@@ -4,9 +4,13 @@
   "description": "",
   "main": "index.js",
   "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
   "scripts": {
-    "dev:backend": "npm run start:dev --workspace=apps/backend",
-    "dev:frontend": "npm run dev --workspace=apps/frontend",
+    "dev:backend": "npm run start:dev --workspace=backend",
+    "dev:frontend": "npm run dev --workspace=frontend",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\""
   },
   "keywords": [],
@@ -17,10 +21,3 @@
     "concurrently": "^9.2.1"
   }
 }
-
-
-git add .
-git commit -m "chore: init monorepo website viecngon with nextjs and nestjs"
-git branch -M main
-git remote add origin https://github.com/lehcun/ViecNgon.git
-git push -u origin main
