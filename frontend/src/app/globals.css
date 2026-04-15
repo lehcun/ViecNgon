@@ -3,11 +3,14 @@
 :root {
   --background: #f4f4f5;
   --foreground: #171717;
+  --primary-blue: #2563eb;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
+
+  @apply antialiased text-slate-900;
 }
 
 /* Ẩn scrollbar nếu cần thiết cho các thanh cuộn ngang */
