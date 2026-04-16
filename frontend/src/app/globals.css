@@ -1,23 +1,29 @@
 @import "tailwindcss";
 
-:root {
-  --background: #f4f4f5;
-  --foreground: #171717;
-  --primary-blue: #2563eb;
+@theme {
+  --color-primary: #2563eb; /* Tự động tạo class: bg-primary, text-primary */
+  --color-primary-hover: #1d4ed8; /* Tự động tạo class: bg-primary-hover */
+  --color-primary-light: #eff6ff; /* Tự động tạo class: bg-primary-light */
+  --color-primary-dark: #0f172a; /* Tự động tạo class: bg-primary-dark */
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-
-  @apply antialiased text-slate-900;
+@layer base {
+  body {
+    background-color: var(--color-background, #ffffff);
+    color: var(--color-foreground, #0f172a);
+    font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 }
 
 /* Ẩn scrollbar nếu cần thiết cho các thanh cuộn ngang */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
