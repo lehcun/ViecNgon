@@ -3,10 +3,10 @@ import { MapPin, ChevronDown, Search, Flame } from "lucide-react";
 
 export default function HeroSection() {
   return (
-    <section className="bg-gradient-to-r from-[#020c1b] via-[#0f2a5c] to-[#0a192f] pt-16 pb-12 px-6">
+    <section className="bg-linear-to-r from-[#020c1b] via-[#0f2a5c] to-[#0a192f] pt-32 pb-12 px-6">
       <div className="max-w-5xl mx-auto">
         <h1 className="text-white text-3xl md:text-4xl font-bold mb-8">
-          863 Việc làm IT cho Cường "Chất"
+          863 Việc làm IT &quot;Ngon&quot;
         </h1>
 
         {/* Search Box */}
