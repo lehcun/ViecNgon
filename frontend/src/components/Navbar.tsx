@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { ChevronDown, MessageSquare, Bell } from "lucide-react";
+import Link from "next/link";
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -107,7 +108,9 @@ export default function Navbar() {
               <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold cursor-pointer shadow-md">
                 C
               </div>
-              <span className="font-semibold hidden sm:block">Đăng Nhập</span>
+              <Link href={"/login"}>
+                <span className="font-semibold hidden sm:block">Đăng Nhập</span>
+              </Link>
             </div>
           </div>
         </div>
