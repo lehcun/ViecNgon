@@ -14,7 +14,7 @@ import EmployerSidebar from "@/components/employer/EmployerSidebar";
 
 export default function EmployerDashboard() {
   return (
-    <main className="px-4 md:px-8 pb-12 pt-8">
+    <main className="px-4 md:px-8 pb-24 pt-8">
       <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
         {/* ================= CỘT TRÁI (SIDEBAR) ================= */}
         <EmployerSidebar />
@@ -138,7 +138,6 @@ export default function EmployerDashboard() {
                     </div>
                   </div>
                 </div>
-
                 {/* Job Item 2 */}
                 <div className="p-5 hover:bg-slate-50 transition-colors">
                   <div className="flex justify-between items-start mb-2">

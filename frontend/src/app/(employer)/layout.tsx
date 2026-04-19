@@ -1,4 +1,5 @@
 import React from "react";
+import EmployerNavbar from "@/components/employer/EmployerNavbar";
 
 export default function EmployerLayout({
   children,
@@ -6,11 +7,11 @@ export default function EmployerLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-screen bg-slate-50">
-      <main className="flex-1 overflow-y-auto p-8">
-        {children}
-        {/* Nội dung các trang như post-job, dashboard sẽ hiển thị ở đây */}
-      </main>
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      <EmployerNavbar />
+
+      {/* Khu vực chứa nội dung Dashboard / Form / Setting */}
+      <div className="flex-1">{children}</div>
     </div>
   );
 }

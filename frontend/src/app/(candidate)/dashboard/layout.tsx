@@ -1,5 +1,5 @@
 import React from "react";
-import CandidateNavbar from "@/components/candidate/CandidateNavbar";
+import Navbar from "@/components/Navbar";
 
 export default function CandidateLayout({
   children,
@@ -8,9 +8,9 @@ export default function CandidateLayout({
 }) {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      <CandidateNavbar />
+      <Navbar variant="app" isLoggedIn={true} />
 
-      <div className="flex-1 pt-8">{children}</div>
+      <div className="flex-1 lg:pt-24 pt-20">{children}</div>
     </div>
   );
 }

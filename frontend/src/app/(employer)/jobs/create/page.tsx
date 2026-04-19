@@ -38,7 +38,7 @@ export default function CreateJobPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto pb-12">
+    <div className="max-w-5xl mx-auto pb-12 pt-4">
       {/* Header */}
       <div className="mb-6">
         <Link

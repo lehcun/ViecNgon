@@ -9,7 +9,6 @@ import {
   MailOpen,
 } from "lucide-react";
 import CandidateSidebar from "@/components/candidate/CandidateSidebar";
-import CandidateNavbar from "@/components/candidate/CandidateNavbar";
 
 export default function CandidateDashboard() {
   const profileCompletion = 69; // Giả lập dữ liệu % hoàn thành hồ sơ
