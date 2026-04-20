@@ -5,13 +5,13 @@ import { FaYoutube, FaFacebook } from "react-icons/fa";
 export default function Footer() {
   return (
     <footer className="relative bg-[#0a0a0a] text-slate-300 border-t border-slate-800 overflow-hidden mt-20">
-      {/* Hiệu ứng ánh sáng và đường cong lượn sóng góc phải (Đặc trưng của ITviec nhưng đổi sang màu Primary) */}
+      {/* Hiệu ứng ánh sáng và đường cong lượn sóng góc phải */}
       <div className="absolute right-0 top-0 bottom-0 w-full md:w-1/2 pointer-events-none overflow-hidden">
-        <div className="absolute right-[-10%] top-[-20%] w-[800px] h-[800px] rounded-full border-[1px] border-primary/10 opacity-30"></div>
-        <div className="absolute right-[-5%] top-[10%] w-[600px] h-[600px] rounded-full border-[1px] border-primary/20 opacity-20"></div>
-        <div className="absolute right-[5%] top-[30%] w-[400px] h-[400px] rounded-full border-[1px] border-primary/30 opacity-10"></div>
+        <div className="absolute right-[-10%] top-[-20%] w-200 h-200 rounded-full border border-primary/10 opacity-30"></div>
+        <div className="absolute right-[-5%] top-[10%] w-150 h-150 rounded-full border border-primary/20 opacity-20"></div>
+        <div className="absolute right-[5%] top-[30%] w-100 h-100 rounded-full border border-primary/30 opacity-10"></div>
         {/* Lớp phủ Gradient mờ */}
-        <div className="absolute inset-0 bg-gradient-to-l from-primary-dark/40 to-transparent mix-blend-screen"></div>
+        <div className="absolute inset-0 bg-linear-to-l from-primary-dark/40 to-transparent mix-blend-screen"></div>
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-16">
