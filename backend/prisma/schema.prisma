@@ -1,0 +1,272 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------
+// 1. BẢNG TÀI KHOẢN
+// ---------------------------------------------------------
+model TaiKhoan {
+  maTaiKhoan   String        @id @default(uuid()) @db.VarChar(50)
+  email        String        @unique @db.VarChar(100)
+  tenNguoiDung String        @db.NVarChar(100)
+  matKhau      String        @db.VarChar(255)
+  sdt          String?       @db.VarChar(20)
+  vaiTro       String        @db.VarChar(20)
+  trangThai    String        @db.VarChar(20)
+
+  // Quan hệ
+  ungVien      UngVien?      // 1 tài khoản có 1 ứng viên
+  nhaTuyenDung NhaTuyenDung? // 1 tài khoản có 1 nhà tuyển dụng
+  danhGias     DanhGia[]
+  thongBaos    ThongBao[]
+
+  @@map("TAIKHOAN")
+}
+
+// ---------------------------------------------------------
+// 2. BẢNG ỨNG VIÊN
+// ---------------------------------------------------------
+model UngVien {
+  maUngVien          String    @id @default(uuid()) @db.VarChar(50)
+  tenUngVien         String    @db.NVarChar(100)
+  ngaySinh           DateTime? @db.Date
+  gioiTinh           String?   @db.NVarChar(10)
+  soNamKinhNghiem    Int?
+  avatarUrl          String?   @db.VarChar(255)
+  chuyenMon          String    @db.NVarChar(150)
+  cvUrl              String    @db.VarChar(255)
+  diaChi             String?   @db.NVarChar(255)
+  kyNang             Json?     
+  trangThaiPortfolio String?   @db.VarChar(10)
+
+  // Khóa ngoại
+  maTaiKhoan         String    @unique @db.VarChar(50)
+  taiKhoan           TaiKhoan  @relation(fields: [maTaiKhoan], references: [maTaiKhoan], onDelete: Cascade)
+
+  // Quan hệ
+  portfolios         Portfolio[]
+  donXinViecs        DonXinViec[]
+
+  @@map("UNGVIEN")
+}
+
+// ---------------------------------------------------------
+// 3. BẢNG CÔNG TY
+// ---------------------------------------------------------
+model CongTy {
+  maCongTy  String  @id @default(uuid()) @db.VarChar(50)
+  tenCongTy String  @db.NVarChar(150)
+  urlLogo   String? @db.VarChar(255)
+  website   String? @db.VarChar(100)
+  diaChi    String? @db.NVarChar(255)
+
+  // Quan hệ
+  nhaTuyenDungs NhaTuyenDung[]
+
+  @@map("CONGTY")
+}
+
+// ---------------------------------------------------------
+// 4. BẢNG NHÀ TUYỂN DỤNG (HR)
+// ---------------------------------------------------------
+model NhaTuyenDung {
+  maNTD      String   @id @default(uuid()) @db.VarChar(50)
+  
+  // Khóa ngoại
+  maCongTy   String   @db.VarChar(50)
+  congTy     CongTy   @relation(fields: [maCongTy], references: [maCongTy])
+  
+  maTaiKhoan String   @unique @db.VarChar(50)
+  taiKhoan   TaiKhoan @relation(fields: [maTaiKhoan], references: [maTaiKhoan], onDelete: Cascade)
+
+  // Quan hệ
+  congViecs     CongViec[]
+  muaQuangCaos  MuaQuangCao[]
+
+  @@map("NHATUYENDUNG")
+}
+
+// ---------------------------------------------------------
+// 5. BẢNG CÔNG VIỆC
+// ---------------------------------------------------------
+model CongViec {
+  maCongViec       String    @id @default(uuid()) @db.VarChar(50)
+  tenCongViec      String    @db.NVarChar(150)
+  moTa             String?   @db.NVarChar(Max)
+  mucLuongToiThieu Decimal?  @db.Decimal(18,0)
+  mucLuongToiDa    Decimal?  @db.Decimal(18,0)
+  yeuCauKinhNghiem Int?
+  ngayDang         DateTime
+  ngayHetHan       DateTime?
+  diaDiem          String?   @db.NVarChar(255)
+  loaiHinh         String    @db.NVarChar(50)
+  capBac           String?   @db.NVarChar(50)
+  trangThai        String    @db.VarChar(20)
+
+  // Khóa ngoại
+  maNTD            String       @db.VarChar(50)
+  nhaTuyenDung     NhaTuyenDung @relation(fields: [maNTD], references: [maNTD])
+
+  // Quan hệ
+  donXinViecs      DonXinViec[]
+
+  @@map("CONGVIEC")
+}
+
+// ---------------------------------------------------------
+// 6. BẢNG PORTFOLIO
+// ---------------------------------------------------------
+model Portfolio {
+  maPortfolio String  @id @default(uuid()) @db.VarChar(50)
+  tieuDe      String  @db.NVarChar(100)
+  moTa        String? @db.NVarChar(500)
+  projectUrl  String? @db.VarChar(255)
+
+  // Khóa ngoại
+  maUngVien   String  @db.VarChar(50)
+  ungVien     UngVien @relation(fields: [maUngVien], references: [maUngVien], onDelete: Cascade)
+
+  @@map("PORTFOLIO")
+}
+
+// ---------------------------------------------------------
+// 7. BẢNG ĐƠN XIN VIỆC
+// ---------------------------------------------------------
+model DonXinViec {
+  maDon      String   @id @default(uuid()) @db.VarChar(50)
+  chiTiet    String?  @db.NVarChar(Max)
+  ngayNop    DateTime
+  trangThai  String   @db.NVarChar(50)
+  fileCvUrl  String?  @db.VarChar(255)
+
+  // Khóa ngoại
+  maUngVien  String   @db.VarChar(50)
+  ungVien    UngVien  @relation(fields: [maUngVien], references: [maUngVien], onDelete: NoAction, onUpdate: NoAction)
+
+  maCongViec String   @db.VarChar(50)
+  congViec   CongViec @relation(fields: [maCongViec], references: [maCongViec], onDelete: Cascade)
+
+  // Quan hệ
+  lichPhongVans LichPhongVan[]
+
+  @@map("DONXINVIEC")
+}
+
+// ---------------------------------------------------------
+// 8. BẢNG LỊCH PHỎNG VẤN
+// ---------------------------------------------------------
+model LichPhongVan {
+  maLich        String   @id @default(uuid()) @db.VarChar(50)
+  thoiGian      DateTime?
+  linkMeeting   String?  @db.NVarChar(100)
+  trangThaiLich String   @db.NVarChar(500)
+
+  // Khóa ngoại (Đã sửa logic: Lịch phỏng vấn gắn với Đơn xin việc)
+  maDon         String     @db.VarChar(50)
+  donXinViec    DonXinViec @relation(fields: [maDon], references: [maDon], onDelete: Cascade)
+
+  @@map("LICHPHONGVAN")
+}
+
+// ---------------------------------------------------------
+// 9. BẢNG ĐÁNH GIÁ
+// ---------------------------------------------------------
+model DanhGia {
+  maDanhGia             String   @id @default(uuid()) @db.VarChar(50)
+  rating                Decimal? @db.Decimal(2,1)
+  tieuDe                String?  @db.NVarChar(100)
+  noiDung               String?  @db.NVarChar(500)
+  ngayDanhGia           DateTime
+  maDoiTuongDuocDanhGia String?  @db.VarChar(50)
+  loaiDoiTuong          String?  @db.VarChar(20)
+
+  // Khóa ngoại
+  maNguoiDanhGia        String   @db.VarChar(50)
+  nguoiDanhGia          TaiKhoan @relation(fields: [maNguoiDanhGia], references: [maTaiKhoan])
+
+  @@map("DANHGIA")
+}
+
+// ---------------------------------------------------------
+// 10. BẢNG THÔNG BÁO
+// ---------------------------------------------------------
+model ThongBao {
+  maThongBao String @id @default(uuid()) @db.VarChar(50)
+  tieuDe     String @db.NVarChar(255)
+  noiDung    String @db.NVarChar(Max)
+  trangThai  String @db.NVarChar(50)
+
+  // Khóa ngoại
+  maTaiKhoan String   @db.VarChar(50)
+  taiKhoan   TaiKhoan @relation(fields: [maTaiKhoan], references: [maTaiKhoan], onDelete: Cascade)
+
+  @@map("THONGBAO")
+}
+
+// ---------------------------------------------------------
+// 11. BẢNG GÓI QUẢNG CÁO
+// ---------------------------------------------------------
+model GoiQuangCao {
+  maGoi           String   @id @default(uuid()) @db.VarChar(50)
+  tieuDe          String   @db.NVarChar(100)
+  loaiQuangCao    String?  @db.NVarChar(50)
+  gia             Decimal  @db.Decimal(18,0)
+  thoiGianHieuLuc Int?
+  soLuotDangTin   Int?
+  ngayTao         DateTime
+
+  // Quan hệ
+  muaQuangCaos    MuaQuangCao[]
+
+  @@map("GOIQUANGCAO")
+}
+
+// ---------------------------------------------------------
+// 12. BẢNG MUA QUẢNG CÁO
+// ---------------------------------------------------------
+model MuaQuangCao {
+  maMua             String   @id @default(uuid()) @db.VarChar(50)
+  tieuDe            String?  @db.NVarChar(100)
+  giaTaiThoiDiemMua Decimal  @db.Decimal(18,0)
+  soLuotConLai      Int?
+  ngayKetThuc       DateTime @db.Date
+  ngayBatDau        DateTime @db.Date
+  ngayMua           DateTime
+  trangThai         String?  @default("Chờ thanh toán") @db.NVarChar(50)
+
+  // Khóa ngoại
+  maNTD             String       @db.VarChar(50)
+  nhaTuyenDung      NhaTuyenDung @relation(fields: [maNTD], references: [maNTD])
+
+  maGoi             String      @db.VarChar(50)
+  goiQuangCao       GoiQuangCao @relation(fields: [maGoi], references: [maGoi])
+
+  // Quan hệ
+  thanhToans        ThanhToan[]
+
+  @@map("MUAQUANGCAO")
+}
+
+// ---------------------------------------------------------
+// 13. BẢNG THANH TOÁN
+// ---------------------------------------------------------
+model ThanhToan {
+  maThanhToan      String   @id @default(uuid()) @db.VarChar(50)
+  ngayThanhToan    DateTime
+  soTienThanhToan  Decimal  @db.Decimal(18,0)
+  phuongThucTT     String?  @db.NVarChar(50)
+  trangThaiTT      String?  @db.NVarChar(50)
+  ghiChu           String?  @db.NVarChar(255)
+  maGiaoDichDoiTac String   @db.VarChar(100)
+
+  // Khóa ngoại
+  maMua            String      @db.VarChar(50)
+  muaQuangCao      MuaQuangCao @relation(fields: [maMua], references: [maMua])
+
+  @@map("THANHTOAN")
+}
