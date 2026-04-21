@@ -1,0 +1,239 @@
+BEGIN TRY
+
+BEGIN TRAN;
+
+-- CreateTable
+CREATE TABLE [dbo].[TAIKHOAN] (
+    [maTaiKhoan] VARCHAR(50) NOT NULL,
+    [email] VARCHAR(100) NOT NULL,
+    [tenNguoiDung] NVARCHAR(100) NOT NULL,
+    [matKhau] VARCHAR(255) NOT NULL,
+    [sdt] VARCHAR(20),
+    [vaiTro] VARCHAR(20) NOT NULL,
+    [trangThai] VARCHAR(20) NOT NULL,
+    CONSTRAINT [TAIKHOAN_pkey] PRIMARY KEY CLUSTERED ([maTaiKhoan]),
+    CONSTRAINT [TAIKHOAN_email_key] UNIQUE NONCLUSTERED ([email])
+);
+
+-- CreateTable
+CREATE TABLE [dbo].[UNGVIEN] (
+    [maUngVien] VARCHAR(50) NOT NULL,
+    [tenUngVien] NVARCHAR(100) NOT NULL,
+    [ngaySinh] DATE,
+    [gioiTinh] NVARCHAR(10),
+    [soNamKinhNghiem] INT,
+    [avatarUrl] VARCHAR(255),
+    [chuyenMon] NVARCHAR(150) NOT NULL,
+    [cvUrl] VARCHAR(255) NOT NULL,
+    [diaChi] NVARCHAR(255),
+    [trangThaiPortfolio] VARCHAR(10),
+    [maTaiKhoan] VARCHAR(50) NOT NULL,
+    CONSTRAINT [UNGVIEN_pkey] PRIMARY KEY CLUSTERED ([maUngVien]),
+    CONSTRAINT [UNGVIEN_maTaiKhoan_key] UNIQUE NONCLUSTERED ([maTaiKhoan])
+);
+
+-- CreateTable
+CREATE TABLE [dbo].[CONGTY] (
+    [maCongTy] VARCHAR(50) NOT NULL,
+    [tenCongTy] NVARCHAR(150) NOT NULL,
+    [urlLogo] VARCHAR(255),
+    [website] VARCHAR(100),
+    [diaChi] NVARCHAR(255),
+    CONSTRAINT [CONGTY_pkey] PRIMARY KEY CLUSTERED ([maCongTy])
+);
+
+-- CreateTable
+CREATE TABLE [dbo].[NHATUYENDUNG] (
+    [maNTD] VARCHAR(50) NOT NULL,
+    [maCongTy] VARCHAR(50) NOT NULL,
+    [maTaiKhoan] VARCHAR(50) NOT NULL,
+    CONSTRAINT [NHATUYENDUNG_pkey] PRIMARY KEY CLUSTERED ([maNTD]),
+    CONSTRAINT [NHATUYENDUNG_maTaiKhoan_key] UNIQUE NONCLUSTERED ([maTaiKhoan])
+);
+
+-- CreateTable
+CREATE TABLE [dbo].[CONGVIEC] (
+    [maCongViec] VARCHAR(50) NOT NULL,
+    [tenCongViec] NVARCHAR(150) NOT NULL,
+    [moTa] NVARCHAR(max),
+    [mucLuongToiThieu] DECIMAL(18,0),
+    [mucLuongToiDa] DECIMAL(18,0),
+    [yeuCauKinhNghiem] INT,
+    [ngayDang] DATETIME2 NOT NULL,
+    [ngayHetHan] DATETIME2,
+    [diaDiem] NVARCHAR(255),
+    [loaiHinh] NVARCHAR(50) NOT NULL,
+    [capBac] NVARCHAR(50),
+    [trangThai] VARCHAR(20) NOT NULL,
+    [maNTD] VARCHAR(50) NOT NULL,
+    CONSTRAINT [CONGVIEC_pkey] PRIMARY KEY CLUSTERED ([maCongViec])
+);
+
+-- CreateTable
+CREATE TABLE [dbo].[PORTFOLIO] (
+    [maPortfolio] VARCHAR(50) NOT NULL,
+    [tieuDe] NVARCHAR(100) NOT NULL,
+    [moTa] NVARCHAR(500),
+    [projectUrl] VARCHAR(255),
+    [maUngVien] VARCHAR(50) NOT NULL,
+    CONSTRAINT [PORTFOLIO_pkey] PRIMARY KEY CLUSTERED ([maPortfolio])
+);
+
+-- CreateTable
+CREATE TABLE [dbo].[DONXINVIEC] (
+    [maDon] VARCHAR(50) NOT NULL,
+    [chiTiet] NVARCHAR(max),
+    [ngayNop] DATETIME2 NOT NULL,
+    [trangThai] NVARCHAR(50) NOT NULL,
+    [fileCvUrl] VARCHAR(255),
+    [maUngVien] VARCHAR(50) NOT NULL,
+    [maCongViec] VARCHAR(50) NOT NULL,
+    CONSTRAINT [DONXINVIEC_pkey] PRIMARY KEY CLUSTERED ([maDon])
+);
+
+-- CreateTable
+CREATE TABLE [dbo].[LICHPHONGVAN] (
+    [maLich] VARCHAR(50) NOT NULL,
+    [thoiGian] DATETIME2,
+    [linkMeeting] NVARCHAR(100),
+    [trangThaiLich] NVARCHAR(500) NOT NULL,
+    [maDon] VARCHAR(50) NOT NULL,
+    CONSTRAINT [LICHPHONGVAN_pkey] PRIMARY KEY CLUSTERED ([maLich])
+);
+
+-- CreateTable
+CREATE TABLE [dbo].[DANHGIA] (
+    [maDanhGia] VARCHAR(50) NOT NULL,
+    [rating] DECIMAL(2,1),
+    [tieuDe] NVARCHAR(100),
+    [noiDung] NVARCHAR(500),
+    [ngayDanhGia] DATETIME2 NOT NULL,
+    [maDoiTuongDuocDanhGia] VARCHAR(50),
+    [loaiDoiTuong] VARCHAR(20),
+    [maNguoiDanhGia] VARCHAR(50) NOT NULL,
+    CONSTRAINT [DANHGIA_pkey] PRIMARY KEY CLUSTERED ([maDanhGia])
+);
+
+-- CreateTable
+CREATE TABLE [dbo].[THONGBAO] (
+    [maThongBao] VARCHAR(50) NOT NULL,
+    [tieuDe] NVARCHAR(255) NOT NULL,
+    [noiDung] NVARCHAR(max) NOT NULL,
+    [trangThai] NVARCHAR(50) NOT NULL,
+    [maTaiKhoan] VARCHAR(50) NOT NULL,
+    CONSTRAINT [THONGBAO_pkey] PRIMARY KEY CLUSTERED ([maThongBao])
+);
+
+-- CreateTable
+CREATE TABLE [dbo].[GOIQUANGCAO] (
+    [maGoi] VARCHAR(50) NOT NULL,
+    [tieuDe] NVARCHAR(100) NOT NULL,
+    [loaiQuangCao] NVARCHAR(50),
+    [gia] DECIMAL(18,0) NOT NULL,
+    [thoiGianHieuLuc] INT,
+    [soLuotDangTin] INT,
+    [ngayTao] DATETIME2 NOT NULL,
+    CONSTRAINT [GOIQUANGCAO_pkey] PRIMARY KEY CLUSTERED ([maGoi])
+);
+
+-- CreateTable
+CREATE TABLE [dbo].[MUAQUANGCAO] (
+    [maMua] VARCHAR(50) NOT NULL,
+    [tieuDe] NVARCHAR(100),
+    [giaTaiThoiDiemMua] DECIMAL(18,0) NOT NULL,
+    [soLuotConLai] INT,
+    [ngayKetThuc] DATE NOT NULL,
+    [ngayBatDau] DATE NOT NULL,
+    [ngayMua] DATETIME2 NOT NULL,
+    [trangThai] NVARCHAR(50) CONSTRAINT [MUAQUANGCAO_trangThai_df] DEFAULT 'Chờ thanh toán',
+    [maNTD] VARCHAR(50) NOT NULL,
+    [maGoi] VARCHAR(50) NOT NULL,
+    CONSTRAINT [MUAQUANGCAO_pkey] PRIMARY KEY CLUSTERED ([maMua])
+);
+
+-- CreateTable
+CREATE TABLE [dbo].[THANHTOAN] (
+    [maThanhToan] VARCHAR(50) NOT NULL,
+    [ngayThanhToan] DATETIME2 NOT NULL,
+    [soTienThanhToan] DECIMAL(18,0) NOT NULL,
+    [phuongThucTT] NVARCHAR(50),
+    [trangThaiTT] NVARCHAR(50),
+    [ghiChu] NVARCHAR(255),
+    [maGiaoDichDoiTac] VARCHAR(100) NOT NULL,
+    [maMua] VARCHAR(50) NOT NULL,
+    CONSTRAINT [THANHTOAN_pkey] PRIMARY KEY CLUSTERED ([maThanhToan])
+);
+
+-- CreateTable
+CREATE TABLE [dbo].[KYNANG] (
+    [maKyNang] VARCHAR(50) NOT NULL,
+    [tenKyNang] NVARCHAR(100) NOT NULL,
+    CONSTRAINT [KYNANG_pkey] PRIMARY KEY CLUSTERED ([maKyNang]),
+    CONSTRAINT [KYNANG_tenKyNang_key] UNIQUE NONCLUSTERED ([tenKyNang])
+);
+
+-- CreateTable
+CREATE TABLE [dbo].[UNGVIEN_KYNANG] (
+    [maUngVien] VARCHAR(50) NOT NULL,
+    [maKyNang] VARCHAR(50) NOT NULL,
+    [mucDo] NVARCHAR(50),
+    CONSTRAINT [UNGVIEN_KYNANG_pkey] PRIMARY KEY CLUSTERED ([maUngVien],[maKyNang])
+);
+
+-- AddForeignKey
+ALTER TABLE [dbo].[UNGVIEN] ADD CONSTRAINT [UNGVIEN_maTaiKhoan_fkey] FOREIGN KEY ([maTaiKhoan]) REFERENCES [dbo].[TAIKHOAN]([maTaiKhoan]) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE [dbo].[NHATUYENDUNG] ADD CONSTRAINT [NHATUYENDUNG_maCongTy_fkey] FOREIGN KEY ([maCongTy]) REFERENCES [dbo].[CONGTY]([maCongTy]) ON DELETE NO ACTION ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE [dbo].[NHATUYENDUNG] ADD CONSTRAINT [NHATUYENDUNG_maTaiKhoan_fkey] FOREIGN KEY ([maTaiKhoan]) REFERENCES [dbo].[TAIKHOAN]([maTaiKhoan]) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE [dbo].[CONGVIEC] ADD CONSTRAINT [CONGVIEC_maNTD_fkey] FOREIGN KEY ([maNTD]) REFERENCES [dbo].[NHATUYENDUNG]([maNTD]) ON DELETE NO ACTION ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE [dbo].[PORTFOLIO] ADD CONSTRAINT [PORTFOLIO_maUngVien_fkey] FOREIGN KEY ([maUngVien]) REFERENCES [dbo].[UNGVIEN]([maUngVien]) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE [dbo].[DONXINVIEC] ADD CONSTRAINT [DONXINVIEC_maUngVien_fkey] FOREIGN KEY ([maUngVien]) REFERENCES [dbo].[UNGVIEN]([maUngVien]) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE [dbo].[DONXINVIEC] ADD CONSTRAINT [DONXINVIEC_maCongViec_fkey] FOREIGN KEY ([maCongViec]) REFERENCES [dbo].[CONGVIEC]([maCongViec]) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE [dbo].[LICHPHONGVAN] ADD CONSTRAINT [LICHPHONGVAN_maDon_fkey] FOREIGN KEY ([maDon]) REFERENCES [dbo].[DONXINVIEC]([maDon]) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE [dbo].[DANHGIA] ADD CONSTRAINT [DANHGIA_maNguoiDanhGia_fkey] FOREIGN KEY ([maNguoiDanhGia]) REFERENCES [dbo].[TAIKHOAN]([maTaiKhoan]) ON DELETE NO ACTION ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE [dbo].[THONGBAO] ADD CONSTRAINT [THONGBAO_maTaiKhoan_fkey] FOREIGN KEY ([maTaiKhoan]) REFERENCES [dbo].[TAIKHOAN]([maTaiKhoan]) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE [dbo].[MUAQUANGCAO] ADD CONSTRAINT [MUAQUANGCAO_maNTD_fkey] FOREIGN KEY ([maNTD]) REFERENCES [dbo].[NHATUYENDUNG]([maNTD]) ON DELETE NO ACTION ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE [dbo].[MUAQUANGCAO] ADD CONSTRAINT [MUAQUANGCAO_maGoi_fkey] FOREIGN KEY ([maGoi]) REFERENCES [dbo].[GOIQUANGCAO]([maGoi]) ON DELETE NO ACTION ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE [dbo].[THANHTOAN] ADD CONSTRAINT [THANHTOAN_maMua_fkey] FOREIGN KEY ([maMua]) REFERENCES [dbo].[MUAQUANGCAO]([maMua]) ON DELETE NO ACTION ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE [dbo].[UNGVIEN_KYNANG] ADD CONSTRAINT [UNGVIEN_KYNANG_maUngVien_fkey] FOREIGN KEY ([maUngVien]) REFERENCES [dbo].[UNGVIEN]([maUngVien]) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE [dbo].[UNGVIEN_KYNANG] ADD CONSTRAINT [UNGVIEN_KYNANG_maKyNang_fkey] FOREIGN KEY ([maKyNang]) REFERENCES [dbo].[KYNANG]([maKyNang]) ON DELETE CASCADE ON UPDATE CASCADE;
+
+COMMIT TRAN;
+
+END TRY
+BEGIN CATCH
+
+IF @@TRANCOUNT > 0
+BEGIN
+    ROLLBACK TRAN;
+END;
+THROW
+
+END CATCH

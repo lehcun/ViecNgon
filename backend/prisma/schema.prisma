@@ -41,7 +41,6 @@ model UngVien {
   chuyenMon          String    @db.NVarChar(150)
   cvUrl              String    @db.VarChar(255)
   diaChi             String?   @db.NVarChar(255)
-  kyNang             Json?     
   trangThaiPortfolio String?   @db.VarChar(10)
 
   // Khóa ngoại
@@ -51,6 +50,7 @@ model UngVien {
   // Quan hệ
   portfolios         Portfolio[]
   donXinViecs        DonXinViec[]
+  kyNangs            UngVienKyNang[]
 
   @@map("UNGVIEN")
 }
@@ -269,4 +269,32 @@ model ThanhToan {
   muaQuangCao      MuaQuangCao @relation(fields: [maMua], references: [maMua])
 
   @@map("THANHTOAN")
+}
+
+// ---------------------------------------------------------
+// 14. BẢNG KỸ NĂNG (Danh mục từ điển kỹ năng của hệ thống)
+// ---------------------------------------------------------
+model KyNang {
+  maKyNang  String          @id @default(uuid()) @db.VarChar(50)
+  tenKyNang String          @unique @db.NVarChar(100)
+  
+  // Quan hệ
+  ungViens  UngVienKyNang[]
+
+  @@map("KYNANG")
+}
+
+// ---------------------------------------------------------
+// 15. BẢNG TRUNG GIAN ỨNG VIÊN - KỸ NĂNG
+// ---------------------------------------------------------
+model UngVienKyNang {
+  maUngVien String  @db.VarChar(50)
+  maKyNang  String  @db.VarChar(50)
+  mucDo     String? @db.NVarChar(50)
+
+  ungVien   UngVien @relation(fields: [maUngVien], references: [maUngVien], onDelete: Cascade)
+  kyNang    KyNang  @relation(fields: [maKyNang], references: [maKyNang], onDelete: Cascade)
+
+  @@id([maUngVien, maKyNang]) // Thiết lập khóa chính kép
+  @@map("UNGVIEN_KYNANG")
 }
