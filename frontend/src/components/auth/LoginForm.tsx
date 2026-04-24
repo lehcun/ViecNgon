@@ -1,12 +1,40 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FiMail, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
 import { FaGoogle, FaFacebook } from "react-icons/fa";
-import Link from "next/link";
+import { useLogin } from "@/hooks/auth/useLogin";
 
 export default function LoginForm() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  const router = useRouter();
+
+  //Gọi hook login
+  const { login, isError, error, isPending } = useLogin();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault(); // Ngăn trình duyệt tự động reload trang khi submit form
+
+    // Thực thi hàm login (truyền biến 'credentials' vào useLogin)
+    login(
+      { email, password },
+      {
+        onSuccess: (data) => {
+          console.log("Thông tin user:", data.user);
+          alert("Đăng nhập thành công!");
+          router.push("/dashboard");
+        },
+        onError: (err) => {
+          console.error("Chi tiết lỗi:", err);
+        },
+      },
+    );
+  };
 
   return (
     <div className="max-w-md mx-auto">
@@ -25,7 +53,7 @@ export default function LoginForm() {
         </p>
       </div>
 
-      <form className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label
             htmlFor="email"
@@ -40,9 +68,12 @@ export default function LoginForm() {
             />
             <input
               id="email"
-              type="email"
               placeholder="Nhập email của bạn"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-md outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+              required
             />
           </div>
         </div>
@@ -62,8 +93,11 @@ export default function LoginForm() {
             <input
               id="password"
               type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="Nhập mật khẩu"
               className="w-full pl-10 pr-12 py-3 border border-slate-300 rounded-md outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+              required
             />
             <button
               type="button"
@@ -82,12 +116,22 @@ export default function LoginForm() {
             </Link>
           </div>
         </div>
+        {/* Hiển thị lỗi nếu đăng nhập thất bại */}
+        {isError && (
+          <p className="text-red-500 text-sm font-medium">{error.message}</p>
+        )}
 
+        {/* Nút Đăng nhập */}
         <button
           type="submit"
-          className="w-full bg-primary text-white font-semibold py-3 px-4 rounded-md hover:bg-primary-hover shadow-md shadow-primary/30 transition-all active:scale-[0.98]"
+          disabled={isPending}
+          className={`w-full ${
+            isPending
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-primary hover:bg-primary-hover active:scale-[0.98]"
+          }  text-white font-semibold py-3 px-4 rounded-md shadow-md shadow-primary/30 transition-all `}
         >
-          Đăng nhập
+          {isPending ? "Đang kiểm tra..." : "Đăng nhập"}
         </button>
       </form>
 

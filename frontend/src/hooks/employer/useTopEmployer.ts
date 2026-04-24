@@ -2,7 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import Employer from "@/types";
 
 const fetchTopEmployers = async (): Promise<Employer[]> => {
-  const response = await fetch("http://127.0.0.1:3001/employer/top");
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/employer/top`,
+  );
 
   if (!response.ok) {
     throw new Error(

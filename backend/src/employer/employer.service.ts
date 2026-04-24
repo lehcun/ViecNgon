@@ -38,7 +38,7 @@ export class EmployerService {
           },
         },
       },
-      take: 10,
+      take: 8,
     });
 
     // Bước 2: Chuẩn hóa lại dữ liệu (Format) để khớp với Component Frontend
