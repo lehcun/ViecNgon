@@ -7,8 +7,7 @@ interface EmployerProps {
     logo: string;
     jobs: number;
     location: string;
-    skills: string[];
-    color: string; // VD: "bg-red-500" hoặc mã hex "#EF4444"
+    skills?: string[];
   };
 }
 
@@ -37,7 +36,7 @@ export default function EmployerCard({ employer }: EmployerProps) {
 
         {/* Khối Logo (Box đỏ) nổi bật với Drop Shadow 3D */}
         <div
-          className={`relative z-10 w-28 h-28 sm:w-32 sm:h-32 rounded-2xl ${employer.color || "bg-red-500"} shadow-[0_12px_30px_rgba(0,0,0,0.15)] flex items-center justify-center p-5 mb-6 transition-transform duration-300 group-hover:-translate-y-1`}
+          className={`relative z-10 w-28 h-28 sm:w-32 sm:h-32 rounded-2xl shadow-[0_12px_30px_rgba(0,0,0,0.15)] flex items-center justify-center p-5 mb-6 transition-transform duration-300 group-hover:-translate-y-1`}
         >
           <Image
             src={employer.logo}

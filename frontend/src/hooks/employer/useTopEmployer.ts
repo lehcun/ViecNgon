@@ -1,15 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-
-export interface Employer {
-  name: string;
-  logo: string;
-  jobs: number;
-  location: string;
-  color?: string;
-}
+import Employer from "@/types";
 
 const fetchTopEmployers = async (): Promise<Employer[]> => {
-  const response = await fetch("http://localhost:3001/employer/top");
+  const response = await fetch("http://127.0.0.1:3001/employer/top");
 
   if (!response.ok) {
     throw new Error(
@@ -29,6 +22,7 @@ export const useTopEmployers = () => {
   });
 
   return {
-    brands: query.data,
+    ...query,
+    employers: query.data,
   };
 };

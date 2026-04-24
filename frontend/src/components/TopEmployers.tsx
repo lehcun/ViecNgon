@@ -3,10 +3,12 @@
 import Image from "next/image";
 import Marquee from "react-fast-marquee";
 import EmployerCard from "./EmployerCard";
-import { MOCK_EMPLOYERS } from "@/data/employer";
 import Employer from "@/types";
+import { useTopEmployers } from "@/hooks/employer/useTopEmployer";
 
 export default function TopEmployers() {
+  const { employers } = useTopEmployers();
+  console.log(employers);
   return (
     <section className="bg-[#f8fafc] py-20 px-6">
       <div className="max-w-6xl mx-auto">
@@ -26,8 +28,9 @@ export default function TopEmployers() {
             speed={40}
             pauseOnHover={true}
           >
-            {MOCK_EMPLOYERS.concat(MOCK_EMPLOYERS).map(
-              (emp: Employer, index: number) => (
+            {employers
+              ?.concat(employers)
+              .map((emp: Employer, index: number) => (
                 <div
                   key={index}
                   className="mx-10 opacity-60 hover:opacity-100 transition-opacity grayscale hover:grayscale-0 flex items-center justify-center h-12"
@@ -40,14 +43,13 @@ export default function TopEmployers() {
                     className="object-contain h-12 w-auto max-w-30"
                   />
                 </div>
-              ),
-            )}
+              ))}
           </Marquee>
         </div>
 
         {/* 2. Phần Grid 4 cột */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {MOCK_EMPLOYERS.map((employer: Employer) => (
+          {employers?.map((employer: Employer) => (
             <EmployerCard key={employer.id} employer={employer} />
           ))}
         </div>

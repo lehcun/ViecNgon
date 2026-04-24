@@ -20,7 +20,11 @@ export class EmployerController {
     return this.employerService.create(createEmployerDto);
   }
 
-  @Get()
+  @Get('top')
+  async getTopEmployers() {
+    return await this.employerService.getCompaniesWithJobCount();
+  }
+
   findAll() {
     return this.employerService.findAll();
   }

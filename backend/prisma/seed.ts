@@ -94,42 +94,35 @@ async function main() {
         urlLogo:
           'https://res.cloudinary.com/dbvlsf9bi/image/upload/v1776325175/grab_w4das4.png',
         website: 'https://grab.com',
-        diaChi: 'Quận 7, TP.HCM',
+        diaChi: 'TP.HCM',
       },
       {
         tenCongTy: 'NAB Innovation',
         urlLogo:
           'https://res.cloudinary.com/dbvlsf9bi/image/upload/v1776325176/nab_l1zght.png',
         website: 'https://nab.com.au',
-        diaChi: 'Quận 4, TP.HCM',
+        diaChi: 'Hà nội',
       },
       {
         tenCongTy: 'ANDPAD Vietnam',
         urlLogo:
           'https://res.cloudinary.com/dbvlsf9bi/image/upload/v1776325177/andpa_omjtkp.png',
         website: 'https://andpad.vn',
-        diaChi: 'Quận 1, TP.HCM',
+        diaChi: 'TP.HCM',
       },
       {
         tenCongTy: 'HSC',
         urlLogo:
           'https://res.cloudinary.com/dbvlsf9bi/image/upload/v1776325178/hsc_i6nltx.png',
         website: 'https://hsc.com.vn',
-        diaChi: 'Quận 1, TP.HCM',
+        diaChi: 'TP.HCM',
       },
       {
         tenCongTy: 'VNG Corporation',
         urlLogo:
           'https://res.cloudinary.com/dbvlsf9bi/image/upload/v1776325179/vng_st3yi1.jpg',
         website: 'https://vng.com.vn',
-        diaChi: 'Khu chế xuất Tân Thuận, Quận 7, TP.HCM',
-      },
-      {
-        tenCongTy: 'FPT Software',
-        urlLogo:
-          'https://res.cloudinary.com/dbvlsf9bi/image/upload/v1776325180/fpt_nvigcr.png',
-        website: 'https://fpt.com',
-        diaChi: 'Ngũ Hành Sơn, Đà Nẵng',
+        diaChi: 'TP.HCM',
       },
     ],
   });
@@ -138,9 +131,10 @@ async function main() {
   const congTyFPT = await prisma.congTy.create({
     data: {
       tenCongTy: 'FPT Software',
-      urlLogo: 'https://example.com/logos/fpt.png', // Đã bổ sung URL Logo
+      urlLogo:
+        'https://res.cloudinary.com/dbvlsf9bi/image/upload/v1776325180/fpt_nvigcr.png',
       website: 'https://fpt.com',
-      diaChi: 'Khu Công Nghệ Cao, Q9, TP.HCM',
+      diaChi: 'Đà Nẵng',
     },
   });
 
