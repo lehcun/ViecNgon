@@ -1,4 +1,6 @@
+// npx prisma db seed -w backend
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
@@ -141,11 +143,15 @@ async function main() {
   // ==========================================
   // 4. TẠO TÀI KHOẢN (Admin, HR, Ứng viên)
   // ==========================================
+  //bam mat khau bryct o days
+  const password = '123456';
+  const hashPassword = await bcrypt.hash(password, 10);
+
   const tkAdmin = await prisma.taiKhoan.create({
     data: {
       email: 'admin@vieclamcdio.com',
       tenNguoiDung: 'Quản Trị Viên',
-      matKhau: 'hashed_pw',
+      matKhau: hashPassword,
       vaiTro: 'ADMIN',
       trangThai: 'Active',
     },
@@ -155,7 +161,7 @@ async function main() {
     data: {
       email: 'hr@fpt.com',
       tenNguoiDung: 'Lê HR',
-      matKhau: 'hashed_pw',
+      matKhau: hashPassword,
       vaiTro: 'NHATUYENDUNG',
       trangThai: 'Active',
     },
@@ -165,7 +171,7 @@ async function main() {
     data: {
       email: 'ungvien@gmail.com',
       tenNguoiDung: 'Nguyễn Văn Ứng Viên',
-      matKhau: 'hashed_pw',
+      matKhau: hashPassword,
       vaiTro: 'UNGVIEN',
       trangThai: 'Active',
     },
