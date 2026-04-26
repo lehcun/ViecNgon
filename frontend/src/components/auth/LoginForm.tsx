@@ -25,7 +25,7 @@ export default function LoginForm() {
       { email, password },
       {
         onSuccess: (data) => {
-          console.log("Thông tin user:", data.user);
+          // console.log("Thông tin user:", data.user);
           alert("Đăng nhập thành công!");
           router.push("/dashboard");
         },

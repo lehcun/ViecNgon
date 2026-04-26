@@ -33,6 +33,8 @@ export class AuthController {
     const cookies = req.cookies as Record<string, string> | undefined;
     const token = cookies?.['access_token'];
 
+    console.log('Auth/me: access_token: ', token);
+
     if (!token) {
       throw new UnauthorizedException('Chưa đăng nhập');
     }
@@ -66,7 +68,7 @@ export class AuthController {
   ) {
     const { access_token, user } = await this.authService.login(loginDto);
 
-    console.log('access_token: ', access_token);
+    console.log('Login: access_token: ', access_token);
 
     res.cookie('access_token', access_token, {
       httpOnly: true,

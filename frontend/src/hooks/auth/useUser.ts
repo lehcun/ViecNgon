@@ -1,4 +1,3 @@
-// hooks/useUser.ts
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/authStore";
 
@@ -12,9 +11,12 @@ export const useUser = () => {
   } = useQuery({
     queryKey: ["authUser"],
     queryFn: async () => {
-      const response = await fetch("http://localhost:3000/auth/me", {
-        credentials: "include", // BẮT BUỘC để trình duyệt tự đính kèm HTTP-Only Cookie
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/me`,
+        {
+          credentials: "include",
+        },
+      );
 
       if (!response.ok) {
         clearAuth(); // Dọn dẹp kho dữ liệu nếu cookie hết hạn hoặc không hợp lệ
