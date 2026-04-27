@@ -8,7 +8,6 @@ import { useTopEmployers } from "@/hooks/employer/useTopEmployer";
 
 export default function TopEmployers() {
   const { employers } = useTopEmployers();
-  console.log(employers);
   return (
     <section className="bg-[#f8fafc] py-20 px-6">
       <div className="max-w-6xl mx-auto">

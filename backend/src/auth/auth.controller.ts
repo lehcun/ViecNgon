@@ -17,7 +17,8 @@ import { JwtService } from '@nestjs/jwt';
 export interface JwtPayload {
   sub: number; // Thường dùng sub để lưu ID
   email: string;
-  role?: string; // Có thể có hoặc không
+  tenNguoiDung: string;
+  role?: string;
   iat?: number; // Thời gian tạo token (thư viện tự thêm)
   exp?: number; // Thời gian hết hạn (thư viện tự thêm)
 }

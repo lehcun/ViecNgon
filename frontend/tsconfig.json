@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@viecngon/types": ["../shared/types/index.ts"]
     }
   },
   "include": [

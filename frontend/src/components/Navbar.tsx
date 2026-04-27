@@ -6,6 +6,7 @@ import Link from "next/link";
 import ProfileDropdown from "./candidate/ProfileDropDown";
 import { useAuthStore } from "@/store/authStore";
 import { useUser } from "@/hooks/auth/useUser";
+import { useLogout } from "@/hooks/auth/useLogout";
 
 interface NavbarProps {
   variant?: "public" | "app"; // 'public' cho trang ngoài, 'app' cho Dashboard
@@ -18,12 +19,10 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
 
   // Goi hook kiểm tra user (Tự động chạy ngầm khi component render)
   const { isCheckingAuth } = useUser();
-  console.log("isAuthenticated", isAuthenticated);
-  console.log("isCheckingAuth", isCheckingAuth);
-  console.log("user", user);
+  // console.log("user", user);
 
-  // 3. Gọi hook đăng xuất
-  // const { mutate: logout, isPending: isLoggingOut } = useLogout();
+  // Gọi hook đăng xuất
+  const { mutate: logout, isPending: isLoggingOut } = useLogout();
 
   // Theo dõi sự kiện cuộn trang
   useEffect(() => {
@@ -130,31 +129,11 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
                 />
                 <div className="h-6 w-px bg-slate-300 hidden sm:block mx-1"></div>
 
-                {/* Hiển thị thông tin User và Nút đăng xuất */}
-                <div className="flex items-center gap-3">
-                  <span className={`text-sm font-medium ${textColor}`}>
-                    {/* Cắt lấy phần tên trước @gmail.com để hiển thị cho gọn */}
-                    Chào, {user.email.split("@")[0]}
-                  </span>
-                  <button
-                    // onClick={() => logout()}
-                    // disabled={isLoggingOut}
-                    className={`text-sm font-medium px-3 py-1.5 rounded-md transition-colors ${
-                      isSolidTheme
-                        ? "text-red-600 hover:bg-red-50"
-                        : "text-red-400 hover:bg-white/10"
-                    } disabled:opacity-50`}
-                  >
-                    {/* {isLoggingOut ? "Đang thoát..." : "Đăng xuất"} */}
-                  </button>
-                </div>
-
-                {/* Nếu bạn vẫn muốn dùng ProfileDropdown, bạn có thể truyền user và logout vào nó: */}
-                {/* <ProfileDropdown
+                <ProfileDropdown
                   user={user}
                   onLogout={logout}
                   isLoggingOut={isLoggingOut}
-                /> */}
+                />
               </>
             ) : (
               // Trạng thái 3: Chưa đăng nhập -> Hiện nút Đăng Nhập

@@ -5,14 +5,25 @@ import {
   LogOut,
   LayoutDashboard,
   FileText,
-  User,
   Briefcase,
   Mail,
   Settings,
   Bell,
+  User,
 } from "lucide-react";
+import { User as UserType } from "@viecngon/types";
 
-export default function ProfileDropdown() {
+interface DropProps {
+  user: UserType;
+  onLogout: () => void;
+  isLoggingOut: boolean;
+}
+
+export default function ProfileDropdown({
+  user,
+  onLogout,
+  isLoggingOut,
+}: DropProps) {
   return (
     <div className="relative group cursor-pointer">
       {/* Vùng hiển thị Avatar trên thanh Nav */}
@@ -33,10 +44,10 @@ export default function ProfileDropdown() {
             C
           </div>
           <div className="flex-1 overflow-hidden">
-            <p className="font-bold text-slate-800 truncate">Lê Hùng Cường</p>
-            <p className="text-xs text-slate-500 truncate">
-              lehcuong2907@gmail.com
+            <p className="font-bold text-slate-800 truncate">
+              {user?.tenNguoiDung}
             </p>
+            <p className="text-xs text-slate-500 truncate">{user?.email}</p>
           </div>
         </div>
 
@@ -96,7 +107,11 @@ export default function ProfileDropdown() {
 
           <div className="my-1 h-px bg-slate-100 mx-2"></div>
 
-          <button className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-rose-600 hover:bg-rose-50 rounded-lg transition-colors w-full text-left">
+          <button
+            onClick={onLogout}
+            disabled={isLoggingOut}
+            className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-rose-600 hover:bg-rose-50 rounded-lg transition-colors w-full text-left"
+          >
             <LogOut size={18} className="text-rose-500" /> Đăng xuất
           </button>
         </div>

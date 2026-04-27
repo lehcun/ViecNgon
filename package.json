@@ -6,7 +6,8 @@
   "private": true,
   "workspaces": [
     "backend",
-    "frontend"
+    "frontend",
+    "shared/types"
   ],
   "scripts": {
     "dev:backend": "npm run start:dev --workspace=backend",
@@ -18,6 +19,7 @@
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "@viecngon/types": "*"
   }
 }
