@@ -13,3 +13,14 @@ export interface Job {
   mucLuongToiThieu: number;
   mucLuongToiDa: number;
 }
+
+export interface Candidate {
+  maUngVien: string;
+  tenUngVien: string;
+  chuyenMon: string;
+  soNamKinhNghiem: number;
+  avatarUrl: string | null;
+  diaChi: string | null;
+  kyNangs: Array<{ mucDo: string; kyNang: { tenKyNang: string } }>;
+  portfolios: Array<{ tieuDe: string; projectUrl: string | null }>;
+}
