@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Candidate } from "@viecngon/types";
 
 export const useCandidate = () => {
-  return useQuery<Candidate, Error>({
+  const query = useQuery<Candidate, Error>({
     // Đặt tên key duy nhất để React Query quản lý cache
     queryKey: ["candidateProfile"],
 
@@ -30,4 +30,10 @@ export const useCandidate = () => {
     // React Query sẽ dùng data có sẵn trong RAM thay vì gọi API liên tục, UI sẽ load nhanh như chớp.
     staleTime: 5 * 60 * 1000,
   });
+
+  return {
+    candidateProfile: query.data,
+    isLoading: query.isLoading,
+    isError: query.isError,
+  };
 };

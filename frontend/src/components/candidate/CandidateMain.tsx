@@ -11,11 +11,13 @@ import {
   MailOpen,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
+import { useCandidate } from "@/hooks/candidate/useCandidate";
 
 const CandidateMain = () => {
   const profileCompletion = 69; // Giả lập dữ liệu % hoàn thành hồ sơ
   const arcLength = 220; // Chu vi của nửa vòng tròn SVG
 
+  const { candidateProfile } = useCandidate();
   const { user } = useAuthStore();
 
   return (
@@ -32,7 +34,7 @@ const CandidateMain = () => {
           <div className="space-y-2 text-slate-600 text-sm">
             <p className="flex items-center justify-center sm:justify-start gap-2">
               <Briefcase size={16} className="text-slate-400" /> Software
-              Engineer (Next.js / NestJS)
+              {candidateProfile?.chuyenMon} Engineer
             </p>
             <p className="flex items-center justify-center sm:justify-start gap-2">
               <Mail size={16} className="text-slate-400" /> {user?.email}
