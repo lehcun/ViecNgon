@@ -10,8 +10,6 @@ export class CandidateController {
   @UseGuards(jwtAuthGuard.JwtAuthGuard)
   @Get('me')
   async getProfile(@CurrentUser() user: jwtAuthGuard.AuthUser) {
-    // req.user được giải mã từ Cookie bởi JwtAuthGuard
-    // Giả sử payload JWT của bạn có chứa maTaiKhoan
     const maTaiKhoan = user.maTaiKhoan;
     return await this.candidateService.getMyProfile(maTaiKhoan);
   }

@@ -11,7 +11,7 @@ export default function CandidateLayout({
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Nav bar o tren cung */}
       <Navbar variant="app" />
-      <div className="flex-1 pt-8 md:pt-10 px-4 md:px-8 pb-12">
+      <div className="flex-1 pt-8 md:pt-10 px-4 md:px-8 pb-12 mt-14">
         <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-8">
           {/* Cột trái: Sidebar (Chiếm 1/4) */}
           <CandidateSidebar />

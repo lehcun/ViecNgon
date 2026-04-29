@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -12,9 +11,12 @@ import {
   Settings,
   ToggleRight,
 } from "lucide-react";
+import { useAuthStore } from "@/store/authStore";
 
 export default function CandidateSidebar() {
   const pathname = usePathname();
+
+  const { user } = useAuthStore();
 
   const isActive = (path: string) => pathname === path;
 
@@ -31,7 +33,9 @@ export default function CandidateSidebar() {
         <p className="text-slate-500 text-sm mb-1 flex items-center gap-2">
           👋 Xin chào
         </p>
-        <h2 className="text-xl font-bold text-slate-800 mb-6">Lê Hùng Cường</h2>
+        <h2 className="text-xl font-bold text-slate-800 mb-6">
+          {user?.tenNguoiDung}
+        </h2>
 
         <div className="flex items-center justify-between bg-slate-50 p-3 rounded-lg border border-slate-100">
           <span className="text-sm font-medium text-slate-700">
@@ -54,13 +58,13 @@ export default function CandidateSidebar() {
             <Briefcase size={20} /> Tổng quan
           </Link>
           <Link
-            href="/dashboard/cv"
+            href="/cv/personalCV"
             className={`${baseLinkClass} ${isActive("/dashboard/cv") ? activeLinkClass : inactiveLinkClass}`}
           >
             <FileText size={20} /> Hồ sơ đính kèm
           </Link>
           <Link
-            href="/dashboard/profile"
+            href="/cv"
             className={`${baseLinkClass} ${isActive("/dashboard/profile") ? activeLinkClass : inactiveLinkClass}`}
           >
             <User size={20} /> Hồ sơ ViecNgon

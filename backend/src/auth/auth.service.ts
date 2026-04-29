@@ -34,8 +34,6 @@ export class AuthService {
     // 3. Tạo Payload cho JWT (Chỉ lưu thông tin cơ bản, KHÔNG lưu mật khẩu)
     const payload = {
       sub: user.maTaiKhoan,
-      tenNguoiDung: user.tenNguoiDung,
-      email: user.email,
       role: user.vaiTro,
     };
 

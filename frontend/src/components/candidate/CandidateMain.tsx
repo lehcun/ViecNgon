@@ -21,7 +21,7 @@ const CandidateMain = () => {
   const { user } = useAuthStore();
 
   return (
-    <div className="w-full lg:w-3/4 flex flex-col gap-6">
+    <div className="w-full flex flex-col gap-6">
       {/* 1. Header Info Card */}
       <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row items-center sm:items-start gap-6">
         <div className="w-24 h-24 bg-primary text-white text-4xl font-bold flex items-center justify-center rounded-full shadow-md shrink-0">
@@ -29,12 +29,12 @@ const CandidateMain = () => {
         </div>
         <div className="flex-1 text-center sm:text-left">
           <h1 className="text-2xl font-bold text-slate-800 mb-2">
-            {user?.tenNguoiDung}
+            {candidateProfile?.tenUngVien}
           </h1>
           <div className="space-y-2 text-slate-600 text-sm">
             <p className="flex items-center justify-center sm:justify-start gap-2">
               <Briefcase size={16} className="text-slate-400" /> Software
-              {candidateProfile?.chuyenMon} Engineer
+              {candidateProfile?.chuyenMon}
             </p>
             <p className="flex items-center justify-center sm:justify-start gap-2">
               <Mail size={16} className="text-slate-400" /> {user?.email}

@@ -1,3 +1,8 @@
+export interface LoginResponse {
+  message: string;
+  user: User;
+}
+
 export interface User {
   maTaiKhoan: string;
   email: string;
