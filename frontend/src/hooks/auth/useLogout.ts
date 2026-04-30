@@ -2,7 +2,14 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/authStore";
 import { useRouter } from "next/navigation";
 
-export const useLogout = () => {
+// Interface định nghĩa các tùy chọn
+interface LogoutOptions {
+  redirectTo?: string | false; // Có thể truyền link ('/login') hoặc truyền false để đứng im
+}
+
+export const useLogout = (
+  options: LogoutOptions = { redirectTo: "/login" },
+) => {
   const router = useRouter();
   const queryClient = useQueryClient();
   // Lấy hàm xóa dữ liệu từ Zustand store
@@ -32,7 +39,10 @@ export const useLogout = () => {
       queryClient.clear();
 
       // 3. Đưa người dùng về trang đăng nhập hoặc trang chủ
-      router.push("/login");
+      // KIỂM TRA ĐIỀU KIỆN TRƯỚC KHI CHUYỂN TRANG
+      if (options.redirectTo) {
+        router.push(options.redirectTo);
+      }
 
       // toast.success("Đã đăng xuất thành công");
     },
