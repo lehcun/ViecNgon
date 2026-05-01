@@ -1,7 +1,7 @@
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import QuickLinks from "@/components/QuickLinks";
-import TopEmployers from "@/components/TopEmployers";
+import TopEmployers from "@/components/TopCompany";
 import Footer from "@/components/layout/Footer";
 
 export default function Home() {

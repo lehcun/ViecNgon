@@ -18,11 +18,11 @@ export default function CompanyDetailPage() {
   return (
     <main className="min-h-screen bg-[#f8fafc] pb-20">
       {/* 1. HEADER BANNER (Chuyển sang nền Xanh Đen - primary-dark) */}
-      <section className="bg-gradient-to-r from-primary-dark via-[#0f2a5c] to-primary-dark pt-24 pb-12 px-6 shadow-md">
+      <section className="bg-linear-to-r from-primary-dark via-[#0f2a5c] to-primary-dark pt-24 pb-12 px-6 shadow-md">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           {/* Logo & Info */}
           <div className="flex items-center gap-6">
-            <div className="w-28 h-28 bg-white rounded-xl p-2 shadow-lg border-2 border-primary/20 flex-shrink-0">
+            <div className="w-28 h-28 bg-white rounded-xl p-2 shadow-lg border-2 border-primary/20 shrink-0">
               <img
                 src="https://ui-avatars.com/api/?name=OTS&background=2563eb&color=fff&size=200&font-size=0.4"
                 alt="ONE Tech Stop"

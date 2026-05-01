@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ChevronDown,
   LogOut,
@@ -19,15 +20,17 @@ export default function EmployerProfileDropdown() {
       <div className="flex items-center gap-2">
         <div className="w-9 h-9 rounded-full border-2 border-primary/20 p-0.5 overflow-hidden shadow-sm group-hover:border-primary transition-all">
           {/* Dùng ảnh avatar thật hoặc logo công ty */}
-          <img
+          <Image
             src="https://ui-avatars.com/api/?name=OTS&background=2563eb&color=fff"
             alt="HR Avatar"
-            className="w-full h-full rounded-full object-cover"
+            width={50}
+            height={50}
+            className="rounded-full object-cover"
           />
         </div>
         <div className="hidden sm:flex flex-col">
           <div className="flex items-center gap-1 text-sm font-bold text-slate-800 group-hover:text-primary transition-colors leading-tight">
-            Cường Lê{" "}
+            Cường Lê
             <ChevronDown
               size={14}
               className="text-slate-400 group-hover:text-primary transition-colors"

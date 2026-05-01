@@ -29,3 +29,11 @@ export interface Candidate {
   kyNangs: Array<{ mucDo: string; kyNang: { tenKyNang: string } }>;
   portfolios: Array<{ tieuDe: string; projectUrl: string | null }>;
 }
+
+export interface Company {
+  id: string;
+  name: string;
+  logo: string;
+  location: string;
+  jobs: number; // Đây là tổng số việc làm hiển thị trên Card
+}

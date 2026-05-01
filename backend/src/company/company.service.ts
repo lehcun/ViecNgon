@@ -1,15 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateEmployerDto } from './dto/create-employer.dto';
-import { UpdateEmployerDto } from './dto/update-employer.dto';
 
 @Injectable()
-export class EmployerService {
+export class CompanyService {
   constructor(private readonly prisma: PrismaService) {}
-
-  create(createEmployerDto: CreateEmployerDto) {
-    return 'This action adds a new employer';
-  }
 
   findAll() {
     return this.prisma.congTy.findMany({});
@@ -59,17 +53,5 @@ export class EmployerService {
     });
 
     return formattedCompanies;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} employer`;
-  }
-
-  update(id: number, updateEmployerDto: UpdateEmployerDto) {
-    return `This action updates a #${id} employer`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} employer`;
   }
 }

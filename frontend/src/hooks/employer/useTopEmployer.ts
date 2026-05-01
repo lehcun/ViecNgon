@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import Employer from "@/types";
+import { Company } from "@viecngon/types";
 
-const fetchTopEmployers = async (): Promise<Employer[]> => {
+const fetchTopCompanies = async (): Promise<Company[]> => {
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/employer/top`,
+    `${process.env.NEXT_PUBLIC_API_URL}/company/top`,
   );
 
   if (!response.ok) {
@@ -15,16 +15,16 @@ const fetchTopEmployers = async (): Promise<Employer[]> => {
   return response.json();
 };
 
-export const useTopEmployers = () => {
+export const useTopCompanies = () => {
   const query = useQuery({
-    queryKey: ["topEmployers"],
-    queryFn: fetchTopEmployers,
+    queryKey: ["topCompanies"],
+    queryFn: fetchTopCompanies,
     staleTime: 5 * 60 * 1000,
     retry: 2,
   });
 
   return {
     ...query,
-    employers: query.data,
+    companies: query.data,
   };
 };
