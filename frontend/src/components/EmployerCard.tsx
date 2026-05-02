@@ -1,20 +1,11 @@
+import { Company } from "@viecngon/types";
 import Image from "next/image";
 import Link from "next/link";
 
-interface EmployerProps {
-  company: {
-    name: string;
-    logo: string;
-    jobs: number;
-    location: string;
-    skills?: string[];
-  };
-}
-
-export default function EmployerCard({ company }: EmployerProps) {
+export default function EmployerCard(company: Company) {
   return (
     <Link
-      href={`/company/${company.name}`}
+      href={`/company/${company.slug}`}
       className="group block w-full max-w-sm bg-white border border-slate-200 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
     >
       {/* --- PHẦN TOP: NỘI DUNG CHÍNH & BACKGROUND TRÒN --- */}

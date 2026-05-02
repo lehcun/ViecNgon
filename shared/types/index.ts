@@ -34,6 +34,8 @@ export interface Company {
   id: string;
   name: string;
   logo: string;
+  jobs: number;
   location: string;
-  jobs: number; // Đây là tổng số việc làm hiển thị trên Card
+  slug: string;
+  skills?: string[];
 }

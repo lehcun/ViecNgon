@@ -47,7 +47,7 @@ export default function TopEmployers() {
         {/* 2. Phần Grid 4 cột */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {companies?.map((company: Company) => (
-            <EmployerCard key={company.id} company={company} />
+            <EmployerCard key={company.id} {...company} />
           ))}
         </div>
 
