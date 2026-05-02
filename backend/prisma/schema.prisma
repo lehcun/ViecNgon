@@ -65,6 +65,9 @@ model CongTy {
   tenPhapLy String? @db.NVarChar(255) // Tên đầy đủ (ONE Tech Stop Vietnam Company Ltd)
   slug      String  @unique @db.VarChar(200)
   moTa      String? @db.NVarChar(Max)
+  phucLoi   String? @db.NVarChar(Max)
+  chuyenMon String? @db.NVarChar(Max)
+  aboutMe   String? @db.NVarChar(Max)
   logoUrl   String? @db.VarChar(255)
   website   String? @db.VarChar(100)
   thanhPho  String? @db.NVarChar(50)
@@ -83,12 +86,31 @@ model CongTy {
   nhaTuyenDungs NhaTuyenDung[]
   baiViets      BaiViet[] // Nối với tab Bài viết
   nguoiTheoDois TheoDoiCongTy[] // Nối với tính năng Theo dõi
+  chiNhanhs     ChiNhanh[]     // Liên kết danh sách địa điểm
 
   @@map("CONGTY")
 }
 
 // ---------------------------------------------------------
-// 4. BẢNG NHÀ TUYỂN DỤNG (HR)
+// 4. BẢNG CHI NHÁNH CÔNG TY (Lưu đa địa điểm)
+// ---------------------------------------------------------
+model ChiNhanh {
+  maChiNhanh  String  @id @default(uuid()) @db.VarChar(50)
+  thanhPho    String  @db.NVarChar(100) 
+  diaChi      String  @db.NVarChar(255) 
+  mapUrl      String? @db.VarChar(500)
+  
+  // Khóa ngoại
+  maCongTy    String  @db.VarChar(50)
+  congTy      CongTy  @relation(fields: [maCongTy], references: [maCongTy], onDelete: Cascade)
+
+  congViecs   CongViec[] // Quan hệ
+  
+  @@map("CHINHANH")
+}
+
+// ---------------------------------------------------------
+// 5. BẢNG NHÀ TUYỂN DỤNG (HR)
 // ---------------------------------------------------------
 model NhaTuyenDung {
   maNTD String @id @default(uuid()) @db.VarChar(50)
@@ -108,28 +130,40 @@ model NhaTuyenDung {
 }
 
 // ---------------------------------------------------------
-// 5. BẢNG CÔNG VIỆC
+// 6. BẢNG CÔNG VIỆC
 // ---------------------------------------------------------
 model CongViec {
-  maCongViec       String    @id @default(uuid()) @db.VarChar(50)
-  tenCongViec      String    @db.NVarChar(150)
-  moTa             String?   @db.NVarChar(Max)
+  maCongViec       String   @id @default(uuid()) @db.VarChar(50)
+  tenCongViec      String   @db.NVarChar(150)
+  slug             String   @unique @db.VarChar(200)
+
+  // --- KHỐI NỘI DUNG CHI TIẾT ---
+  moTa             String?  @db.NVarChar(Max) // Mô tả công việc (Nhiệm vụ, trách nhiệm)
+  yeuCauCongViec   String?  @db.NVarChar(Max) // BỔ SUNG: Yêu cầu ứng viên (Kỹ năng, bằng cấp)
+  phucLoi          String?  @db.NVarChar(Max) // BỔ SUNG: Phúc lợi (Lương tháng 13, Macbook...)
+
   mucLuongToiThieu Decimal?  @db.Decimal(18, 0)
   mucLuongToiDa    Decimal?  @db.Decimal(18, 0)
   yeuCauKinhNghiem Int?
+  capBac           String?   @db.NVarChar(50)
+
+  // --- KHỐI ĐỊA ĐIỂM & HÌNH THỨC ---
+  thanhPho         String?  @db.NVarChar(100) // BỔ SUNG: Phục vụ in ra thẻ Job và bộ lọc (VD: Đà Nẵng)
+  loaiHinh         String   @db.NVarChar(50)  // Full-time, Part-time, Freelance
+  hinhThucLamViec  String?  @db.NVarChar(50)  // BỔ SUNG: Remote, Tại văn phòng, Hybrid
+
+ // --- KHỐI THỜI GIAN & THỐNG KÊ ---
   ngayDang         DateTime
   ngayHetHan       DateTime?
-  diaDiem          String?   @db.NVarChar(255)
-  loaiHinh         String    @db.NVarChar(50)
-  capBac           String?   @db.NVarChar(50)
-  trangThai        String    @db.VarChar(20)
+  ngayCapNhat      DateTime @default(now()) @updatedAt // BỔ SUNG: Thời gian HR cập nhật tin lần cuối
+  luotXem          Int      @default(0) // BỔ SUNG: Đếm số lượt ứng viên click vào tin
+  trangThai        String   @db.VarChar(20)
 
-  luotXem          Int      @default(0) // Số lượt ứng viên click vào xem
-  ngayCapNhat      DateTime @default(now()) @updatedAt
-
-  // Khóa ngoại
-  maNTD        String       @db.VarChar(50)
-  nhaTuyenDung NhaTuyenDung @relation(fields: [maNTD], references: [maNTD])
+  // --- KHÓA NGOẠI & QUAN HỆ ---
+  maNTD            String       @db.VarChar(50)
+  nhaTuyenDung     NhaTuyenDung @relation(fields: [maNTD], references: [maNTD], onDelete: NoAction, onUpdate: NoAction)
+  maChiNhanh       String?  @db.VarChar(50) // Dấu ? (Optional) để dự phòng cho các việc làm Remote (Làm từ xa không cần tới chi nhánh)
+  chiNhanh         ChiNhanh? @relation(fields: [maChiNhanh], references: [maChiNhanh], onDelete: NoAction, onUpdate: NoAction)
 
   // Quan hệ
   donXinViecs     DonXinViec[]
@@ -139,7 +173,7 @@ model CongViec {
 }
 
 // ---------------------------------------------------------
-// 6. BẢNG PORTFOLIO
+// 7. BẢNG PORTFOLIO
 // ---------------------------------------------------------
 model Portfolio {
   maPortfolio String  @id @default(uuid()) @db.VarChar(50)
@@ -155,7 +189,7 @@ model Portfolio {
 }
 
 // ---------------------------------------------------------
-// 7. BẢNG ĐƠN XIN VIỆC
+// 8. BẢNG ĐƠN XIN VIỆC
 // ---------------------------------------------------------
 model DonXinViec {
   maDon     String   @id @default(uuid()) @db.VarChar(50)
@@ -178,7 +212,7 @@ model DonXinViec {
 }
 
 // ---------------------------------------------------------
-// 8. BẢNG LỊCH PHỎNG VẤN
+// 9. BẢNG LỊCH PHỎNG VẤN
 // ---------------------------------------------------------
 model LichPhongVan {
   maLich        String    @id @default(uuid()) @db.VarChar(50)
@@ -194,7 +228,7 @@ model LichPhongVan {
 }
 
 // ---------------------------------------------------------
-// 9. BẢNG ĐÁNH GIÁ
+// 10. BẢNG ĐÁNH GIÁ
 // ---------------------------------------------------------
 model DanhGia {
   maDanhGia             String   @id @default(uuid()) @db.VarChar(50)
@@ -213,7 +247,7 @@ model DanhGia {
 }
 
 // ---------------------------------------------------------
-// 10. BẢNG THÔNG BÁO
+// 11. BẢNG THÔNG BÁO
 // ---------------------------------------------------------
 model ThongBao {
   maThongBao String @id @default(uuid()) @db.VarChar(50)
@@ -229,7 +263,7 @@ model ThongBao {
 }
 
 // ---------------------------------------------------------
-// 11. BẢNG GÓI QUẢNG CÁO
+// 12. BẢNG GÓI QUẢNG CÁO
 // ---------------------------------------------------------
 model GoiQuangCao {
   maGoi           String   @id @default(uuid()) @db.VarChar(50)
@@ -247,7 +281,7 @@ model GoiQuangCao {
 }
 
 // ---------------------------------------------------------
-// 12. BẢNG MUA QUẢNG CÁO
+// 13. BẢNG MUA QUẢNG CÁO
 // ---------------------------------------------------------
 model MuaQuangCao {
   maMua             String   @id @default(uuid()) @db.VarChar(50)
@@ -273,7 +307,7 @@ model MuaQuangCao {
 }
 
 // ---------------------------------------------------------
-// 13. BẢNG THANH TOÁN
+// 14. BẢNG THANH TOÁN
 // ---------------------------------------------------------
 model ThanhToan {
   maThanhToan      String   @id @default(uuid()) @db.VarChar(50)
@@ -292,7 +326,7 @@ model ThanhToan {
 }
 
 // ---------------------------------------------------------
-// 14. BẢNG KỸ NĂNG (Danh mục từ điển kỹ năng của hệ thống)
+// 15. BẢNG KỸ NĂNG (Danh mục từ điển kỹ năng của hệ thống)
 // ---------------------------------------------------------
 model KyNang {
   maKyNang  String @id @default(uuid()) @db.VarChar(50)
@@ -306,7 +340,7 @@ model KyNang {
 }
 
 // ---------------------------------------------------------
-// 15. BẢNG TRUNG GIAN ỨNG VIÊN - KỸ NĂNG
+// 16. BẢNG TRUNG GIAN ỨNG VIÊN - KỸ NĂNG
 // ---------------------------------------------------------
 model UngVienKyNang {
   maUngVien String  @db.VarChar(50)
@@ -321,7 +355,7 @@ model UngVienKyNang {
 }
 
 // ---------------------------------------------------------
-// 16. BẢNG BÀI VIẾT (Cho tab Bài viết & Blog)
+// 17. BẢNG BÀI VIẾT (Cho tab Bài viết & Blog)
 // ---------------------------------------------------------
 model BaiViet {
   maBaiViet String   @id @default(uuid()) @db.VarChar(50)
@@ -338,7 +372,7 @@ model BaiViet {
 }
 
 // ---------------------------------------------------------
-// 17. BẢNG THEO DÕI CÔNG TY (Cho nút Theo dõi)
+// 18. BẢNG THEO DÕI CÔNG TY (Cho nút Theo dõi)
 // ---------------------------------------------------------
 model TheoDoiCongTy {
   maUngVien   String   @db.VarChar(50)
@@ -353,7 +387,7 @@ model TheoDoiCongTy {
 }
 
 // ---------------------------------------------------------
-// 18. BẢNG TRUNG GIAN CÔNG VIỆC - KỸ NĂNG (Cho Tag công việc)
+// 19. BẢNG TRUNG GIAN CÔNG VIỆC - KỸ NĂNG (Cho Tag công việc)
 // ---------------------------------------------------------
 model CongViecKyNang {
   maCongViec String @db.VarChar(50)

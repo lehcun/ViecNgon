@@ -32,8 +32,8 @@ const CompanyDetailModel = () => {
           <div className="flex items-center gap-6">
             <div className="flex items-center justify-center w-28 h-28 rounded-xl bg-white shadow-lg border-2 border-primary/20 shrink-0">
               <Image
-                src={company?.logo ?? "/logo.png"}
-                alt={company?.slug ?? "not found"}
+                src={company?.logo || "/logo.png"}
+                alt={company?.slug || "not found"}
                 width={100}
                 height={100}
                 className="w-full h-full object-cover rounded-xl"
@@ -146,7 +146,7 @@ const CompanyDetailModel = () => {
                     src="https://flagcdn.com/w20/vn.png"
                     alt="VietNam"
                     className="w-5 h-auto rounded-sm"
-                  />{" "}
+                  />
                   {company?.country}
                 </p>
               </div>
@@ -223,7 +223,7 @@ const CompanyDetailModel = () => {
                 </p>
               </div>
               <a
-                href={company?.website ?? "/"}
+                href={company?.website || "/"}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 px-5 py-2.5 bg-white border border-primary text-primary font-semibold rounded-md hover:bg-primary-light transition-colors"
@@ -233,11 +233,25 @@ const CompanyDetailModel = () => {
               </a>
             </div>
           </div>
+
+          {/* Phúc lợi công ty */}
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <h2 className="text-xl font-bold text-slate-800 mb-6 border-l-4 border-primary pl-3">
+              Phúc lợi công ty
+            </h2>
+
+            <div className="prose prose-slate max-w-none text-slate-600 leading-relaxed mb-8">
+              {company?.description}
+            </div>
+          </div>
         </div>
 
         {/* CỘT PHẢI: DANH SÁCH VIỆC LÀM */}
         <div className="w-full lg:w-1/3">
-          <CompanyJobLists />
+          <CompanyJobLists
+            totalJobs={company?.totalJobs}
+            jobs={company?.activeJobs}
+          />
         </div>
       </section>
       ;

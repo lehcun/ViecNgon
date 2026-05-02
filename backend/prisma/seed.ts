@@ -22,6 +22,7 @@ async function main() {
   await prisma.kyNang.deleteMany();
   await prisma.nhaTuyenDung.deleteMany();
   await prisma.ungVien.deleteMany();
+  await prisma.chiNhanh.deleteMany();
   await prisma.congTy.deleteMany();
   await prisma.taiKhoan.deleteMany();
 
@@ -131,16 +132,30 @@ async function main() {
       tenCongTy: 'FPT Software',
       tenPhapLy: 'Công ty TNHH Phần mềm FPT',
       slug: 'fpt-software',
-      moTa: 'FPT Software là công ty công nghệ lớn nhất Việt Nam với hơn 30.000 nhân viên trên toàn cầu, cung cấp các dịch vụ IT chất lượng cao.',
+      moTa: 'FPT Software là công ty công nghệ lớn nhất Việt Nam với hơn 30.000 nhân viên trên toàn cầu. Chúng tôi tiên phong trong lĩnh vực chuyển đổi số, cung cấp các dịch vụ IT chất lượng cao như Cloud, AI/ML, Data Analytics và RPA cho hàng trăm khách hàng Fortune 500 trên thế giới.',
+      phucLoi: JSON.stringify([
+        'Lương tháng 13 và thưởng hiệu quả công việc cuối năm.',
+        'Gói bảo hiểm sức khỏe FPT Care độc quyền cho nhân viên và người thân.',
+        'Lộ trình thăng tiến rõ ràng, cơ hội làm việc Onsite ngắn hạn và dài hạn tại Nhật Bản, Mỹ, Châu Âu.',
+        'Hệ sinh thái tiện ích Campus chuẩn quốc tế: phòng Gym, bể bơi, khu thể thao ngoài trời, quán cafe đa dạng.',
+      ]),
+      chuyenMon:
+        'Cloud Computing, AI & Machine Learning, Automotive, Enterprise Applications.',
+      aboutMe:
+        'Môi trường làm việc trẻ trung, năng động, nơi mọi ý tưởng đều được tôn trọng và tạo điều kiện phát triển.',
       logoUrl:
         'https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-FPT.png',
       website: 'https://fptsoftware.com',
-      diaChi: 'Khu Công nghệ cao Hòa Lạc, Thạch Thất, Hà Nội',
       thanhPho: 'Hà Nội',
-      moHinhCongTy: 'Outsource',
-      linhVuc: 'Phần mềm & IT',
-      quyMo: '10000+ nhân viên',
+      diaChi: 'Khu Công nghệ cao Hòa Lạc, Thạch Thất, Hà Nội', // Trụ sở chính
+      moHinhCongTy: 'Outsource / Dịch vụ IT',
+      linhVuc: 'Công nghệ thông tin / Phần mềm',
+      quyMo: '10,000+ nhân viên',
       quocGia: 'Việt Nam',
+      thoiGianLamViec: 'Thứ 2 - Thứ 6 (08:30 - 17:30)',
+      chinhSachOT:
+        'Thanh toán OT theo đúng quy định Luật Lao động (150%, 200%, 300%)',
+      giaiThuong: 'Top 100 Nơi làm việc tốt nhất Việt Nam 2023, Sao Khuê 2023',
     },
   });
   const hrFPT = await prisma.nhaTuyenDung.create({
@@ -152,16 +167,29 @@ async function main() {
       tenCongTy: 'VNG Corporation',
       tenPhapLy: 'Công ty Cổ phần VNG',
       slug: 'vng-corporation',
-      moTa: 'Kỳ lân công nghệ đầu tiên của Việt Nam, phát triển Zalo, VNGGames, ZaloPay và nền tảng VNG Cloud.',
+      moTa: 'Thành lập từ 2004, VNG là Kỳ lân công nghệ đầu tiên của Việt Nam. Chúng tôi xây dựng và phát triển các sản phẩm công nghệ với hàng chục triệu người dùng thực như Zalo, VNGGames, ZaloPay, và VNG Cloud.',
+      phucLoi: JSON.stringify([
+        'Lương tháng 13 & Performance Bonus (lên tới 3 tháng lương)',
+        'Bảo hiểm sức khỏe Premium cho bản thân và gia đình',
+        'Tài trợ chứng chỉ quốc tế (AWS, OCA, PMP...)',
+      ]),
+      chuyenMon: 'Social Media, Online Gaming, E-wallet, Cloud Services',
+      aboutMe:
+        'Kiến tạo công nghệ, Phát triển con người. VNG tin tưởng vào sức mạnh của Internet sẽ thay đổi cuộc sống.',
       logoUrl:
         'https://res.cloudinary.com/dbvlsf9bi/image/upload/v1776325179/vng_st3yi1.jpg',
       website: 'https://vng.com.vn',
-      diaChi: 'Z06 Đường số 13, Tân Thuận Đông, Quận 7, TP.HCM',
       thanhPho: 'TP.HCM',
+      diaChi:
+        'VNG Campus, Z06 Đường số 13, Khu chế xuất Tân Thuận, Quận 7, TP.HCM',
       moHinhCongTy: 'Product',
-      linhVuc: 'Giải trí & Internet',
-      quyMo: '1000-5000 nhân viên',
+      linhVuc: 'Internet & Giải trí điện tử',
+      quyMo: '1000 - 5000 nhân viên',
       quocGia: 'Việt Nam',
+      thoiGianLamViec: 'Thứ 2 - Thứ 6',
+      chinhSachOT:
+        'Không khuyến khích OT. Áp dụng nghỉ bù (Comp-off) nếu có phát sinh OT',
+      giaiThuong: 'Nhà xuất bản Game hàng đầu Đông Nam Á',
     },
   });
   const hrVNG = await prisma.nhaTuyenDung.create({
@@ -174,6 +202,10 @@ async function main() {
       tenPhapLy: 'Công ty TNHH Shopee',
       slug: 'shopee-vietnam',
       moTa: 'Nền tảng thương mại điện tử hàng đầu tại Đông Nam Á và Đài Loan.',
+      phucLoi: JSON.stringify([
+        'Gói bảo hiểm sức khỏe FPT Care độc quyền cho nhân viên và người thân.',
+        'Hệ sinh thái tiện ích Campus chuẩn quốc tế: phòng Gym, bể bơi, khu thể thao ngoài trời, quán cafe đa dạng.',
+      ]),
       logoUrl:
         'https://res.cloudinary.com/dbvlsf9bi/image/upload/v1777681291/shopee-vn_hwihqn.jpg',
       website: 'https://careers.shopee.vn',
@@ -208,6 +240,40 @@ async function main() {
   });
   const hrMomo = await prisma.nhaTuyenDung.create({
     data: { maCongTy: ctyMomo.maCongTy, maTaiKhoan: tkHR_Momo.maTaiKhoan },
+  });
+
+  // =========================================================
+  // 3.1 TẠO CHI NHÁNH ĐỊA ĐIỂM (ĐA CHI NHÁNH)
+  // =========================================================
+  console.log('📍 Đang tạo Chi nhánh công ty...');
+
+  const cnFPTHaNoi = await prisma.chiNhanh.create({
+    data: {
+      maCongTy: ctyFPT.maCongTy,
+      thanhPho: 'Hà Nội',
+      diaChi: 'Tòa nhà FPT, Số 17 Phố Duy Tân, Dịch Vọng Hậu, Cầu Giấy, Hà Nội',
+      mapUrl: 'https://maps.google.com/?q=FPT+Duy+Tan',
+    },
+  });
+
+  const cnFPTDaNang = await prisma.chiNhanh.create({
+    data: {
+      maCongTy: ctyFPT.maCongTy,
+      thanhPho: 'Đà Nẵng',
+      diaChi:
+        'FPT Complex, Đường Nam Kỳ Khởi Nghĩa, Khu đô thị FPT City, Ngũ Hành Sơn, Đà Nẵng',
+      mapUrl: 'https://maps.google.com/?q=FPT+Complex',
+    },
+  });
+
+  const cnVNGHCM = await prisma.chiNhanh.create({
+    data: {
+      maCongTy: ctyVNG.maCongTy,
+      thanhPho: 'TP.HCM',
+      diaChi:
+        'VNG Campus, Z06 Đường số 13, Khu chế xuất Tân Thuận, Quận 7, TP.HCM',
+      mapUrl: 'https://maps.google.com/?q=VNG+Campus',
+    },
   });
 
   // =========================================================
@@ -322,79 +388,140 @@ async function main() {
   // =========================================================
   // 6. TẠO CÔNG VIỆC (JOB POSTINGS) & GẮN KỸ NĂNG
   // =========================================================
-  console.log('💼 Đang đăng tải các Job Tuyển dụng...');
+  console.log('💼 Đang đăng tải tin tuyển dụng chi tiết...');
   const nextMonth = new Date();
   nextMonth.setMonth(nextMonth.getMonth() + 1);
 
-  // Job 1 - FPT
+  // Job 1 - FPT Software (Chi nhánh Hà Nội)
   const job1 = await prisma.congViec.create({
     data: {
-      tenCongViec: 'Senior Java Developer (Upto $2500)',
-      moTa: 'Tham gia vào các dự án chuyển đổi số quy mô lớn cho khách hàng thị trường Mỹ và Nhật Bản. Yêu cầu thành thạo Spring Boot và Microservices.',
+      tenCongViec: 'Senior Java Backend Engineer (Financial Project)',
+      slug: 'senior-java-backend-engineer-financial-project-fpt',
+
+      // Khối nội dung chi tiết đã được chuẩn hóa JSON
+      moTa: JSON.stringify([
+        'Trực tiếp tham gia phân tích yêu cầu, thiết kế kiến trúc và viết code cho hệ thống Core Banking của đối tác chiến lược tại Mỹ.',
+        'Tối ưu hóa hiệu năng hệ thống (performance tuning), đảm bảo khả năng xử lý hàng triệu giao dịch mỗi ngày (High Availability, Scalability).',
+        'Phối hợp chặt chẽ với team BA, QA và khách hàng để giải quyết các technical bugs phức tạp.',
+        'Thực hiện Code Review và hướng dẫn/mentor cho các bạn Junior/Fresher trong team.',
+      ]),
+      yeuCauCongViec: JSON.stringify([
+        'Có tối thiểu 4 năm kinh nghiệm làm việc thực tế với Java (Java 8+ trở lên).',
+        'Nắm vững hệ sinh thái Spring (Spring Boot, Spring MVC, Spring Data JPA, Spring Security).',
+        'Có kinh nghiệm làm việc với kiến trúc Microservices và thiết kế RESTful APIs.',
+        'Thành thạo các hệ quản trị CSDL quan hệ (PostgreSQL/Oracle) và NoSQL (MongoDB/Redis).',
+        'Nắm vững các công cụ CI/CD, Git, Docker, Kubernetes.',
+        'Tiếng Anh giao tiếp và đọc hiểu tài liệu chuyên ngành tốt (Tương đương TOEIC 650+).',
+      ]),
+      phucLoi: JSON.stringify([
+        'Lương cơ bản lên đến $2500 + Thưởng hiệu suất dự án hàng quý.',
+        'Được tài trợ 100% lệ phí thi các chứng chỉ quốc tế (AWS, Oracle, PMP).',
+        'Cung cấp thiết bị làm việc hiện đại (Macbook, Màn hình phụ 27 inch).',
+        'Tham gia các lớp đào tạo tiếng Nhật/Tiếng Anh miễn phí tại công ty.',
+      ]),
+
       mucLuongToiThieu: 30000000,
       mucLuongToiDa: 60000000,
       yeuCauKinhNghiem: 4,
+      capBac: 'Senior',
+
+      // Khối địa điểm & hình thức
+      thanhPho: 'Hà Nội',
+      loaiHinh: 'Full-time',
+      hinhThucLamViec: 'Hybrid', // Làm việc kết hợp
+
+      // Khối thời gian & quan hệ
       ngayDang: new Date(),
       ngayHetHan: nextMonth,
-      diaDiem: 'Hà Nội',
-      loaiHinh: 'Toàn thời gian',
-      capBac: 'Senior',
-      trangThai: 'Active',
+      luotXem: 125,
+      trangThai: 'Đang tuyển',
       maNTD: hrFPT.maNTD,
+      maChiNhanh: cnFPTHaNoi.maChiNhanh,
     },
   });
 
-  // Job 2 - VNG
+  // Job 2 - VNG Corporation (Chi nhánh HCM)
   const job2 = await prisma.congViec.create({
     data: {
-      tenCongViec: 'Backend Node.js Engineer (ZaloPay)',
-      moTa: 'Thiết kế và phát triển các hệ thống chịu tải cao (High Traffic) cho siêu ứng dụng ZaloPay. Làm việc trực tiếp với Redis, Kafka và CSDL phân tán.',
-      mucLuongToiThieu: 25000000,
-      mucLuongToiDa: 50000000,
-      yeuCauKinhNghiem: 2,
-      ngayDang: new Date(),
-      ngayHetHan: nextMonth,
-      diaDiem: 'Hồ Chí Minh',
-      loaiHinh: 'Toàn thời gian',
-      capBac: 'Middle',
-      trangThai: 'Active',
-      maNTD: hrVNG.maNTD,
-    },
-  });
+      tenCongViec: 'Node.js Developer (ZaloPay Platform)',
+      slug: 'nodejs-developer-zalopay-platform-vng',
 
-  // Job 3 - Shopee
-  const job3 = await prisma.congViec.create({
-    data: {
-      tenCongViec: 'Frontend ReactJS Engineer (E-commerce)',
-      moTa: 'Tối ưu hóa trải nghiệm người dùng trên nền tảng Web của Shopee. Làm việc với ReactJS, Redux, Webpack và các kỹ thuật tối ưu hóa hiệu năng.',
-      mucLuongToiThieu: 20000000,
+      // Khối nội dung chi tiết đã được chuẩn hóa JSON
+      moTa: JSON.stringify([
+        'Phát triển và bảo trì các dịch vụ Backend/APIs cho nền tảng thanh toán ZaloPay, phục vụ hàng chục triệu người dùng.',
+        'Tham gia vào quá trình System Design, giải quyết các bài toán về Concurrency, Data Consistency trong xử lý giao dịch tài chính.',
+        'Giám sát hệ thống (Monitoring), phát hiện và xử lý sự cố (Troubleshooting) kịp thời để đảm bảo SLA 99.99%.',
+        'Viết Unit Test và Integration Test để đảm bảo chất lượng code đầu ra.',
+      ]),
+      yeuCauCongViec: JSON.stringify([
+        'Từ 2-3 năm kinh nghiệm phát triển Backend với Node.js (Express, NestJS).',
+        'Hiểu biết sâu sắc về JavaScript/TypeScript, Event Loop và Async/Await trong Node.js.',
+        'Có kinh nghiệm làm việc với Message Queue (Kafka, RabbitMQ) và hệ thống Cache (Redis).',
+        'Tư duy logic tốt, am hiểu về Data Structures & Algorithms.',
+        'Có kinh nghiệm trong lĩnh vực FinTech, Payment Gateway là một điểm cộng lớn.',
+      ]),
+      phucLoi: JSON.stringify([
+        'Package thu nhập lên tới 15 tháng lương/năm.',
+        'Cấp Macbook Pro M3 max option ngay ngày đầu tiên nhận việc.',
+        'Tham gia CLB thể thao của công ty (Bóng đá, Cầu lông, Yoga) với phí tài trợ 100%.',
+        'Môi trường làm việc cởi mở, không áp đặt dresscode.',
+      ]),
+
+      mucLuongToiThieu: 25000000,
       mucLuongToiDa: 45000000,
       yeuCauKinhNghiem: 2,
+      capBac: 'Middle',
+
+      // Khối địa điểm & hình thức
+      thanhPho: 'TP.HCM',
+      loaiHinh: 'Full-time',
+      hinhThucLamViec: 'Tại văn phòng',
+
+      // Khối thời gian & quan hệ
       ngayDang: new Date(),
       ngayHetHan: nextMonth,
-      diaDiem: 'Hồ Chí Minh',
-      loaiHinh: 'Toàn thời gian',
-      capBac: 'Middle',
-      trangThai: 'Active',
-      maNTD: hrShopee.maNTD,
+      luotXem: 340,
+      trangThai: 'Đang tuyển',
+      maNTD: hrVNG.maNTD,
+      maChiNhanh: cnVNGHCM.maChiNhanh,
     },
   });
 
-  // Job 4 - MoMo
-  const job4 = await prisma.congViec.create({
+  // (Optional: Job 3 làm việc từ xa hoàn toàn - Remote)
+  const job3 = await prisma.congViec.create({
     data: {
-      tenCongViec: 'Data Engineer / Python Developer',
-      moTa: 'Xây dựng Data Pipeline, xử lý Big Data từ hàng chục triệu giao dịch mỗi ngày. Ưu tiên ứng viên mạnh về Python, PySpark và Airflow.',
-      mucLuongToiThieu: 35000000,
-      mucLuongToiDa: 70000000,
+      tenCongViec: 'Fullstack ReactJS/NodeJS (Remote - Đà Nẵng)',
+      slug: 'fullstack-reactjs-nodejs-remote-fpt-danang',
+
+      // Khối nội dung chi tiết đã được chuẩn hóa JSON
+      moTa: JSON.stringify([
+        'Tham gia dự án phát triển hệ thống ERP nội bộ cho khách hàng quốc tế.',
+        'Viết code linh hoạt cho cả phía Frontend (React) và Backend (NodeJS).',
+        'Chủ động báo cáo tiến độ công việc qua Jira và tham gia các buổi họp Daily Scrum hàng ngày.',
+      ]),
+      yeuCauCongViec: JSON.stringify([
+        '3 năm kinh nghiệm lập trình Fullstack.',
+        'Kỹ năng tự quản lý thời gian tốt vì tính chất công việc làm từ xa.',
+        'Thành thạo Gitflow và quy trình CI/CD cơ bản.',
+      ]),
+      phucLoi: JSON.stringify([
+        'Trợ cấp set-up góc làm việc tại nhà (Màn hình, bàn ghế công thái học).',
+        'Thời gian làm việc hoàn toàn chủ động theo múi giờ cá nhân.',
+      ]),
+
+      mucLuongToiThieu: 20000000,
+      mucLuongToiDa: 40000000,
       yeuCauKinhNghiem: 3,
+      capBac: 'Middle',
+      thanhPho: 'Đà Nẵng',
+      loaiHinh: 'Full-time',
+      hinhThucLamViec: 'Remote', // Làm việc từ xa hoàn toàn
       ngayDang: new Date(),
       ngayHetHan: nextMonth,
-      diaDiem: 'Hồ Chí Minh',
-      loaiHinh: 'Toàn thời gian',
-      capBac: 'Senior',
-      trangThai: 'Active',
-      maNTD: hrMomo.maNTD,
+      luotXem: 89,
+      trangThai: 'Đang tuyển',
+      maNTD: hrFPT.maNTD,
+      maChiNhanh: cnFPTDaNang.maChiNhanh,
     },
   });
 
@@ -407,8 +534,6 @@ async function main() {
       { maCongViec: job2.maCongViec, maKyNang: knTS.maKyNang },
       { maCongViec: job3.maCongViec, maKyNang: knReact.maKyNang },
       { maCongViec: job3.maCongViec, maKyNang: knTS.maKyNang },
-      { maCongViec: job4.maCongViec, maKyNang: knPython.maKyNang },
-      { maCongViec: job4.maCongViec, maKyNang: knSQL.maKyNang },
     ],
   });
 

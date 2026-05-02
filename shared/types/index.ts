@@ -47,6 +47,9 @@ export interface CompanyDetailResponse {
   website: string | null;
   slug: string;
   description: string | null;
+  benefits: string[];
+  skills: string[];
+  aboutMe: string | null;
   country: string | null;
   city: string | null;
   companyModel: string | null;
@@ -58,9 +61,13 @@ export interface CompanyDetailResponse {
   activeJobs: {
     id: string;
     title: string;
-    salaryMin: number | null;
-    salaryMax: number | null;
+    slug: string;
+    salaryDisplay: string;
     location: string | null;
-    deadline: Date | null;
+    postedAt: string | Date;
+    skills: string[];
+    benefits: string[];
+    workModel: string;
+    // isHot?: boolean;
   }[];
 }
