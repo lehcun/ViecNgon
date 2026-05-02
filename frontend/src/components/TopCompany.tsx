@@ -3,8 +3,8 @@
 import Image from "next/image";
 import Marquee from "react-fast-marquee";
 import EmployerCard from "./EmployerCard";
-import { useTopCompanies } from "@/hooks/employer/useTopEmployer";
-import { Company } from "@viecngon/types";
+import { useTopCompanies } from "@/hooks/company/useTopCompanies";
+import { FormattedTopCompany } from "@viecngon/types";
 
 export default function TopEmployers() {
   const { companies } = useTopCompanies();
@@ -27,26 +27,28 @@ export default function TopEmployers() {
             speed={40}
             pauseOnHover={true}
           >
-            {companies?.concat(companies).map((emp: Company, index: number) => (
-              <div
-                key={index}
-                className="mx-10 opacity-60 hover:opacity-100 transition-opacity grayscale hover:grayscale-0 flex items-center justify-center h-12"
-              >
-                <Image
-                  src={emp.logo}
-                  alt={emp.name}
-                  width={120}
-                  height={48}
-                  className="object-contain h-12 w-auto max-w-30"
-                />
-              </div>
-            ))}
+            {companies
+              ?.concat(companies)
+              .map((emp: FormattedTopCompany, index: number) => (
+                <div
+                  key={index}
+                  className="mx-10 opacity-60 hover:opacity-100 transition-opacity grayscale hover:grayscale-0 flex items-center justify-center h-12"
+                >
+                  <Image
+                    src={emp.logo ?? "/logo.png"}
+                    alt={emp.name}
+                    width={120}
+                    height={48}
+                    className="object-contain h-12 w-auto max-w-30"
+                  />
+                </div>
+              ))}
           </Marquee>
         </div>
 
         {/* 2. Phần Grid 4 cột */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {companies?.map((company: Company) => (
+          {companies?.map((company: FormattedTopCompany) => (
             <EmployerCard key={company.id} {...company} />
           ))}
         </div>

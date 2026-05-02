@@ -30,12 +30,37 @@ export interface Candidate {
   portfolios: Array<{ tieuDe: string; projectUrl: string | null }>;
 }
 
-export interface Company {
+export interface FormattedTopCompany {
   id: string;
   name: string;
-  logo: string;
-  jobs: number;
-  location: string;
+  logo: string | null;
+  location: string | null;
   slug: string;
-  skills?: string[];
+  jobs: number;
+}
+
+export interface CompanyDetailResponse {
+  id: string;
+  name: string;
+  logo: string | null;
+  location: string | null;
+  website: string | null;
+  slug: string;
+  description: string | null;
+  country: string | null;
+  city: string | null;
+  companyModel: string | null;
+  industry: string | null;
+  size: string | null;
+  workingTime: string | null;
+  otPolicy: string | null;
+  totalJobs: number;
+  activeJobs: {
+    id: string;
+    title: string;
+    salaryMin: number | null;
+    salaryMax: number | null;
+    location: string | null;
+    deadline: Date | null;
+  }[];
 }

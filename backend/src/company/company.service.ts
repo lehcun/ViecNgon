@@ -1,13 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-
-export interface FormattedTopCompany {
-  name: string;
-  logo: string | null;
-  location: string | null;
-  slug: string;
-  jobs: number;
-}
+import { CompanyDetailResponse, FormattedTopCompany } from '@viecngon/types';
 
 @Injectable()
 export class CompanyService {
@@ -35,6 +28,7 @@ export class CompanyService {
     // Bước 1: Query database bằng Prisma
     const companies = await this.prisma.congTy.findMany({
       select: {
+        maCongTy: true,
         tenCongTy: true,
         logoUrl: true,
         thanhPho: true,
@@ -69,6 +63,7 @@ export class CompanyService {
         }, 0);
 
         return {
+          id: company.maCongTy,
           name: company.tenCongTy,
           logo: company.logoUrl,
           location: company.thanhPho,
@@ -80,5 +75,85 @@ export class CompanyService {
     );
 
     return formattedCompanies;
+  }
+
+  async getCompanyDetailBySlug(slug: string): Promise<CompanyDetailResponse> {
+    // Bước 1: Truy vấn thông tin công ty và lồng bảng lấy các việc làm đang tuyển
+    const company = await this.prisma.congTy.findUnique({
+      where: { slug: slug },
+      select: {
+        maCongTy: true,
+        tenCongTy: true,
+        logoUrl: true,
+        diaChi: true,
+        website: true,
+        slug: true,
+        moTa: true,
+        quocGia: true,
+        thanhPho: true,
+        moHinhCongTy: true,
+        linhVuc: true,
+        quyMo: true,
+        thoiGianLamViec: true,
+        chinhSachOT: true,
+        nhaTuyenDungs: {
+          select: {
+            congViecs: {
+              where: {
+                trangThai: 'Đang tuyển', // Chỉ lấy các job còn hạn
+              },
+              select: {
+                maCongViec: true,
+                tenCongViec: true,
+                mucLuongToiThieu: true,
+                mucLuongToiDa: true,
+                diaDiem: true,
+                ngayHetHan: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Nếu người dùng gõ sai tên công ty trên URL
+    if (!company) {
+      throw new NotFoundException('Không tìm thấy thông tin công ty này');
+    }
+
+    // Bước 2: Gom tất cả việc làm từ các HR khác nhau vào chung một mảng phẳng (flat array)
+    // flatMap sẽ lấy mảng congViecs của từng HR và trải phẳng chúng ra thành 1 mảng duy nhất
+    const allActiveJobs = company.nhaTuyenDungs
+      .flatMap((hr) => hr.congViecs)
+      .map((job) => ({
+        id: job.maCongViec,
+        title: job.tenCongViec,
+
+        salaryMin: job.mucLuongToiThieu ? Number(job.mucLuongToiThieu) : null,
+        salaryMax: job.mucLuongToiDa ? Number(job.mucLuongToiDa) : null,
+
+        location: job.diaDiem,
+        deadline: job.ngayHetHan,
+      }));
+
+    // Bước 3: Trả về dữ liệu đã được Format gọn gàng
+    return {
+      id: company.maCongTy,
+      name: company.tenCongTy,
+      logo: company.logoUrl,
+      location: company.diaChi,
+      website: company.website,
+      slug: company.slug,
+      description: company.moTa,
+      country: company.quocGia,
+      city: company.thanhPho,
+      companyModel: company.moHinhCongTy,
+      industry: company.linhVuc,
+      size: company.quyMo,
+      workingTime: company.thoiGianLamViec,
+      otPolicy: company.chinhSachOT,
+      totalJobs: allActiveJobs.length,
+      activeJobs: allActiveJobs,
+    };
   }
 }
