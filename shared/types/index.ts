@@ -50,11 +50,11 @@ export interface CompanyDetailResponse {
   benefits: string[];
   skills: string[];
   aboutMe: string | null;
-  country: string | null;
   city: string | null;
   companyModel: string | null;
   industry: string | null;
   size: string | null;
+  country: string | null;
   workingTime: string | null;
   otPolicy: string | null;
   totalJobs: number;
@@ -70,4 +70,38 @@ export interface CompanyDetailResponse {
     workModel: string;
     // isHot?: boolean;
   }[];
+}
+
+export interface JobDetailResponse {
+  id: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  requirements: string | null;
+  benefits: string[];
+  salaryMin: number | null;
+  salaryMax: number | null;
+  experience: number | null;
+  level: string | null;
+  location: string | null;
+  type: string;
+  workModel: string | null;
+  postedAt: string | Date;
+  deadline: Date | null;
+  updatedAt: Date;
+  views: number;
+  status: string;
+  skills: string[];
+  company: {
+    id: string;
+    name: string;
+    logo: string | null;
+    slug: string;
+    companyModel: string | null;
+    industry: string | null;
+    size: string | null;
+    country: string | null;
+    workingTime: string | null;
+    otPolicy: string | null;
+  };
 }

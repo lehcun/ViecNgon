@@ -183,7 +183,9 @@ export class CompanyService {
       benefits: company.phucLoi
         ? (JSON.parse(company.phucLoi) as string[])
         : [],
-      skills: company.chuyenMon,
+      skills: company.chuyenMon
+        ? company.chuyenMon.split(',').map((s) => s.trim())
+        : [],
       aboutMe: company.aboutMe,
       country: company.quocGia,
       city: company.thanhPho,

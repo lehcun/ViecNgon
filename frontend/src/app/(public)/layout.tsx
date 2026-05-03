@@ -1,3 +1,4 @@
+import Footer from "@/components/layout/Footer";
 import Navbar from "@/components/Navbar";
 
 export default function PublicLayout({
@@ -8,7 +9,8 @@ export default function PublicLayout({
   return (
     <html lang="en">
       <Navbar />
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="bg-slate-50 min-h-full flex flex-col">{children}</body>
+      <Footer />
     </html>
   );
 }

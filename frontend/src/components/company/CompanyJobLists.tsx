@@ -26,7 +26,7 @@ const CompanyJobLists = ({
           {jobs.map((job) => (
             <Link
               key={job.id}
-              href={`/jobs/${job?.slug}`}
+              href={`/job-it/${job?.slug}`}
               className="block bg-white border border-slate-200 rounded-xl p-5 hover:border-primary hover:shadow-lg transition-all group relative overflow-hidden"
             >
               <div className="absolute top-0 right-0 bg-primary text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg">
