@@ -143,3 +143,14 @@ export interface UpdateCandidatePayload {
   cvUrl?: string;
   address?: string;
 }
+
+export interface RegisterResponse {
+  accessToken: string;
+  user: {
+    id: string;
+    email: string;
+    role: string;
+    name: string;
+    status: string;
+  };
+}

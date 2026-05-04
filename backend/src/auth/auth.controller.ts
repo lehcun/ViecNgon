@@ -13,6 +13,7 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import express from 'express';
 import { JwtService } from '@nestjs/jwt';
+import { SignupDto } from './dto/signup.dto';
 
 export interface JwtPayload {
   sub: number; // Thường dùng sub để lưu ID
@@ -79,5 +80,22 @@ export class AuthController {
     });
 
     return { message: 'Đăng nhập thành công', user };
+  }
+
+  @Post('signup')
+  async signup(
+    @Body() signupDto: SignupDto,
+    @Res({ passthrough: true }) res: express.Response,
+  ) {
+    const result = await this.authService.signup(signupDto);
+
+    res.cookie('access_token', result.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 1000 * 60 * 60 * 24, // 1 ngày
+    });
+
+    return result.user;
   }
 }
