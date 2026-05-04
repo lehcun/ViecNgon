@@ -3,11 +3,11 @@
 import React from "react";
 import Link from "next/link";
 import { Info, UploadCloud, Edit3, AlertCircle, FileText } from "lucide-react";
-import { useCandidate } from "@/hooks/candidate/useCandidate";
 import { useAuthStore } from "@/store/authStore";
+import { useCandidateProfile } from "@/hooks/candidate/useCandidateProfile";
 
 const CandidatePersonCVContent = () => {
-  const { candidateProfile } = useCandidate();
+  const { candidateProfile } = useCandidateProfile();
   const { user } = useAuthStore();
   //   console.log("candidateProfile: ", candidateProfile);
   //   console.log("user: ", user);
@@ -76,7 +76,7 @@ const CandidatePersonCVContent = () => {
               Họ và Tên
             </span>
             <span className="text-sm font-bold text-slate-800">
-              {candidateProfile?.tenUngVien || (
+              {candidateProfile?.account.userName || (
                 <label className="flex items-center gap-1 text-sm font-medium text-amber-500 w-max">
                   <AlertCircle size={16} /> Thêm thông tin
                 </label>
@@ -122,7 +122,7 @@ const CandidatePersonCVContent = () => {
             <span className="text-sm text-slate-500 font-medium">
               Tổng số năm kinh nghiệm
             </span>
-            {candidateProfile?.soNamKinhNghiem || (
+            {candidateProfile?.yearsOfExperience || (
               <label className="text-sm font-medium text-slate-400 text-left w-max">
                 Thêm thông tin
               </label>

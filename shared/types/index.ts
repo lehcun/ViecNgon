@@ -19,16 +19,16 @@ export interface Job {
   mucLuongToiDa: number;
 }
 
-export interface Candidate {
-  maUngVien: string;
-  tenUngVien: string;
-  chuyenMon: string;
-  soNamKinhNghiem: number;
-  avatarUrl: string | null;
-  diaChi: string | null;
-  kyNangs: Array<{ mucDo: string; kyNang: { tenKyNang: string } }>;
-  portfolios: Array<{ tieuDe: string; projectUrl: string | null }>;
-}
+// export interface Candidate {
+//   id: string;
+//   tenUngVien: string;
+//   chuyenMon: string;
+//   soNamKinhNghiem: number;
+//   avatarUrl: string | null;
+//   diaChi: string | null;
+//   kyNangs: Array<{ mucDo: string; kyNang: { tenKyNang: string } }>;
+//   portfolios: Array<{ tieuDe: string; projectUrl: string | null }>;
+// }
 
 export interface FormattedTopCompany {
   id: string;
@@ -105,4 +105,41 @@ export interface JobDetailResponse {
     workingTime: string | null;
     otPolicy: string | null;
   };
+}
+
+export interface CandidateProfileResponse {
+  candidateId: string;
+  accountId: string;
+  candidateName: string;
+  dateOfBirth: string | null;
+  gender: string | null;
+  yearsOfExperience: number | null;
+  avatarUrl: string | null;
+  profession: string;
+  cvUrl: string | null;
+  address: string | null;
+
+  account: {
+    email: string;
+    userName: string;
+    phoneNumber: string | null;
+  };
+
+  skills: {
+    skillId: string;
+    skillName: string;
+    level: string | null;
+  }[];
+}
+
+export interface UpdateCandidatePayload {
+  userName?: string;
+  phoneNumber?: string;
+  dateOfBirth?: string | Date;
+  gender?: string;
+  yearsOfExperience?: number;
+  avatarUrl?: string;
+  profession?: string;
+  cvUrl?: string;
+  address?: string;
 }

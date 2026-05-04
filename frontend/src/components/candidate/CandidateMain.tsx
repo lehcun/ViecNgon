@@ -11,13 +11,13 @@ import {
   MailOpen,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
-import { useCandidate } from "@/hooks/candidate/useCandidate";
+import { useCandidateProfile } from "@/hooks/candidate/useCandidateProfile";
 
 const CandidateMain = () => {
   const profileCompletion = 69; // Giả lập dữ liệu % hoàn thành hồ sơ
   const arcLength = 220; // Chu vi của nửa vòng tròn SVG
 
-  const { candidateProfile } = useCandidate();
+  const { candidateProfile } = useCandidateProfile();
   const { user } = useAuthStore();
 
   return (
@@ -29,19 +29,19 @@ const CandidateMain = () => {
         </div>
         <div className="flex-1 text-center sm:text-left">
           <h1 className="text-2xl font-bold text-slate-800 mb-2">
-            {candidateProfile?.tenUngVien}
+            {candidateProfile?.account.userName}
           </h1>
           <div className="space-y-2 text-slate-600 text-sm">
             <p className="flex items-center justify-center sm:justify-start gap-2">
-              <Briefcase size={16} className="text-slate-400" /> Software
-              {candidateProfile?.chuyenMon}
+              <Briefcase size={16} className="text-slate-400" />
+              {candidateProfile?.profession}
             </p>
             <p className="flex items-center justify-center sm:justify-start gap-2">
               <Mail size={16} className="text-slate-400" /> {user?.email}
             </p>
           </div>
           <Link
-            href="/dashboard/profile/edit"
+            href="/cv-profile"
             className="inline-flex items-center gap-1 text-primary font-semibold mt-4 hover:underline"
           >
             Cập nhật hồ sơ <ChevronRight size={16} />
