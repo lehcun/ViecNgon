@@ -8,6 +8,9 @@ import { AuthGuard } from '@nestjs/passport';
 export interface AuthUser {
   maTaiKhoan: string;
   vaiTro: string;
+  name?: string;
+  email?: string;
+  avatarUrl?: string;
 }
 
 @Injectable()

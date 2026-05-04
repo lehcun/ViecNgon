@@ -4,12 +4,12 @@ export interface LoginResponse {
 }
 
 export interface User {
-  maTaiKhoan: string;
+  id: string;
   email: string;
-  tenNguoiDung: string;
+  name: string;
   sdt?: string;
-  vaiTro: "ADMIN" | "UNGVIEN" | "NHATUYENDUNG";
-  trangThai: string;
+  role: "ADMIN" | "UNGVIEN" | "NHATUYENDUNG";
+  status: "ACTIVE" | "INACTIVE";
 }
 
 export interface Job {
@@ -81,6 +81,7 @@ export interface JobDetailResponse {
   benefits: string[];
   salaryMin: number | null;
   salaryMax: number | null;
+  salaryDisplay: string;
   experience: number | null;
   level: string | null;
   location: string | null;

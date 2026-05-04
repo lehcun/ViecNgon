@@ -35,6 +35,9 @@ export class AuthService {
     const payload = {
       sub: user.maTaiKhoan,
       role: user.vaiTro,
+      name: user.tenNguoiDung,
+      email: user.email,
+      // avatarUrl: user.avatarUrl,
     };
 
     // 4. Trả về Token và thông tin user (loại bỏ mật khẩu)

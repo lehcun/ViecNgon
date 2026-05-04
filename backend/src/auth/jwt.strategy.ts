@@ -6,13 +6,16 @@ import { Request } from 'express';
 interface payloadType {
   sub: string;
   role: string;
+  name?: string;
+  email?: string;
+  avatarUrl?: string;
 }
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor() {
     super({
-      // BÍ QUYẾT Ở ĐÂY: Viết một hàm tự động lấy Token từ Cookie
+      // BÍ  QUYẾT Ở ĐÂY: Viết một hàm tự động lấy Token từ Cookie
       jwtFromRequest: ExtractJwt.fromExtractors([
         (request: Request) => {
           const token = request?.cookies['access_token'] as string | null;
@@ -31,8 +34,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   validate(payload: payloadType) {
     // payload chính là dữ liệu bạn đã nhét vào token lúc login (vd: sub(maTaiKhoan), vaiTro)
     return {
-      maTaiKhoan: payload.sub,
-      vaiTro: payload.role,
+      id: payload.sub,
+      role: payload.role,
+      name: payload.name,
+      email: payload.email,
+      avatarUrl: payload.avatarUrl,
     };
   }
 }

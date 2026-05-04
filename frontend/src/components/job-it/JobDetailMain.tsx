@@ -11,8 +11,11 @@ import {
 } from "lucide-react";
 import { JobDetailResponse } from "@viecngon/types";
 import { getRelativeTime } from "@/utils/formatTime";
+import { useAuthStore } from "@/store/authStore";
 
 const JobDetailMain = ({ job }: { job?: JobDetailResponse }) => {
+  const { isAuthenticated, user } = useAuthStore();
+
   const [isSaved, setIsSaved] = useState(false);
   if (job === undefined) return <h2>loading...</h2>;
 
@@ -28,7 +31,7 @@ const JobDetailMain = ({ job }: { job?: JobDetailResponse }) => {
         </p>
 
         <div className="flex items-center gap-2 text-emerald-600 font-bold bg-emerald-50 w-max px-3 py-1.5 rounded-lg mb-6">
-          <DollarSign size={18} /> {}
+          <DollarSign size={18} /> {job.salaryDisplay}
         </div>
 
         {/* Nút Ứng tuyển & Lưu */}
@@ -190,9 +193,15 @@ const JobDetailMain = ({ job }: { job?: JobDetailResponse }) => {
         {/* Alert Đăng ký nhận việc */}
         <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 shadow-sm">
           <span className="text-sm font-medium text-slate-600">
-            Nhận các việc làm tương tự qua email lehcuong2907@gmail.com
+            {isAuthenticated
+              ? `Nhận các việc làm tương tự qua email ${user?.email}`
+              : "Đăng nhập để nhận việc làm qua email"}
           </span>
-          <button className="whitespace-nowrap px-4 py-2 border-2 border-rose-500 text-rose-500 hover:bg-rose-50 font-bold rounded-lg transition-colors flex items-center gap-2 text-sm">
+          <button
+            disabled={!isAuthenticated}
+            onClick={() => {}}
+            className="whitespace-nowrap px-4 py-2 border-2 border-rose-500 text-rose-500 hover:bg-rose-50 font-bold rounded-lg transition-colors flex items-center gap-2 text-sm"
+          >
             <Mail size={16} /> Nhận thông báo
           </button>
         </div>

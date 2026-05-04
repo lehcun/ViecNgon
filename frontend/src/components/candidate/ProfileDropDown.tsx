@@ -24,6 +24,8 @@ export default function ProfileDropdown({
   onLogout,
   isLoggingOut,
 }: DropProps) {
+  if (!user) return null;
+
   return (
     <div className="relative group cursor-pointer">
       {/* Vùng hiển thị Avatar trên thanh Nav */}
@@ -44,9 +46,7 @@ export default function ProfileDropdown({
             C
           </div>
           <div className="flex-1 overflow-hidden">
-            <p className="font-bold text-slate-800 truncate">
-              {user?.tenNguoiDung}
-            </p>
+            <p className="font-bold text-slate-800 truncate">{user?.name}</p>
             <p className="text-xs text-slate-500 truncate">{user?.email}</p>
           </div>
         </div>

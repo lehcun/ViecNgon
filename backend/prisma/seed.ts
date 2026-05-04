@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
@@ -29,8 +30,8 @@ async function main() {
   console.log('✅ Dọn dẹp hoàn tất. Bắt đầu bơm dữ liệu mẫu (Seeding)...');
 
   // Mật khẩu chung: "123456" đã được băm (hash) bằng bcrypt
-  const mockPassword =
-    '$2b$10$XoV.Bv0Vj/E4.K1Y/2W6O.6x.OiN3aP9W9k1l2m3n4o5p6q7r8s9t';
+  const password = '123456';
+  const hashPassword = await bcrypt.hash(password, 10);
 
   // =========================================================
   // 2. TẠO TÀI KHOẢN (ADMIN, HR, ỨNG VIÊN)
@@ -41,7 +42,7 @@ async function main() {
     data: {
       email: 'admin@viecngon.vn',
       tenNguoiDung: 'Quản Trị Viên',
-      matKhau: mockPassword,
+      matKhau: hashPassword,
       sdt: '0901111111',
       vaiTro: 'ADMIN',
       trangThai: 'Active',
@@ -53,7 +54,7 @@ async function main() {
     data: {
       email: 'hr.fpt@fpt.com',
       tenNguoiDung: 'Tuyển dụng FPT',
-      matKhau: mockPassword,
+      matKhau: hashPassword,
       sdt: '0912222222',
       vaiTro: 'NHATUYENDUNG',
       trangThai: 'Active',
@@ -63,7 +64,7 @@ async function main() {
     data: {
       email: 'talent@vng.com.vn',
       tenNguoiDung: 'VNG Talent',
-      matKhau: mockPassword,
+      matKhau: hashPassword,
       sdt: '0923333333',
       vaiTro: 'NHATUYENDUNG',
       trangThai: 'Active',
@@ -73,7 +74,7 @@ async function main() {
     data: {
       email: 'hr@shopee.vn',
       tenNguoiDung: 'Shopee Careers',
-      matKhau: mockPassword,
+      matKhau: hashPassword,
       sdt: '0934444444',
       vaiTro: 'NHATUYENDUNG',
       trangThai: 'Active',
@@ -83,7 +84,7 @@ async function main() {
     data: {
       email: 'tuyendung@momo.vn',
       tenNguoiDung: 'MoMo HR',
-      matKhau: mockPassword,
+      matKhau: hashPassword,
       sdt: '0945555555',
       vaiTro: 'NHATUYENDUNG',
       trangThai: 'Active',
@@ -95,7 +96,7 @@ async function main() {
     data: {
       email: 'tuan.nguyen@gmail.com',
       tenNguoiDung: 'Nguyễn Anh Tuấn',
-      matKhau: mockPassword,
+      matKhau: hashPassword,
       sdt: '0981112223',
       vaiTro: 'UNGVIEN',
       trangThai: 'Active',
@@ -105,7 +106,7 @@ async function main() {
     data: {
       email: 'mai.tran@gmail.com',
       tenNguoiDung: 'Trần Thị Phương Mai',
-      matKhau: mockPassword,
+      matKhau: hashPassword,
       sdt: '0982223334',
       vaiTro: 'UNGVIEN',
       trangThai: 'Active',
@@ -115,7 +116,7 @@ async function main() {
     data: {
       email: 'hoang.le@gmail.com',
       tenNguoiDung: 'Lê Minh Hoàng',
-      matKhau: mockPassword,
+      matKhau: hashPassword,
       sdt: '0983334445',
       vaiTro: 'UNGVIEN',
       trangThai: 'Active',

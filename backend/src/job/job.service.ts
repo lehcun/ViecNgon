@@ -33,6 +33,22 @@ export class JobService {
       data: { luotXem: { increment: 1 } },
     });
 
+    const min = job.mucLuongToiThieu ? Number(job.mucLuongToiThieu) : 0;
+    const max = job.mucLuongToiDa ? Number(job.mucLuongToiDa) : 0;
+
+    let salaryDisplay = '';
+
+    if (min === 0 && max === 0) {
+      salaryDisplay = 'Thỏa thuận';
+    } else if (min > 0 && max === 0) {
+      salaryDisplay = `Từ ${min.toLocaleString()} VNĐ`;
+    } else if (min === 0 && max > 0) {
+      salaryDisplay = `Lên đến ${max.toLocaleString()} VNĐ`;
+    } else {
+      // Trường hợp có cả min và max (Ví dụ: 10.000.000 - 20.000.000 VNĐ)
+      salaryDisplay = `${min.toLocaleString()} - ${max.toLocaleString()} VNĐ`;
+    }
+
     // 3. Format lại dữ liệu cho Frontend dễ đọc (giống với Clean Architecture)
     const formattedJob = {
       id: job.maCongViec,
@@ -44,8 +60,11 @@ export class JobService {
       benefits: job.phucLoi ? (JSON.parse(job.phucLoi) as string[]) : [],
 
       // Ép kiểu Decimal sang Number cho Frontend
-      salaryMin: job.mucLuongToiThieu ? Number(job.mucLuongToiThieu) : null,
-      salaryMax: job.mucLuongToiDa ? Number(job.mucLuongToiDa) : null,
+      // Trả về cả min, max và chuỗi đã format
+      salaryMin: min,
+      salaryMax: max,
+      salaryDisplay: salaryDisplay,
+
       experience: job.yeuCauKinhNghiem,
       level: job.capBac,
 
