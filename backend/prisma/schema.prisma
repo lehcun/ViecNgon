@@ -61,8 +61,8 @@ model UngVien {
 // ---------------------------------------------------------
 model CongTy {
   maCongTy  String  @id @default(uuid()) @db.VarChar(50)
-  tenCongTy String  @db.NVarChar(150) // Tên thương hiệu (ONE Tech Stop)
-  tenPhapLy String? @db.NVarChar(255) // Tên đầy đủ (ONE Tech Stop Vietnam Company Ltd)
+  tenCongTy String  @db.NVarChar(150)
+  tenPhapLy String? @db.NVarChar(255)
   slug      String  @unique @db.VarChar(200)
   moTa      String? @db.NVarChar(Max)
   phucLoi   String? @db.NVarChar(Max)

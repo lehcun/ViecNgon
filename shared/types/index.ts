@@ -154,3 +154,70 @@ export interface RegisterResponse {
     status: string;
   };
 }
+
+export interface RecentApplicant {
+  applicationId: string;
+  candidateId: string;
+  candidateName: string;
+  avatarUrl: string | null;
+  status: string;
+  appliedAt: string | Date;
+  jobTitle: string; // Tên job đã được BE map sẵn
+}
+
+export interface DashboardJobItem {
+  id: string;
+  title: string;
+  slug: string;
+  location: string | null;
+  type: string;
+  views: number;
+  applicationsCount: number;
+  status: string;
+  postedAt: string | Date;
+  deadline: string | Date | null;
+}
+
+export interface RecruiterProfileResponse {
+  recruiterId: string;
+  accountId: string;
+  companyId: string;
+  account: {
+    email: string;
+    userName: string;
+    phoneNumber: string | null;
+  };
+  company: {
+    name: string;
+    legalName: string | null;
+    slug: string;
+    description: string | null;
+    logo: string | null;
+    website: string | null;
+    address: string | null;
+    city: string | null;
+    industry: string | null;
+    size: string | null;
+  };
+  statistics: {
+    totalJobs: number;
+    totalViews: number;
+    totalApplications: number;
+  };
+  recentApplicants: RecentApplicant[];
+  jobs: {
+    count: number;
+    list: DashboardJobItem[];
+  };
+}
+
+export interface UpdateRecruiterPayload {
+  userName?: string;
+  phoneNumber?: string;
+  companyName?: string;
+  description?: string;
+  website?: string;
+  address?: string;
+  city?: string;
+  logoUrl?: string;
+}

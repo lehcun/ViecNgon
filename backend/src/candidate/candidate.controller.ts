@@ -1,8 +1,8 @@
 import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
-import * as jwtAuthGuard from 'src/auth/jwt-auth.guard';
+import * as jwtAuthGuard from 'src/auth/guards/jwt-auth.guard';
 import { CandidateService } from './candidate.service';
-import { CurrentUser } from 'src/auth/current-user.decorator';
 import { UpdateCandidateDto } from './dto/update-candidate.dto';
+import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 
 @Controller('candidate')
 export class CandidateController {

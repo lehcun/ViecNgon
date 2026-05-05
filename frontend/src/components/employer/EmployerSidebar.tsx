@@ -13,8 +13,11 @@ import {
   Settings,
   ChevronRight,
 } from "lucide-react";
+import { useRecruiterProfile } from "@/hooks/recruiter/useRecruiterProfile";
 
 export default function EmployerSidebar() {
+  const { recruiterProfile: recruiter } = useRecruiterProfile();
+
   const pathname = usePathname();
   const isActive = (path: string) => pathname === path;
 
@@ -25,7 +28,7 @@ export default function EmployerSidebar() {
     "text-slate-600 hover:bg-slate-50 hover:text-primary";
 
   return (
-    <aside className="w-full lg:w-1/4 flex flex-col gap-6 lg:sticky lg:top-24 self-start">
+    <>
       {/* Card: Thông tin tài khoản HR */}
       <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
         <div className="flex items-center gap-4 mb-4">
@@ -38,7 +41,7 @@ export default function EmployerSidebar() {
           </div>
           <div>
             <h2 className="text-base font-bold text-slate-800 line-clamp-1">
-              ONE Tech Stop VN
+              {recruiter?.company?.name}
             </h2>
             <p className="text-slate-500 text-xs">Tài khoản: HR Manager</p>
           </div>
@@ -48,7 +51,7 @@ export default function EmployerSidebar() {
         <div className="bg-linear-to-r from-slate-800 to-slate-900 rounded-lg p-4 text-white">
           <p className="text-xs text-slate-300 mb-1">Lượt đăng tin còn lại</p>
           <div className="flex items-end justify-between">
-            <span className="text-2xl font-black text-emerald-400">3</span>
+            <span className="text-2xl font-black text-emerald-400">{3}</span>
             <Link
               href="/employer/billing"
               className="text-xs font-semibold text-white hover:text-primary-light flex items-center gap-1 transition-colors"
@@ -115,6 +118,6 @@ export default function EmployerSidebar() {
           </Link>
         </nav>
       </div>
-    </aside>
+    </>
   );
 }
