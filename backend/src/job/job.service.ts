@@ -54,14 +54,30 @@ export class JobService {
     const cleanYeuCau = this.sanitizeContent(createJobDto.yeuCauCongViec);
     const cleanPhucLoi = this.sanitizeContent(createJobDto.phucLoi);
 
+    const { kyNangs, maTaiKhoan, ...jobData } = createJobDto;
+
+    const nhaTuyenDung = await this.prisma.nhaTuyenDung.findUnique({
+      where: { maTaiKhoan },
+    });
+    if (!nhaTuyenDung) {
+      throw new NotFoundException(
+        'Không tìm thấy thông tin nhà tuyển dụng cho tài khoản này.',
+      );
+    }
     // 3. Lưu vào Database
     return this.prisma.congViec.create({
       data: {
-        ...createJobDto,
+        ...jobData,
         slug: uniqueSlug,
         moTa: cleanMoTa,
         yeuCauCongViec: cleanYeuCau,
         phucLoi: cleanPhucLoi,
+        maNTD: nhaTuyenDung.maNTD,
+        congViecKyNangs: {
+          create: kyNangs.map((id) => ({
+            maKyNang: id,
+          })),
+        },
       },
     });
   }
@@ -190,7 +206,7 @@ export class JobService {
       description: job.moTa,
       requirements: job.yeuCauCongViec,
       // Xử lý biến chuỗi JSON thành mảng
-      benefits: job.phucLoi ? (JSON.parse(job.phucLoi) as string[]) : [],
+      benefits: job.phucLoi,
 
       // Ép kiểu Decimal sang Number cho Frontend
       // Trả về cả min, max và chuỗi đã format

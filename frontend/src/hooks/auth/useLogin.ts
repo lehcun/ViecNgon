@@ -16,8 +16,9 @@ const fetchLogin = async (
       credentials: "include",
     },
   );
+
   if (!response.ok) {
-    const errorData = await response.json();
+    const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.message || "Đăng nhập thất bại");
   }
 
@@ -25,19 +26,20 @@ const fetchLogin = async (
 };
 
 export const useLogin = () => {
-  const setUser = useAuthStore((state) => state.setUser);
+  const { setUser } = useAuthStore();
 
   const mutation = useMutation({
     mutationFn: (credentials: Record<string, string>) =>
       fetchLogin(credentials),
     onSuccess: (data) => {
-      // Data Layer: Tự động lưu user vào Zustand ngay khi đăng nhập thành công
+      // Tự động lưu user vào Zustand ngay khi đăng nhập thành công
+      // Đã sửa lại thành setUser cho đúng với file store
       setUser(data.user);
     },
   });
 
   return {
     ...mutation,
-    login: mutation.mutate,
+    login: mutation.mutateAsync, // Dùng mutateAsync tốt hơn nếu bạn muốn UI đợi (await) kết quả
   };
 };

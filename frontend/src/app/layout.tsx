@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import "./globals.css";
 import { Be_Vietnam_Pro } from "next/font/google";
 import QueryProvider from "@/providers/QueryProvider";
+import AuthProvider from "@/providers/AuthProvider";
 
 export const metadata: Metadata = {
   title: "ViecNgon - Tìm kiếm việc làm IT ngon",
@@ -25,7 +26,9 @@ export default function RootLayout({
     <html lang="vi">
       <body className={beVietnamPro.className}>
         <QueryProvider>
-          <main>{children}</main>
+          <AuthProvider>
+            <main>{children}</main>
+          </AuthProvider>
         </QueryProvider>
       </body>
     </html>

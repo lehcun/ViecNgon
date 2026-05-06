@@ -13,7 +13,11 @@ export const useLogout = (
   const router = useRouter();
   const queryClient = useQueryClient();
   // Lấy hàm xóa dữ liệu từ Zustand store
-  const clearAuth = useAuthStore((state) => state.clearAuth);
+
+  const { logout } = useAuthStore();
+  const clearAuth = () => {
+    logout();
+  };
 
   return useMutation({
     mutationFn: async () => {

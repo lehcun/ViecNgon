@@ -164,7 +164,7 @@ export class CompanyService {
           location: job.thanhPho,
           workModel: job.hinhThucLamViec ?? 'Linh hoạt',
           postedAt: job.ngayDang,
-          benefits: job.phucLoi ? (JSON.parse(job.phucLoi) as string[]) : [],
+          benefits: job.phucLoi ?? '',
           skills: job.congViecKyNangs.map((cvkn) => cvkn.kyNang.tenKyNang),
         };
       });
@@ -180,9 +180,7 @@ export class CompanyService {
       website: company.website,
       slug: company.slug,
       description: company.moTa,
-      benefits: company.phucLoi
-        ? (JSON.parse(company.phucLoi) as string[])
-        : [],
+      benefits: company.phucLoi,
       skills: company.chuyenMon
         ? company.chuyenMon.split(',').map((s) => s.trim())
         : [],

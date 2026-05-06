@@ -123,14 +123,11 @@ const JobDetailMain = ({ job }: { job?: JobDetailResponse }) => {
         <h2 className="text-xl font-bold text-slate-800 mb-4">
           {job.benefits.length} Lý do để gia nhập công ty
         </h2>
-        <ul className="space-y-3">
-          {job.benefits.map((benefit) => (
-            <li key={benefit} className="flex items-start gap-2 text-slate-700">
-              <span className="text-rose-500 font-bold mt-0.5">•</span>
-              <span>{benefit}</span>
-            </li>
-          ))}
-        </ul>
+        {/* Render HTML từ Tiptap bằng dangerouslySetInnerHTML */}
+        <div
+          className="prose prose-slate prose-li:marker:text-rose-500 max-w-none text-slate-700"
+          dangerouslySetInnerHTML={{ __html: job.benefits || "" }}
+        />
       </div>
 
       {/* Card 3: Chi tiết công việc (Mô tả) */}

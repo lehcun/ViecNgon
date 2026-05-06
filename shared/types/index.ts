@@ -1,15 +1,18 @@
 export interface LoginResponse {
   message: string;
   user: User;
+  access_token: string;
 }
 
 export interface User {
-  id: string;
+  sub: string;
   email: string;
   name: string;
   sdt?: string;
   role: "ADMIN" | "UNGVIEN" | "NHATUYENDUNG";
-  status: "ACTIVE" | "INACTIVE";
+  // status: "ACTIVE" | "INACTIVE";
+  exp: number;
+  iat: number;
 }
 
 export interface Job {
@@ -47,7 +50,7 @@ export interface CompanyDetailResponse {
   website: string | null;
   slug: string;
   description: string | null;
-  benefits: string[];
+  benefits: string | null;
   skills: string[];
   aboutMe: string | null;
   city: string | null;
@@ -66,7 +69,7 @@ export interface CompanyDetailResponse {
     location: string | null;
     postedAt: string | Date;
     skills: string[];
-    benefits: string[];
+    benefits: string;
     workModel: string;
     // isHot?: boolean;
   }[];
@@ -220,4 +223,9 @@ export interface UpdateRecruiterPayload {
   address?: string;
   city?: string;
   logoUrl?: string;
+}
+
+export interface SkillResponse {
+  id: string;
+  name: string;
 }

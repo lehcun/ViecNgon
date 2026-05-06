@@ -79,7 +79,7 @@ export class AuthController {
       maxAge: 1000 * 60 * 60 * 24 * 7,
     });
 
-    return { message: 'Đăng nhập thành công', user };
+    return { message: 'Đăng nhập thành công', user, access_token };
   }
 
   @Post('signup')

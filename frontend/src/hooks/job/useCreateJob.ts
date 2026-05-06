@@ -13,8 +13,11 @@ export interface JobFormState {
   capBac: string;
   thanhPho: string;
   loaiHinh: string;
+  hinhThucLamViec: string; // [BỔ SUNG: Remote, Tại văn phòng...]
+  maChiNhanh: string; // [BỔ SUNG: Tùy chọn chi nhánh]
   ngayHetHan: string;
   negotiable: boolean; // Field phụ trợ riêng cho UI (Lương thỏa thuận)
+  kyNangs: string[];
 }
 
 // 2. Định nghĩa Type cho DTO gửi lên Backend (Khớp 100% với NestJS DTO)
@@ -29,15 +32,20 @@ export interface CreateCongViecPayload {
   capBac?: string;
   thanhPho?: string;
   loaiHinh: string;
+  hinhThucLamViec?: string; // [BỔ SUNG]
+  maChiNhanh?: string; // [BỔ SUNG]
   ngayDang: string; // Backend yêu cầu ISOString
   ngayHetHan?: string; // Backend yêu cầu ISOString
   trangThai: string;
-  maNTD: string;
+  maTaiKhoan: string;
+  kyNangs: string[];
 }
 
 export function useCreateJob(initialCredits: number = 0) {
   const { user } = useAuthStore();
-  console.log("user: ", user);
+
+  console.log(user);
+
   // --- UI STATES ---
   const [remainingCredits, setRemainingCredits] =
     useState<number>(initialCredits);
@@ -49,7 +57,9 @@ export function useCreateJob(initialCredits: number = 0) {
     tenCongViec: "",
     capBac: "",
     loaiHinh: "",
-    thanhPho: "", // Trong UI cũ bạn gọi là diaDiem
+    hinhThucLamViec: "", // [BỔ SUNG: Khởi tạo rỗng]
+    maChiNhanh: "", // [BỔ SUNG: Khởi tạo rỗng]
+    thanhPho: "",
     yeuCauKinhNghiem: "",
     ngayHetHan: "",
     mucLuongToiThieu: "",
@@ -58,6 +68,7 @@ export function useCreateJob(initialCredits: number = 0) {
     moTa: "",
     yeuCauCongViec: "",
     phucLoi: "",
+    kyNangs: [],
   });
 
   // --- HANDLERS ---
@@ -85,12 +96,29 @@ export function useCreateJob(initialCredits: number = 0) {
     });
   };
 
-  // Thêm hàm này vào dưới hàm handleInputChange hiện tại
+  // Xử lý riêng cho Rich Text Editor
   const handleRichTextChange = (field: keyof JobFormState, value: string) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
+  };
+
+  // Xử lý chọn/bỏ chọn Kỹ năng
+  const handleToggleSkill = (skillId: string) => {
+    setFormData((prev) => {
+      const isSelected = prev.kyNangs.includes(skillId);
+      if (isSelected) {
+        // Nếu đã chọn thì gỡ ra (filter)
+        return {
+          ...prev,
+          kyNangs: prev.kyNangs.filter((id) => id !== skillId),
+        };
+      } else {
+        // Nếu chưa chọn thì thêm vào mảng
+        return { ...prev, kyNangs: [...prev.kyNangs, skillId] };
+      }
+    });
   };
 
   // Hàm helper để Reset Form
@@ -99,6 +127,8 @@ export function useCreateJob(initialCredits: number = 0) {
       tenCongViec: "",
       capBac: "",
       loaiHinh: "",
+      hinhThucLamViec: "",
+      maChiNhanh: "",
       thanhPho: "",
       yeuCauKinhNghiem: "",
       ngayHetHan: "",
@@ -108,6 +138,7 @@ export function useCreateJob(initialCredits: number = 0) {
       moTa: "",
       yeuCauCongViec: "",
       phucLoi: "",
+      kyNangs: [],
     });
   };
 
@@ -115,7 +146,7 @@ export function useCreateJob(initialCredits: number = 0) {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    if (!user?.id) {
+    if (!user?.sub) {
       alert("Bạn cần đăng nhập để thực hiện chức năng này!");
       return;
     }
@@ -123,6 +154,12 @@ export function useCreateJob(initialCredits: number = 0) {
     // 1. Kiểm tra Business Logic (Lượt đăng tin)
     if (remainingCredits <= 0) {
       setShowUpgradeModal(true);
+      return;
+    }
+
+    // Kiểm tra phải chọn ít nhất 1 kỹ năng
+    if (formData.kyNangs.length === 0) {
+      alert("Vui lòng chọn ít nhất 1 kỹ năng cho công việc này!");
       return;
     }
 
@@ -134,6 +171,11 @@ export function useCreateJob(initialCredits: number = 0) {
         tenCongViec: formData.tenCongViec.trim(),
         capBac: formData.capBac || undefined,
         loaiHinh: formData.loaiHinh,
+
+        // [BỔ SUNG] Nếu ko chọn gửi undefined để DB lưu null
+        hinhThucLamViec: formData.hinhThucLamViec || undefined,
+        maChiNhanh: formData.maChiNhanh || undefined,
+
         thanhPho: formData.thanhPho.trim() || undefined,
 
         // Nếu chọn "Lương thỏa thuận", ta gửi undefined để DB lưu Null
@@ -162,23 +204,21 @@ export function useCreateJob(initialCredits: number = 0) {
 
         // Tự động gán các trường hệ thống
         trangThai: "Đang tuyển",
-        maNTD: user.id, // TODO: Lấy từ Context/Redux (User đang đăng nhập)
+        maTaiKhoan: user.sub, // Lấy từ authStore
+
+        kyNangs: formData.kyNangs,
       };
 
       console.log("🚀 Payload chuẩn bị gửi lên NestJS:", payload);
 
       // 3. Gọi API (Giả lập)
-      /*
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cong-viec`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/job`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
       if (!res.ok) throw new Error("Lỗi khi gọi API Backend");
-      */
-
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Giả lập mạng 1s
 
       // 4. Thành công
       alert("Đăng tin thành công!");
@@ -203,6 +243,10 @@ export function useCreateJob(initialCredits: number = 0) {
     handleInputChange,
     handleRichTextChange,
     handleSubmit,
+    handleToggleSkill,
+    resetForm,
+
+    // Close Modal
     closeModal: () => setShowUpgradeModal(false),
   };
 }

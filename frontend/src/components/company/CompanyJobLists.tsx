@@ -65,14 +65,10 @@ const CompanyJobLists = ({
                 ))}
               </div>
 
-              <ul className="mt-4 space-y-1 text-sm text-slate-600 list-disc list-inside">
-                {job.benefits.map((benefit) => (
-                  <li key={benefit} className="flex items-center gap-2">
-                    <CheckCircle2 size={16} className="text-emerald-500" />
-                    {benefit}
-                  </li>
-                ))}
-              </ul>
+              <div
+                className="mt-4 text-sm text-slate-600 prose prose-sm prose-slate max-w-none prose-li:marker:text-emerald-500"
+                dangerouslySetInnerHTML={{ __html: job.benefits || "" }}
+              />
             </Link>
           ))}
         </div>

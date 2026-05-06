@@ -208,9 +208,10 @@ const CompanyDetailModel = () => {
               Giới thiệu công ty
             </h2>
 
-            <div className="prose prose-slate max-w-none text-slate-600 leading-relaxed mb-8">
-              {company?.description}
-            </div>
+            <div
+              className="prose prose-slate max-w-none text-slate-600 leading-relaxed mb-8"
+              dangerouslySetInnerHTML={{ __html: company?.description || "" }}
+            ></div>
 
             {/* Mục Website Công ty (Mới thêm) */}
             <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -240,9 +241,10 @@ const CompanyDetailModel = () => {
               Phúc lợi công ty
             </h2>
 
-            <div className="prose prose-slate max-w-none text-slate-600 leading-relaxed mb-8">
-              {company?.description}
-            </div>
+            <div
+              className="prose prose-slate max-w-none text-slate-600 leading-relaxed mb-8"
+              dangerouslySetInnerHTML={{ __html: company?.description || "" }}
+            ></div>
           </div>
         </div>
 

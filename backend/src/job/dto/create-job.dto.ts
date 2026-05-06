@@ -1,4 +1,10 @@
-import { IsString, IsOptional, IsNumber, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsDateString,
+  IsArray,
+} from 'class-validator';
 
 export class CreateJobDto {
   @IsString()
@@ -54,9 +60,13 @@ export class CreateJobDto {
   trangThai: string;
 
   @IsString()
-  maNTD: string;
+  maTaiKhoan: string;
 
   @IsOptional()
   @IsString()
   maChiNhanh?: string;
+
+  @IsArray()
+  @IsString({ each: true }) // Kiểm tra đảm bảo mỗi phần tử trong mảng đều là chuỗi (string)
+  kyNangs: string[];
 }

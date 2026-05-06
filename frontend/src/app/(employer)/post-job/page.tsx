@@ -15,12 +15,14 @@ import {
   ChevronLeft,
   CheckCircle2,
   Loader2,
+  Building2,
+  Code2, // [BỔ SUNG: Icon cho hình thức làm việc / chi nhánh]
 } from "lucide-react";
 import { useCreateJob } from "@/hooks/job/useCreateJob";
 import RichTextEditor from "@/components/common/RichTextEditor";
+import { useAllSkill } from "@/hooks/useGetAllSkill";
 
 export default function PostJobPage() {
-  // GỌI CUSTOM HOOK (Truyền vào 0 để test Modal, truyền > 0 để test Đăng tin)
   const {
     formData,
     remainingCredits,
@@ -29,8 +31,13 @@ export default function PostJobPage() {
     handleInputChange,
     handleRichTextChange,
     handleSubmit,
+    handleToggleSkill,
+    resetForm,
     closeModal,
   } = useCreateJob(1);
+
+  // Dữ liệu Kỹ năng từ Database
+  const { allSkill } = useAllSkill();
 
   return (
     <div className="max-w-5xl mx-auto pb-12 pt-4">
@@ -125,7 +132,59 @@ export default function PostJobPage() {
                     </option>
                     <option value="Fulltime">Toàn thời gian (Full-time)</option>
                     <option value="Parttime">Bán thời gian (Part-time)</option>
+                    <option value="Freelance">Nghề tự do (Freelance)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* [BỔ SUNG: Hình thức làm việc theo Database (Remote, Tại văn phòng, Hybrid)] */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">
+                  Hình thức làm việc <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <Building2
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                    size={18}
+                  />
+                  <select
+                    name="hinhThucLamViec"
+                    value={formData.hinhThucLamViec}
+                    onChange={handleInputChange}
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none cursor-pointer"
+                    required
+                  >
+                    <option value="" disabled>
+                      Chọn hình thức
+                    </option>
+                    <option value="TaiVanPhong">
+                      Tại văn phòng (In-office)
+                    </option>
                     <option value="Remote">Làm việc từ xa (Remote)</option>
+                    <option value="Hybrid">Linh hoạt (Hybrid)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* [BỔ SUNG: Chọn Chi Nhánh (Tùy chọn) - Vì trong DB maChiNhanh có thể null nếu làm Remote] */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">
+                  Chi nhánh làm việc (Không bắt buộc)
+                </label>
+                <div className="relative">
+                  <MapPin
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                    size={18}
+                  />
+                  <select
+                    name="maChiNhanh"
+                    value={formData.maChiNhanh}
+                    onChange={handleInputChange}
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none cursor-pointer"
+                  >
+                    <option value="">-- Chọn chi nhánh --</option>
+                    <option value="CN1">Chi nhánh Hồ Chí Minh</option>
+                    <option value="CN2">Chi nhánh Hà Nội</option>
                   </select>
                 </div>
               </div>
@@ -133,7 +192,8 @@ export default function PostJobPage() {
 
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1">
-                Địa điểm làm việc <span className="text-red-500">*</span>
+                Thành phố (Từ khóa tìm kiếm){" "}
+                <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <MapPin
@@ -145,11 +205,49 @@ export default function PostJobPage() {
                   name="thanhPho"
                   value={formData.thanhPho}
                   onChange={handleInputChange}
-                  placeholder="VD: Quận 1, TP. Hồ Chí Minh"
+                  placeholder="VD: Đà Nẵng, TP. Hồ Chí Minh..."
                   className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                   required
                 />
               </div>
+            </div>
+
+            {/* [BỔ SUNG: KỸ NĂNG] Khối UI Chọn Kỹ Năng */}
+            <div className="pt-4 border-t border-slate-100">
+              <label className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                <Code2 size={18} className="text-primary" />
+                Kỹ năng chuyên môn <span className="text-red-500">*</span>
+              </label>
+              <div className="flex flex-wrap gap-3">
+                {allSkill?.map((skill) => {
+                  const isSelected = formData.kyNangs.includes(skill.id);
+                  return (
+                    <label
+                      key={skill.id}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-full border cursor-pointer select-none transition-all duration-200 ${
+                        isSelected
+                          ? "border-primary bg-primary/10 text-primary shadow-sm"
+                          : "border-slate-200 bg-white text-slate-600 hover:border-primary/50 hover:bg-slate-50"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        className="hidden" // Ẩn checkbox mặc định đi, dùng UI của label
+                        checked={isSelected}
+                        onChange={() => handleToggleSkill(skill.id)}
+                      />
+                      <span className="text-sm font-medium">{skill.name}</span>
+                    </label>
+                  );
+                })}
+              </div>
+              {/* Cảnh báo nếu chưa chọn kỹ năng nào */}
+              {formData.kyNangs.length === 0 && (
+                <p className="text-xs text-red-500 mt-2">
+                  * Vui lòng chọn ít nhất 1 kỹ năng để ứng viên dễ dàng tìm thấy
+                  tin của bạn.
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -157,7 +255,7 @@ export default function PostJobPage() {
         {/* Khối 2: Yêu cầu & Lương */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 sm:p-8">
           <h2 className="text-lg font-bold text-slate-800 mb-6 pb-2 border-b border-slate-100">
-            Yêu cầu & Quyền lợi
+            Kinh nghiệm & Quyền lợi
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -213,7 +311,7 @@ export default function PostJobPage() {
                     name="mucLuongToiThieu"
                     value={formData.mucLuongToiThieu}
                     onChange={handleInputChange}
-                    disabled={formData.negotiable} // Khóa nếu chọn thỏa thuận
+                    disabled={formData.negotiable}
                     placeholder="Tối thiểu"
                     className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   />
@@ -252,22 +350,53 @@ export default function PostJobPage() {
           </div>
         </div>
 
-        {/* Khối 3: Rich Text Editor Mô tả */}
+        {/* Khối 3: Rich Text Editor Mô tả, Yêu cầu, Phúc lợi */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 sm:p-8">
           <h2 className="text-lg font-bold text-slate-800 mb-6 pb-2 border-b border-slate-100">
-            Mô tả chi tiết công việc <span className="text-red-500">*</span>
+            Chi tiết nội dung tin đăng
           </h2>
 
-          <div className="bg-white">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Mô tả công việc
-            </label>
-            <RichTextEditor
-              value={formData.moTa}
-              onChange={(content) => handleRichTextChange("moTa", content)}
-            />
+          <div className="space-y-8">
+            {/* Mô tả công việc */}
+            <div className="bg-white">
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Mô tả công việc (Nhiệm vụ, trách nhiệm){" "}
+                <span className="text-red-500">*</span>
+              </label>
+              <RichTextEditor
+                value={formData.moTa}
+                onChange={(content) => handleRichTextChange("moTa", content)}
+              />
+            </div>
+
+            {/* [BỔ SUNG: Yêu cầu công việc] */}
+            <div className="bg-white">
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Yêu cầu ứng viên (Kỹ năng, bằng cấp){" "}
+                <span className="text-red-500">*</span>
+              </label>
+              <RichTextEditor
+                value={formData.yeuCauCongViec}
+                onChange={(content) =>
+                  handleRichTextChange("yeuCauCongViec", content)
+                }
+              />
+            </div>
+
+            {/* [BỔ SUNG: Phúc lợi] */}
+            <div className="bg-white">
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Quyền lợi & Phúc lợi (Lương tháng 13, BHYT,...){" "}
+                <span className="text-red-500">*</span>
+              </label>
+              <RichTextEditor
+                value={formData.phucLoi}
+                onChange={(content) => handleRichTextChange("phucLoi", content)}
+              />
+            </div>
           </div>
-          <p className="text-xs text-slate-500 mt-2">
+
+          <p className="text-xs text-slate-500 mt-4">
             * Nội dung bạn định dạng ở đây sẽ được hiển thị y hệt cho ứng viên
             xem.
           </p>
@@ -300,6 +429,7 @@ export default function PostJobPage() {
       {showUpgradeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm transition-opacity">
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            {/* Modal Content */}
             <div className="bg-linear-to-r from-orange-50 to-rose-50 p-6 flex justify-center border-b border-orange-100">
               <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-lg border border-orange-100">
                 <AlertCircle size={40} className="text-orange-500" />
