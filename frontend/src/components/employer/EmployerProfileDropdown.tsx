@@ -12,8 +12,13 @@ import {
   ShieldCheck,
   UserCircle,
 } from "lucide-react";
+import { useAuthStore } from "@/store/authStore";
+import { useLogout } from "@/hooks/auth/useLogout";
 
 export default function EmployerProfileDropdown() {
+  const { user } = useAuthStore();
+  const { mutate: logout } = useLogout();
+
   return (
     <div className="relative group cursor-pointer">
       {/* Khu vực Avatar trên thanh Nav */}
@@ -51,7 +56,7 @@ export default function EmployerProfileDropdown() {
         <div className="p-5 border-b border-slate-100 bg-linear-to-br from-slate-50 to-white">
           <p className="text-sm text-slate-500 mb-1">👋 Xin chào,</p>
           <p className="font-bold text-slate-800 text-base mb-1">
-            Lê Hùng Cường
+            {user?.name}
           </p>
           <div className="flex items-start gap-1.5 mt-2 bg-primary-light/50 p-2.5 rounded-lg border border-primary/10">
             <ShieldCheck size={16} className="text-primary mt-0.5 shrink-0" />
@@ -112,7 +117,10 @@ export default function EmployerProfileDropdown() {
             khoản Ứng viên
           </Link>
 
-          <button className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-rose-600 hover:bg-rose-50 rounded-lg transition-colors w-full text-left mt-1">
+          <button
+            onClick={() => logout()}
+            className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-rose-600 hover:bg-rose-50 rounded-lg transition-colors w-full text-left mt-1"
+          >
             <LogOut size={18} className="text-rose-500" /> Đăng xuất
           </button>
         </div>

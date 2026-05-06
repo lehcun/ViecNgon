@@ -48,7 +48,7 @@ export default function EmployerNavbar() {
         <div className="flex items-center gap-4">
           {/* Nút Đăng tin nhanh (Primary Action) */}
           <Link
-            href="/jobs/create"
+            href="/post-job"
             className="hidden md:flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-bold text-sm shadow-md shadow-primary/20 transition-all active:scale-95"
           >
             <PlusCircle size={18} /> Đăng tin

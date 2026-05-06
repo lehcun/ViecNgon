@@ -27,7 +27,7 @@ export default function EmployerLoginForm() {
       {
         onSuccess: (data) => {
           // Kiểm tra role của tài khoản đã đũng là nhatuyendung chưa
-          if (data.user.vaiTro !== "NHATUYENDUNG") {
+          if (data.user.role !== "NHATUYENDUNG") {
             // 1. Nếu là Ứng viên đi lạc, hiện thông báo lỗi
             setRoleError(
               "Tài khoản này không có quyền truy cập cổng Nhà tuyển dụng!",

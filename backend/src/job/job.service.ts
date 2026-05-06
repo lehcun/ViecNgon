@@ -1,9 +1,142 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import sanitizeHtml from 'sanitize-html';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { CreateJobDto } from './dto/create-job.dto';
+import slugify from 'slugify';
 
 @Injectable()
 export class JobService {
   constructor(private prisma: PrismaService) {}
+
+  // Hàm private để dọn dẹp HTML dùng chung
+  private sanitizeContent(htmlContent?: string): string | null {
+    if (!htmlContent) return null;
+    return sanitizeHtml(htmlContent, {
+      allowedTags: [
+        'b',
+        'i',
+        'em',
+        'strong',
+        'a',
+        'p',
+        'h1',
+        'h2',
+        'h3',
+        'h4',
+        'h5',
+        'h6',
+        'ul',
+        'li',
+        'ol',
+        'br',
+        'span',
+        'div',
+        'u',
+      ],
+      allowedAttributes: {
+        a: ['href', 'target'],
+        span: ['style'],
+        p: ['style'],
+      },
+    });
+  }
+
+  async create(createJobDto: CreateJobDto) {
+    // 1. Tạo Slug từ Tên công việc (VD: "Lập trình viên Java" -> "lap-trinh-vien-java-12345")
+    const baseSlug = slugify(createJobDto.tenCongViec, {
+      lower: true,
+      locale: 'vi',
+    });
+    const uniqueSlug = `${baseSlug}-${Date.now()}`; // Đảm bảo unique tuyệt đối
+
+    // 2. Làm sạch các trường chứa HTML từ Rich Text Editor
+    const cleanMoTa = this.sanitizeContent(createJobDto.moTa);
+    const cleanYeuCau = this.sanitizeContent(createJobDto.yeuCauCongViec);
+    const cleanPhucLoi = this.sanitizeContent(createJobDto.phucLoi);
+
+    // 3. Lưu vào Database
+    return this.prisma.congViec.create({
+      data: {
+        ...createJobDto,
+        slug: uniqueSlug,
+        moTa: cleanMoTa,
+        yeuCauCongViec: cleanYeuCau,
+        phucLoi: cleanPhucLoi,
+      },
+    });
+  }
+
+  async findAll() {
+    return this.prisma.congViec.findMany({
+      where: { trangThai: 'Đang tuyển' },
+      orderBy: { ngayDang: 'desc' },
+      include: {
+        nhaTuyenDung: true,
+        // chiNhanh: true, // Mở comment nếu cần lấy thông tin chi nhánh
+      },
+    });
+  }
+
+  async findOne(maCongViec: string) {
+    // 1. Tăng lượt xem lên 1 đơn vị mỗi lần gọi API lấy chi tiết
+    await this.prisma.congViec.update({
+      where: { maCongViec },
+      data: { luotXem: { increment: 1 } },
+    });
+
+    // 2. Lấy dữ liệu công việc kèm quan hệ
+    const job = await this.prisma.congViec.findUnique({
+      where: { maCongViec },
+      include: {
+        nhaTuyenDung: true,
+        chiNhanh: true,
+        congViecKyNangs: {
+          include: {
+            kyNang: true, // Trích xuất thêm tên kỹ năng nếu bạn có bảng KyNang
+          },
+        },
+      },
+    });
+
+    if (!job) {
+      throw new NotFoundException(
+        `Không tìm thấy công việc với mã: ${maCongViec}`,
+      );
+    }
+
+    return job;
+  }
+
+  async update(maCongViec: string, updateData: Partial<CreateJobDto>) {
+    // Làm sạch lại dữ liệu nếu HR có cập nhật các trường Rich Text
+    const dataToUpdate: Record<string, any> = { ...updateData };
+
+    if (typeof updateData.moTa === 'string') {
+      dataToUpdate.moTa = this.sanitizeContent(updateData.moTa);
+    }
+    if (typeof updateData.yeuCauCongViec === 'string') {
+      dataToUpdate.yeuCauCongViec = this.sanitizeContent(
+        updateData.yeuCauCongViec,
+      );
+    }
+    if (typeof updateData.phucLoi === 'string') {
+      dataToUpdate.phucLoi = this.sanitizeContent(updateData.phucLoi);
+    }
+
+    // Cập nhật ngày cập nhật mới nhất
+    dataToUpdate.ngayCapNhat = new Date();
+
+    return this.prisma.congViec.update({
+      where: { maCongViec },
+      data: dataToUpdate,
+    });
+  }
+
+  async remove(maCongViec: string) {
+    return this.prisma.congViec.delete({
+      where: { maCongViec },
+    });
+  }
 
   async getJobBySlug(slug: string) {
     // 1. Tìm công việc dựa vào slug

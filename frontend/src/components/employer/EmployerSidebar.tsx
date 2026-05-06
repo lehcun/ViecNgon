@@ -72,8 +72,8 @@ export default function EmployerSidebar() {
             <LayoutDashboard size={20} /> Tổng quan
           </Link>
           <Link
-            href="/jobs/create"
-            className={`${baseLinkClass} ${isActive("/jobs/create") ? activeLinkClass : inactiveLinkClass} text-primary font-bold`}
+            href="/post-job"
+            className={`${baseLinkClass} ${isActive("/post-job") ? activeLinkClass : inactiveLinkClass} text-primary font-bold`}
           >
             <FilePlus2 size={20} /> Đăng tin tuyển dụng
           </Link>
@@ -92,7 +92,7 @@ export default function EmployerSidebar() {
               <Users size={20} /> Quản lý ứng viên
             </div>
             <span className="bg-rose-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-              12
+              {recruiter?.recentApplicants.length}
             </span>
           </Link>
 
