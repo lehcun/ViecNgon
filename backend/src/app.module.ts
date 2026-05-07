@@ -8,6 +8,7 @@ import { RecruiterModule } from './recruiter/recruiter.module';
 import { CompanyModule } from './company/company.module';
 import { JobModule } from './job/job.module';
 import { SkillModule } from './skill/skill.module';
+import { ApplicationModule } from './application/application.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { SkillModule } from './skill/skill.module';
     CompanyModule,
     JobModule,
     SkillModule,
+    ApplicationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

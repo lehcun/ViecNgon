@@ -35,8 +35,6 @@ export class AuthController {
     const cookies = req.cookies as Record<string, string> | undefined;
     const token = cookies?.['access_token'];
 
-    console.log('Auth/me: access_token: ', token);
-
     if (!token) {
       throw new UnauthorizedException('Chưa đăng nhập');
     }

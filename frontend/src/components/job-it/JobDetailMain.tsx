@@ -12,12 +12,22 @@ import {
 import { JobDetailResponse } from "@viecngon/types";
 import { getRelativeTime } from "@/utils/formatTime";
 import { useAuthStore } from "@/store/authStore";
+import { useRouter } from "next/navigation";
 
 const JobDetailMain = ({ job }: { job?: JobDetailResponse }) => {
   const { isAuthenticated, user } = useAuthStore();
+  const router = useRouter();
 
   const [isSaved, setIsSaved] = useState(false);
   if (job === undefined) return <h2>loading...</h2>;
+
+  const handleApply = () => {
+    if (!isAuthenticated) {
+      router.push("/auth/login");
+    } else {
+      router.push(`/job-it/${job.slug}/job_applications`);
+    }
+  };
 
   return (
     <>
@@ -36,7 +46,11 @@ const JobDetailMain = ({ job }: { job?: JobDetailResponse }) => {
 
         {/* Nút Ứng tuyển & Lưu */}
         <div className="flex items-center gap-4 mb-8">
-          <button className="flex-1 bg-primary hover:bg-primary-hover text-white font-bold py-3.5 rounded-lg shadow-md shadow-primary/20 transition-all active:scale-95 text-lg">
+          <button
+            type="button"
+            onClick={handleApply}
+            className="flex-1 bg-primary hover:bg-primary-hover text-white font-bold py-3.5 rounded-lg shadow-md shadow-primary/20 transition-all active:scale-95 text-lg"
+          >
             Ứng tuyển ngay
           </button>
           <button
@@ -121,7 +135,7 @@ const JobDetailMain = ({ job }: { job?: JobDetailResponse }) => {
       {/* Card 2: 3 Lý do gia nhập */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:p-8">
         <h2 className="text-xl font-bold text-slate-800 mb-4">
-          {job.benefits.length} Lý do để gia nhập công ty
+          Lý do để gia nhập công ty
         </h2>
         {/* Render HTML từ Tiptap bằng dangerouslySetInnerHTML */}
         <div
