@@ -8,9 +8,11 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { JobService } from './job.service';
 import { CreateJobDto } from './dto/create-job.dto';
+import { GetJobsFilterDto } from './dto/get-jobs-filter.dto';
 
 @Controller('job')
 export class JobController {
@@ -20,11 +22,6 @@ export class JobController {
   @HttpCode(HttpStatus.CREATED)
   create(@Body() createJobDto: CreateJobDto) {
     return this.jobService.create(createJobDto);
-  }
-
-  @Get()
-  findAll() {
-    return this.jobService.findAll();
   }
 
   // @Get(':id')
@@ -40,6 +37,12 @@ export class JobController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.jobService.remove(id);
+  }
+
+  @Get()
+  async getJobs(@Query() filterDto: GetJobsFilterDto) {
+    // @Query() tự động lấy các tham số trên thanh URL nhét vào object filterDto
+    return this.jobService.getJobs(filterDto);
   }
 
   @Get(':slug')

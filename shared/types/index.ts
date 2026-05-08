@@ -74,6 +74,20 @@ export interface CompanyDetailResponse {
     // isHot?: boolean;
   }[];
 }
+export interface JobFilterParams {
+  thanhPho?: string;
+  loaiHinh?: string;
+  hinhThucLamViec?: string;
+
+  /**
+   * Lọc theo mức lương tối thiểu mong muốn (USD hoặc VNĐ tùy thiết kế)
+   * Lưu ý: Ở Frontend khi lấy từ URL xuống nó sẽ là chuỗi (string),
+   * khi gửi xuống Backend (NestJS) thì Class-validator sẽ ép kiểu về Number.
+   * VD: "500", "1000", "2000"
+   */
+  mucLuong?: string;
+  page?: string;
+}
 
 export interface JobDetailResponse {
   id: string;
@@ -81,7 +95,7 @@ export interface JobDetailResponse {
   slug: string;
   description: string | null;
   requirements: string | null;
-  benefits: string[];
+  benefits: string;
   salaryMin: number | null;
   salaryMax: number | null;
   salaryDisplay: string;
