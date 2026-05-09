@@ -23,6 +23,8 @@ const CompanyDetailModel = () => {
 
   const { company } = useCompanyDetail(slug);
 
+  if (!company) return <h2>...Loading</h2>;
+
   return (
     <>
       {/* 1. HEADER BANNER (Chuyển sang nền Xanh Đen - primary-dark) */}
@@ -32,8 +34,8 @@ const CompanyDetailModel = () => {
           <div className="flex items-center gap-6">
             <div className="flex items-center justify-center w-28 h-28 rounded-xl bg-white shadow-lg border-2 border-primary/20 shrink-0">
               <Image
-                src={company?.logo || "/logo.png"}
-                alt={company?.slug || "not found"}
+                src={company.logo || "/logo.png"}
+                alt={company.slug || "not found"}
                 width={100}
                 height={100}
                 className="w-full h-full object-cover rounded-xl"
@@ -41,16 +43,16 @@ const CompanyDetailModel = () => {
             </div>
             <div>
               <h1 className="text-3xl font-extrabold text-white mb-2">
-                {company?.name}
+                {company.name}
               </h1>
               <div className="flex flex-wrap items-center gap-4 text-sm text-slate-300">
                 <span className="flex items-center gap-1.5">
                   <MapPin size={16} className="text-primary-light" />
-                  {company?.location}
+                  {company.location}
                 </span>
                 <span className="flex items-center gap-1.5 underline hover:text-white cursor-pointer">
                   <Building2 size={16} className="text-primary-light" />{" "}
-                  {company?.totalJobs} việc làm đang tuyển dụng
+                  {company.totalJobs} việc làm đang tuyển dụng
                 </span>
               </div>
               <div className="flex gap-3 mt-4">
@@ -120,7 +122,7 @@ const CompanyDetailModel = () => {
                   <Building2 size={16} /> Mô hình công ty
                 </p>
                 <p className="font-semibold text-slate-800">
-                  {company?.companyModel}
+                  {company.companyModel}
                 </p>
               </div>
               <div>
@@ -128,14 +130,14 @@ const CompanyDetailModel = () => {
                   <Building2 size={16} /> Lĩnh vực công ty
                 </p>
                 <p className="font-semibold text-slate-800">
-                  {company?.industry}
+                  {company.industry}
                 </p>
               </div>
               <div>
                 <p className="text-sm text-slate-500 mb-1 flex items-center gap-1.5">
                   <Users size={16} /> Quy mô công ty
                 </p>
-                <p className="font-semibold text-slate-800">{company?.size}</p>
+                <p className="font-semibold text-slate-800">{company.size}</p>
               </div>
               <div>
                 <p className="text-sm text-slate-500 mb-1 flex items-center gap-1.5">
@@ -147,7 +149,7 @@ const CompanyDetailModel = () => {
                     alt="VietNam"
                     className="w-5 h-auto rounded-sm"
                   />
-                  {company?.country}
+                  {company.country}
                 </p>
               </div>
               <div>
@@ -155,7 +157,7 @@ const CompanyDetailModel = () => {
                   <Clock size={16} /> Thời gian làm việc
                 </p>
                 <p className="font-semibold text-slate-800">
-                  {company?.workingTime ?? "Chưa rõ"}
+                  {company.workingTime ?? "Chưa rõ"}
                 </p>
               </div>
               <div>
@@ -163,7 +165,7 @@ const CompanyDetailModel = () => {
                   <Clock size={16} /> Làm việc ngoài giờ
                 </p>
                 <p className="font-semibold text-slate-800">
-                  {company?.otPolicy ?? "Chưa có chính sách OT"}
+                  {company.otPolicy ?? "Chưa có chính sách OT"}
                 </p>
               </div>
             </div>
@@ -210,7 +212,7 @@ const CompanyDetailModel = () => {
 
             <div
               className="prose prose-slate max-w-none text-slate-600 leading-relaxed mb-8"
-              dangerouslySetInnerHTML={{ __html: company?.description || "" }}
+              dangerouslySetInnerHTML={{ __html: company.description || "" }}
             ></div>
 
             {/* Mục Website Công ty (Mới thêm) */}
@@ -224,7 +226,7 @@ const CompanyDetailModel = () => {
                 </p>
               </div>
               <a
-                href={company?.website || "/"}
+                href={company.website || "/"}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 px-5 py-2.5 bg-white border border-primary text-primary font-semibold rounded-md hover:bg-primary-light transition-colors"
@@ -243,7 +245,18 @@ const CompanyDetailModel = () => {
 
             <div
               className="prose prose-slate max-w-none text-slate-600 leading-relaxed mb-8"
-              dangerouslySetInnerHTML={{ __html: company?.description || "" }}
+              dangerouslySetInnerHTML={{ __html: company.benefits || "" }}
+            ></div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <h2 className="text-xl font-bold text-slate-800 mb-6 border-l-4 border-primary pl-3">
+              About me
+            </h2>
+
+            <div
+              className="prose prose-slate max-w-none text-slate-600 leading-relaxed mb-8"
+              dangerouslySetInnerHTML={{ __html: company.aboutMe || "" }}
             ></div>
           </div>
         </div>
@@ -251,8 +264,8 @@ const CompanyDetailModel = () => {
         {/* CỘT PHẢI: DANH SÁCH VIỆC LÀM */}
         <div className="w-full lg:w-1/3">
           <CompanyJobLists
-            totalJobs={company?.totalJobs}
-            jobs={company?.activeJobs}
+            totalJobs={company.totalJobs}
+            jobs={company.activeJobs}
           />
         </div>
       </section>

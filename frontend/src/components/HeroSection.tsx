@@ -6,7 +6,7 @@ export default function HeroSection() {
     <section className="bg-linear-to-r from-[#020c1b] via-[#0f2a5c] to-[#0a192f] pt-32 pb-12 px-6">
       <div className="max-w-5xl mx-auto">
         <h1 className="text-white text-3xl md:text-4xl font-bold mb-8">
-          863 Việc làm IT &quot;Ngon&quot;
+          15 Việc làm IT &quot;Ngon&quot;
         </h1>
 
         {/* Search Box */}

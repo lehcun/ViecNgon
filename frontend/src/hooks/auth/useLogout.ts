@@ -14,10 +14,7 @@ export const useLogout = (
   const queryClient = useQueryClient();
   // Lấy hàm xóa dữ liệu từ Zustand store
 
-  const { logout } = useAuthStore();
-  const clearAuth = () => {
-    logout();
-  };
+  const { clearAuth } = useAuthStore();
 
   return useMutation({
     mutationFn: async () => {

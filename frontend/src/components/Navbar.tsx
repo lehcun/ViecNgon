@@ -67,11 +67,13 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
           <ul
             className={`hidden md:flex items-center gap-6 text-sm font-medium ${textColor}`}
           >
-            <li
-              className={`flex items-center gap-1 cursor-pointer transition ${hoverColor}`}
-            >
-              Việc Làm IT <ChevronDown size={14} />
-            </li>
+            <Link href={"/job-it"}>
+              <li
+                className={`flex items-center gap-1 cursor-pointer transition ${hoverColor}`}
+              >
+                Việc Làm IT <ChevronDown size={14} />
+              </li>
+            </Link>
             <li
               className={`flex items-center gap-1 cursor-pointer transition ${hoverColor}`}
             >

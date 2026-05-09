@@ -52,11 +52,14 @@ export function middleware(request: NextRequest) {
   const isCandidateRoute =
     (path.startsWith("/dashboard") &&
       !path.startsWith("/employer-dashboard")) ||
-    path.startsWith("/applied-jobs");
+    path.includes("/job_applications");
 
   if (isCandidateRoute) {
     if (!token) {
-      return NextResponse.redirect(new URL("/login", request.url));
+      // (Mẹo UX): Đẩy về trang login kèm return URL để user login xong được back lại trang ứng tuyển
+      return NextResponse.redirect(
+        new URL(`/login?callbackUrl=${encodeURIComponent(path)}`, request.url),
+      );
     }
     if (role !== "UNGVIEN") {
       return NextResponse.redirect(new URL("/", request.url));
@@ -92,6 +95,7 @@ export const config = {
 
     // Các route của Ứng viên
     "/dashboard/:path*",
-    "/applied-jobs/:path*",
+    "/job_applications/:path*",
+    "/job-it/:slug/job_applications/:path*",
   ],
 };

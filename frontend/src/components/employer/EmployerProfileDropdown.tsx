@@ -17,7 +17,7 @@ import { useLogout } from "@/hooks/auth/useLogout";
 
 export default function EmployerProfileDropdown() {
   const { user } = useAuthStore();
-  const { mutate: logout } = useLogout();
+  const { mutate: logout } = useLogout({ redirectTo: "/employer/login" });
 
   return (
     <div className="relative group cursor-pointer">

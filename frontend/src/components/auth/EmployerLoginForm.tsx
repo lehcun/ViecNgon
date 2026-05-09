@@ -135,11 +135,12 @@ export default function EmployerLoginForm() {
         <p className="text-[13px] text-slate-500 leading-relaxed py-2">
           Bằng việc đăng nhập, bạn đồng ý với các
           <a href="#" className="text-primary hover:underline">
-            Điều khoản dịch vụ
+            {" "}
+            Điều khoản dịch vụ{" "}
           </a>
-          và
+          và{" "}
           <a href="#" className="text-primary hover:underline">
-            Chính sách quyền riêng tư
+            Chính sách quyền riêng tư{" "}
           </a>
           của ViecNgon liên quan đến thông tin riêng tư của bạn.
         </p>

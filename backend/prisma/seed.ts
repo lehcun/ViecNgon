@@ -128,27 +128,24 @@ async function main() {
   // =========================================================
   console.log('🏢 Đang tạo Công ty và kết nối hồ sơ HR...');
 
+  // --- 1. FPT SOFTWARE ---
   const ctyFPT = await prisma.congTy.create({
     data: {
       tenCongTy: 'FPT Software',
       tenPhapLy: 'Công ty TNHH Phần mềm FPT',
       slug: 'fpt-software',
-      moTa: 'FPT Software là công ty công nghệ lớn nhất Việt Nam với hơn 30.000 nhân viên trên toàn cầu. Chúng tôi tiên phong trong lĩnh vực chuyển đổi số, cung cấp các dịch vụ IT chất lượng cao như Cloud, AI/ML, Data Analytics và RPA cho hàng trăm khách hàng Fortune 500 trên thế giới.',
-      phucLoi: JSON.stringify([
-        'Lương tháng 13 và thưởng hiệu quả công việc cuối năm.',
-        'Gói bảo hiểm sức khỏe FPT Care độc quyền cho nhân viên và người thân.',
-        'Lộ trình thăng tiến rõ ràng, cơ hội làm việc Onsite ngắn hạn và dài hạn tại Nhật Bản, Mỹ, Châu Âu.',
-        'Hệ sinh thái tiện ích Campus chuẩn quốc tế: phòng Gym, bể bơi, khu thể thao ngoài trời, quán cafe đa dạng.',
-      ]),
+      moTa: '<p>FPT Software là công ty công nghệ lớn nhất Việt Nam với hơn 30.000 nhân viên trên toàn cầu. Chúng tôi tiên phong trong lĩnh vực chuyển đổi số, cung cấp các dịch vụ IT chất lượng cao cho hàng trăm khách hàng Fortune 500.</p>',
+      phucLoi:
+        '<ul><li>Lương tháng 13 và thưởng hiệu quả công việc cuối năm hấp dẫn.</li><li>Gói bảo hiểm sức khỏe FPT Care độc quyền dành cho nhân viên và người thân.</li><li>Cơ hội làm việc Onsite ngắn hạn và dài hạn tại Nhật Bản, Mỹ, và Châu Âu.</li><li>Hệ sinh thái Campus chuẩn quốc tế: phòng Gym, bể bơi, khu thể thao ngoài trời.</li></ul>',
       chuyenMon:
-        'Cloud Computing, AI & Machine Learning, Automotive, Enterprise Applications.',
+        '<ul><li><strong>Công nghệ:</strong> Java, .NET, Python, C++, Automotive.</li><li><strong>Giải pháp:</strong> Cloud Computing, AI/ML, Data Analytics, RPA.</li></ul>',
       aboutMe:
-        'Môi trường làm việc trẻ trung, năng động, nơi mọi ý tưởng đều được tôn trọng và tạo điều kiện phát triển.',
+        '<p>Tại FPT Software, chúng tôi tin rằng "Con người là tài sản quý giá nhất". Môi trường làm việc trẻ trung, năng động, nơi mọi ý tưởng đột phá đều được tôn trọng và tạo điều kiện phát triển tối đa.</p>',
       logoUrl:
         'https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-FPT.png',
       website: 'https://fptsoftware.com',
       thanhPho: 'Hà Nội',
-      diaChi: 'Khu Công nghệ cao Hòa Lạc, Thạch Thất, Hà Nội', // Trụ sở chính
+      diaChi: 'Khu Công nghệ cao Hòa Lạc, Thạch Thất, Hà Nội',
       moHinhCongTy: 'Outsource / Dịch vụ IT',
       linhVuc: 'Công nghệ thông tin / Phần mềm',
       quyMo: '10,000+ nhân viên',
@@ -156,40 +153,38 @@ async function main() {
       thoiGianLamViec: 'Thứ 2 - Thứ 6 (08:30 - 17:30)',
       chinhSachOT:
         'Thanh toán OT theo đúng quy định Luật Lao động (150%, 200%, 300%)',
-      giaiThuong: 'Top 100 Nơi làm việc tốt nhất Việt Nam 2023, Sao Khuê 2023',
+      giaiThuong:
+        'Top 100 Nơi làm việc tốt nhất Việt Nam, Giải thưởng Sao Khuê',
     },
   });
   const hrFPT = await prisma.nhaTuyenDung.create({
     data: { maCongTy: ctyFPT.maCongTy, maTaiKhoan: tkHR_FPT.maTaiKhoan },
   });
 
+  // --- 2. VNG CORPORATION ---
   const ctyVNG = await prisma.congTy.create({
     data: {
       tenCongTy: 'VNG Corporation',
       tenPhapLy: 'Công ty Cổ phần VNG',
       slug: 'vng-corporation',
-      moTa: 'Thành lập từ 2004, VNG là Kỳ lân công nghệ đầu tiên của Việt Nam. Chúng tôi xây dựng và phát triển các sản phẩm công nghệ với hàng chục triệu người dùng thực như Zalo, VNGGames, ZaloPay, và VNG Cloud.',
-      phucLoi: JSON.stringify([
-        'Lương tháng 13 & Performance Bonus (lên tới 3 tháng lương)',
-        'Bảo hiểm sức khỏe Premium cho bản thân và gia đình',
-        'Tài trợ chứng chỉ quốc tế (AWS, OCA, PMP...)',
-      ]),
-      chuyenMon: 'Social Media, Online Gaming, E-wallet, Cloud Services',
+      moTa: '<p>Thành lập từ 2004, VNG là Kỳ lân công nghệ đầu tiên của Việt Nam. Chúng tôi xây dựng hệ sinh thái dịch vụ trực tuyến phục vụ hàng chục triệu người dùng.</p>',
+      phucLoi:
+        '<ul><li>Package thu nhập lên tới 15-18 tháng lương/năm.</li><li>VNG Campus chuẩn quốc tế với đầy đủ tiện ích: Canteen, Gym, khu giải trí.</li><li>Bảo hiểm sức khỏe Premium và khám sức khỏe định kỳ hàng năm.</li><li>Hỗ trợ kinh phí đào tạo và thi các chứng chỉ quốc tế chuyên sâu.</li></ul>',
+      chuyenMon:
+        '<ul><li><strong>Sản phẩm:</strong> Zalo, ZaloPay, VNGGames.</li><li><strong>Hạ tầng:</strong> VNG Cloud, Data Center chuẩn Tier III.</li></ul>',
       aboutMe:
-        'Kiến tạo công nghệ, Phát triển con người. VNG tin tưởng vào sức mạnh của Internet sẽ thay đổi cuộc sống.',
+        '<p>Với sứ mệnh "Kiến tạo công nghệ và Phát triển con người", VNG tạo ra một môi trường làm việc cởi mở, không khoảng cách, thúc đẩy sự sáng tạo không giới hạn.</p>',
       logoUrl:
         'https://res.cloudinary.com/dbvlsf9bi/image/upload/v1776325179/vng_st3yi1.jpg',
       website: 'https://vng.com.vn',
       thanhPho: 'TP.HCM',
-      diaChi:
-        'VNG Campus, Z06 Đường số 13, Khu chế xuất Tân Thuận, Quận 7, TP.HCM',
+      diaChi: 'VNG Campus, Z06 Đường số 13, Quận 7, TP.HCM',
       moHinhCongTy: 'Product',
       linhVuc: 'Internet & Giải trí điện tử',
-      quyMo: '1000 - 5000 nhân viên',
+      quyMo: '1,000 - 5,000 nhân viên',
       quocGia: 'Việt Nam',
-      thoiGianLamViec: 'Thứ 2 - Thứ 6',
-      chinhSachOT:
-        'Không khuyến khích OT. Áp dụng nghỉ bù (Comp-off) nếu có phát sinh OT',
+      thoiGianLamViec: 'Thứ 2 - Thứ 6 (09:00 - 18:30)',
+      chinhSachOT: 'Không khuyến khích OT, áp dụng chế độ nghỉ bù linh hoạt.',
       giaiThuong: 'Nhà xuất bản Game hàng đầu Đông Nam Á',
     },
   });
@@ -197,46 +192,62 @@ async function main() {
     data: { maCongTy: ctyVNG.maCongTy, maTaiKhoan: tkHR_VNG.maTaiKhoan },
   });
 
+  // --- 3. SHOPEE VIETNAM ---
   const ctyShopee = await prisma.congTy.create({
     data: {
       tenCongTy: 'Shopee Vietnam',
       tenPhapLy: 'Công ty TNHH Shopee',
       slug: 'shopee-vietnam',
-      moTa: 'Nền tảng thương mại điện tử hàng đầu tại Đông Nam Á và Đài Loan.',
-      phucLoi: JSON.stringify([
-        'Gói bảo hiểm sức khỏe FPT Care độc quyền cho nhân viên và người thân.',
-        'Hệ sinh thái tiện ích Campus chuẩn quốc tế: phòng Gym, bể bơi, khu thể thao ngoài trời, quán cafe đa dạng.',
-      ]),
+      moTa: '<p>Shopee là nền tảng thương mại điện tử hàng đầu tại Đông Nam Á và Đài Loan, cung cấp trải nghiệm mua sắm trực tuyến dễ dàng và an toàn.</p>',
+      phucLoi:
+        '<ul><li>Cấp MacBook Pro ngay ngày đầu nhận việc.</li><li>Miễn phí trà, cafe, trái cây và đồ ăn nhẹ tại văn phòng hàng ngày.</li><li>Tham gia các sự kiện gắn kết nội bộ và du lịch công ty thường niên (Company Trip).</li><li>Môi trường đa quốc gia, làm việc trực tiếp với các chuyên gia từ Singapore.</li></ul>',
+      chuyenMon:
+        '<ul><li>Thương mại điện tử (E-commerce), Supply Chain.</li><li>Hệ thống chịu tải cao, Real-time Data Processing.</li></ul>',
+      aboutMe:
+        '<p>Chúng tôi tập trung vào việc trao quyền cho nhân viên để tạo ra tác động lớn cho cộng đồng thông qua công nghệ và đổi mới sáng tạo.</p>',
       logoUrl:
         'https://res.cloudinary.com/dbvlsf9bi/image/upload/v1777681291/shopee-vn_hwihqn.jpg',
       website: 'https://careers.shopee.vn',
-      diaChi: 'Saigon Centre, 65 Lê Lợi, Bến Nghé, Quận 1, TP.HCM',
       thanhPho: 'TP.HCM',
+      diaChi: 'Saigon Centre, 65 Lê Lợi, Bến Nghé, Quận 1, TP.HCM',
       moHinhCongTy: 'Product',
       linhVuc: 'Thương mại điện tử',
-      quyMo: '1000-5000 nhân viên',
+      quyMo: '1,000 - 5,000 nhân viên',
       quocGia: 'Singapore',
+      thoiGianLamViec: 'Thứ 2 - Thứ 6 (09:00 - 18:00)',
+      chinhSachOT: 'Thanh toán lương ngoài giờ theo quy định.',
+      giaiThuong: 'Top 1 Nền tảng Thương mại điện tử phổ biến nhất Việt Nam',
     },
   });
-  const hrShopee = await prisma.nhaTuyenDung.create({
+  await prisma.nhaTuyenDung.create({
     data: { maCongTy: ctyShopee.maCongTy, maTaiKhoan: tkHR_Shopee.maTaiKhoan },
   });
 
+  // --- 4. MOMO (FINTECH) ---
   const ctyMomo = await prisma.congTy.create({
     data: {
       tenCongTy: 'MoMo',
       tenPhapLy: 'Công ty Cổ phần Dịch vụ Di động Trực tuyến (M_Service)',
       slug: 'momo-vietnam',
-      moTa: 'Siêu ứng dụng thanh toán số 1 tại Việt Nam, tiên phong trong lĩnh vực FinTech.',
+      moTa: '<p>MoMo là siêu ứng dụng thanh toán số 1 Việt Nam, giúp người dùng thực hiện mọi giao dịch tài chính chỉ trên một nền tảng duy nhất.</p>',
+      phucLoi:
+        '<ul><li>Thưởng Performance định kỳ theo dự án và năng lực cá nhân.</li><li>Chế độ làm việc Hybrid (Linh hoạt làm việc tại nhà và văn phòng).</li><li>Trợ cấp thiết bị làm việc hiện đại cho toàn bộ nhân viên khối Tech.</li><li>Gói chăm sóc sức khỏe toàn diện định kỳ tại các bệnh viện quốc tế.</li></ul>',
+      chuyenMon:
+        '<ul><li>Payment Gateway, QR Payment, Digital Wallet.</li><li>Blockchain, AWS Cloud, High Performance Microservices.</li></ul>',
+      aboutMe:
+        '<p>Tại MoMo, chúng tôi xây dựng tương lai của tài chính số. Chúng tôi chào đón những cá nhân dám nghĩ, dám làm và có niềm đam mê mãnh liệt với sản phẩm.</p>',
       logoUrl:
         'https://cdn.haitrieu.com/wp-content/uploads/2022/10/Logo-MoMo-Square.png',
       website: 'https://momo.vn',
-      diaChi: 'Tòa nhà Phú Mỹ Hưng, Hoàng Văn Thái, Quận 7, TP.HCM',
       thanhPho: 'TP.HCM',
+      diaChi: 'Tòa nhà Phú Mỹ Hưng, Hoàng Văn Thái, Quận 7, TP.HCM',
       moHinhCongTy: 'Product',
-      linhVuc: 'FinTech',
-      quyMo: '1000-5000 nhân viên',
+      linhVuc: 'FinTech / Tài chính số',
+      quyMo: '1,000 - 5,000 nhân viên',
       quocGia: 'Việt Nam',
+      thoiGianLamViec: 'Thứ 2 - Thứ 6',
+      chinhSachOT: 'Chế độ đãi ngộ OT cạnh tranh và nghỉ bù xứng đáng.',
+      giaiThuong: 'Siêu ứng dụng thanh toán hàng đầu Việt Nam',
     },
   });
   const hrMomo = await prisma.nhaTuyenDung.create({
@@ -399,39 +410,21 @@ async function main() {
       tenCongViec: 'Senior Java Backend Engineer (Financial Project)',
       slug: 'senior-java-backend-engineer-financial-project-fpt',
 
-      // Khối nội dung chi tiết đã được chuẩn hóa JSON
-      moTa: JSON.stringify([
-        'Trực tiếp tham gia phân tích yêu cầu, thiết kế kiến trúc và viết code cho hệ thống Core Banking của đối tác chiến lược tại Mỹ.',
-        'Tối ưu hóa hiệu năng hệ thống (performance tuning), đảm bảo khả năng xử lý hàng triệu giao dịch mỗi ngày (High Availability, Scalability).',
-        'Phối hợp chặt chẽ với team BA, QA và khách hàng để giải quyết các technical bugs phức tạp.',
-        'Thực hiện Code Review và hướng dẫn/mentor cho các bạn Junior/Fresher trong team.',
-      ]),
-      yeuCauCongViec: JSON.stringify([
-        'Có tối thiểu 4 năm kinh nghiệm làm việc thực tế với Java (Java 8+ trở lên).',
-        'Nắm vững hệ sinh thái Spring (Spring Boot, Spring MVC, Spring Data JPA, Spring Security).',
-        'Có kinh nghiệm làm việc với kiến trúc Microservices và thiết kế RESTful APIs.',
-        'Thành thạo các hệ quản trị CSDL quan hệ (PostgreSQL/Oracle) và NoSQL (MongoDB/Redis).',
-        'Nắm vững các công cụ CI/CD, Git, Docker, Kubernetes.',
-        'Tiếng Anh giao tiếp và đọc hiểu tài liệu chuyên ngành tốt (Tương đương TOEIC 650+).',
-      ]),
-      phucLoi: JSON.stringify([
-        'Lương cơ bản lên đến $2500 + Thưởng hiệu suất dự án hàng quý.',
-        'Được tài trợ 100% lệ phí thi các chứng chỉ quốc tế (AWS, Oracle, PMP).',
-        'Cung cấp thiết bị làm việc hiện đại (Macbook, Màn hình phụ 27 inch).',
-        'Tham gia các lớp đào tạo tiếng Nhật/Tiếng Anh miễn phí tại công ty.',
-      ]),
+      moTa: '<ul><li>Trực tiếp tham gia phân tích yêu cầu, thiết kế kiến trúc và viết code cho hệ thống Core Banking của đối tác chiến lược tại Mỹ.</li><li>Tối ưu hóa hiệu năng hệ thống (performance tuning), đảm bảo khả năng xử lý hàng triệu giao dịch mỗi ngày (High Availability, Scalability).</li><li>Phối hợp chặt chẽ với team BA, QA và khách hàng để giải quyết các technical bugs phức tạp.</li><li>Thực hiện Code Review và hướng dẫn/mentor cho các bạn Junior/Fresher trong team.</li></ul>',
+      yeuCauCongViec:
+        '<ul><li>Có tối thiểu 4 năm kinh nghiệm làm việc thực tế với Java (Java 8+ trở lên).</li><li>Nắm vững hệ sinh thái Spring (Spring Boot, Spring MVC, Spring Data JPA, Spring Security).</li><li>Có kinh nghiệm làm việc với kiến trúc Microservices và thiết kế RESTful APIs.</li><li>Thành thạo các hệ quản trị CSDL quan hệ (PostgreSQL/Oracle) và NoSQL (MongoDB/Redis).</li><li>Nắm vững các công cụ CI/CD, Git, Docker, Kubernetes.</li><li>Tiếng Anh giao tiếp và đọc hiểu tài liệu chuyên ngành tốt (Tương đương TOEIC 650+).</li></ul>',
+      phucLoi:
+        '<ul><li>Lương cơ bản lên đến $2500 + Thưởng hiệu suất dự án hàng quý.</li><li>Được tài trợ 100% lệ phí thi các chứng chỉ quốc tế (AWS, Oracle, PMP).</li><li>Cung cấp thiết bị làm việc hiện đại (Macbook, Màn hình phụ 27 inch).</li><li>Tham gia các lớp đào tạo tiếng Nhật/Tiếng Anh miễn phí tại công ty.</li></ul>',
 
       mucLuongToiThieu: 30000000,
       mucLuongToiDa: 60000000,
       yeuCauKinhNghiem: 4,
       capBac: 'Senior',
 
-      // Khối địa điểm & hình thức
       thanhPho: 'Hà Nội',
       loaiHinh: 'Full-time',
       hinhThucLamViec: 'Hybrid', // Làm việc kết hợp
 
-      // Khối thời gian & quan hệ
       ngayDang: new Date(),
       ngayHetHan: nextMonth,
       luotXem: 125,
@@ -447,38 +440,21 @@ async function main() {
       tenCongViec: 'Node.js Developer (ZaloPay Platform)',
       slug: 'nodejs-developer-zalopay-platform-vng',
 
-      // Khối nội dung chi tiết đã được chuẩn hóa JSON
-      moTa: JSON.stringify([
-        'Phát triển và bảo trì các dịch vụ Backend/APIs cho nền tảng thanh toán ZaloPay, phục vụ hàng chục triệu người dùng.',
-        'Tham gia vào quá trình System Design, giải quyết các bài toán về Concurrency, Data Consistency trong xử lý giao dịch tài chính.',
-        'Giám sát hệ thống (Monitoring), phát hiện và xử lý sự cố (Troubleshooting) kịp thời để đảm bảo SLA 99.99%.',
-        'Viết Unit Test và Integration Test để đảm bảo chất lượng code đầu ra.',
-      ]),
-      yeuCauCongViec: JSON.stringify([
-        'Từ 2-3 năm kinh nghiệm phát triển Backend với Node.js (Express, NestJS).',
-        'Hiểu biết sâu sắc về JavaScript/TypeScript, Event Loop và Async/Await trong Node.js.',
-        'Có kinh nghiệm làm việc với Message Queue (Kafka, RabbitMQ) và hệ thống Cache (Redis).',
-        'Tư duy logic tốt, am hiểu về Data Structures & Algorithms.',
-        'Có kinh nghiệm trong lĩnh vực FinTech, Payment Gateway là một điểm cộng lớn.',
-      ]),
-      phucLoi: JSON.stringify([
-        'Package thu nhập lên tới 15 tháng lương/năm.',
-        'Cấp Macbook Pro M3 max option ngay ngày đầu tiên nhận việc.',
-        'Tham gia CLB thể thao của công ty (Bóng đá, Cầu lông, Yoga) với phí tài trợ 100%.',
-        'Môi trường làm việc cởi mở, không áp đặt dresscode.',
-      ]),
+      moTa: '<ul><li>Phát triển và bảo trì các dịch vụ Backend/APIs cho nền tảng thanh toán ZaloPay, phục vụ hàng chục triệu người dùng.</li><li>Tham gia vào quá trình System Design, giải quyết các bài toán về Concurrency, Data Consistency trong xử lý giao dịch tài chính.</li><li>Giám sát hệ thống (Monitoring), phát hiện và xử lý sự cố (Troubleshooting) kịp thời để đảm bảo SLA 99.99%.</li><li>Viết Unit Test và Integration Test để đảm bảo chất lượng code đầu ra.</li></ul>',
+      yeuCauCongViec:
+        '<ul><li>Từ 2-3 năm kinh nghiệm phát triển Backend với Node.js (Express, NestJS).</li><li>Hiểu biết sâu sắc về JavaScript/TypeScript, Event Loop và Async/Await trong Node.js.</li><li>Có kinh nghiệm làm việc với Message Queue (Kafka, RabbitMQ) và hệ thống Cache (Redis).</li><li>Tư duy logic tốt, am hiểu về Data Structures & Algorithms.</li><li>Có kinh nghiệm trong lĩnh vực FinTech, Payment Gateway là một điểm cộng lớn.</li></ul>',
+      phucLoi:
+        '<ul><li>Package thu nhập lên tới 15 tháng lương/năm.</li><li>Cấp Macbook Pro M3 max option ngay ngày đầu tiên nhận việc.</li><li>Tham gia CLB thể thao của công ty (Bóng đá, Cầu lông, Yoga) với phí tài trợ 100%.</li><li>Môi trường làm việc cởi mở, không áp đặt dresscode.</li></ul>',
 
       mucLuongToiThieu: 25000000,
       mucLuongToiDa: 45000000,
       yeuCauKinhNghiem: 2,
       capBac: 'Middle',
 
-      // Khối địa điểm & hình thức
       thanhPho: 'TP.HCM',
       loaiHinh: 'Full-time',
       hinhThucLamViec: 'Tại văn phòng',
 
-      // Khối thời gian & quan hệ
       ngayDang: new Date(),
       ngayHetHan: nextMonth,
       luotXem: 340,
@@ -494,21 +470,11 @@ async function main() {
       tenCongViec: 'Fullstack ReactJS/NodeJS (Remote - Đà Nẵng)',
       slug: 'fullstack-reactjs-nodejs-remote-fpt-danang',
 
-      // Khối nội dung chi tiết đã được chuẩn hóa JSON
-      moTa: JSON.stringify([
-        'Tham gia dự án phát triển hệ thống ERP nội bộ cho khách hàng quốc tế.',
-        'Viết code linh hoạt cho cả phía Frontend (React) và Backend (NodeJS).',
-        'Chủ động báo cáo tiến độ công việc qua Jira và tham gia các buổi họp Daily Scrum hàng ngày.',
-      ]),
-      yeuCauCongViec: JSON.stringify([
-        '3 năm kinh nghiệm lập trình Fullstack.',
-        'Kỹ năng tự quản lý thời gian tốt vì tính chất công việc làm từ xa.',
-        'Thành thạo Gitflow và quy trình CI/CD cơ bản.',
-      ]),
-      phucLoi: JSON.stringify([
-        'Trợ cấp set-up góc làm việc tại nhà (Màn hình, bàn ghế công thái học).',
-        'Thời gian làm việc hoàn toàn chủ động theo múi giờ cá nhân.',
-      ]),
+      moTa: '<ul><li>Tham gia dự án phát triển hệ thống ERP nội bộ cho khách hàng quốc tế.</li><li>Viết code linh hoạt cho cả phía Frontend (React) và Backend (NodeJS).</li><li>Chủ động báo cáo tiến độ công việc qua Jira và tham gia các buổi họp Daily Scrum hàng ngày.</li></ul>',
+      yeuCauCongViec:
+        '<ul><li>3 năm kinh nghiệm lập trình Fullstack.</li><li>Kỹ năng tự quản lý thời gian tốt vì tính chất công việc làm từ xa.</li><li>Thành thạo Gitflow và quy trình CI/CD cơ bản.</li></ul>',
+      phucLoi:
+        '<ul><li>Trợ cấp set-up góc làm việc tại nhà (Màn hình, bàn ghế công thái học).</li><li>Thời gian làm việc hoàn toàn chủ động theo múi giờ cá nhân.</li></ul>',
 
       mucLuongToiThieu: 20000000,
       mucLuongToiDa: 40000000,
