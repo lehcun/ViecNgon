@@ -9,10 +9,12 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { JobService } from './job.service';
 import { CreateJobDto } from './dto/create-job.dto';
 import { GetJobsFilterDto } from './dto/get-jobs-filter.dto';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
 @Controller('job')
 export class JobController {
@@ -35,8 +37,9 @@ export class JobController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.jobService.remove(id);
+  @UseGuards(JwtAuthGuard) // Mở ra để bảo vệ API
+  async removeJob(@Param('id') id: string) {
+    return await this.jobService.remove(id);
   }
 
   @Get()

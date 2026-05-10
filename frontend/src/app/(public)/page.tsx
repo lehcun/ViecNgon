@@ -2,7 +2,6 @@ import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import QuickLinks from "@/components/QuickLinks";
 import TopEmployers from "@/components/TopCompany";
-import Footer from "@/components/layout/Footer";
 
 export default function Home() {
   return (
@@ -11,7 +10,6 @@ export default function Home() {
       <HeroSection />
       <QuickLinks />
       <TopEmployers />
-      <Footer />
     </main>
   );
 }

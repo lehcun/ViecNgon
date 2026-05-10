@@ -239,10 +239,20 @@ export class JobService {
     });
   }
 
-  async remove(maCongViec: string) {
-    return this.prisma.congViec.delete({
-      where: { maCongViec },
+  async remove(id: string) {
+    const job = await this.prisma.congViec.findUnique({
+      where: { maCongViec: id },
     });
+
+    if (!job) {
+      throw new NotFoundException(`Không tìm thấy việc làm với ID: ${id}`);
+    }
+
+    await this.prisma.congViec.delete({
+      where: { maCongViec: id },
+    });
+
+    return { message: 'Xóa việc làm thành công' };
   }
 
   async getJobBySlug(slug: string) {
