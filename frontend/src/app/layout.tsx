@@ -4,8 +4,9 @@ import { Be_Vietnam_Pro, Geist } from "next/font/google";
 import QueryProvider from "@/providers/QueryProvider";
 import AuthProvider from "@/providers/AuthProvider";
 import { cn } from "@/lib/utils";
+import { Toaster } from "react-hot-toast";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
   title: "ViecNgon - Tìm kiếm việc làm IT ngon",
@@ -31,6 +32,7 @@ export default function RootLayout({
         <QueryProvider>
           <AuthProvider>
             <main>{children}</main>
+            <Toaster position="top-right" reverseOrder={false} />
           </AuthProvider>
         </QueryProvider>
       </body>

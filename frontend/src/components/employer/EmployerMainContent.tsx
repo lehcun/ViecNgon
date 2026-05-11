@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
+import React, { useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,10 +21,32 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { useRemoveJob } from "@/hooks/job/useRemoveJob";
+import toast from "react-hot-toast";
 
 const EmployerMainContent = () => {
   const { recruiterProfile: recruiter } = useRecruiterProfile();
-  const { mutate: remove } = useRemoveJob();
+  const { mutate: removeJob } = useRemoveJob();
+
+  const handleRemoveJob = (jobId: string, jobTitle: string) => {
+    // 1. Hiện bảng confirm của trình duyệt
+    const isConfirm = window.confirm(
+      `Bạn có chắc chắn muốn xóa tin: ${jobTitle} không?`,
+    );
+
+    // 2. Nếu người dùng bấm "Đồng ý" (OK) thì mới gọi API xóa
+    if (isConfirm) {
+      removeJob(jobId, {
+        onSuccess: () => {
+          // Bắn toast thành công tại tầng UI
+          toast.success("Đã xóa tin tuyển dụng thành công!");
+        },
+        onError: (error) => {
+          // Bắn toast lỗi tại tầng UI
+          toast.error(error.message || "Có lỗi xảy ra khi xóa!");
+        },
+      });
+    }
+  };
 
   return (
     <>
@@ -141,7 +163,7 @@ const EmployerMainContent = () => {
                           Chỉnh sửa tin
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => remove(job.id)}
+                          onClick={() => handleRemoveJob(job.id, job.title)}
                           className="text-red-600"
                         >
                           Xóa tin tuyển dụng

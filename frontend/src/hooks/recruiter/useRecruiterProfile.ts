@@ -1,9 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { RecruiterProfileResponse } from "@viecngon/types";
 
-// ---------------------------------------------------------
-// HOOK 1: LẤY THÔNG TIN HỒ SƠ HR & CÔNG TY (GET)
-// ---------------------------------------------------------
 export const useRecruiterProfile = () => {
   const query = useQuery<RecruiterProfileResponse>({
     queryKey: ["recruiterProfile"],

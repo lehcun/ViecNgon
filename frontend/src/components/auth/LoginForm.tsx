@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FiMail, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
 import { FaGoogle, FaFacebook } from "react-icons/fa";
+import toast from "react-hot-toast";
 import { useLogin } from "@/hooks/auth/useLogin";
 
 export default function LoginForm() {
@@ -26,7 +27,7 @@ export default function LoginForm() {
       {
         onSuccess: (data) => {
           // console.log("Thông tin user:", data.user);
-          alert("Đăng nhập thành công!");
+          toast.success("Đăng nhập thành công!");
           router.push("/dashboard");
         },
         onError: (err) => {
