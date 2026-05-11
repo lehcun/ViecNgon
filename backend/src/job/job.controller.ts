@@ -37,7 +37,7 @@ export class JobController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard) // Mở ra để bảo vệ API
+  @UseGuards(JwtAuthGuard)
   async removeJob(@Param('id') id: string) {
     return await this.jobService.remove(id);
   }

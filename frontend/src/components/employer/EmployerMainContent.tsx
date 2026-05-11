@@ -14,9 +14,17 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
+import { useRemoveJob } from "@/hooks/job/useRemoveJob";
 
 const EmployerMainContent = () => {
   const { recruiterProfile: recruiter } = useRecruiterProfile();
+  const { mutate: remove } = useRemoveJob();
 
   return (
     <>
@@ -118,9 +126,29 @@ const EmployerMainContent = () => {
                   <h3 className="font-bold text-slate-800 text-base">
                     {job.title}
                   </h3>
-                  <button className="text-slate-400 hover:text-slate-600">
-                    <MoreVertical size={18} />
-                  </button>
+                  <div className="text-slate-400 hover:text-slate-600">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="p-2 hover:bg-gray-100 rounded-full">
+                        {/* Nút 3 chấm */}
+                        <MoreVertical className="h-5 w-5 text-gray-500" />
+                      </DropdownMenuTrigger>
+
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => console.log("Xem")}>
+                          Xem chi tiết
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => console.log("Sửa")}>
+                          Chỉnh sửa tin
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => remove(job.id)}
+                          className="text-red-600"
+                        >
+                          Xóa tin tuyển dụng
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
                 <div className="flex items-center gap-4 text-sm text-slate-500 mb-4">
                   <span className="flex items-center gap-1">

@@ -1,8 +1,11 @@
 import { Metadata } from "next";
 import "./globals.css";
-import { Be_Vietnam_Pro } from "next/font/google";
+import { Be_Vietnam_Pro, Geist } from "next/font/google";
 import QueryProvider from "@/providers/QueryProvider";
 import AuthProvider from "@/providers/AuthProvider";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   title: "ViecNgon - Tìm kiếm việc làm IT ngon",
@@ -23,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="vi">
+    <html lang="vi" className={cn("font-sans", geist.variable)}>
       <body className={beVietnamPro.className}>
         <QueryProvider>
           <AuthProvider>
