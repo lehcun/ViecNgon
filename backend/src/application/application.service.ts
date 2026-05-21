@@ -65,4 +65,78 @@ export class ApplicationService {
       data: newApplication,
     };
   }
+
+  async getCandidatesForEmployer(maTaiKhoan: string) {
+    const nhaTuyenDung = await this.prisma.nhaTuyenDung.findUnique({
+      where: { maTaiKhoan: maTaiKhoan },
+      select: { maNTD: true },
+    });
+
+    // BẢO MẬT: Bắt lỗi nếu tài khoản này không có hồ sơ Nhà tuyển dụng
+    if (!nhaTuyenDung) {
+      throw new NotFoundException(
+        'Không tìm thấy thông tin Nhà tuyển dụng hợp lệ cho tài khoản này.',
+      );
+    }
+
+    const maNTD = nhaTuyenDung.maNTD;
+    // Bước 1: Query qua bảng DonXinViec
+    const applications = await this.prisma.donXinViec.findMany({
+      where: {
+        // BẢO MẬT: Chỉ lấy những đơn xin việc nộp vào CÔNG VIỆC thuộc về HR này
+        congViec: {
+          maNTD: maNTD,
+        },
+      },
+      include: {
+        // Kéo thông tin Ứng viên (để in ra Avatar và Tên)
+        ungVien: {
+          select: {
+            maUngVien: true,
+            tenUngVien: true,
+            avatarUrl: true,
+            cvUrl: true,
+            chuyenMon: true,
+            taiKhoan: {
+              select: { email: true, sdt: true }, // Lấy thông tin liên lạc
+            },
+          },
+        },
+        // Kéo thông tin Công việc (để in ra chữ: "Ứng tuyển: Senior ReactJS")
+        congViec: {
+          select: {
+            maCongViec: true,
+            tenCongViec: true,
+          },
+        },
+      },
+      orderBy: {
+        ngayNop: 'desc', // Sắp xếp hồ sơ mới nộp lên đầu tiên
+      },
+    });
+
+    // Bước 2: Chuẩn hóa dữ liệu (Format) trả về cho Frontend UI
+    return applications.map((app) => ({
+      applicationId: app.maDon,
+      candidateId: app.ungVien.maUngVien,
+      candidateName: app.ungVien.tenUngVien,
+      avatarUrl: app.ungVien.avatarUrl,
+      contactEmail: app.ungVien.taiKhoan.email,
+
+      jobId: app.congViec.maCongViec,
+      jobTitle: app.congViec.tenCongViec,
+
+      appliedAt: app.ngayNop,
+      status: app.trangThai, // Các trạng thái: CHUA_XEM, PHU_HOP...
+      cvUrl: app.fileCvUrl || app.ungVien.cvUrl, // Ưu tiên CV tải lên riêng, nếu không có thì lấy CV gốc
+    }));
+  }
+
+  async updateApplicationStatus(maDon: string, trangThai: string) {
+    // Các trạng thái hợp lệ như đã thống nhất: CHUA_XEM, DA_XEM, PHU_HOP, KHONG_PHU_HOP, PHONG_VAN [3]
+    return this.prisma.donXinViec.update({
+      where: { maDon: maDon },
+      data: { trangThai: trangThai },
+    });
+  }
 }

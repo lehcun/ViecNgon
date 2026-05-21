@@ -1,4 +1,12 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import * as jwtAuthGuard from 'src/auth/guards/jwt-auth.guard';
 import { ApplicationService } from './application.service';
 import { CreateDonXinViecDto } from './dto/create-don-xin-viec.dto';
@@ -17,6 +25,25 @@ export class ApplicationController {
     return this.donXinViecService.createApplication(
       createDonXinViecDto,
       user.id,
+    );
+  }
+
+  // 1. API Lấy danh sách ứng viên
+  @Get()
+  async getCandidates(@CurrentUser() user: jwtAuthGuard.AuthUser) {
+    // user.maTaiKhoan lấy từ token. Bạn dùng mã này query ra maNTD ở service nhé
+    return await this.donXinViecService.getCandidatesForEmployer(user.id);
+  }
+
+  // 2. API Cập nhật trạng thái đơn
+  @Patch(':maDon/status')
+  async updateStatus(
+    @Param('maDon') maDon: string,
+    @Body('status') newStatus: string,
+  ) {
+    return await this.donXinViecService.updateApplicationStatus(
+      maDon,
+      newStatus,
     );
   }
 }
