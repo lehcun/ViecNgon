@@ -521,16 +521,27 @@ async function main() {
     },
   });
 
-  await prisma.donXinViec.create({
-    data: {
-      maCongViec: job3.maCongViec,
-      maUngVien: uvMai.maUngVien,
-      trangThai: 'Chờ duyệt',
-      ngayNop: new Date(),
-      fileCvUrl: '/uploads/cv/mai_tran_cv.pdf',
-      chiTiet:
-        'Chào anh/chị HR, em gửi CV ứng tuyển vị trí Frontend E-commerce ạ.',
-    },
+  await prisma.donXinViec.createMany({
+    data: [
+      {
+        maCongViec: job3.maCongViec,
+        maUngVien: uvMai.maUngVien,
+        trangThai: 'CHO_DUYET',
+        ngayNop: new Date(),
+        fileCvUrl: '/uploads/cv/mai_tran_cv.pdf',
+        chiTiet:
+          'Chào anh/chị HR, em gửi CV ứng tuyển vị trí Fullstack ReactJS/NodeJS ạ.',
+      },
+      {
+        maCongViec: job1.maCongViec,
+        maUngVien: uvHoang.maUngVien,
+        trangThai: 'BI_LOAI',
+        ngayNop: new Date(),
+        fileCvUrl: '/uploads/cv/mai_tran_cv.pdf',
+        chiTiet:
+          'Chào anh/chị HR, em gửi CV ứng tuyển vị trí Senior Java Backend Engineer  ạ.',
+      },
+    ],
   });
 
   await prisma.goiQuangCao.createMany({

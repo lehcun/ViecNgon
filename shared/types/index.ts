@@ -243,3 +243,16 @@ export interface SkillResponse {
   id: string;
   name: string;
 }
+
+export interface ApplicationItem {
+  applicationId: string;
+  candidateId: string;
+  candidateName: string;
+  avatarUrl: string | null;
+  contactEmail: string;
+  jobId: string;
+  jobTitle: string;
+  appliedAt: string | Date;
+  status: string;
+  cvUrl: string | null;
+}

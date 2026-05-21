@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -260,7 +259,7 @@ const EmployerMainContent = () => {
 
             <div className="mt-auto pt-4 text-center">
               <Link
-                href="/employer/candidates"
+                href="/candidates"
                 className="text-sm font-semibold text-primary hover:underline"
               >
                 Xem tất cả hồ sơ

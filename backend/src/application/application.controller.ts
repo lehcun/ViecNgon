@@ -28,14 +28,13 @@ export class ApplicationController {
     );
   }
 
-  // 1. API Lấy danh sách ứng viên
+  @UseGuards(jwtAuthGuard.JwtAuthGuard)
   @Get()
   async getCandidates(@CurrentUser() user: jwtAuthGuard.AuthUser) {
-    // user.maTaiKhoan lấy từ token. Bạn dùng mã này query ra maNTD ở service nhé
     return await this.donXinViecService.getCandidatesForEmployer(user.id);
   }
 
-  // 2. API Cập nhật trạng thái đơn
+  @UseGuards(jwtAuthGuard.JwtAuthGuard)
   @Patch(':maDon/status')
   async updateStatus(
     @Param('maDon') maDon: string,

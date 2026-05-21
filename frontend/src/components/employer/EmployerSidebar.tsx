@@ -85,8 +85,8 @@ export default function EmployerSidebar() {
           </Link>
 
           <Link
-            href="/employer/candidates"
-            className={`${baseLinkClass} ${isActive("/employer/candidates") ? activeLinkClass : inactiveLinkClass} justify-between`}
+            href="candidates"
+            className={`${baseLinkClass} ${isActive("/candidates") ? activeLinkClass : inactiveLinkClass} justify-between`}
           >
             <div className="flex items-center gap-3">
               <Users size={20} /> Quản lý ứng viên
