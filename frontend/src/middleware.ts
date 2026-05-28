@@ -1,101 +1,99 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Hàm giải mã JWT Payload thủ công (Tương thích 100% với Edge Runtime của Next.js)
-function decodeJwt(token: string) {
+// 1. TỐI ƯU HÓA HÀM DECODE (Sử dụng chuẩn Buffer của Edge Runtime, chống crash)
+function getRoleFromToken(token: string): string | null {
   try {
-    const base64Url = token.split(".")[1];
-    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-    // Giải mã Base64 sang chuỗi JSON một cách an toàn (tránh lỗi ký tự tiếng Việt)
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split("")
-        .map(function (c) {
-          return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
-        })
-        .join(""),
-    );
-    return JSON.parse(jsonPayload);
+    const payloadBase64 = token.split(".")[1];
+    if (!payloadBase64) return null;
+
+    // Đảm bảo padding Base64 chuẩn
+    const base64 = payloadBase64.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = Buffer.from(base64, "base64").toString("utf-8");
+
+    const parsed = JSON.parse(jsonPayload);
+    return parsed?.role || null;
   } catch (error) {
-    return null;
+    console.error("JWT Decode Error:", error);
+    return null; // Token lỗi thì coi như không có quyền
   }
 }
+
+// 2. ĐỊNH NGHĨA QUY TẮC BẢO MẬT (RBAC - Role Based Access Control)
+// Thêm bớt quyền hoặc route chỉ cần sửa ở mảng này, không cần đụng vào logic if/else
+const routeAccessRules = [
+  { prefix: "/admin", allowedRoles: ["ADMIN"], loginUrl: "/admin/login" },
+  {
+    prefix: "/employer-dashboard",
+    allowedRoles: ["NHATUYENDUNG"],
+    loginUrl: "/employer/login",
+  },
+  {
+    prefix: "/post-job",
+    allowedRoles: ["NHATUYENDUNG"],
+    loginUrl: "/employer/login",
+  },
+  {
+    prefix: "/jobs/manage",
+    allowedRoles: ["NHATUYENDUNG"],
+    loginUrl: "/employer/login",
+  },
+  { prefix: "/dashboard", allowedRoles: ["UNGVIEN"], loginUrl: "/login" },
+  {
+    prefix: "/job_applications",
+    allowedRoles: ["UNGVIEN"],
+    loginUrl: "/login",
+  },
+];
+
+const authRoutes = ["/login", "/employer/login", "/admin/login", "/register"];
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get("access_token")?.value;
   const path = request.nextUrl.pathname;
 
-  // --- LẤY ROLE TỪ TOKEN ---
-  let role = null;
-  if (token) {
-    const payload = decodeJwt(token);
-    role = payload?.role; // Theo log JWT của bạn, key này tên là 'role' ('UNGVIEN' hoặc 'NHATUYENDUNG')
+  // Lấy Role từ token hiện tại
+  const userRole = token ? getRoleFromToken(token) : null;
+
+  // 3. XỬ LÝ REDIRECT KHI ĐÃ LOGIN MÀ VÀO TRANG AUTH (Login/Register)
+  if (token && userRole && authRoutes.includes(path)) {
+    const redirectMap: Record<string, string> = {
+      ADMIN: "/admin",
+      NHATUYENDUNG: "/employer-dashboard",
+      UNGVIEN: "/dashboard",
+    };
+    const redirectTo = redirectMap[userRole] || "/";
+    return NextResponse.redirect(new URL(redirectTo, request.url));
   }
 
-  // --- 1. BẢO VỆ CỔNG NHÀ TUYỂN DỤNG ---
-  const isEmployerRoute =
-    path.startsWith("/employer-dashboard") ||
-    path.startsWith("/post-job") ||
-    path.startsWith("/jobs/manage"); // (Lưu ý: Sửa lại /jobs-manage thành /jobs/manage cho đồng bộ với matcher bên dưới)
+  // 4. KIỂM TRA QUYỀN TRUY CẬP (The Magic Loop)
+  for (const rule of routeAccessRules) {
+    // Nếu URL hiện tại bắt đầu bằng một trong các prefix được bảo vệ
+    if (path.startsWith(rule.prefix)) {
+      // Nếu chưa có token -> Đẩy về trang đăng nhập tương ứng, có lưu lại callbackUrl
+      if (!token || !userRole) {
+        const loginUrl = new URL(rule.loginUrl, request.url);
+        loginUrl.searchParams.set("callbackUrl", path);
+        return NextResponse.redirect(loginUrl);
+      }
 
-  if (isEmployerRoute) {
-    if (!token) {
-      return NextResponse.redirect(new URL("/employer/login", request.url));
+      // Nếu có token nhưng ROLE không nằm trong danh sách cho phép -> Cấm truy cập
+      if (!rule.allowedRoles.includes(userRole)) {
+        return NextResponse.redirect(new URL("/403-forbidden", request.url)); // Tới trang báo lỗi không có quyền (hoặc về "/")
+      }
+
+      // Vượt qua kiểm tra -> Cho phép đi tiếp
+      break;
     }
-    if (role !== "NHATUYENDUNG") {
-      return NextResponse.redirect(new URL("/", request.url));
-    }
-  }
-
-  // --- 2. BẢO VỆ CÁC TRANG CỦA ỨNG VIÊN ---
-  // Dùng logic khéo léo để tránh nhầm lẫn giữa "/dashboard" và "/employer-dashboard"
-  const isCandidateRoute =
-    (path.startsWith("/dashboard") &&
-      !path.startsWith("/employer-dashboard")) ||
-    path.includes("/job_applications");
-
-  if (isCandidateRoute) {
-    if (!token) {
-      // (Mẹo UX): Đẩy về trang login kèm return URL để user login xong được back lại trang ứng tuyển
-      return NextResponse.redirect(
-        new URL(`/login?callbackUrl=${encodeURIComponent(path)}`, request.url),
-      );
-    }
-    if (role !== "UNGVIEN") {
-      return NextResponse.redirect(new URL("/", request.url));
-    }
-  }
-
-  // --- 3. ĐÃ LOGIN THÌ KHÔNG CHO VÀO LẠI TRANG LOGIN/REGISTER NỮA ---
-  const isAuthRoute =
-    path === "/login" || path === "/employer/login" || path === "/register";
-
-  if (token && isAuthRoute) {
-    // Tự động điều hướng về đúng màn hình tương ứng với Role
-    const redirectUrl =
-      role === "NHATUYENDUNG" ? "/employer-dashboard" : "/dashboard";
-    return NextResponse.redirect(new URL(redirectUrl, request.url));
   }
 
   return NextResponse.next();
 }
 
-// --- 4. CẤU HÌNH MATCHER ---
+// 5. MATCHER BẢO TRÌ SẠCH SẼ
 export const config = {
   matcher: [
-    // Các route của HR
-    "/employer-dashboard/:path*",
-    "/post-job/:path*",
-    "/jobs/manage/:path*",
-
-    // Các route Auth
-    "/login",
-    "/employer/login",
-    "/register",
-
-    // Các route của Ứng viên
-    "/dashboard/:path*",
-    "/job_applications/:path*",
-    "/job-it/:slug/job_applications/:path*",
+    // Bỏ qua các file tĩnh, ảnh, api nội bộ để tăng tốc hiệu năng
+    "/((?!api|_next/static|_next/image|favicon.ico|public).*)",
   ],
 };
