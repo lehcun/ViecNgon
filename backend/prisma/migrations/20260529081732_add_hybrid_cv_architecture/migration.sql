@@ -1,0 +1,94 @@
+BEGIN TRY
+
+BEGIN TRAN;
+
+-- AlterTable
+ALTER TABLE [dbo].[MUAQUANGCAO] DROP CONSTRAINT [MUAQUANGCAO_trangThai_df];
+ALTER TABLE [dbo].[MUAQUANGCAO] ADD CONSTRAINT [MUAQUANGCAO_trangThai_df] DEFAULT 'Chờ thanh toán' FOR [trangThai];
+
+-- AlterTable
+ALTER TABLE [dbo].[UNGVIEN] ADD [gioiThieuBanThan] NVARCHAR(max),
+[loaiCvMacDinh] VARCHAR(20) NOT NULL CONSTRAINT [UNGVIEN_loaiCvMacDinh_df] DEFAULT 'ONLINE',
+[maFileCvMacDinh] VARCHAR(50);
+
+-- CreateTable
+CREATE TABLE [dbo].[FILE_CV] (
+    [maFileCv] VARCHAR(50) NOT NULL,
+    [tenFile] NVARCHAR(255) NOT NULL,
+    [fileUrl] VARCHAR(255) NOT NULL,
+    [ngayTaiLen] DATETIME2 NOT NULL CONSTRAINT [FILE_CV_ngayTaiLen_df] DEFAULT CURRENT_TIMESTAMP,
+    [maUngVien] VARCHAR(50) NOT NULL,
+    CONSTRAINT [FILE_CV_pkey] PRIMARY KEY CLUSTERED ([maFileCv])
+);
+
+-- CreateTable
+CREATE TABLE [dbo].[KINH_NGHIEM] (
+    [maKinhNghiem] VARCHAR(50) NOT NULL,
+    [tenCongTy] NVARCHAR(150) NOT NULL,
+    [viTri] NVARCHAR(100) NOT NULL,
+    [ngayBatDau] DATE NOT NULL,
+    [ngayKetThuc] DATE,
+    [moTaChiTiet] NVARCHAR(max),
+    [maUngVien] VARCHAR(50) NOT NULL,
+    CONSTRAINT [KINH_NGHIEM_pkey] PRIMARY KEY CLUSTERED ([maKinhNghiem])
+);
+
+-- CreateTable
+CREATE TABLE [dbo].[HOC_VAN] (
+    [maHocVan] VARCHAR(50) NOT NULL,
+    [tenTruong] NVARCHAR(150) NOT NULL,
+    [nganhHoc] NVARCHAR(100) NOT NULL,
+    [ngayBatDau] DATE NOT NULL,
+    [ngayTotNghiep] DATE,
+    [gpa] VARCHAR(10),
+    [maUngVien] VARCHAR(50) NOT NULL,
+    CONSTRAINT [HOC_VAN_pkey] PRIMARY KEY CLUSTERED ([maHocVan])
+);
+
+-- CreateTable
+CREATE TABLE [dbo].[CHUNG_CHI] (
+    [maChungChi] VARCHAR(50) NOT NULL,
+    [tenChungChi] NVARCHAR(150) NOT NULL,
+    [toChucCap] NVARCHAR(150) NOT NULL,
+    [ngayCap] DATE NOT NULL,
+    [ngayHetHan] DATE,
+    [maUngVien] VARCHAR(50) NOT NULL,
+    CONSTRAINT [CHUNG_CHI_pkey] PRIMARY KEY CLUSTERED ([maChungChi])
+);
+
+-- CreateTable
+CREATE TABLE [dbo].[NGOAI_NGU] (
+    [maNgoaiNgu] VARCHAR(50) NOT NULL,
+    [tenNgoaiNgu] NVARCHAR(50) NOT NULL,
+    [trinhDo] NVARCHAR(50) NOT NULL,
+    [maUngVien] VARCHAR(50) NOT NULL,
+    CONSTRAINT [NGOAI_NGU_pkey] PRIMARY KEY CLUSTERED ([maNgoaiNgu])
+);
+
+-- AddForeignKey
+ALTER TABLE [dbo].[FILE_CV] ADD CONSTRAINT [FILE_CV_maUngVien_fkey] FOREIGN KEY ([maUngVien]) REFERENCES [dbo].[UNGVIEN]([maUngVien]) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE [dbo].[KINH_NGHIEM] ADD CONSTRAINT [KINH_NGHIEM_maUngVien_fkey] FOREIGN KEY ([maUngVien]) REFERENCES [dbo].[UNGVIEN]([maUngVien]) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE [dbo].[HOC_VAN] ADD CONSTRAINT [HOC_VAN_maUngVien_fkey] FOREIGN KEY ([maUngVien]) REFERENCES [dbo].[UNGVIEN]([maUngVien]) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE [dbo].[CHUNG_CHI] ADD CONSTRAINT [CHUNG_CHI_maUngVien_fkey] FOREIGN KEY ([maUngVien]) REFERENCES [dbo].[UNGVIEN]([maUngVien]) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE [dbo].[NGOAI_NGU] ADD CONSTRAINT [NGOAI_NGU_maUngVien_fkey] FOREIGN KEY ([maUngVien]) REFERENCES [dbo].[UNGVIEN]([maUngVien]) ON DELETE CASCADE ON UPDATE CASCADE;
+
+COMMIT TRAN;
+
+END TRY
+BEGIN CATCH
+
+IF @@TRANCOUNT > 0
+BEGIN
+    ROLLBACK TRAN;
+END;
+THROW
+
+END CATCH

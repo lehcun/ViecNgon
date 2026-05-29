@@ -43,6 +43,12 @@ model UngVien {
   diaChi             String?   @db.NVarChar(255)
   trangThaiPortfolio String?   @db.VarChar(10)
 
+  //Trong phần giới thiệu
+  gioiThieuBanThan String? @db.NVarChar(Max)
+
+  loaiCvMacDinh   String  @default("ONLINE") @db.VarChar(20) // 'ONLINE' hoặc 'PDF'
+  maFileCvMacDinh String? @db.VarChar(50)
+
   // Khóa ngoại
   maTaiKhoan String   @unique @db.VarChar(50)
   taiKhoan   TaiKhoan @relation(fields: [maTaiKhoan], references: [maTaiKhoan], onDelete: Cascade)
@@ -53,7 +59,84 @@ model UngVien {
   kyNangs        UngVienKyNang[]
   congTyTheoDois TheoDoiCongTy[]
 
+  //Quan hệ chi tiết 
+  danhSachFileCv FileCv[]
+  kinhNghiems    KinhNghiem[]
+  hocVans        HocVan[]
+  chungChis      ChungChi[]
+  ngoaiNgus      NgoaiNgu[]
+
   @@map("UNGVIEN")
+}
+
+// ==========================================
+// 2.1 TẦNG FILE ĐÍNH KÈM (PDF UPLOAD)
+// ==========================================
+model FileCv {
+  maFileCv   String   @id @default(uuid()) @db.VarChar(50)
+  tenFile    String   @db.NVarChar(255)
+  fileUrl    String   @db.VarChar(255)
+  ngayTaiLen DateTime @default(now())
+
+  maUngVien String  @db.VarChar(50)
+  ungVien   UngVien @relation(fields: [maUngVien], references: [maUngVien], onDelete: Cascade)
+
+  @@map("FILE_CV")
+}
+
+// ==========================================
+// 2.2 TẦNG HỒ SƠ TRỰC TUYẾN
+// ==========================================
+model KinhNghiem {
+  maKinhNghiem String    @id @default(uuid()) @db.VarChar(50)
+  tenCongTy    String    @db.NVarChar(150)
+  viTri        String    @db.NVarChar(100)
+  ngayBatDau   DateTime  @db.Date
+  ngayKetThuc  DateTime? @db.Date
+  moTaChiTiet  String?   @db.NVarChar(Max)
+
+  maUngVien String  @db.VarChar(50)
+  ungVien   UngVien @relation(fields: [maUngVien], references: [maUngVien], onDelete: Cascade)
+
+  @@map("KINH_NGHIEM")
+}
+
+model HocVan {
+  maHocVan      String    @id @default(uuid()) @db.VarChar(50)
+  tenTruong     String    @db.NVarChar(150)
+  nganhHoc      String    @db.NVarChar(100)
+  ngayBatDau    DateTime  @db.Date
+  ngayTotNghiep DateTime? @db.Date
+  gpa           String?   @db.VarChar(10)
+
+  maUngVien String  @db.VarChar(50)
+  ungVien   UngVien @relation(fields: [maUngVien], references: [maUngVien], onDelete: Cascade)
+
+  @@map("HOC_VAN")
+}
+
+model ChungChi {
+  maChungChi  String    @id @default(uuid()) @db.VarChar(50)
+  tenChungChi String    @db.NVarChar(150)
+  toChucCap   String    @db.NVarChar(150)
+  ngayCap     DateTime  @db.Date
+  ngayHetHan  DateTime? @db.Date
+
+  maUngVien String  @db.VarChar(50)
+  ungVien   UngVien @relation(fields: [maUngVien], references: [maUngVien], onDelete: Cascade)
+
+  @@map("CHUNG_CHI")
+}
+
+model NgoaiNgu {
+  maNgoaiNgu  String @id @default(uuid()) @db.VarChar(50)
+  tenNgoaiNgu String @db.NVarChar(50)
+  trinhDo     String @db.NVarChar(50)
+
+  maUngVien String  @db.VarChar(50)
+  ungVien   UngVien @relation(fields: [maUngVien], references: [maUngVien], onDelete: Cascade)
+
+  @@map("NGOAI_NGU")
 }
 
 // ---------------------------------------------------------
@@ -86,7 +169,7 @@ model CongTy {
   nhaTuyenDungs NhaTuyenDung[]
   baiViets      BaiViet[] // Nối với tab Bài viết
   nguoiTheoDois TheoDoiCongTy[] // Nối với tính năng Theo dõi
-  chiNhanhs     ChiNhanh[]     // Liên kết danh sách địa điểm
+  chiNhanhs     ChiNhanh[] // Liên kết danh sách địa điểm
 
   @@map("CONGTY")
 }
@@ -95,17 +178,17 @@ model CongTy {
 // 4. BẢNG CHI NHÁNH CÔNG TY (Lưu đa địa điểm)
 // ---------------------------------------------------------
 model ChiNhanh {
-  maChiNhanh  String  @id @default(uuid()) @db.VarChar(50)
-  thanhPho    String  @db.NVarChar(100) 
-  diaChi      String  @db.NVarChar(255) 
-  mapUrl      String? @db.VarChar(500)
-  
-  // Khóa ngoại
-  maCongTy    String  @db.VarChar(50)
-  congTy      CongTy  @relation(fields: [maCongTy], references: [maCongTy], onDelete: Cascade)
+  maChiNhanh String  @id @default(uuid()) @db.VarChar(50)
+  thanhPho   String  @db.NVarChar(100)
+  diaChi     String  @db.NVarChar(255)
+  mapUrl     String? @db.VarChar(500)
 
-  congViecs   CongViec[] // Quan hệ
-  
+  // Khóa ngoại
+  maCongTy String @db.VarChar(50)
+  congTy   CongTy @relation(fields: [maCongTy], references: [maCongTy], onDelete: Cascade)
+
+  congViecs CongViec[] // Quan hệ
+
   @@map("CHINHANH")
 }
 
@@ -133,37 +216,37 @@ model NhaTuyenDung {
 // 6. BẢNG CÔNG VIỆC
 // ---------------------------------------------------------
 model CongViec {
-  maCongViec       String   @id @default(uuid()) @db.VarChar(50)
-  tenCongViec      String   @db.NVarChar(150)
-  slug             String   @unique @db.VarChar(200)
+  maCongViec  String @id @default(uuid()) @db.VarChar(50)
+  tenCongViec String @db.NVarChar(150)
+  slug        String @unique @db.VarChar(200)
 
   // --- KHỐI NỘI DUNG CHI TIẾT ---
-  moTa             String?  @db.NVarChar(Max) // Mô tả công việc (Nhiệm vụ, trách nhiệm)
-  yeuCauCongViec   String?  @db.NVarChar(Max) // BỔ SUNG: Yêu cầu ứng viên (Kỹ năng, bằng cấp)
-  phucLoi          String?  @db.NVarChar(Max) // BỔ SUNG: Phúc lợi (Lương tháng 13, Macbook...)
+  moTa           String? @db.NVarChar(Max) // Mô tả công việc (Nhiệm vụ, trách nhiệm)
+  yeuCauCongViec String? @db.NVarChar(Max) // BỔ SUNG: Yêu cầu ứng viên (Kỹ năng, bằng cấp)
+  phucLoi        String? @db.NVarChar(Max) // BỔ SUNG: Phúc lợi (Lương tháng 13, Macbook...)
 
-  mucLuongToiThieu Decimal?  @db.Decimal(18, 0)
-  mucLuongToiDa    Decimal?  @db.Decimal(18, 0)
+  mucLuongToiThieu Decimal? @db.Decimal(18, 0)
+  mucLuongToiDa    Decimal? @db.Decimal(18, 0)
   yeuCauKinhNghiem Int?
-  capBac           String?   @db.NVarChar(50)
+  capBac           String?  @db.NVarChar(50)
 
   // --- KHỐI ĐỊA ĐIỂM & HÌNH THỨC ---
-  thanhPho         String?  @db.NVarChar(100) // BỔ SUNG: Phục vụ in ra thẻ Job và bộ lọc (VD: Đà Nẵng)
-  loaiHinh         String   @db.NVarChar(50)  // Full-time, Part-time, Freelance
-  hinhThucLamViec  String?  @db.NVarChar(50)  // BỔ SUNG: Remote, Tại văn phòng, Hybrid
+  thanhPho        String? @db.NVarChar(100) // BỔ SUNG: Phục vụ in ra thẻ Job và bộ lọc (VD: Đà Nẵng)
+  loaiHinh        String  @db.NVarChar(50) // Full-time, Part-time, Freelance
+  hinhThucLamViec String? @db.NVarChar(50) // BỔ SUNG: Remote, Tại văn phòng, Hybrid
 
- // --- KHỐI THỜI GIAN & THỐNG KÊ ---
-  ngayDang         DateTime
-  ngayHetHan       DateTime?
-  ngayCapNhat      DateTime @default(now()) @updatedAt // BỔ SUNG: Thời gian HR cập nhật tin lần cuối
-  luotXem          Int      @default(0) // BỔ SUNG: Đếm số lượt ứng viên click vào tin
-  trangThai        String   @db.VarChar(20)
+  // --- KHỐI THỜI GIAN & THỐNG KÊ ---
+  ngayDang    DateTime
+  ngayHetHan  DateTime?
+  ngayCapNhat DateTime  @default(now()) @updatedAt // BỔ SUNG: Thời gian HR cập nhật tin lần cuối
+  luotXem     Int       @default(0) // BỔ SUNG: Đếm số lượt ứng viên click vào tin
+  trangThai   String    @db.VarChar(20)
 
   // --- KHÓA NGOẠI & QUAN HỆ ---
-  maNTD            String       @db.VarChar(50)
-  nhaTuyenDung     NhaTuyenDung @relation(fields: [maNTD], references: [maNTD], onDelete: NoAction, onUpdate: NoAction)
-  maChiNhanh       String?  @db.VarChar(50) // Dấu ? (Optional) để dự phòng cho các việc làm Remote (Làm từ xa không cần tới chi nhánh)
-  chiNhanh         ChiNhanh? @relation(fields: [maChiNhanh], references: [maChiNhanh], onDelete: NoAction, onUpdate: NoAction)
+  maNTD        String       @db.VarChar(50)
+  nhaTuyenDung NhaTuyenDung @relation(fields: [maNTD], references: [maNTD], onDelete: NoAction, onUpdate: NoAction)
+  maChiNhanh   String?      @db.VarChar(50) // Dấu ? (Optional) để dự phòng cho các việc làm Remote (Làm từ xa không cần tới chi nhánh)
+  chiNhanh     ChiNhanh?    @relation(fields: [maChiNhanh], references: [maChiNhanh], onDelete: NoAction, onUpdate: NoAction)
 
   // Quan hệ
   donXinViecs     DonXinViec[]
