@@ -1,4 +1,5 @@
 import { useAuthStore } from "@/store/authStore";
+import { useRouter } from "next/navigation";
 import { useState, ChangeEvent, FormEvent } from "react";
 
 // 1. Định nghĩa Type cho Form State (Khớp với UI nhập liệu)
@@ -44,7 +45,7 @@ export interface CreateCongViecPayload {
 export function useCreateJob(initialCredits: number = 0) {
   const { user } = useAuthStore();
 
-  console.log(user);
+  const router = useRouter();
 
   // --- UI STATES ---
   const [remainingCredits, setRemainingCredits] =
@@ -147,7 +148,7 @@ export function useCreateJob(initialCredits: number = 0) {
     e.preventDefault();
 
     console.log(user);
-    if (!user?.sub) {
+    if (!user) {
       alert("Bạn cần đăng nhập để thực hiện chức năng này!");
       return;
     }
@@ -225,6 +226,8 @@ export function useCreateJob(initialCredits: number = 0) {
       alert("Đăng tin thành công!");
       setRemainingCredits((prev) => prev - 1);
       resetForm();
+
+      router.push("/employer-dashboard");
     } catch (error) {
       console.error("❌ Lỗi đăng tin:", error);
       alert("Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.");
