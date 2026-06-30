@@ -11,7 +11,7 @@ export class CandidateController {
   @UseGuards(jwtAuthGuard.JwtAuthGuard)
   @Get('profile')
   async getProfile(@CurrentUser() user: jwtAuthGuard.AuthUser) {
-    return this.candidateService.getProfile(user.id);
+    return await this.candidateService.getProfile(user.id);
   }
 
   @UseGuards(jwtAuthGuard.JwtAuthGuard)

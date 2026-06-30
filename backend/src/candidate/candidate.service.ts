@@ -1,25 +1,37 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateCandidateDto } from './dto/update-candidate.dto';
+import { CandidateProfileResponse } from '@viecngon/types';
 
 @Injectable()
 export class CandidateService {
   constructor(private prisma: PrismaService) {}
 
   // 1. Lấy thông tin chi tiết ứng viên dựa trên ID tài khoản đang login
-  async getProfile(maTaiKhoan: string) {
+  async getProfile(maTaiKhoan: string): Promise<CandidateProfileResponse> {
+    // 1. Kéo toàn bộ dữ liệu từ Database
     const profile = await this.prisma.ungVien.findUnique({
       where: { maTaiKhoan: maTaiKhoan },
       include: {
         taiKhoan: {
-          select: {
-            email: true,
-            sdt: true,
-            tenNguoiDung: true,
-          },
+          select: { email: true, sdt: true, tenNguoiDung: true },
         },
         kyNangs: {
           include: { kyNang: true },
+        },
+        // --- INCLUDE CÁC BẢNG MỚI CỦA HYBRID CV ---
+        kinhNghiems: {
+          orderBy: { ngayBatDau: 'desc' }, // Sắp xếp kinh nghiệm mới nhất lên đầu
+        },
+        hocVans: {
+          orderBy: { ngayBatDau: 'desc' }, // Sắp xếp học vấn mới nhất lên đầu
+        },
+        chungChis: {
+          orderBy: { ngayCap: 'desc' },
+        },
+        ngoaiNgus: true,
+        danhSachFileCv: {
+          orderBy: { ngayTaiLen: 'desc' }, // CV mới tải lên nằm trên cùng
         },
       },
     });
@@ -30,6 +42,7 @@ export class CandidateService {
       );
     }
 
+    // 2. Format dữ liệu chuẩn hóa sang tiếng Anh trả về Frontend
     return {
       candidateId: profile.maUngVien,
       accountId: profile.maTaiKhoan,
@@ -42,17 +55,61 @@ export class CandidateService {
       cvUrl: profile.cvUrl,
       address: profile.diaChi,
 
+      // Dữ liệu mới
+      aboutMe: profile.gioiThieuBanThan,
+      defaultCvType: profile.loaiCvMacDinh,
+      defaultCvFileId: profile.maFileCvMacDinh,
+
       account: {
         email: profile.taiKhoan.email,
         userName: profile.taiKhoan.tenNguoiDung,
         phoneNumber: profile.taiKhoan.sdt,
       },
 
-      // Mổ xẻ mảng kỹ năng và gom gọn lại
       skills: profile.kyNangs.map((k) => ({
         skillId: k.maKyNang,
         skillName: k.kyNang.tenKyNang,
         level: k.mucDo,
+      })),
+
+      // Mapping các mảng dữ liệu mới
+      experiences: profile.kinhNghiems.map((kn) => ({
+        id: kn.maKinhNghiem,
+        companyName: kn.tenCongTy,
+        position: kn.viTri,
+        startDate: kn.ngayBatDau,
+        endDate: kn.ngayKetThuc,
+        description: kn.moTaChiTiet,
+      })),
+
+      educations: profile.hocVans.map((hv) => ({
+        id: hv.maHocVan,
+        schoolName: hv.tenTruong,
+        major: hv.nganhHoc,
+        startDate: hv.ngayBatDau,
+        endDate: hv.ngayTotNghiep,
+        gpa: hv.gpa,
+      })),
+
+      certificates: profile.chungChis.map((cc) => ({
+        id: cc.maChungChi,
+        name: cc.tenChungChi,
+        organization: cc.toChucCap,
+        issueDate: cc.ngayCap,
+        expirationDate: cc.ngayHetHan,
+      })),
+
+      languages: profile.ngoaiNgus.map((nn) => ({
+        id: nn.maNgoaiNgu,
+        name: nn.tenNgoaiNgu,
+        proficiency: nn.trinhDo,
+      })),
+
+      uploadedCvs: profile.danhSachFileCv.map((file) => ({
+        id: file.maFileCv,
+        fileName: file.tenFile,
+        fileUrl: file.fileUrl,
+        uploadedAt: file.ngayTaiLen,
       })),
     };
   }

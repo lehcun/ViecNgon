@@ -13,12 +13,10 @@ export const useCandidateProfile = () => {
         },
       );
 
-      // Fetch không tự throw error với HTTP status 4xx, 5xx nên phải tự check
       if (!response.ok) {
         throw new Error("Lỗi khi tải dữ liệu hồ sơ");
       }
 
-      // Phải gọi hàm json() để parse dữ liệu trả về
       return response.json();
     },
     staleTime: 5 * 60 * 1000,

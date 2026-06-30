@@ -21,6 +21,8 @@ import { formatDateToDDMMYYYY } from "@/utils/date";
 export default function CandidateProfilePage() {
   const { candidateProfile } = useCandidateProfile();
 
+  console.log("candidateProfile: ", candidateProfile);
+
   //Các state
   const [isEditInfoOpen, setIsEditInfoOpen] = useState(false);
   const profileCompletion = 71;

@@ -128,13 +128,18 @@ export interface CandidateProfileResponse {
   candidateId: string;
   accountId: string;
   candidateName: string;
-  dateOfBirth: string | null;
+  dateOfBirth: Date | string | null;
   gender: string | null;
   yearsOfExperience: number | null;
   avatarUrl: string | null;
   profession: string;
   cvUrl: string | null;
   address: string | null;
+
+  // --- CÁC TRƯỜNG MỚI BỔ SUNG CHO HYBRID CV ---
+  aboutMe: string | null; // Giới thiệu bản thân
+  defaultCvType: string; // 'ONLINE' hoặc 'PDF'
+  defaultCvFileId: string | null; // ID của file CV mặc định (nếu chọn PDF)
 
   account: {
     email: string;
@@ -146,6 +151,46 @@ export interface CandidateProfileResponse {
     skillId: string;
     skillName: string;
     level: string | null;
+  }[];
+
+  // --- CÁC MẢNG DỮ LIỆU LỒNG NHAU (HỒ SƠ TRỰC TUYẾN) ---
+  experiences: {
+    id: string;
+    companyName: string;
+    position: string;
+    startDate: Date | string;
+    endDate: Date | string | null;
+    description: string | null;
+  }[];
+
+  educations: {
+    id: string;
+    schoolName: string;
+    major: string;
+    startDate: Date | string;
+    endDate: Date | string | null;
+    gpa: string | null;
+  }[];
+
+  certificates: {
+    id: string;
+    name: string;
+    organization: string;
+    issueDate: Date | string;
+    expirationDate: Date | string | null;
+  }[];
+
+  languages: {
+    id: string;
+    name: string;
+    proficiency: string;
+  }[];
+
+  uploadedCvs: {
+    id: string;
+    fileName: string;
+    fileUrl: string;
+    uploadedAt: Date | string;
   }[];
 }
 

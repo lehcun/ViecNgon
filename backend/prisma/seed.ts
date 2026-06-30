@@ -323,9 +323,11 @@ async function main() {
   ] = createdSkills;
 
   // =========================================================
-  // 5. TẠO HỒ SƠ ỨNG VIÊN & GẮN KỸ NĂNG
+  // 5. TẠO HỒ SƠ ỨNG VIÊN (HYBRID CV - NESTED WRITES)
   // =========================================================
-  console.log('🧑‍💻 Đang tạo Hồ sơ Ứng viên...');
+  console.log('🧑‍💻 Đang tạo Hồ sơ Ứng viên (Profile Động + File Đính kèm)...');
+
+  // --- ỨNG VIÊN 1: SENIOR BACKEND ---
   const uvTuan = await prisma.ungVien.create({
     data: {
       maTaiKhoan: tkUV_Tuan.maTaiKhoan,
@@ -333,13 +335,75 @@ async function main() {
       ngaySinh: new Date('1996-08-12'),
       gioiTinh: 'Nam',
       soNamKinhNghiem: 5,
-      chuyenMon: 'Senior Backend Developer',
-      cvUrl: '/uploads/cv/tuan_nguyen_cv.pdf',
-      diaChi: 'Hà Nội',
+      chuyenMon: 'Senior Backend Developer (Node.js/AWS)',
+      diaChi: 'Cầu Giấy, Hà Nội',
       trangThaiPortfolio: 'Public',
+      cvUrl: '/uploads/cv/tuan_nguyen_backend_cv.pdf',
+      loaiCvMacDinh: 'ONLINE', // Ưu tiên dùng Profile động
+      gioiThieuBanThan:
+        '<p>Với hơn 5 năm kinh nghiệm làm việc trong các hệ thống <strong>High-Traffic</strong> và kiến trúc <strong>Microservices</strong>. Điểm mạnh của tôi là khả năng tối ưu hóa hiệu năng và thiết lập CI/CD.</p>',
+
+      // 1. Ghi lồng File CV
+      danhSachFileCv: {
+        create: [
+          {
+            tenFile: 'Tuan_Nguyen_Backend_2026.pdf',
+            fileUrl: '/uploads/cv/tuan_nguyen_backend_cv.pdf',
+          },
+        ],
+      },
+      // 2. Ghi lồng Kinh Nghiệm
+      kinhNghiems: {
+        create: [
+          {
+            tenCongTy: 'XYZ Tech Company',
+            viTri: 'Tech Lead',
+            ngayBatDau: new Date('2022-06-01'),
+            ngayKetThuc: null, // null = Đến nay
+            moTaChiTiet:
+              '<ul><li>Dẫn dắt team 5 người xây dựng Payment Gateway xử lý 10.000 TPS.</li><li>Thiết kế hệ thống Microservices với NestJS và Kafka.</li></ul>',
+          },
+          {
+            tenCongTy: 'ABC Corp',
+            viTri: 'Backend Developer',
+            ngayBatDau: new Date('2018-09-01'),
+            ngayKetThuc: new Date('2022-05-31'),
+            moTaChiTiet:
+              '<ul><li>Phát triển và bảo trì hệ thống ERP nội bộ.</li><li>Chuyển đổi thành công kiến trúc Monolith sang Microservices.</li></ul>',
+          },
+        ],
+      },
+      // 3. Ghi lồng Học Vấn
+      hocVans: {
+        create: [
+          {
+            tenTruong: 'Đại học Bách Khoa Hà Nội',
+            nganhHoc: 'Kỹ thuật Phần mềm',
+            ngayBatDau: new Date('2014-09-01'),
+            ngayTotNghiep: new Date('2018-06-01'),
+            gpa: '3.4/4.0',
+          },
+        ],
+      },
+      // 4. Ghi lồng Chứng Chỉ
+      chungChis: {
+        create: [
+          {
+            tenChungChi: 'AWS Certified Solutions Architect',
+            toChucCap: 'Amazon Web Services',
+            ngayCap: new Date('2023-05-15'),
+            ngayHetHan: new Date('2026-05-15'),
+          },
+        ],
+      },
+      // 5. Ghi lồng Ngoại Ngữ
+      ngoaiNgus: {
+        create: [{ tenNgoaiNgu: 'Tiếng Anh', trinhDo: 'TOEIC 850' }],
+      },
     },
   });
 
+  // --- ỨNG VIÊN 2: UI/UX & FRONTEND ---
   const uvMai = await prisma.ungVien.create({
     data: {
       maTaiKhoan: tkUV_Mai.maTaiKhoan,
@@ -347,13 +411,62 @@ async function main() {
       ngaySinh: new Date('1999-03-25'),
       gioiTinh: 'Nữ',
       soNamKinhNghiem: 2,
-      chuyenMon: 'UI/UX Designer & Frontend',
-      cvUrl: '/uploads/cv/mai_tran_cv.pdf',
-      diaChi: 'Hồ Chí Minh',
+      chuyenMon: 'UI/UX Designer & Frontend React',
+      diaChi: 'Quận 1, TP.HCM',
       trangThaiPortfolio: 'Public',
+      cvUrl: '/uploads/cv/mai_tran_design_cv.pdf',
+      loaiCvMacDinh: 'PDF', // Ứng viên này thích dùng File PDF gốc hơn
+      gioiThieuBanThan:
+        '<p>Là một người đam mê cái đẹp và tư duy hướng người dùng (User-centric). Tôi có khả năng kết nối hoàn hảo giữa bản vẽ Figma và code ReactJS thực tế.</p>',
+
+      danhSachFileCv: {
+        create: [
+          {
+            tenFile: 'MaiTran_UIUX_Portfolio.pdf',
+            fileUrl: '/uploads/cv/mai_tran_design_cv.pdf',
+          },
+        ],
+      },
+      kinhNghiems: {
+        create: [
+          {
+            tenCongTy: 'Creative Agency',
+            viTri: 'UI/UX Designer',
+            ngayBatDau: new Date('2023-01-01'),
+            ngayKetThuc: null,
+            moTaChiTiet:
+              '<ul><li>Thiết kế Design System cho 3 dự án E-commerce lớn.</li><li>Phối hợp cùng team Dev để đảm bảo Pixel-perfect.</li></ul>',
+          },
+        ],
+      },
+      hocVans: {
+        create: [
+          {
+            tenTruong: 'Đại học RMIT Việt Nam',
+            nganhHoc: 'Cử nhân Thiết kế (Truyền thông số)',
+            ngayBatDau: new Date('2018-09-01'),
+            ngayTotNghiep: new Date('2022-06-01'),
+            gpa: 'High Distinction',
+          },
+        ],
+      },
+      chungChis: {
+        create: [
+          {
+            tenChungChi: 'Google UX Design Professional',
+            toChucCap: 'Coursera',
+            ngayCap: new Date('2023-02-10'),
+            ngayHetHan: null,
+          }, // Chứng chỉ không hết hạn
+        ],
+      },
+      ngoaiNgus: {
+        create: [{ tenNgoaiNgu: 'Tiếng Anh', trinhDo: 'IELTS 7.5' }],
+      },
     },
   });
 
+  // --- ỨNG VIÊN 3: DEVOPS / CLOUD ---
   const uvHoang = await prisma.ungVien.create({
     data: {
       maTaiKhoan: tkUV_Hoang.maTaiKhoan,
@@ -361,15 +474,72 @@ async function main() {
       ngaySinh: new Date('1995-11-05'),
       gioiTinh: 'Nam',
       soNamKinhNghiem: 7,
-      chuyenMon: 'DevOps / Cloud Engineer',
-      cvUrl: '/uploads/cv/hoang_le_cv.pdf',
-      diaChi: 'Đà Nẵng',
+      chuyenMon: 'Cloud & DevOps Engineer',
+      diaChi: 'Hải Châu, Đà Nẵng',
       trangThaiPortfolio: 'Public',
+      cvUrl: '/uploads/cv/hoang_le_devops_cv.pdf',
+      loaiCvMacDinh: 'ONLINE',
+      gioiThieuBanThan:
+        '<p>Chuyên gia tự động hóa luồng triển khai phần mềm (CI/CD) và quản trị hạ tầng Cloud. Mục tiêu của tôi là "Make deployment boring".</p>',
+
+      danhSachFileCv: {
+        create: [
+          {
+            tenFile: 'HoangLe_DevOps_CV.pdf',
+            fileUrl: '/uploads/cv/hoang_le_devops_cv.pdf',
+          },
+        ],
+      },
+      kinhNghiems: {
+        create: [
+          {
+            tenCongTy: 'Global Tech',
+            viTri: 'Senior Cloud Engineer',
+            ngayBatDau: new Date('2020-03-01'),
+            ngayKetThuc: null,
+            moTaChiTiet:
+              '<ul><li>Quản trị cụm Kubernetes với hơn 200 nodes trên AWS EKS.</li></ul>',
+          },
+          {
+            tenCongTy: 'Local ISP',
+            viTri: 'System Admin',
+            ngayBatDau: new Date('2017-08-01'),
+            ngayKetThuc: new Date('2020-02-28'),
+            moTaChiTiet:
+              '<ul><li>Vận hành hệ thống máy chủ Linux vật lý.</li></ul>',
+          },
+        ],
+      },
+      hocVans: {
+        create: [
+          {
+            tenTruong: 'Đại học FPT',
+            nganhHoc: 'An toàn Thông tin',
+            ngayBatDau: new Date('2013-09-01'),
+            ngayTotNghiep: new Date('2017-08-01'),
+            gpa: '3.0/4.0',
+          },
+        ],
+      },
+      chungChis: {
+        create: [
+          {
+            tenChungChi: 'CKA: Certified Kubernetes Administrator',
+            toChucCap: 'CNCF',
+            ngayCap: new Date('2024-01-10'),
+            ngayHetHan: new Date('2027-01-10'),
+          },
+        ],
+      },
     },
   });
-
+  // =========================================================
+  // 5.1 GẮN KỸ NĂNG CHO ỨNG VIÊN (Phần quan trọng của Hybrid CV)
+  // =========================================================
+  console.log('⚡ Đang cập nhật Kỹ năng chuyên môn cho Ứng viên...');
   await prisma.ungVienKyNang.createMany({
     data: [
+      // Kỹ năng của Tuấn
       {
         maUngVien: uvTuan.maUngVien,
         maKyNang: knNode.maKyNang,
@@ -377,12 +547,17 @@ async function main() {
       },
       { maUngVien: uvTuan.maUngVien, maKyNang: knSQL.maKyNang, mucDo: 'Giỏi' },
       { maUngVien: uvTuan.maUngVien, maKyNang: knTS.maKyNang, mucDo: 'Giỏi' },
+      { maUngVien: uvTuan.maUngVien, maKyNang: knAWS.maKyNang, mucDo: 'Khá' },
+
+      // Kỹ năng của Mai
       {
         maUngVien: uvMai.maUngVien,
         maKyNang: knFigma.maKyNang,
         mucDo: 'Chuyên gia',
       },
-      { maUngVien: uvMai.maUngVien, maKyNang: knReact.maKyNang, mucDo: 'Khá' },
+      { maUngVien: uvMai.maUngVien, maKyNang: knReact.maKyNang, mucDo: 'Giỏi' },
+
+      // Kỹ năng của Hoàng
       {
         maUngVien: uvHoang.maUngVien,
         maKyNang: knAWS.maKyNang,
@@ -391,9 +566,42 @@ async function main() {
       {
         maUngVien: uvHoang.maUngVien,
         maKyNang: knDocker.maKyNang,
-        mucDo: 'Giỏi',
+        mucDo: 'Chuyên gia',
       },
       { maUngVien: uvHoang.maUngVien, maKyNang: knK8s.maKyNang, mucDo: 'Giỏi' },
+      {
+        maUngVien: uvHoang.maUngVien,
+        maKyNang: knPython.maKyNang,
+        mucDo: 'Khá',
+      },
+    ],
+  });
+
+  // =========================================================
+  // 5.2 TẠO PORTFOLIO / DỰ ÁN CÁ NHÂN
+  // =========================================================
+  console.log('📂 Đang bơm dữ liệu Portfolio (Dự án thực tế)...');
+
+  await prisma.portfolio.createMany({
+    data: [
+      {
+        maUngVien: uvTuan.maUngVien,
+        tieuDe: 'Hệ thống Thanh toán V-Pay (Đồ án tốt nghiệp)',
+        moTa: '<p>Xây dựng hệ thống cổng thanh toán mô phỏng với <strong>NestJS, Redis và SQL Server</strong>. Áp dụng RabbitMQ để xử lý hàng đợi giao dịch.</p>',
+        projectUrl: 'https://github.com/tuan-nguyen/v-pay',
+      },
+      {
+        maUngVien: uvMai.maUngVien,
+        tieuDe: 'Redesign App Ngân hàng số Timo',
+        moTa: '<p>Dự án cá nhân: Phân tích lại luồng UX và Redesign toàn bộ UI cho ứng dụng Timo. Sử dụng <strong>Figma</strong> để thiết kế Design System và Prototype.</p>',
+        projectUrl: 'https://behance.net/maitran/timo-redesign',
+      },
+      {
+        maUngVien: uvHoang.maUngVien,
+        tieuDe: 'Tự động hóa CI/CD cho E-commerce Platform',
+        moTa: '<p>Thiết lập luồng CI/CD hoàn chỉnh sử dụng GitHub Actions, build Docker Image và deploy tự động lên cụm Kubernetes (EKS) trên AWS.</p>',
+        projectUrl: 'https://hoangle.dev/projects/k8s-ecommerce',
+      },
     ],
   });
 
