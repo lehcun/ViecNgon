@@ -17,6 +17,7 @@ import {
 import PersonalInfoModal from "@/components/candidate/PersonalInfoModal";
 import { useCandidateProfile } from "@/hooks/candidate/useCandidateProfile";
 import { formatDateToDDMMYYYY } from "@/utils/date";
+import { CandidateProfileResponse } from "@viecngon/types";
 
 export default function CandidateProfilePage() {
   const { candidateProfile } = useCandidateProfile();
@@ -60,7 +61,7 @@ export default function CandidateProfilePage() {
                 {candidateProfile.account.userName}
               </h1>
               <p className="text-slate-600 font-medium mt-1">
-                Backend developer
+                {candidateProfile.profession}
               </p>
             </div>
           </div>
@@ -109,18 +110,11 @@ export default function CandidateProfilePage() {
               <Edit3 size={20} />
             </button>
           </div>
-          <p className="text-sm text-slate-600 leading-relaxed">
-            I am Le Hung Cuong, a <strong>TypeScript Developer</strong> with a
-            strong focus on <strong>Backend development</strong>. My core
-            expertise lies in building scalable, high-performance web
-            applications using <strong>NestJS</strong> and
-            <strong>Next.js</strong>. I have a deep understanding of server-side
-            logic, database optimization, and system architecture. While I am
-            comfortable crafting modern, SEO-friendly frontends with Next.js, I
-            find my greatest passion in solving complex backend challenges,
-            designing <strong>RESTful APIs</strong>, and ensuring system
-            reliability.
-          </p>
+          {/* Render HTML từ Tiptap bằng dangerouslySetInnerHTML */}
+          <div
+            className="prose prose-slate prose-li:marker:text-rose-500 max-w-none text-slate-700"
+            dangerouslySetInnerHTML={{ __html: candidateProfile.aboutMe || "" }}
+          />
         </div>
 
         {/* 3. Học vấn */}
@@ -132,26 +126,47 @@ export default function CandidateProfilePage() {
             </button>
           </div>
 
-          <div className="group relative">
-            <div className="flex justify-between items-start mb-1">
-              <h3 className="font-bold text-slate-800">
-                Trường Đại Học Duy Tân
-              </h3>
-              <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button className="text-slate-400 hover:text-primary p-1">
-                  <Edit3 size={16} />
-                </button>
-                <button className="text-slate-400 hover:text-rose-500 p-1">
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            </div>
-            <p className="text-sm text-slate-600 font-medium mb-1">
-              Cử nhân - Software Engineer
+          {candidateProfile?.educations?.length > 0 ? (
+            candidateProfile.educations.map(
+              (item: CandidateProfileResponse["educations"][number]) => {
+                return (
+                  <div key={item.id} className="group relative mb-6 last:mb-0">
+                    <div className="flex justify-between items-start mb-1">
+                      <h3 className="font-bold text-slate-800">
+                        {item.schoolName}
+                      </h3>
+                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button className="text-slate-400 hover:text-primary p-1">
+                          <Edit3 size={16} />
+                        </button>
+                        <button className="text-slate-400 hover:text-rose-500 p-1">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+
+                    <p className="text-sm text-slate-600 font-medium mb-1">
+                      {item.major}
+                    </p>
+
+                    <p className="text-xs text-slate-500 mb-3 uppercase">
+                      {item.startDate} -{" "}
+                      {item.endDate ? item.endDate : "HIỆN TẠI"}
+                    </p>
+
+                    {/* Chỉ hiển thị GPA nếu ứng viên có nhập */}
+                    {item.gpa && (
+                      <p className="text-sm text-slate-600">{item.gpa} GPA</p>
+                    )}
+                  </div>
+                );
+              },
+            )
+          ) : (
+            <p className="text-sm text-slate-500 italic">
+              Chưa có thông tin học vấn.
             </p>
-            <p className="text-xs text-slate-500 mb-3">09/2023 - HIỆN TẠI</p>
-            <p className="text-sm text-slate-600">3.7 GPA</p>
-          </div>
+          )}
         </div>
 
         {/* 4. Kinh nghiệm làm việc */}
@@ -165,23 +180,64 @@ export default function CandidateProfilePage() {
             </button>
           </div>
 
-          <div className="group relative">
-            <div className="flex justify-between items-start mb-1">
-              <h3 className="font-bold text-slate-800">Internship</h3>
-              <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button className="text-slate-400 hover:text-primary p-1">
-                  <Edit3 size={16} />
-                </button>
-                <button className="text-slate-400 hover:text-rose-500 p-1">
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            </div>
-            <p className="text-sm text-slate-600 font-medium mb-1">
-              Samsung Vietnam Mobile R&D Center
+          {/* Duyệt mảng experiences từ dữ liệu API */}
+          {candidateProfile?.experiences?.length > 0 ? (
+            candidateProfile.experiences.map(
+              (item: CandidateProfileResponse["experiences"][number]) => (
+                <div key={item.id} className="group relative mb-6 last:mb-0">
+                  <div className="flex justify-between items-start mb-1">
+                    {/* Tên vị trí công việc */}
+                    <h3 className="font-bold text-slate-800">
+                      {item.position}
+                    </h3>
+                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button className="text-slate-400 hover:text-primary p-1">
+                        <Edit3 size={16} />
+                      </button>
+                      <button className="text-slate-400 hover:text-rose-500 p-1">
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Tên công ty */}
+                  <p className="text-sm text-slate-600 font-medium mb-1">
+                    {item.companyName}
+                  </p>
+
+                  {/* Thời gian làm việc */}
+                  <p className="text-xs text-slate-500 mb-3 uppercase">
+                    {item.startDate} -{" "}
+                    {item.endDate ? item.endDate : "HIỆN TẠI"}
+                  </p>
+
+                  {/* Render nội dung HTML an toàn cho phần mô tả */}
+                  {item.description && (
+                    <div
+                      className="text-sm text-slate-600 prose prose-sm max-w-none mt-2"
+                      dangerouslySetInnerHTML={{ __html: item.description }}
+                    />
+                  )}
+                </div>
+              ),
+            )
+          ) : (
+            <p className="text-sm text-slate-500 italic">
+              Chưa có thông tin kinh nghiệm làm việc.
             </p>
-            <p className="text-xs text-slate-500">08/2025 - 09/2025</p>
+          )}
+        </div>
+
+        {/* 8. Dự án */}
+        <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+          <div className="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
+            <h2 className="text-lg font-bold text-slate-800">Dự án nổi bật</h2>
+            <button className="text-primary hover:bg-primary-light p-1.5 rounded-md transition-colors">
+              <PlusCircle size={22} />
+            </button>
           </div>
+
+          <p className="text-sm text-slate-500 italic">Chưa nhập dự án nào.</p>
         </div>
 
         {/* 5. Kỹ năng */}
@@ -199,8 +255,8 @@ export default function CandidateProfilePage() {
             <p className="text-sm text-slate-600">
               <span className="text-blue-600 font-semibold">
                 Cập nhật nhanh
-              </span>
-              số năm kinh nghiệm cho kỹ năng
+              </span>{" "}
+              mức độ thông thạo cho kỹ năng
             </p>
           </div>
 
@@ -217,24 +273,134 @@ export default function CandidateProfilePage() {
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              <span className="inline-flex items-center px-3 py-1.5 rounded-full border border-slate-200 text-sm text-slate-700 bg-white shadow-sm">
-                <strong>CSS</strong>
-                <span className="text-slate-400 ml-1">(&lt; 1 năm)</span>
-              </span>
-              <span className="inline-flex items-center px-3 py-1.5 rounded-full border border-slate-200 text-sm text-slate-700 bg-white shadow-sm">
-                <strong>HTML</strong>
-                <span className="text-slate-400 ml-1">(&lt; 1 năm)</span>
-              </span>
-              <span className="inline-flex items-center px-3 py-1.5 rounded-full border border-slate-200 text-sm text-slate-700 bg-white shadow-sm">
-                <strong>MySQL</strong>
-                <span className="text-slate-400 ml-1">(&lt; 1 năm)</span>
-              </span>
-              <span className="inline-flex items-center px-3 py-1.5 rounded-full border border-slate-200 text-sm text-slate-700 bg-white shadow-sm">
-                <strong>Nest.js</strong>
-                <span className="text-slate-400 ml-1">(&lt; 1 năm)</span>
-              </span>
-            </div>
+            {/* Duyệt mảng skills từ dữ liệu API */}
+            {candidateProfile?.skills?.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {candidateProfile.skills.map(
+                  (skill: CandidateProfileResponse["skills"][number]) => (
+                    <span
+                      key={skill.skillId}
+                      className="inline-flex items-center px-3 py-1.5 rounded-full border border-slate-200 text-sm text-slate-700 bg-white shadow-sm hover:border-primary transition-colors cursor-default"
+                    >
+                      <strong>{skill.skillName}</strong>
+                      {/* Hiển thị level (ví dụ: Khá, Giỏi) */}
+                      {skill.level && (
+                        <span className="text-slate-500 ml-1.5 text-xs font-medium">
+                          ({skill.level})
+                        </span>
+                      )}
+                    </span>
+                  ),
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500 italic">
+                Chưa có thông tin kỹ năng.
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* 6. Chứng chỉ */}
+        <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm  ">
+          <div className="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
+            <h2 className="text-lg font-bold text-slate-800">Chứng chỉ</h2>
+            <button className="text-primary hover:bg-primary-light p-1.5 rounded-md transition-colors">
+              <PlusCircle size={22} />
+            </button>
+          </div>
+
+          {/* Duyệt mảng certificates từ dữ liệu API */}
+          {candidateProfile?.certificates?.length > 0 ? (
+            candidateProfile.certificates.map(
+              (item: CandidateProfileResponse["certificates"][number]) => (
+                <div
+                  key={item.id}
+                  className="group relative mb-6 last:mb-0 border-b border-dashed border-slate-100 pb-4 last:border-none last:pb-0"
+                >
+                  <div className="flex justify-between items-start mb-1">
+                    {/* Tên chứng chỉ */}
+                    <h3 className="font-bold text-slate-800 text-base">
+                      {item.name}
+                    </h3>
+                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button className="text-slate-400 hover:text-primary p-1">
+                        <Edit3 size={16} />
+                      </button>
+                      <button className="text-slate-400 hover:text-rose-500 p-1">
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Tổ chức cấp */}
+                  <p className="text-sm text-slate-600 font-medium mb-1">
+                    {item.organization}
+                  </p>
+
+                  {/* Thời gian hiệu lực */}
+                  <p className="text-xs text-slate-500 uppercase">
+                    {item.issueDate}
+                    {item.expirationDate
+                      ? ` - ${item.expirationDate}`
+                      : " - Vô thời hạn"}
+                  </p>
+                </div>
+              ),
+            )
+          ) : (
+            <p className="text-sm text-slate-500 italic">
+              Chưa có thông tin chứng chỉ.
+            </p>
+          )}
+        </div>
+
+        {/* 7. Ngoại ngữ */}
+        <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+          <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-4">
+            <h2 className="text-lg font-bold text-slate-800">Ngoại ngữ</h2>
+            <button className="text-primary hover:bg-primary-light p-1.5 rounded-md transition-colors">
+              <PlusCircle size={22} />
+            </button>
+          </div>
+
+          <div className="group relative">
+            {/* Duyệt mảng languages từ dữ liệu API */}
+            {candidateProfile?.languages?.length > 0 ? (
+              <div className="flex flex-wrap gap-3">
+                {candidateProfile.languages.map(
+                  (lang: CandidateProfileResponse["languages"][number]) => (
+                    <div
+                      key={lang.id}
+                      className="flex items-center justify-between w-full sm:w-[calc(50%-0.375rem)] px-4 py-3 rounded-lg border border-slate-200 bg-white hover:border-primary transition-colors group/lang relative"
+                    >
+                      <div>
+                        <h3 className="font-bold text-slate-800 text-sm">
+                          {lang.name}
+                        </h3>
+                        <p className="text-xs text-slate-500 font-medium mt-0.5">
+                          {lang.proficiency}
+                        </p>
+                      </div>
+
+                      {/* Các nút hành động (Sửa/Xóa) sẽ hiện khi hover vào từng thẻ ngôn ngữ */}
+                      <div className="flex items-center gap-1 opacity-0 group-hover/lang:opacity-100 transition-opacity">
+                        <button className="text-slate-400 hover:text-primary p-1.5 rounded-full hover:bg-slate-50">
+                          <Edit3 size={14} />
+                        </button>
+                        <button className="text-slate-400 hover:text-rose-500 p-1.5 rounded-full hover:bg-slate-50">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ),
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500 italic">
+                Chưa có thông tin ngoại ngữ.
+              </p>
+            )}
           </div>
         </div>
       </div>

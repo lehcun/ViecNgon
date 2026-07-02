@@ -42,6 +42,12 @@ export class CandidateService {
       );
     }
 
+    // HÀM HELPER XỬ LÝ NGÀY THÁNG Ở BACKEND (Chuyển thành MM/YYYY)
+    const formatMonthYear = (date: Date | null | undefined): string => {
+      if (!date) return '';
+      return `${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+    };
+
     // 2. Format dữ liệu chuẩn hóa sang tiếng Anh trả về Frontend
     return {
       candidateId: profile.maUngVien,
@@ -77,8 +83,8 @@ export class CandidateService {
         id: kn.maKinhNghiem,
         companyName: kn.tenCongTy,
         position: kn.viTri,
-        startDate: kn.ngayBatDau,
-        endDate: kn.ngayKetThuc,
+        startDate: formatMonthYear(kn.ngayBatDau),
+        endDate: formatMonthYear(kn.ngayKetThuc),
         description: kn.moTaChiTiet,
       })),
 
@@ -86,8 +92,8 @@ export class CandidateService {
         id: hv.maHocVan,
         schoolName: hv.tenTruong,
         major: hv.nganhHoc,
-        startDate: hv.ngayBatDau,
-        endDate: hv.ngayTotNghiep,
+        startDate: formatMonthYear(hv.ngayBatDau),
+        endDate: formatMonthYear(hv.ngayTotNghiep),
         gpa: hv.gpa,
       })),
 
@@ -95,8 +101,8 @@ export class CandidateService {
         id: cc.maChungChi,
         name: cc.tenChungChi,
         organization: cc.toChucCap,
-        issueDate: cc.ngayCap,
-        expirationDate: cc.ngayHetHan,
+        issueDate: formatMonthYear(cc.ngayCap),
+        expirationDate: formatMonthYear(cc.ngayHetHan),
       })),
 
       languages: profile.ngoaiNgus.map((nn) => ({

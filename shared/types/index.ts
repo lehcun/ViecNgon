@@ -158,8 +158,8 @@ export interface CandidateProfileResponse {
     id: string;
     companyName: string;
     position: string;
-    startDate: Date | string;
-    endDate: Date | string | null;
+    startDate: string;
+    endDate: string | null;
     description: string | null;
   }[];
 
@@ -167,8 +167,8 @@ export interface CandidateProfileResponse {
     id: string;
     schoolName: string;
     major: string;
-    startDate: Date | string;
-    endDate: Date | string | null;
+    startDate: string;
+    endDate: string | null;
     gpa: string | null;
   }[];
 
@@ -176,8 +176,8 @@ export interface CandidateProfileResponse {
     id: string;
     name: string;
     organization: string;
-    issueDate: Date | string;
-    expirationDate: Date | string | null;
+    issueDate: string;
+    expirationDate: string | null;
   }[];
 
   languages: {
