@@ -18,6 +18,7 @@ import PersonalInfoModal from "@/components/candidate/PersonalInfoModal";
 import { useCandidateProfile } from "@/hooks/candidate/useCandidateProfile";
 import { formatDateToDDMMYYYY } from "@/utils/date";
 import { CandidateProfileResponse } from "@viecngon/types";
+import DownloadCVButton from "@/components/candidate/DowloadCVButton";
 
 export default function CandidateProfilePage() {
   const { candidateProfile } = useCandidateProfile();
@@ -465,9 +466,10 @@ export default function CandidateProfilePage() {
             </div>
           </div>
 
-          <button className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-3 rounded-lg shadow-md shadow-primary/20 transition-all active:scale-95">
-            Xem và Tải CV
-          </button>
+          {/* Nút xem CV và tải xuống PDF */}
+          {candidateProfile && (
+            <DownloadCVButton profileData={candidateProfile} />
+          )}
         </div>
 
         {/* Widget 2: Cập nhật nhanh bằng CV */}
