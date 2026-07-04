@@ -2,30 +2,12 @@
 import React, { useEffect, useState } from "react";
 import { Download, Loader2 } from "lucide-react";
 
-// --- BẮT ĐẦU MOCK (Dành riêng cho môi trường Preview trên web) ---
-// TRONG DỰ ÁN THỰC TẾ CỦA BẠN: Hãy xóa đoạn mock này và BỎ COMMENT 2 dòng import bên dưới:
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import CVTemplate from "./CVTemplate";
-
-// const CVTemplate = ({ data }: any) => <div />;
-// const PDFDownloadLink = ({ children, className }: any) => {
-//   return (
-//     <button
-//       className={className}
-//       onClick={() =>
-//         alert(
-//           "Tính năng giả lập cho Preview. Trong dự án thực tế, file PDF sẽ được tải xuống!",
-//         )
-//       }
-//     >
-//       {typeof children === "function" ? children({ loading: false }) : children}
-//     </button>
-//   );
-// };
-// --- KẾT THÚC MOCK ---
+import { CandidateProfileResponse } from "@viecngon/types";
 
 interface DownloadCVButtonProps {
-  profileData: any; // Cục JSON Profile lấy từ backend
+  profileData: CandidateProfileResponse | null; // Cục JSON Profile lấy từ backend
 }
 
 export default function DownloadCVButton({
@@ -35,7 +17,10 @@ export default function DownloadCVButton({
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
+    const timer = setTimeout(() => {
+      setIsMounted(true);
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   if (!isMounted) {
