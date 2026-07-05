@@ -19,6 +19,7 @@ import { useCandidateProfile } from "@/hooks/candidate/useCandidateProfile";
 import { formatDateToDDMMYYYY } from "@/utils/date";
 import { CandidateProfileResponse } from "@viecngon/types";
 import DownloadCVButton from "@/components/candidate/DowloadCVButton";
+import CVActionButtons from "@/components/candidate/CVActionButton";
 
 export default function CandidateProfilePage() {
   const { candidateProfile } = useCandidateProfile();
@@ -467,9 +468,7 @@ export default function CandidateProfilePage() {
           </div>
 
           {/* Nút xem CV và tải xuống PDF */}
-          {candidateProfile && (
-            <DownloadCVButton profileData={candidateProfile} />
-          )}
+          {candidateProfile && <CVActionButtons data={candidateProfile} />}
         </div>
 
         {/* Widget 2: Cập nhật nhanh bằng CV */}

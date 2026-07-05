@@ -94,7 +94,7 @@ async function main() {
   // Tài khoản Ứng viên
   const tkUV_Tuan = await prisma.taiKhoan.create({
     data: {
-      email: '  ',
+      email: 'tuan.nguyen@gmail.com',
       tenNguoiDung: 'Nguyễn Anh Tuấn',
       matKhau: hashPassword,
       sdt: '0981112223',
