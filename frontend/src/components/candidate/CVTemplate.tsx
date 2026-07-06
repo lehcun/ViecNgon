@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Font,
 } from "@react-pdf/renderer";
+import Html from "react-pdf-html";
 import { CandidateProfileResponse } from "@viecngon/types";
 
 // 1. ĐĂNG KÝ FONT TIẾNG VIỆT (Bắt buộc để không bị lỗi dấu trên file PDF)
@@ -49,7 +50,7 @@ const styles = StyleSheet.create({
     color: "#1e293b",
     textTransform: "uppercase",
   },
-  title: { fontSize: 14, color: "#2563eb", marginTop: 4, fontWeight: 700 },
+  title: { fontSize: 14, color: "#2563eb", marginTop: 10, fontWeight: 700 },
   contactRow: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -58,14 +59,14 @@ const styles = StyleSheet.create({
     color: "#64748b",
   },
   contactItem: { marginRight: 15, marginBottom: 4 },
-  section: { marginTop: 15 },
+  section: { marginTop: 2 },
   sectionTitle: {
     fontSize: 14,
     fontWeight: 700,
     color: "#1e293b",
     borderBottom: "1px solid #e2e8f0",
-    paddingBottom: 4,
-    marginBottom: 8,
+    // paddingBottom: 4,
+    // marginBottom: 8,
     textTransform: "uppercase",
   },
   itemBlock: { marginBottom: 10 },
@@ -88,6 +89,74 @@ const styles = StyleSheet.create({
   },
   skillRow: { flexDirection: "row", flexWrap: "wrap" },
 });
+
+const htmlStyles = {
+  p: {
+    fontFamily: "Roboto",
+    fontSize: 11,
+    color: "#334155",
+    lineHeight: 1.4,
+    marginBottom: 2,
+  },
+  div: {
+    fontFamily: "Roboto",
+    fontSize: 11,
+    color: "#334155",
+    lineHeight: 1.4,
+  },
+  li: {
+    fontFamily: "Roboto",
+    fontSize: 11,
+    color: "#334155",
+    lineHeight: 1.4,
+    marginBottom: 2, // Khoảng cách giữa các gạch đầu dòng hẹp lại
+  },
+  span: {
+    fontFamily: "Roboto",
+    fontSize: 11,
+    color: "#334155",
+    lineHeight: 1.4,
+  },
+  ul: {
+    marginBottom: 4,
+    paddingLeft: 14, // Thụt lề chuẩn cho chấm tròn
+  },
+  ol: {
+    marginBottom: 4,
+    paddingLeft: 14,
+  },
+  strong: {
+    fontWeight: 700,
+    color: "#0f172a",
+  },
+  em: {
+    color: "#475569",
+  },
+  u: {
+    textDecoration: "underline",
+  },
+  h1: {
+    fontFamily: "Roboto",
+    fontSize: 14,
+    fontWeight: 700,
+    marginBottom: 4,
+    color: "#1e293b",
+  },
+  h2: {
+    fontFamily: "Roboto",
+    fontSize: 12,
+    fontWeight: 700,
+    marginBottom: 4,
+    color: "#1e293b",
+  },
+  h3: {
+    fontFamily: "Roboto",
+    fontSize: 11,
+    fontWeight: 700,
+    marginBottom: 4,
+    color: "#1e293b",
+  },
+};
 
 // HÀM HELPER: Format date (VD: 2021-08-01T... -> 08/2021)
 const formatDate = (dateValue: Date | string | null): string => {
@@ -248,10 +317,12 @@ export default function CVTemplate({
         </View>
 
         {/* 1. GIỚI THIỆU BẢN THÂN */}
+        {/* (ĐÃ XỬ LÝ HTML) */}
         {displayData.aboutMe && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Giới thiệu bản thân</Text>
-            <Text style={styles.description}>{displayData.aboutMe}</Text>
+            {/* Truyền chuỗi HTML vào component Html, nó sẽ tự render ra PDF Node */}
+            <Html stylesheet={htmlStyles}>{displayData.aboutMe}</Html>
           </View>
         )}
 

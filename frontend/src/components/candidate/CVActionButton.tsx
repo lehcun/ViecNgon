@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { pdf } from "@react-pdf/renderer";
-import CVTemplate from "./CVTemplate"; // File giữ nguyên không đụng chạm
+import CVTemplate from "./CVTemplate";
 import { CandidateProfileResponse } from "@viecngon/types";
 
 export default function CVActionButtons({
