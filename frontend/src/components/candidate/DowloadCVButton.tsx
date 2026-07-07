@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Download, Loader2 } from "lucide-react";
 
 import { PDFDownloadLink } from "@react-pdf/renderer";
-import CVTemplate from "./CVTemplate";
+import CVTemplate from "./cv-template/CVTemplate";
 import { CandidateProfileResponse } from "@viecngon/types";
 
 interface DownloadCVButtonProps {

@@ -1,5 +1,6 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   ArrowLeft,
   Loader2,
@@ -8,11 +9,13 @@ import {
   Eye,
   Download,
 } from "lucide-react";
-
-import Link from "next/link";
 import { pdf } from "@react-pdf/renderer";
+
 import { useCandidateProfile } from "@/hooks/candidate/useCandidateProfile";
-import CVTemplate from "@/components/candidate/CVTemplate";
+
+import CVTemplate from "@/components/candidate/cv-template/CVTemplate";
+import CVTemplateFormat from "@/components/candidate/cv-template/CVTemplateFormat";
+import CVTemplateMinimal from "@/components/candidate/cv-template/CVTemplateMinimal";
 
 // Danh sách các mẫu CV để render ra thanh Sidebar bên trái
 const CV_TEMPLATES = [
@@ -28,34 +31,31 @@ const CV_TEMPLATES = [
     name: "Hiện đại",
     color: "text-teal-600",
     image: "https://placehold.co/300x420/0f766e/ffffff?text=Hien+Dai",
-    component: CVTemplate,
+    component: CVTemplateFormat, // Tạm mượn CVTemplate, bạn có thể thay bằng file mẫu khác sau này
   },
   {
     id: "toi_gian",
     name: "Tối giản",
     color: "text-slate-800",
     image: "https://placehold.co/300x420/1e293b/ffffff?text=Toi+Gian",
-    component: CVTemplate,
+    component: CVTemplateMinimal,
   },
 ];
 
 export default function CandidateCVTemplatePage() {
   const { candidateProfile: profile, isLoading } = useCandidateProfile();
 
-  // State quản lý việc chọn mẫu CV và trạng thái tạo file
+  // States
+  const [isMounted, setIsMounted] = useState(false);
   const [activeTemplateId, setActiveTemplateId] =
     useState<string>("truyen_thong");
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
 
-  // Màn hình Loading khi đang fetch dữ liệu Profile
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-slate-500">
-        <Loader2 size={32} className="animate-spin mb-4" />
-        <p>Đang tải dữ liệu hồ sơ của bạn...</p>
-      </div>
-    );
-  }
+  // Tránh lỗi Hydration trên Next.js SSR
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Lấy ra Template đang được chọn
   const activeTemplateObj =
@@ -63,56 +63,79 @@ export default function CandidateCVTemplatePage() {
   const ActiveCVComponent = activeTemplateObj.component;
 
   // ==========================================
-  // HÀM XỬ LÝ: TẠO PDF VÀ MỞ TAB MỚI / TẢI XUỐNG
+  // EFFECT: TỰ ĐỘNG TẠO FILE PDF (BLOB) KHI CHỌN MẪU
   // ==========================================
-  const handlePdfAction = async (action: "preview" | "download") => {
-    if (!profile) return;
+  useEffect(() => {
+    // Chỉ chạy khi đã có dữ liệu profile và render trên Client
+    if (!profile || !isMounted) return;
 
-    try {
-      setIsGenerating(true);
+    let isCancelled = false;
+    let objectUrl: string | null = null;
 
-      // 1. Dùng hàm pdf() để render component thành file ngầm
-      const doc = <ActiveCVComponent data={profile} />;
-      const asPdf = pdf(doc);
+    const generatePreview = async () => {
+      setIsPreviewLoading(true);
+      try {
+        // Dùng react-pdf render component thành dữ liệu nhị phân (Blob)
+        const doc = <ActiveCVComponent data={profile} />;
+        const asPdf = pdf(doc);
+        const blob = await asPdf.toBlob();
 
-      // 2. Biến file ngầm đó thành định dạng Blob (Binary Large Object)
-      const blob = await asPdf.toBlob();
-
-      // 3. Tạo một đường link ảo trên trình duyệt
-      const url = URL.createObjectURL(blob);
-
-      if (action === "preview") {
-        // Mở link ảo sang tab mới (Không revoke URL để tab mới có thể đọc được file)
-        window.open(url, "_blank");
-      } else {
-        // Tạo thẻ a ẩn để ép tải xuống
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `CV_${activeTemplateObj.name}_${profile.candidateName?.replace(/\s+/g, "_") || "UngVien"}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-
-        // Dọn dẹp bộ nhớ sau khi tải xong
-        document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        if (!isCancelled) {
+          objectUrl = URL.createObjectURL(blob);
+          setPreviewUrl(objectUrl);
+        }
+      } catch (error) {
+        console.error("Lỗi khi tạo bản xem trước PDF:", error);
+      } finally {
+        if (!isCancelled) setIsPreviewLoading(false);
       }
-    } catch (error) {
-      console.error(
-        `Lỗi khi ${action === "preview" ? "xem trước" : "tải"} PDF:`,
-        error,
-      );
-      alert("Có lỗi xảy ra khi xử lý file PDF. Vui lòng thử lại.");
-    } finally {
-      setIsGenerating(false);
+    };
+
+    generatePreview();
+
+    // Dọn dẹp bộ nhớ (Thu hồi URL) khi component unmount hoặc đổi mẫu khác
+    return () => {
+      isCancelled = true;
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [profile, activeTemplateId, isMounted]);
+
+  // ==========================================
+  // HÀM XỬ LÝ: MỞ TAB MỚI / TẢI XUỐNG
+  // ==========================================
+  const handlePdfAction = (action: "preview" | "download") => {
+    if (!previewUrl) return;
+
+    if (action === "preview") {
+      window.open(previewUrl, "_blank");
+    } else {
+      const link = document.createElement("a");
+      link.href = previewUrl;
+      link.download = `CV_${activeTemplateObj.name}_${profile?.candidateName?.replace(/\s+/g, "_") || "UngVien"}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   };
+
+  // Màn hình Loading khi đang fetch dữ liệu Profile
+  if (isLoading || !isMounted) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-slate-500">
+        <Loader2 size={32} className="animate-spin mb-4" />
+        <p>Đang khởi tạo trình tạo CV...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 bg-slate-50 min-h-screen">
       {/* HEADER & BREADCRUMB */}
       <div className="mb-6 border-b border-slate-200 pb-6">
         <Link
-          href="/cv-profile"
+          href="/candidate/profile"
           className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-primary transition-colors mb-4"
         >
           <ArrowLeft size={16} className="mr-1.5" />
@@ -137,7 +160,7 @@ export default function CandidateCVTemplatePage() {
               <span>Thư viện Mẫu CV</span>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-1 gap-4 overflow-y-auto max-h-175 pr-1 pb-4">
+            <div className="grid grid-cols-2 lg:grid-cols-1 gap-4 overflow-y-auto max-h-[700px] pr-1 pb-4">
               {CV_TEMPLATES.map((template) => {
                 const isActive = activeTemplateId === template.id;
 
@@ -186,7 +209,7 @@ export default function CandidateCVTemplatePage() {
           </div>
         </div>
 
-        {/* CỘT PHẢI: KHUNG THAO TÁC & PREVIEW ẢNH */}
+        {/* CỘT PHẢI: KHUNG THAO TÁC & PREVIEW IFRAME */}
         <div className="w-full flex-1 flex flex-col gap-6">
           {/* Thanh công cụ hành động */}
           <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -201,52 +224,40 @@ export default function CandidateCVTemplatePage() {
             <div className="flex w-full sm:w-auto gap-3">
               <button
                 onClick={() => handlePdfAction("preview")}
-                disabled={isGenerating}
+                disabled={isPreviewLoading || !previewUrl}
                 className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-white text-blue-600 border border-blue-600 hover:bg-blue-50 rounded-xl font-medium transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isGenerating ? (
-                  <Loader2 size={18} className="animate-spin" />
-                ) : (
-                  <Eye size={18} />
-                )}
-                Xem trước
+                <Eye size={18} />
+                Phóng to
               </button>
 
               <button
                 onClick={() => handlePdfAction("download")}
-                disabled={isGenerating}
+                disabled={isPreviewLoading || !previewUrl}
                 className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isGenerating ? (
-                  <Loader2 size={18} className="animate-spin" />
-                ) : (
-                  <Download size={18} />
-                )}
+                <Download size={18} />
                 Tải xuống
               </button>
             </div>
           </div>
 
-          {/* Vùng hiển thị ảnh minh họa mẫu to */}
-          <div className="w-full bg-white rounded-xl p-8 flex items-center justify-center border border-slate-200 shadow-sm relative overflow-hidden min-h-[500px]">
-            {/* Phông nền màu mờ mờ khớp với mẫu đang chọn */}
-            <div
-              className={`absolute inset-0 opacity-[0.03] ${activeTemplateObj.color.replace("text-", "bg-")}`}
-            ></div>
-
-            <div className="relative z-10 w-full max-w-100 shadow-2xl rounded-sm overflow-hidden border border-slate-200/50 bg-white">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={activeTemplateObj.image}
-                alt={activeTemplateObj.name}
-                className="w-full h-auto object-cover opacity-30 blur-[2px]"
-              />
-
-              {/* Box render giả lập thay thế nội dung thật vào ảnh */}
-              <div className="absolute inset-0 p-8">
-                {profile && <ActiveCVComponent data={profile} />}
+          {/* Vùng hiển thị LIVE PREVIEW bằng Iframe */}
+          <div className="w-full bg-slate-200/60 rounded-xl flex items-center justify-center border border-slate-300 shadow-inner relative overflow-hidden min-h-[600px] h-[calc(100vh-200px)]">
+            {isPreviewLoading ? (
+              <div className="flex flex-col items-center text-slate-500">
+                <Loader2 size={36} className="animate-spin mb-4 text-primary" />
+                <p className="font-medium">Đang tạo bản xem trước PDF...</p>
               </div>
-            </div>
+            ) : previewUrl ? (
+              <iframe
+                src={`${previewUrl}#toolbar=0&navpanes=0`}
+                className="w-full h-full border-none rounded-xl bg-slate-500"
+                title="CV Preview"
+              />
+            ) : (
+              <div className="text-slate-400">Không thể tải bản xem trước</div>
+            )}
           </div>
         </div>
       </div>

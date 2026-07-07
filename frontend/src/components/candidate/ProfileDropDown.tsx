@@ -60,13 +60,13 @@ export default function ProfileDropdown({
             <LayoutDashboard size={18} className="text-slate-400" /> Tổng quan
           </Link>
           <Link
-            href="/dashboard/cv"
+            href="/cv/personalCV"
             className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-600 hover:text-primary hover:bg-primary-light/50 rounded-lg transition-colors"
           >
             <FileText size={18} className="text-slate-400" /> Hồ sơ đính kèm
           </Link>
           <Link
-            href="/dashboard/profile"
+            href="/cv-profile"
             className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-600 hover:text-primary hover:bg-primary-light/50 rounded-lg transition-colors"
           >
             <User size={18} className="text-slate-400" /> Hồ sơ ViecNgon

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { pdf } from "@react-pdf/renderer";
-import CVTemplate from "./CVTemplate";
+import CVTemplate from "./cv-template/CVTemplate";
 import { CandidateProfileResponse } from "@viecngon/types";
 
 export default function CVActionButtons({
