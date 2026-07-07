@@ -13,13 +13,12 @@ import {
   MapPin,
   Link as LinkIcon,
   Bot,
+  FileText,
 } from "lucide-react";
 import PersonalInfoModal from "@/components/candidate/PersonalInfoModal";
 import { useCandidateProfile } from "@/hooks/candidate/useCandidateProfile";
 import { formatDateToDDMMYYYY } from "@/utils/date";
 import { CandidateProfileResponse } from "@viecngon/types";
-import DownloadCVButton from "@/components/candidate/DowloadCVButton";
-import CVActionButtons from "@/components/candidate/CVActionButton";
 
 export default function CandidateProfilePage() {
   const { candidateProfile } = useCandidateProfile();
@@ -468,7 +467,15 @@ export default function CandidateProfilePage() {
           </div>
 
           {/* Nút xem CV và tải xuống PDF */}
-          {candidateProfile && <CVActionButtons data={candidateProfile} />}
+          {candidateProfile && (
+            <Link
+              href="/cv-template"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-all shadow-sm hover:shadow-md w-fit"
+            >
+              <FileText size={20} />
+              Xem và tải CV
+            </Link>
+          )}
         </div>
 
         {/* Widget 2: Cập nhật nhanh bằng CV */}
