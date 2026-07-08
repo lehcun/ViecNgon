@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   Eye,
   Download,
+  Save,
 } from "lucide-react";
 import { pdf } from "@react-pdf/renderer";
 
@@ -16,6 +17,8 @@ import { useCandidateProfile } from "@/hooks/candidate/useCandidateProfile";
 import CVTemplate from "@/components/candidate/cv-template/CVTemplate";
 import CVTemplateFormat from "@/components/candidate/cv-template/CVTemplateFormat";
 import CVTemplateMinimal from "@/components/candidate/cv-template/CVTemplateMinimal";
+import toast from "react-hot-toast";
+import { useUploadGeneratedCv } from "@/hooks/candidate/useUploadGeneratedCv";
 
 // Danh sách các mẫu CV để render ra thanh Sidebar bên trái
 const CV_TEMPLATES = [
@@ -31,7 +34,7 @@ const CV_TEMPLATES = [
     name: "Hiện đại",
     color: "text-teal-600",
     image: "https://placehold.co/300x420/0f766e/ffffff?text=Hien+Dai",
-    component: CVTemplateFormat, // Tạm mượn CVTemplate, bạn có thể thay bằng file mẫu khác sau này
+    component: CVTemplateFormat,
   },
   {
     id: "toi_gian",
@@ -44,6 +47,8 @@ const CV_TEMPLATES = [
 
 export default function CandidateCVTemplatePage() {
   const { candidateProfile: profile, isLoading } = useCandidateProfile();
+  const { mutateAsync: uploadCv, isPending: isUploading } =
+    useUploadGeneratedCv();
 
   // States
   const [isMounted, setIsMounted] = useState(false);
@@ -51,6 +56,30 @@ export default function CandidateCVTemplatePage() {
     useState<string>("truyen_thong");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+
+  const handleSetDefault = async () => {
+    try {
+      // 1. TẠO FILE PDF NGẦM NGAY KHI BẤM NÚT
+      const doc = <ActiveCVComponent data={profile} />;
+      const asPdf = pdf(doc);
+      const blob = await asPdf.toBlob();
+
+      // 2. CHUYỂN ĐỔI THÀNH ĐỐI TƯỢNG FILE
+      const fileName = `CV_ViecNgon_${profile?.candidateName?.replace(/\s+/g, "_") || "UngVien"}.pdf`;
+      const file = new File([blob], fileName, { type: "application/pdf" });
+
+      // 3. GÓI VÀO FORMDATA (Lúc này biến "file" đã tồn tại)
+      const formData = new FormData();
+      formData.append("file", file);
+
+      // 4. BẮN API QUA HOOK
+      await uploadCv(formData);
+
+      toast.success("🎉 Đã lưu CV làm mặc định thành công!");
+    } catch (error: any) {
+      toast.error(error.message || "Không thể lưu CV. Vui lòng thử lại.");
+    }
+  };
 
   // Tránh lỗi Hydration trên Next.js SSR
   useEffect(() => {
@@ -160,7 +189,7 @@ export default function CandidateCVTemplatePage() {
               <span>Thư viện Mẫu CV</span>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-1 gap-4 overflow-y-auto max-h-[700px] pr-1 pb-4">
+            <div className="grid grid-cols-2 lg:grid-cols-1 gap-4 overflow-y-auto max-h-175 pr-1 pb-4">
               {CV_TEMPLATES.map((template) => {
                 const isActive = activeTemplateId === template.id;
 
@@ -223,8 +252,16 @@ export default function CandidateCVTemplatePage() {
             {/* 2 Nút Bấm Action */}
             <div className="flex w-full sm:w-auto gap-3">
               <button
+                onClick={() => handleSetDefault()}
+                disabled={isPreviewLoading || !previewUrl || isUploading}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-white text-blue-600 border border-blue-600 hover:bg-blue-50 rounded-xl font-medium transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Save size={18} />
+                Chọn mẫu này
+              </button>
+              <button
                 onClick={() => handlePdfAction("preview")}
-                disabled={isPreviewLoading || !previewUrl}
+                disabled={isPreviewLoading || !previewUrl || isUploading}
                 className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-white text-blue-600 border border-blue-600 hover:bg-blue-50 rounded-xl font-medium transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Eye size={18} />
@@ -233,7 +270,7 @@ export default function CandidateCVTemplatePage() {
 
               <button
                 onClick={() => handlePdfAction("download")}
-                disabled={isPreviewLoading || !previewUrl}
+                disabled={isPreviewLoading || !previewUrl || isUploading}
                 className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Download size={18} />
@@ -243,7 +280,7 @@ export default function CandidateCVTemplatePage() {
           </div>
 
           {/* Vùng hiển thị LIVE PREVIEW bằng Iframe */}
-          <div className="w-full bg-slate-200/60 rounded-xl flex items-center justify-center border border-slate-300 shadow-inner relative overflow-hidden min-h-[600px] h-[calc(100vh-200px)]">
+          <div className="w-full bg-slate-200/60 rounded-xl flex items-center justify-center border border-slate-300 shadow-inner relative overflow-hidden min-h-150 h-[calc(100vh-200px)]">
             {isPreviewLoading ? (
               <div className="flex flex-col items-center text-slate-500">
                 <Loader2 size={36} className="animate-spin mb-4 text-primary" />

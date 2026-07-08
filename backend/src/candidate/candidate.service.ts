@@ -1,7 +1,18 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateCandidateDto } from './dto/update-candidate.dto';
 import { CandidateProfileResponse } from '@viecngon/types';
+
+interface MockMulterFile {
+  originalname: string;
+  buffer: Buffer;
+  mimetype: string;
+}
 
 @Injectable()
 export class CandidateService {
@@ -154,5 +165,68 @@ export class CandidateService {
         candidateId: updatedProfile.maUngVien,
       };
     });
+  }
+
+  async uploadGeneratedCv(maTaiKhoan: string, file: MockMulterFile) {
+    if (!file) {
+      throw new BadRequestException('Không tìm thấy file CV.');
+    }
+
+    try {
+      // 1. Upload file lên Cloud (Thực hiện NGOÀI transaction để tránh khóa Database quá lâu)
+      const fileUrl = await this.uploadToCloudService(file);
+
+      // Tìm maUngVien theo maTaiKhoan
+      const ungVien = await this.prisma.ungVien.findUnique({
+        where: { maTaiKhoan: maTaiKhoan },
+        select: { maUngVien: true },
+      });
+
+      if (!ungVien) {
+        throw new NotFoundException(
+          'Không tìm thấy ứng viên với tài khoản này.',
+        );
+      }
+
+      // 2. Mở Transaction để ghi dữ liệu
+      return await this.prisma.$transaction(async (tx) => {
+        // 2.1 Tạo bản ghi mới trong bảng FileCv
+        const newFileCv = await tx.fileCv.create({
+          data: {
+            tenFile: file.originalname || 'CV_ViecNgon.pdf',
+            fileUrl: fileUrl,
+            maUngVien: ungVien.maUngVien, // Khóa ngoại
+          },
+        });
+
+        // 2.2 Cập nhật bảng UngVien
+        await tx.ungVien.update({
+          where: { maUngVien: ungVien.maUngVien },
+          data: {
+            loaiCvMacDinh: 'ONLINE', // Đặt loại CV mặc định là ONLINE
+            maFileCvMacDinh: newFileCv.maFileCv, // Trỏ đến ID của file vừa tạo
+          },
+        });
+
+        return {
+          message: 'Lưu CV mặc định thành công',
+          fileId: newFileCv.maFileCv,
+          fileUrl: newFileCv.fileUrl,
+        };
+      });
+    } catch (error) {
+      console.error('Lỗi khi lưu CV tạo từ web:', error);
+      throw new InternalServerErrorException(
+        'Không thể lưu CV vào hệ thống. Vui lòng thử lại.',
+      );
+    }
+  }
+
+  // --- Hàm Helper (Giả lập upload) ---
+  private uploadToCloudService(file: MockMulterFile): Promise<string> {
+    // Tích hợp logic Cloudinary / AWS S3 của bạn ở đây
+    return Promise.resolve(
+      `https://viecngon-cloud.com/cv/storage/${Date.now()}_${file.originalname}`,
+    );
   }
 }

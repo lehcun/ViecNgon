@@ -132,7 +132,7 @@ const formatDate = (dateValue: Date | string | null): string => {
     return isNaN(d.getTime())
       ? String(dateValue)
       : `${`0${d.getMonth() + 1}`.slice(-2)}/${d.getFullYear()}`;
-  } catch (error) {
+  } catch {
     return String(dateValue);
   }
 };
