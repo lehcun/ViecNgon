@@ -18,32 +18,19 @@ interface MockMulterFile {
 export class CandidateService {
   constructor(private prisma: PrismaService) {}
 
-  // 1. Lấy thông tin chi tiết ứng viên dựa trên ID tài khoản đang login
+  //  Lấy thông tin chi tiết ứng viên dựa trên ID tài khoản đang login
   async getProfile(maTaiKhoan: string): Promise<CandidateProfileResponse> {
     // 1. Kéo toàn bộ dữ liệu từ Database
     const profile = await this.prisma.ungVien.findUnique({
       where: { maTaiKhoan: maTaiKhoan },
       include: {
-        taiKhoan: {
-          select: { email: true, sdt: true, tenNguoiDung: true },
-        },
-        kyNangs: {
-          include: { kyNang: true },
-        },
-        // --- INCLUDE CÁC BẢNG MỚI CỦA HYBRID CV ---
-        kinhNghiems: {
-          orderBy: { ngayBatDau: 'desc' }, // Sắp xếp kinh nghiệm mới nhất lên đầu
-        },
-        hocVans: {
-          orderBy: { ngayBatDau: 'desc' }, // Sắp xếp học vấn mới nhất lên đầu
-        },
-        chungChis: {
-          orderBy: { ngayCap: 'desc' },
-        },
+        taiKhoan: { select: { email: true, sdt: true, tenNguoiDung: true } },
+        kyNangs: { include: { kyNang: true } },
+        kinhNghiems: { orderBy: { ngayBatDau: 'desc' } },
+        hocVans: { orderBy: { ngayBatDau: 'desc' } },
+        chungChis: { orderBy: { ngayCap: 'desc' } },
         ngoaiNgus: true,
-        danhSachFileCv: {
-          orderBy: { ngayTaiLen: 'desc' }, // CV mới tải lên nằm trên cùng
-        },
+        danhSachFileCv: { orderBy: { ngayTaiLen: 'desc' } },
       },
     });
 
@@ -59,6 +46,24 @@ export class CandidateService {
       return `${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
     };
 
+    // ========================================================
+    // 🔥 LOGIC MỚI: TÌM SẴN THÔNG TIN FILE CV MẶC ĐỊNH Ở BACKEND
+    // ========================================================
+    const defaultFileDb = profile.maFileCvMacDinh
+      ? profile.danhSachFileCv.find(
+          (f) => f.maFileCv === profile.maFileCvMacDinh,
+        )
+      : null;
+
+    const defaultCvFile = defaultFileDb
+      ? {
+          id: defaultFileDb.maFileCv,
+          fileName: defaultFileDb.tenFile,
+          fileUrl: defaultFileDb.fileUrl,
+          uploadedAt: defaultFileDb.ngayTaiLen,
+        }
+      : null;
+
     // 2. Format dữ liệu chuẩn hóa sang tiếng Anh trả về Frontend
     return {
       candidateId: profile.maUngVien,
@@ -72,10 +77,12 @@ export class CandidateService {
       cvUrl: profile.cvUrl,
       address: profile.diaChi,
 
-      // Dữ liệu mới
       aboutMe: profile.gioiThieuBanThan,
       defaultCvType: profile.loaiCvMacDinh,
       defaultCvFileId: profile.maFileCvMacDinh,
+
+      // TRẢ VỀ LUÔN OBJECT CHỨA THÔNG TIN FILE MẶC ĐỊNH
+      defaultCvFile: defaultCvFile,
 
       account: {
         email: profile.taiKhoan.email,
@@ -89,7 +96,6 @@ export class CandidateService {
         level: k.mucDo,
       })),
 
-      // Mapping các mảng dữ liệu mới
       experiences: profile.kinhNghiems.map((kn) => ({
         id: kn.maKinhNghiem,
         companyName: kn.tenCongTy,
