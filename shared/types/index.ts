@@ -141,6 +141,13 @@ export interface CandidateProfileResponse {
   defaultCvType: string; // 'ONLINE' hoặc 'PDF'
   defaultCvFileId: string | null; // ID của file CV mặc định (nếu chọn PDF)
 
+  defaultCvFile: {
+    id: string;
+    fileName: string;
+    fileUrl: string;
+    uploadedAt: Date;
+  } | null;
+
   account: {
     email: string;
     userName: string;

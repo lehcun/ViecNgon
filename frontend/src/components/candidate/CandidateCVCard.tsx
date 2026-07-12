@@ -15,7 +15,7 @@ import {
 import { useCandidateProfile } from "@/hooks/candidate/useCandidateProfile";
 
 // Helper chuyển đổi ngày (giống trong CVTemplate)
-const formatDateToLocal = (dateString: string | null | undefined) => {
+const formatDateToLocal = (dateString: string | null | Date) => {
   if (!dateString) return "Không xác định";
   try {
     const date = new Date(dateString);
@@ -84,23 +84,20 @@ export default function CandidateCVCard() {
   }
 
   // --- TRƯỜNG HỢP 2: ĐÃ CÓ CV (Hiển thị giống hình ảnh) ---
-  // Lấy dữ liệu file CV mặc định từ mảng uploadedCvs dựa vào defaultCvFileId
-  const defaultCv = profile?.uploadedCvs?.find(
-    (cv: any) => cv.id === profile?.defaultCvFileId,
-  );
 
   // Nếu tìm thấy file trong mảng thì lấy tên, không thì sinh tên mặc định
+  const defaultCv = profile?.defaultCvFile;
+
   const cvName =
     defaultCv?.fileName ||
     `CV_ViecNgon_${profile?.candidateName?.replace(/\s+/g, "_") || "UngVien"}.pdf`;
+
   const uploadDate = formatDateToLocal(
     defaultCv?.uploadedAt || new Date().toISOString(),
   );
 
-  // Lấy đường dẫn tải: Lấy từ file tìm được, nếu không có thì fallback về cvUrl
   const fileUrl = defaultCv?.fileUrl || profile?.cvUrl || "#";
 
-  // Xác định loại CV
   const cvType =
     profile?.defaultCvType === "ONLINE" ? "Tạo từ Website" : "Tải lên từ máy";
 

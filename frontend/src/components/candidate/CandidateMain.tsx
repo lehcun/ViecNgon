@@ -5,13 +5,13 @@ import {
   Briefcase,
   Mail,
   ChevronRight,
-  UploadCloud,
   Send,
   Heart,
   MailOpen,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { useCandidateProfile } from "@/hooks/candidate/useCandidateProfile";
+import CandidateCVCard from "./CandidateCVCard";
 
 const CandidateMain = () => {
   const profileCompletion = 69; // Giả lập dữ liệu % hoàn thành hồ sơ
@@ -50,30 +50,7 @@ const CandidateMain = () => {
       </div>
 
       {/* 2. Hồ sơ đính kèm Card */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm">
-        <h2 className="text-lg font-bold text-slate-800 mb-4">
-          Hồ sơ đính kèm của bạn
-        </h2>
-
-        <div className="border-2 border-dashed border-slate-200 bg-slate-50 rounded-xl p-8 flex flex-col items-center justify-center text-center transition-colors hover:border-primary/50 hover:bg-primary-light/20 cursor-pointer group">
-          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4 group-hover:scale-110 transition-transform">
-            <UploadCloud
-              size={32}
-              className="text-slate-300 group-hover:text-primary transition-colors"
-            />
-          </div>
-          <p className="text-slate-600 mb-4 max-w-sm">
-            Bạn chưa đính kèm CV. Tải lên CV của bạn để tối ưu hoá quá trình tìm
-            việc và nhận gợi ý phù hợp nhất.
-          </p>
-          <Link
-            href="/dashboard/cv/upload"
-            className="inline-flex items-center gap-1 text-primary font-semibold hover:underline"
-          >
-            Quản lý hồ sơ đính kèm <ChevronRight size={16} />
-          </Link>
-        </div>
-      </div>
+      <CandidateCVCard />
 
       {/* 3. Hồ sơ ViecNgon Card (Biểu đồ nửa vầng trăng) */}
       <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm flex flex-col md:flex-row items-center gap-8">
