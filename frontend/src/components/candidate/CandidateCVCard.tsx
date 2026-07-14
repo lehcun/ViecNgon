@@ -109,6 +109,7 @@ export default function CandidateCVCard() {
       alert("Đường dẫn file chưa sẵn sàng!");
     }
   };
+
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm h-full flex flex-col">
       <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">

@@ -7,6 +7,7 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateCandidateDto } from './dto/update-candidate.dto';
 import { CandidateProfileResponse } from '@viecngon/types';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 interface MockMulterFile {
   originalname: string;
@@ -16,7 +17,10 @@ interface MockMulterFile {
 
 @Injectable()
 export class CandidateService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private cloudinaryService: CloudinaryService,
+  ) {}
 
   //  Lấy thông tin chi tiết ứng viên dựa trên ID tài khoản đang login
   async getProfile(maTaiKhoan: string): Promise<CandidateProfileResponse> {
@@ -180,7 +184,7 @@ export class CandidateService {
 
     try {
       // 1. Upload file lên Cloud (Thực hiện NGOÀI transaction để tránh khóa Database quá lâu)
-      const fileUrl = await this.uploadToCloudService(file);
+      const fileUrl = await this.cloudinaryService.uploadCvPdf(file);
 
       // Tìm maUngVien theo maTaiKhoan
       const ungVien = await this.prisma.ungVien.findUnique({
@@ -226,13 +230,5 @@ export class CandidateService {
         'Không thể lưu CV vào hệ thống. Vui lòng thử lại.',
       );
     }
-  }
-
-  // --- Hàm Helper (Giả lập upload) ---
-  private uploadToCloudService(file: MockMulterFile): Promise<string> {
-    // Tích hợp logic Cloudinary / AWS S3 của bạn ở đây
-    return Promise.resolve(
-      `https://viecngon-cloud.com/cv/storage/${Date.now()}_${file.originalname}`,
-    );
   }
 }
