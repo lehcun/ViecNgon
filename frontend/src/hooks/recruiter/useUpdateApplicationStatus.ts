@@ -13,14 +13,14 @@ export const useUpdateApplicationStatus = () => {
       status: string;
     }) => {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/applications/${maDon}/status`,
+        `${process.env.NEXT_PUBLIC_API_URL}/application/${maDon}/status`,
         {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ status }),
-          credentials: "include", // Bắt buộc để gửi kèm Token Cookie [9]
+          credentials: "include",
         },
       );
 
