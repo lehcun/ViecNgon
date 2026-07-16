@@ -1,14 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { ApplicationItem } from "@viecngon/types";
 
-export const useEmployerCandidates = () => {
+export const useEmployerApplication = () => {
   const {
-    data: candidates = [],
+    data: applications = [],
     isLoading,
     isError,
     error,
   } = useQuery<ApplicationItem[]>({
-    queryKey: ["employer-candidates"],
+    queryKey: ["employer-application"],
     queryFn: async () => {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/application`,
@@ -29,7 +29,7 @@ export const useEmployerCandidates = () => {
   });
 
   return {
-    candidates,
+    applications,
     isLoading,
     isError,
     error,

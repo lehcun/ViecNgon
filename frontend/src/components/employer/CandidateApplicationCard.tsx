@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Clock, Mail, FileText, ExternalLink, Loader2 } from "lucide-react";
 import { useUpdateApplicationStatus } from "@/hooks/recruiter/useUpdateApplicationStatus";
 import { ApplicationItem } from "@viecngon/types";
+import Link from "next/link";
 
 // Hàm helper tô màu nhãn trạng thái chuẩn UI/UX
 const getStatusBadge = (status: string) => {
@@ -57,7 +58,10 @@ export default function CandidateCard({
   };
 
   return (
-    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:border-primary/50 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <Link
+      href={`/applications/${application.applicationId}`}
+      className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:border-primary/50 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4"
+    >
       {/* Cột trái: Thông tin ứng viên */}
       <div className="flex items-start gap-4 flex-1">
         {/* Avatar */}
@@ -147,6 +151,6 @@ export default function CandidateCard({
           )}
         </div>
       </div>
-    </div>
+    </Link>
   );
 }

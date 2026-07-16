@@ -259,7 +259,7 @@ const EmployerMainContent = () => {
 
             <div className="mt-auto pt-4 text-center">
               <Link
-                href="/candidates"
+                href="/applications"
                 className="text-sm font-semibold text-primary hover:underline"
               >
                 Xem tất cả hồ sơ

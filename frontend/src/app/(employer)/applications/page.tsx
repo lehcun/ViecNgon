@@ -2,12 +2,12 @@
 
 import React, { useState, useMemo } from "react";
 import { Loader2, Search, Filter, ChevronLeft } from "lucide-react";
-import { useEmployerCandidates } from "@/hooks/recruiter/useEmployerCandidates";
+import { useEmployerApplication } from "@/hooks/recruiter/useEmployerCandidates";
 import CandidateCard from "@/components/employer/CandidateApplicationCard";
 import Link from "next/link";
 
-export default function EmployerCandidatesPage() {
-  const { candidates, isLoading, isError } = useEmployerCandidates();
+export default function ApplicationListPage() {
+  const { applications, isLoading, isError } = useEmployerApplication();
 
   // State phục vụ Bộ lọc
   const [searchKeyword, setSearchKeyword] = useState("");
@@ -15,9 +15,9 @@ export default function EmployerCandidatesPage() {
 
   // Logic Lọc dữ liệu trên Frontend (Không cần gọi lại API)
   const filteredCandidates = useMemo(() => {
-    if (!candidates) return [];
+    if (!applications) return [];
 
-    return candidates.filter((app) => {
+    return applications.filter((app) => {
       // Lọc theo trạng thái
       const matchStatus = filterStatus === "ALL" || app.status === filterStatus;
 
@@ -29,7 +29,7 @@ export default function EmployerCandidatesPage() {
 
       return matchStatus && matchKeyword;
     });
-  }, [candidates, searchKeyword, filterStatus]);
+  }, [applications, searchKeyword, filterStatus]);
 
   if (isLoading) {
     return (
@@ -73,7 +73,9 @@ export default function EmployerCandidatesPage() {
           </h1>
           <p className="text-slate-500 text-sm mt-1">
             Bạn có tổng cộng{" "}
-            <span className="font-bold text-primary">{candidates.length}</span>{" "}
+            <span className="font-bold text-primary">
+              {applications.length}
+            </span>{" "}
             hồ sơ ứng tuyển.
           </p>
         </div>
