@@ -16,6 +16,9 @@ import {
   MoreVertical,
   Download,
 } from "lucide-react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useApplicationDetail } from "@/hooks/recruiter/useApplicationDetail";
 
 // Mock Data (Thực tế sẽ lấy từ API qua useParams)
 const MOCK_APPLICATION = {
@@ -31,8 +34,19 @@ const MOCK_APPLICATION = {
 };
 
 export default function ApplicationDetailPage() {
+  const params = useParams();
+  const maDon = params.id as string; // Lấy đúng tên thư mục trong ngoặc vuông [id]
+
+  console.log("Mã đơn hiện tại là:", maDon[0]);
+
+  // Gọi API thông qua Hook
+  const {
+    data: application,
+    isLoading,
+    isError,
+  } = useApplicationDetail(maDon[0]);
   const [activeTab, setActiveTab] = useState<"CV" | "PROFILE">("CV");
-  const [currentStatus, setCurrentStatus] = useState(MOCK_APPLICATION.status);
+  const [currentStatus, setCurrentStatus] = useState("");
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
 
@@ -41,12 +55,12 @@ export default function ApplicationDetailPage() {
       {/* --- HEADER --- */}
       <div className="max-w-350 mx-auto mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <a
-            href="/employer-dashboard/applications"
+          <Link
+            href="/applications"
             className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-slate-500"
           >
             <ChevronLeft size={20} />
-          </a>
+          </Link>
           <div>
             <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
               {MOCK_APPLICATION.candidateName}

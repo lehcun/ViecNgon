@@ -129,7 +129,7 @@ export default function CandidateCVTemplatePage() {
         URL.revokeObjectURL(objectUrl);
       }
     };
-  }, [profile, activeTemplateId, isMounted]);
+  }, [profile, activeTemplateId, isMounted, ActiveCVComponent]);
 
   // ==========================================
   // HÀM XỬ LÝ: MỞ TAB MỚI / TẢI XUỐNG

@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Clock, Mail, FileText, ExternalLink, Loader2 } from "lucide-react";
 import { useUpdateApplicationStatus } from "@/hooks/recruiter/useUpdateApplicationStatus";
 import { ApplicationItem } from "@viecngon/types";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 // Hàm helper tô màu nhãn trạng thái chuẩn UI/UX
 const getStatusBadge = (status: string) => {
@@ -57,9 +57,15 @@ export default function CandidateCard({
     updateStatus({ maDon: application.applicationId, status: newStatus });
   };
 
+  const router = useRouter();
+
+  const handleCardClick = () => {
+    router.push(`/applications/${application.applicationId}`);
+  };
+
   return (
-    <Link
-      href={`/applications/${application.applicationId}`}
+    <div
+      onClick={handleCardClick}
       className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:border-primary/50 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4"
     >
       {/* Cột trái: Thông tin ứng viên */}
@@ -87,12 +93,12 @@ export default function CandidateCard({
             {getStatusBadge(application.status)}
           </div>
 
-          <div className="flex items-center gap-2 text-sm text-slate-600 mb-2">
+          <button className="flex items-center gap-2 text-sm text-slate-600 mb-2 z-10">
             <Mail size={14} className="text-slate-400" />
             <span>{application.contactEmail}</span>
-          </div>
+          </button>
 
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-slate-500">
+          <button className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-slate-500">
             <span className="font-medium text-slate-700 flex items-center gap-1">
               Ứng tuyển:{" "}
               <span className="text-primary">{application.jobTitle}</span>
@@ -108,7 +114,7 @@ export default function CandidateCard({
                 minute: "2-digit",
               })}
             </span>
-          </div>
+          </button>
         </div>
       </div>
 
@@ -120,6 +126,7 @@ export default function CandidateCard({
             href={application.cvUrl}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
             className="w-full sm:w-auto px-4 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 text-sm font-semibold rounded-lg border border-slate-200 transition-colors flex items-center justify-center gap-2"
           >
             <FileText size={16} className="text-blue-500" /> Xem CV{" "}
@@ -130,7 +137,10 @@ export default function CandidateCard({
         )}
 
         {/* Dropdown Đổi Trạng thái */}
-        <div className="relative w-full sm:w-auto">
+        <div
+          className="relative w-full sm:w-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
           <select
             value={application.status}
             onChange={handleStatusChange}
@@ -151,6 +161,6 @@ export default function CandidateCard({
           )}
         </div>
       </div>
-    </Link>
+    </div>
   );
 }
