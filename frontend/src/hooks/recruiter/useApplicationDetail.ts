@@ -6,10 +6,10 @@ export const useApplicationDetail = (maDon: string) => {
     queryKey: ["application-detail", maDon],
     queryFn: async () => {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/employer/applications/${maDon}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/applications/${maDon}`,
         {
           method: "GET",
-          credentials: "include", // Gửi kèm Cookie xác thực HR
+          credentials: "include",
         },
       );
 

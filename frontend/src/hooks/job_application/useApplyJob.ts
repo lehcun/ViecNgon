@@ -9,7 +9,7 @@ export interface ApplyJobPayload {
 // 2. Hàm gọi API thuần (Fetch)
 const applyForJobAPI = async (payload: ApplyJobPayload) => {
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/application`,
+    `${process.env.NEXT_PUBLIC_API_URL}/applications`,
     {
       method: "POST",
       headers: {

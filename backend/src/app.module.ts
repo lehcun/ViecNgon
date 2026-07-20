@@ -8,8 +8,8 @@ import { RecruiterModule } from './recruiter/recruiter.module';
 import { CompanyModule } from './company/company.module';
 import { JobModule } from './job/job.module';
 import { SkillModule } from './skill/skill.module';
-import { ApplicationModule } from './application/application.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { ApplicationsModule } from './applications/applications.module';
 
 @Module({
   imports: [
@@ -20,8 +20,8 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     CompanyModule,
     JobModule,
     SkillModule,
-    ApplicationModule,
     CloudinaryModule,
+    ApplicationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

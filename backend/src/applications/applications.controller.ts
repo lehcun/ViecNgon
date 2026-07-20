@@ -8,14 +8,17 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import * as jwtAuthGuard from 'src/auth/guards/jwt-auth.guard';
-import { ApplicationService } from './application.service';
-import { CreateDonXinViecDto } from './dto/create-don-xin-viec.dto';
+import { CreateDonXinViecDto } from '../applications/dto/create-don-xin-viec.dto';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
+import { ApplicationsService } from './applications.service';
 
-@Controller('application')
+@Controller('applications')
 export class ApplicationController {
-  constructor(private readonly donXinViecService: ApplicationService) {}
+  constructor(private readonly donXinViecService: ApplicationsService) {}
 
+  // =========================================================
+  // 1. API DÀNH CHO ỨNG VIÊN (CANDIDATE)
+  // =========================================================
   @UseGuards(jwtAuthGuard.JwtAuthGuard)
   @Post()
   async applyForJob(
@@ -28,14 +31,23 @@ export class ApplicationController {
     );
   }
 
+  // =========================================================
+  // 1. API DÀNH CHO ỨNG VIÊN (CANDIDATE)
+  // =========================================================
+
   @UseGuards(jwtAuthGuard.JwtAuthGuard)
-  @Get()
+  @Get('employer')
   async getCandidates(@CurrentUser() user: jwtAuthGuard.AuthUser) {
     return await this.donXinViecService.getCandidatesForEmployer(user.id);
   }
 
+  @Get('employer/:maDon')
+  async getApplicationDetail(@Param('maDon') maDon: string) {
+    // return await this.candidateManagementService.getApplicationDetail(maDon);
+  }
+
   @UseGuards(jwtAuthGuard.JwtAuthGuard)
-  @Patch(':maDon/status')
+  @Patch('employer/:maDon')
   async updateStatus(
     @Param('maDon') maDon: string,
     @Body('status') newStatus: string,

@@ -7,7 +7,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateDonXinViecDto } from './dto/create-don-xin-viec.dto';
 
 @Injectable()
-export class ApplicationService {
+export class ApplicationsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async createApplication(dto: CreateDonXinViecDto, userId: string) {
@@ -138,5 +138,101 @@ export class ApplicationService {
       where: { maDon: maDon },
       data: { trangThai: trangThai },
     });
+  }
+
+  async getApplicationDetail(maDon: string) {
+    // Bước 1: Query qua bảng DonXinViec và include lồng sâu xuống UngVien
+    const application = await this.prisma.donXinViec.findUnique({
+      where: { maDon: maDon },
+      include: {
+        // Lấy thông tin Công việc đang ứng tuyển
+        congViec: {
+          select: {
+            maCongViec: true,
+            tenCongViec: true,
+          },
+        },
+        // Lấy thông tin Ứng viên & Hybrid CV của họ
+        ungVien: {
+          include: {
+            taiKhoan: {
+              select: { email: true, sdt: true },
+            },
+            kinhNghiems: {
+              orderBy: { ngayBatDau: 'desc' },
+            },
+            hocVans: {
+              orderBy: { ngayBatDau: 'desc' },
+            },
+            kyNangs: {
+              include: { kyNang: true },
+            },
+            danhSachFileCv: true, // Để đối chiếu file nếu cần
+          },
+        },
+      },
+    });
+
+    // Bắt lỗi nếu mã đơn không tồn tại (Ví dụ: Ứng viên đã rút đơn)
+    if (!application) {
+      throw new NotFoundException(
+        'Không tìm thấy đơn ứng tuyển này hoặc đơn đã bị thu hồi.',
+      );
+    }
+
+    // Bước 2: Format dữ liệu chuẩn hóa sang tiếng Anh trả về cho Frontend
+    const ungVien = application.ungVien;
+
+    return {
+      // --- THÔNG TIN ĐƠN ỨNG TUYỂN (APPLICATION INFO) ---
+      applicationId: application.maDon,
+      appliedAt: application.ngayNop,
+      status: application.trangThai,
+      coverLetter: application.chiTiet, // Thư giới thiệu ứng viên viết lúc nộp
+
+      // Ưu tiên file CV đính kèm lúc nộp. Nếu không có, lấy CV mặc định của ứng viên
+      cvUrl: application.fileCvUrl || ungVien.cvUrl,
+
+      // --- THÔNG TIN CÔNG VIỆC (JOB INFO) ---
+      jobId: application.congViec.maCongViec,
+      jobTitle: application.congViec.tenCongViec,
+
+      // --- THÔNG TIN ỨNG VIÊN (CANDIDATE INFO) ---
+      candidateId: ungVien.maUngVien,
+      candidateName: ungVien.tenUngVien,
+      avatarUrl: ungVien.avatarUrl,
+      profession: ungVien.chuyenMon,
+      aboutMe: ungVien.gioiThieuBanThan,
+
+      contact: {
+        email: ungVien.taiKhoan.email,
+        phoneNumber: ungVien.taiKhoan.sdt,
+        address: ungVien.diaChi,
+      },
+
+      // --- DỮ LIỆU HỒ SƠ TRỰC TUYẾN (Dành cho HR đọc nếu không có file PDF) ---
+      skills: ungVien.kyNangs.map((k) => ({
+        skillName: k.kyNang.tenKyNang,
+        level: k.mucDo,
+      })),
+
+      experiences: ungVien.kinhNghiems.map((exp) => ({
+        id: exp.maKinhNghiem,
+        companyName: exp.tenCongTy,
+        position: exp.viTri,
+        startDate: exp.ngayBatDau,
+        endDate: exp.ngayKetThuc,
+        description: exp.moTaChiTiet,
+      })),
+
+      educations: ungVien.hocVans.map((edu) => ({
+        id: edu.maHocVan,
+        schoolName: edu.tenTruong,
+        major: edu.nganhHoc,
+        startDate: edu.ngayBatDau,
+        endDate: edu.ngayTotNghiep,
+        gpa: edu.gpa,
+      })),
+    };
   }
 }

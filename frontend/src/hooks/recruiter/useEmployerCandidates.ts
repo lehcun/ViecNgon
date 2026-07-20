@@ -11,7 +11,7 @@ export const useEmployerApplication = () => {
     queryKey: ["employer-application"],
     queryFn: async () => {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/application`,
+        `${process.env.NEXT_PUBLIC_API_URL}/applications`,
         {
           method: "GET",
           credentials: "include",
