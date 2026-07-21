@@ -308,3 +308,53 @@ export interface ApplicationItem {
   status: string;
   cvUrl: string | null;
 }
+
+export interface ApplicationDetailResponse {
+  // --- THÔNG TIN ĐƠN ỨNG TUYỂN ---
+  applicationId: string;
+  appliedAt: string | Date;
+  status: string;
+  coverLetter: string | null;
+  cvUrl: string | null;
+
+  // --- THÔNG TIN CÔNG VIỆC ---
+  jobId: string;
+  jobTitle: string;
+
+  // --- THÔNG TIN ỨNG VIÊN ---
+  candidateId: string;
+  candidateName: string;
+  avatarUrl: string | null;
+  profession: string;
+  aboutMe: string | null;
+
+  contact: {
+    email: string;
+    phoneNumber: string | null;
+    address: string | null;
+  };
+
+  // --- DỮ LIỆU HỒ SƠ TRỰC TUYẾN (HYBRID CV) ---
+  skills: {
+    skillName: string;
+    level: string | null;
+  }[];
+
+  experiences: {
+    id: string;
+    companyName: string;
+    position: string;
+    startDate: Date | string;
+    endDate: Date | string | null;
+    description: string | null;
+  }[];
+
+  educations: {
+    id: string;
+    schoolName: string;
+    major: string;
+    startDate: Date | string;
+    endDate: Date | string | null;
+    gpa: string | null;
+  }[];
+}

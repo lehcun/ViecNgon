@@ -13,7 +13,7 @@ export const useUpdateApplicationStatus = () => {
       status: string;
     }) => {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/applications/${maDon}/status`,
+        `${process.env.NEXT_PUBLIC_API_URL}/applications/employer/${maDon}/status`,
         {
           method: "PATCH",
           headers: {

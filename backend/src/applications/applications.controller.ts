@@ -13,7 +13,7 @@ import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { ApplicationsService } from './applications.service';
 
 @Controller('applications')
-export class ApplicationController {
+export class ApplicationsController {
   constructor(private readonly donXinViecService: ApplicationsService) {}
 
   // =========================================================
@@ -43,11 +43,11 @@ export class ApplicationController {
 
   @Get('employer/:maDon')
   async getApplicationDetail(@Param('maDon') maDon: string) {
-    // return await this.candidateManagementService.getApplicationDetail(maDon);
+    return await this.donXinViecService.getApplicationDetail(maDon);
   }
 
   @UseGuards(jwtAuthGuard.JwtAuthGuard)
-  @Patch('employer/:maDon')
+  @Patch('employer/:maDon/status')
   async updateStatus(
     @Param('maDon') maDon: string,
     @Body('status') newStatus: string,

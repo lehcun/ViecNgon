@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateDonXinViecDto } from './dto/create-don-xin-viec.dto';
+import { ApplicationDetailResponse } from '@viecngon/types';
 
 @Injectable()
 export class ApplicationsService {
@@ -140,7 +141,9 @@ export class ApplicationsService {
     });
   }
 
-  async getApplicationDetail(maDon: string) {
+  async getApplicationDetail(
+    maDon: string,
+  ): Promise<ApplicationDetailResponse> {
     // Bước 1: Query qua bảng DonXinViec và include lồng sâu xuống UngVien
     const application = await this.prisma.donXinViec.findUnique({
       where: { maDon: maDon },
