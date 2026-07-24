@@ -6,10 +6,14 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateDonXinViecDto } from './dto/create-don-xin-viec.dto';
 import { ApplicationDetailResponse } from '@viecngon/types';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class ApplicationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailerService: MailerService,
+  ) {}
 
   async createApplication(dto: CreateDonXinViecDto, userId: string) {
     const { maCongViec, chiTiet, fileCvUrl } = dto;
@@ -237,5 +241,46 @@ export class ApplicationsService {
         gpa: edu.gpa,
       })),
     };
+  }
+
+  async sendEmailToCandidate(maDon: string, subject: string, content: string) {
+    // 1. Tìm thông tin đơn ứng tuyển, lấy Email và Mã tài khoản của ứng viên
+    const application = await this.prisma.donXinViec.findUnique({
+      where: { maDon: maDon },
+      include: {
+        ungVien: {
+          include: {
+            taiKhoan: { select: { email: true, maTaiKhoan: true } },
+          },
+        },
+      },
+    });
+
+    if (!application) {
+      throw new NotFoundException('Không tìm thấy đơn ứng tuyển này.');
+    }
+
+    const candidateEmail = application.ungVien.taiKhoan.email;
+    const candidateAccountId = application.ungVien.taiKhoan.maTaiKhoan;
+
+    // 2. Gửi Email thông qua NodeMailer
+    await this.mailerService.sendMail({
+      to: candidateEmail,
+      subject: subject,
+      html: content, // Vì Frontend xài React Quill gửi chuỗi HTML, ta map thẳng vào trường html
+    });
+
+    // 3. Lưu thông báo vào hệ thống cho Ứng viên thấy
+    await this.prisma.thongBao.create({
+      data: {
+        tieuDe: subject,
+        noiDung:
+          'Bạn có một email mới từ Nhà tuyển dụng. Vui lòng kiểm tra hộp thư email của bạn.',
+        trangThai: 'CHUA_DOC',
+        maTaiKhoan: candidateAccountId,
+      },
+    });
+
+    return { message: 'Đã gửi email và tạo thông báo thành công!' };
   }
 }

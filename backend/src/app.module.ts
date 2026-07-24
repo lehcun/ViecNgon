@@ -10,6 +10,7 @@ import { JobModule } from './job/job.module';
 import { SkillModule } from './skill/skill.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { ApplicationsModule } from './applications/applications.module';
+import { MailerModule } from '@nestjs-modules/mailer';
 
 @Module({
   imports: [
@@ -22,6 +23,19 @@ import { ApplicationsModule } from './applications/applications.module';
     SkillModule,
     CloudinaryModule,
     ApplicationsModule,
+    MailerModule.forRoot({
+      transport: {
+        host: process.env.MAIL_HOST,
+        secure: false, // true cho port 465, false cho các port khác
+        auth: {
+          user: process.env.MAIL_USER,
+          pass: process.env.MAIL_PASS,
+        },
+      },
+      defaults: {
+        from: process.env.MAIL_FROM,
+      },
+    }),
   ],
   controllers: [AppController],
   providers: [AppService],

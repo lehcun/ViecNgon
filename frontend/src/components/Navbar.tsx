@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronDown, MessageSquare, Bell } from "lucide-react";
+import { ChevronDown, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import ProfileDropdown from "./candidate/ProfileDropDown";
 import { useAuthStore } from "@/store/authStore";
 import { useUser } from "@/hooks/auth/useUser";
 import { useLogout } from "@/hooks/auth/useLogout";
+import NotificationDropdown from "./NotificationDropdown";
 
 interface NavbarProps {
   variant?: "public" | "app"; // 'public' cho trang ngoài, 'app' cho Dashboard
@@ -19,7 +20,6 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
 
   // Goi hook kiểm tra user (Tự động chạy ngầm khi component render)
   const { isCheckingAuth } = useUser();
-  // console.log("user", user);
 
   // Gọi hook đăng xuất
   const { mutate: logout, isPending: isLoggingOut } = useLogout();
@@ -125,10 +125,7 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
                   size={20}
                   className={`cursor-pointer transition ${iconColor} ${hoverColor}`}
                 />
-                <Bell
-                  size={20}
-                  className={`cursor-pointer transition ${iconColor} ${hoverColor}`}
-                />
+                <NotificationDropdown />
                 <div className="h-6 w-px bg-slate-300 hidden sm:block mx-1"></div>
 
                 <ProfileDropdown

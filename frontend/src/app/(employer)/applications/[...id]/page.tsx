@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   ChevronLeft,
   FileText,
@@ -15,12 +15,14 @@ import {
   Clock,
   MoreVertical,
   Download,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useApplicationDetail } from "@/hooks/recruiter/useApplicationDetail";
 import { ApplicationDetailResponse } from "@viecngon/types";
 import { useUpdateApplicationStatus } from "@/hooks/recruiter/useUpdateApplicationStatus";
+import SendEmailModal from "@/components/employer/SendEmailModel";
 
 const formatDate = (dateString: string | Date | null | undefined) => {
   if (!dateString) return "Không xác định";
@@ -44,20 +46,21 @@ export default function ApplicationDetailPage() {
     isError,
   } = useApplicationDetail(maDon[0]);
 
-  const { mutate: updateStatus, isPending } = useUpdateApplicationStatus();
+  const { mutate: updateStatus, isPending: isUpdating } =
+    useUpdateApplicationStatus();
 
   const [activeTab, setActiveTab] = useState<"CV" | "PROFILE">("CV");
-  const [currentStatus, setCurrentStatus] = useState("");
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
 
-  // Cập nhật trạng thái cục bộ khi dữ liệu API load xong
-  useEffect(() => {
-    if (application?.status) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setCurrentStatus(application.status);
-    }
-  }, [application]);
+  // Lưu trạng thái tạm thời khi HR vừa bấm (giúp giao diện phản hồi tức thì)
+  const [optimisticStatus, setOptimisticStatus] = useState<string | null>(null);
+
+  // Trạng thái hiện tại: Ưu tiên lấy trạng thái HR vừa bấm, nếu chưa bấm thì lấy từ API trả về
+  const currentStatus = optimisticStatus || application?.status || "";
+
+  // Status đóng mở model Email
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
 
   // Render trạng thái Loading / Error
   if (isLoading) {
@@ -86,8 +89,8 @@ export default function ApplicationDetailPage() {
     );
   }
 
-  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newStatus = e.target.value;
+  const handleStatusChange = (newStatus: string) => {
+    setOptimisticStatus(newStatus);
     updateStatus({ maDon: application.applicationId, status: newStatus });
   };
 
@@ -110,20 +113,20 @@ export default function ApplicationDetailPage() {
               {application.candidateName}
               <span
                 className={`text-xs px-2.5 py-1 rounded-full font-bold border ${
-                  currentStatus === "INTERVIEW"
+                  currentStatus === "PHONG_VAN"
                     ? "bg-purple-100 text-purple-700 border-purple-200"
-                    : currentStatus === "HIRED"
+                    : currentStatus === "DUOC_NHAN"
                       ? "bg-emerald-100 text-emerald-700 border-emerald-200"
-                      : currentStatus === "REJECTED"
+                      : currentStatus === "BI_LOAI"
                         ? "bg-rose-100 text-rose-700 border-rose-200"
                         : "bg-blue-100 text-blue-700 border-blue-200"
                 }`}
               >
-                {currentStatus === "INTERVIEW"
+                {currentStatus === "PHONG_VAN"
                   ? "Phỏng vấn"
-                  : currentStatus === "HIRED"
+                  : currentStatus === "DUOC_NHAN"
                     ? "Đã nhận việc"
-                    : currentStatus === "REJECTED"
+                    : currentStatus === "BI_LOAI"
                       ? "Từ chối"
                       : "Đang xem xét"}
               </span>
@@ -378,108 +381,154 @@ export default function ApplicationDetailPage() {
         {/* ========================================== */}
         <div className="w-full lg:w-1/3 flex flex-col gap-5 sticky top-6">
           {/* 1. CHUYỂN TRẠNG THÁI */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 overflow-hidden">
+            {/* Hiệu ứng loading mờ khi đang gọi API cập nhật */}
+            {isUpdating && (
+              <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] z-10 flex flex-col items-center justify-center text-primary">
+                <Loader2 size={28} className="animate-spin mb-2" />
+                <span className="text-sm font-medium">Đang lưu...</span>
+              </div>
+            )}
             <h3 className="text-sm font-bold text-slate-800 mb-3 uppercase tracking-wider">
               Trạng thái ứng tuyển
             </h3>
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => handleStatusChange("CHO_DUYET")}
-                className={`py-2 px-3 rounded-lg text-sm font-medium border flex items-center justify-center gap-1.5 transition-all ${currentStatus === "REVIEWING" ? "bg-blue-50 border-blue-200 text-blue-700 shadow-inner" : "bg-white border-slate-200 text-slate-600 hover:border-blue-300"}`}
+                className={`py-2 px-3 rounded-lg text-sm font-medium border flex items-center justify-center gap-1.5 transition-all ${currentStatus === "CHO_DUYET" ? "bg-blue-50 border-blue-200 text-blue-700 shadow-inner" : "bg-white border-slate-200 text-slate-600 hover:border-blue-300"}`}
               >
-                <Clock size={16} /> Xem xét
+                <Clock size={16} /> Chờ duyệt
               </button>
               <button
                 onClick={() => handleStatusChange("PHONG_VAN")}
-                className={`py-2 px-3 rounded-lg text-sm font-medium border flex items-center justify-center gap-1.5 transition-all ${currentStatus === "INTERVIEW" ? "bg-purple-50 border-purple-200 text-purple-700 shadow-inner" : "bg-white border-slate-200 text-slate-600 hover:border-purple-300"}`}
+                className={`py-2 px-3 rounded-lg text-sm font-medium border flex items-center justify-center gap-1.5 transition-all ${currentStatus === "PHONG_VAN" ? "bg-purple-50 border-purple-200 text-purple-700 shadow-inner" : "bg-white border-slate-200 text-slate-600 hover:border-purple-300"}`}
               >
                 <CalendarDays size={16} /> Phỏng vấn
               </button>
               <button
                 onClick={() => handleStatusChange("DUOC_NHAN")}
-                className={`py-2 px-3 rounded-lg text-sm font-medium border flex items-center justify-center gap-1.5 transition-all ${currentStatus === "HIRED" ? "bg-emerald-50 border-emerald-200 text-emerald-700 shadow-inner" : "bg-white border-slate-200 text-slate-600 hover:border-emerald-300"}`}
+                className={`py-2 px-3 rounded-lg text-sm font-medium border flex items-center justify-center gap-1.5 transition-all ${currentStatus === "DUOC_NHAN" ? "bg-emerald-50 border-emerald-200 text-emerald-700 shadow-inner" : "bg-white border-slate-200 text-slate-600 hover:border-emerald-300"}`}
               >
                 <CheckCircle2 size={16} /> Nhận việc
               </button>
               <button
                 onClick={() => handleStatusChange("BI_LOAI")}
-                className={`py-2 px-3 rounded-lg text-sm font-medium border flex items-center justify-center gap-1.5 transition-all ${currentStatus === "REJECTED" ? "bg-rose-50 border-rose-200 text-rose-700 shadow-inner" : "bg-white border-slate-200 text-slate-600 hover:border-rose-300"}`}
+                className={`py-2 px-3 rounded-lg text-sm font-medium border flex items-center justify-center gap-1.5 transition-all ${currentStatus === "BI_LOAI" ? "bg-rose-50 border-rose-200 text-rose-700 shadow-inner" : "bg-white border-slate-200 text-slate-600 hover:border-rose-300"}`}
               >
-                <XCircle size={16} /> Từ chối
+                <XCircle size={16} /> Bị loại
               </button>
             </div>
           </div>
 
-          {/* 2. LÊN LỊCH PHỎNG VẤN (Tính năng "Ăn điểm") */}
-          <div className="bg-linear-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100 shadow-sm p-5 relative overflow-hidden">
-            <div className="absolute -right-4 -top-4 w-24 h-24 bg-purple-200/50 rounded-full blur-xl"></div>
-            <h3 className="text-sm font-bold text-indigo-900 mb-2 flex items-center gap-2 relative z-10">
-              <Video size={18} className="text-purple-600" />
-              Lên lịch phỏng vấn
-            </h3>
-            <p className="text-xs text-indigo-700/80 mb-4 relative z-10">
-              Tự động gửi email mời và tạo phòng họp Google Meet cho ứng viên.
-            </p>
-            <button
-              onClick={() => alert("Mở Modal Form tạo lịch phỏng vấn ở đây!")}
-              className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow-md shadow-indigo-200 transition-colors flex items-center justify-center gap-2 relative z-10"
-            >
-              <CalendarDays size={18} /> Đặt lịch ngay
-            </button>
-          </div>
-
-          {/* 3. ĐÁNH GIÁ & GHI CHÚ */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col flex-1">
-            <div className="p-5 border-b border-slate-100">
-              <h3 className="text-sm font-bold text-slate-800 mb-3 uppercase tracking-wider">
-                Đánh giá ứng viên
+          {/* --- KHỐI 2: DÀNH RIÊNG CHO TRẠNG THÁI "PHONG_VAN" --- */}
+          {currentStatus === "PHONG_VAN" && (
+            <div className="bg-linear-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100 shadow-sm p-5 relative overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300">
+              <div className="absolute -right-4 -top-4 w-24 h-24 bg-purple-200/50 rounded-full blur-xl"></div>
+              <h3 className="text-sm font-bold text-indigo-900 mb-2 flex items-center gap-2 relative z-10">
+                <Video size={18} className="text-purple-600" />
+                Lên lịch phỏng vấn
               </h3>
-              <div className="flex items-center gap-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() => setRating(star)}
-                    onMouseEnter={() => setHoverRating(star)}
-                    onMouseLeave={() => setHoverRating(0)}
-                    className="p-1 transition-transform hover:scale-110"
-                  >
-                    <Star
-                      size={28}
-                      className={`${
-                        (hoverRating || rating) >= star
-                          ? "fill-amber-400 text-amber-400"
-                          : "fill-slate-100 text-slate-300"
-                      } transition-colors`}
-                    />
-                  </button>
-                ))}
-                <span className="ml-3 text-sm font-medium text-amber-600">
-                  {rating > 0 ? `${rating}/5 sao` : "Chưa chấm điểm"}
-                </span>
+              <p className="text-xs text-indigo-700/80 mb-4 relative z-10">
+                Tự động gửi email mời và tạo phòng họp Google Meet đồng bộ vào
+                Lịch.
+              </p>
+              <button
+                onClick={() => alert("Mở Modal Form tạo lịch phỏng vấn ở đây!")}
+                className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow-md shadow-indigo-200 transition-colors flex items-center justify-center gap-2 relative z-10"
+              >
+                <CalendarDays size={18} /> Đặt lịch ngay
+              </button>
+            </div>
+          )}
+
+          {/* --- KHỐI 3: ĐÁNH GIÁ & GHI CHÚ  -- DÀNH RIÊNG CHO TRẠNG THÁI "DUOC_NHAN" --- */}
+          {currentStatus === "DUOC_NHAN" && (
+            <div className="bg-emerald-50/50 rounded-2xl border border-emerald-200 shadow-sm flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-300">
+              <div className="p-5 border-b border-emerald-100">
+                <h3 className="text-sm font-bold text-emerald-900 mb-3 uppercase tracking-wider">
+                  Đánh giá Ứng viên (Uy tín)
+                </h3>
+                <div className="flex items-center gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setRating(star)}
+                      onMouseEnter={() => setHoverRating(star)}
+                      onMouseLeave={() => setHoverRating(0)}
+                      className="p-1 transition-transform hover:scale-110"
+                    >
+                      <Star
+                        size={32}
+                        className={`${
+                          (hoverRating || rating) >= star
+                            ? "fill-amber-400 text-amber-400"
+                            : "fill-white text-emerald-200"
+                        } transition-colors`}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="p-5 flex flex-col">
+                <textarea
+                  className="w-full min-h-20 p-3 text-sm border border-emerald-200 rounded-xl bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all resize-none"
+                  placeholder="Nhận xét về thái độ, kỹ năng để hệ thống tính điểm..."
+                ></textarea>
+                <button className="mt-3 w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2">
+                  <Star size={16} className="fill-white" /> Lưu đánh giá
+                </button>
               </div>
             </div>
+          )}
 
-            <div className="p-5 flex-1 flex flex-col">
-              <h3 className="text-sm font-bold text-slate-800 mb-2">
-                Ghi chú nội bộ
-              </h3>
-              <textarea
-                className="w-full flex-1 min-h-25 p-3 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all resize-none"
-                placeholder="Nhập nhận xét về kỹ năng, thái độ của ứng viên. Ứng viên sẽ không thấy ghi chú này..."
-              ></textarea>
-              <button className="mt-3 w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2">
-                <Save size={16} /> Lưu đánh giá
-              </button>
+          {/* --- KHỐI 4: GHI CHÚ NỘI BỘ (Dành cho BI_LOAI hoặc CHO_DUYET) --- */}
+          {(currentStatus === "BI_LOAI" || currentStatus === "CHO_DUYET") && (
+            <div
+              className={`bg-white rounded-2xl border shadow-sm flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-300 ${currentStatus === "BI_LOAI" ? "border-rose-200" : "border-slate-200"}`}
+            >
+              <div className="p-5 flex flex-col">
+                <h3
+                  className={`text-sm font-bold mb-2 flex items-center gap-2 ${currentStatus === "BI_LOAI" ? "text-rose-700" : "text-slate-800"}`}
+                >
+                  <FileText size={18} />
+                  {currentStatus === "BI_LOAI"
+                    ? "Lý do loại (Ghi chú nội bộ)"
+                    : "Ghi chú nội bộ"}
+                </h3>
+                <textarea
+                  className="w-full min-h-25 p-3 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all resize-none"
+                  placeholder={
+                    currentStatus === "BI_LOAI"
+                      ? "Ghi chú lý do loại (thiếu KN, thái độ...). Ứng viên không thấy ghi chú này."
+                      : "Nhập nhận xét nội bộ cho team HR..."
+                  }
+                ></textarea>
+                <button className="mt-3 w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2">
+                  <Save size={16} /> Lưu ghi chú
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* 4. GỬI EMAIL NHANH */}
-          <button className="w-full py-3.5 bg-white border border-slate-200 hover:border-primary hover:text-primary text-slate-700 rounded-2xl text-sm font-bold shadow-sm transition-all flex items-center justify-center gap-2">
-            <MessageSquare size={18} /> Gửi Email cho ứng viên
-          </button>
+          {/* --- GỬI EMAIL NHANH (Chỉ hiện khi đang CHO_DUYET hoặc PHONG_VAN) --- */}
+          {(currentStatus === "CHO_DUYET" || currentStatus === "PHONG_VAN") && (
+            <button
+              onClick={() => setIsEmailModalOpen(true)}
+              className="w-full py-3.5 bg-white border border-slate-200 hover:border-primary hover:text-primary text-slate-700 rounded-2xl text-sm font-bold shadow-sm transition-all flex items-center justify-center gap-2"
+            >
+              <MessageSquare size={18} /> Gửi Email cho ứng viên
+            </button>
+          )}
         </div>
       </div>
+      <SendEmailModal
+        isOpen={isEmailModalOpen}
+        onClose={() => setIsEmailModalOpen(false)}
+        candidateEmail={application.contact.email}
+        jobTitle={application.jobTitle}
+        applicationId={application.applicationId}
+      />
     </div>
   );
 }

@@ -333,10 +333,11 @@ model DanhGia {
 // 11. BẢNG THÔNG BÁO
 // ---------------------------------------------------------
 model ThongBao {
-  maThongBao String @id @default(uuid()) @db.VarChar(50)
-  tieuDe     String @db.NVarChar(255)
-  noiDung    String @db.NVarChar(Max)
-  trangThai  String @db.NVarChar(50)
+  maThongBao String   @id @default(uuid()) @db.VarChar(50)
+  tieuDe     String   @db.NVarChar(255)
+  noiDung    String   @db.NVarChar(Max)
+  trangThai  String   @db.NVarChar(50) // 'CHUA_DOC' hoặc 'DA_DOC'
+  ngayTao    DateTime @default(now())
 
   // Khóa ngoại
   maTaiKhoan String   @db.VarChar(50)
