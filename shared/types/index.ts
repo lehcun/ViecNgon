@@ -358,3 +358,11 @@ export interface ApplicationDetailResponse {
     gpa: string | null;
   }[];
 }
+
+export interface NotificationItemResponse {
+  id: string;
+  title: string;
+  content: string;
+  status: "CHUA_DOC" | "DA_DOC";
+  createdAt: string | Date;
+}

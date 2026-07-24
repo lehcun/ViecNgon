@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { Bell, MessageSquare, Search, PlusCircle } from "lucide-react";
 import EmployerProfileDropdown from "./EmployerProfileDropdown";
+import EmployerNotificationDropdown from "./EmployerNotificationDropdown";
 
 export default function EmployerNavbar() {
   return (
@@ -62,10 +63,7 @@ export default function EmployerNavbar() {
             <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
           </button>
 
-          <button className="text-slate-500 hover:text-primary relative transition-colors p-2 mr-2">
-            <Bell size={20} />
-            <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
-          </button>
+          <EmployerNotificationDropdown />
 
           {/* Component Dropdown Avatar */}
           <EmployerProfileDropdown />

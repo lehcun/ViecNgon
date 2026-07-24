@@ -11,6 +11,7 @@ import { SkillModule } from './skill/skill.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { ApplicationsModule } from './applications/applications.module';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
         from: process.env.MAIL_FROM,
       },
     }),
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
