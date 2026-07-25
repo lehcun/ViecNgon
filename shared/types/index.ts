@@ -366,3 +366,11 @@ export interface NotificationItemResponse {
   status: "CHUA_DOC" | "DA_DOC";
   createdAt: string | Date;
 }
+
+export interface ScheduleInterviewPayload {
+  maDon: string;
+  tieuDe: string;
+  thoiGian: string; // Định dạng ISO 8601
+  moTa?: string;
+  taoGoogleMeet: boolean;
+}

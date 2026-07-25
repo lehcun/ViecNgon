@@ -12,6 +12,7 @@ import { CreateDonXinViecDto } from '../applications/dto/create-don-xin-viec.dto
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { ApplicationsService } from './applications.service';
 import { SendEmailDto } from './dto/send-email.dto';
+import { ScheduleInterviewDto } from './dto/schedule-interview.dto';
 
 @Controller('applications')
 export class ApplicationsController {
@@ -69,6 +70,21 @@ export class ApplicationsController {
       maDon,
       sendEmailDto.subject,
       sendEmailDto.content,
+    );
+  }
+
+  @UseGuards(jwtAuthGuard.JwtAuthGuard)
+  @Post('employer/:maDon/schedule')
+  async scheduleInterview(
+    @Param('maDon') maDon: string,
+    @Body() scheduleDto: ScheduleInterviewDto,
+    @CurrentUser() user: { email: string },
+  ) {
+    // Truyền email HR lấy từ JWT Token để Google biết ai là người tổ chức cuộc họp
+    return await this.applicationService.scheduleInterview(
+      maDon,
+      scheduleDto,
+      user.email,
     );
   }
 }

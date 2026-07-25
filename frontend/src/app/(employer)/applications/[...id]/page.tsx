@@ -23,6 +23,7 @@ import { useApplicationDetail } from "@/hooks/recruiter/useApplicationDetail";
 import { ApplicationDetailResponse } from "@viecngon/types";
 import { useUpdateApplicationStatus } from "@/hooks/recruiter/useUpdateApplicationStatus";
 import SendEmailModal from "@/components/employer/SendEmailModel";
+import ScheduleInterviewModal from "@/components/employer/ScheduleInterviewModal";
 
 const formatDate = (dateString: string | Date | null | undefined) => {
   if (!dateString) return "Không xác định";
@@ -61,6 +62,9 @@ export default function ApplicationDetailPage() {
 
   // Status đóng mở model Email
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+
+  // Status đóng mở model Đặt lịch
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
 
   // Render trạng thái Loading / Error
   if (isLoading) {
@@ -433,7 +437,7 @@ export default function ApplicationDetailPage() {
                 Lịch.
               </p>
               <button
-                onClick={() => alert("Mở Modal Form tạo lịch phỏng vấn ở đây!")}
+                onClick={() => setIsScheduleModalOpen(true)}
                 className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow-md shadow-indigo-200 transition-colors flex items-center justify-center gap-2 relative z-10"
               >
                 <CalendarDays size={18} /> Đặt lịch ngay
@@ -528,6 +532,14 @@ export default function ApplicationDetailPage() {
         candidateEmail={application.contact.email}
         jobTitle={application.jobTitle}
         applicationId={application.applicationId}
+      />
+
+      <ScheduleInterviewModal
+        isOpen={isScheduleModalOpen}
+        onClose={() => setIsScheduleModalOpen(false)}
+        applicationId={application.applicationId}
+        candidateName={application.candidateName}
+        jobTitle={application.jobTitle}
       />
     </div>
   );

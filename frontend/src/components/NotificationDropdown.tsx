@@ -41,12 +41,6 @@ export default function NotificationDropdown() {
     (n) => n.status === "CHUA_DOC",
   ).length;
 
-  const handleRead = (id: string, status: string) => {
-    if (status === "CHUA_DOC") {
-      markAsRead(id); // Gọi API cập nhật
-    }
-  };
-
   // Xử lý Click ra ngoài để đóng Dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

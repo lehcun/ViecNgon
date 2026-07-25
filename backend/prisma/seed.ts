@@ -49,6 +49,18 @@ async function main() {
     },
   });
 
+  // Tài khoản Trưởng nhóm làm HR cho MoMo
+  const tkHR_Cuong = await prisma.taiKhoan.create({
+    data: {
+      email: 'lehcuong2907@gmail.com',
+      tenNguoiDung: 'Lê Hùng Cường',
+      matKhau: hashPassword,
+      sdt: '0815114XXX', // Bạn có thể điền sdt thật
+      vaiTro: 'NHATUYENDUNG',
+      trangThai: 'Active',
+    },
+  });
+
   // Tài khoản HR
   const tkHR_FPT = await prisma.taiKhoan.create({
     data: {
@@ -250,8 +262,11 @@ async function main() {
       giaiThuong: 'Siêu ứng dụng thanh toán hàng đầu Việt Nam',
     },
   });
-  const hrMomo = await prisma.nhaTuyenDung.create({
-    data: { maCongTy: ctyMomo.maCongTy, maTaiKhoan: tkHR_Momo.maTaiKhoan },
+  const hrMomoCuong = await prisma.nhaTuyenDung.create({
+    data: {
+      maCongTy: ctyMomo.maCongTy,
+      maTaiKhoan: tkHR_Cuong.maTaiKhoan,
+    },
   });
 
   // =========================================================
@@ -700,6 +715,42 @@ async function main() {
     },
   });
 
+  const jobMomoCuong = await prisma.congViec.create({
+    data: {
+      tenCongViec: 'Senior React/Next.js Engineer (Super App)',
+      slug: 'senior-react-nextjs-engineer-super-app-momo',
+
+      moTa: '<ul><li>Tham gia phát triển các tính năng Frontend cốt lõi cho siêu ứng dụng MoMo với hơn 30 triệu người dùng.</li><li>Tối ưu hóa hiệu năng (Web Performance), đảm bảo trải nghiệm mượt mà trên môi trường Web và Mini App.</li><li>Phối hợp cùng team Backend, QA và Product Owner để phân tích và triển khai tính năng mới.</li></ul>',
+      yeuCauCongViec:
+        '<ul><li>Có ít nhất 3 năm kinh nghiệm làm việc với ReactJS, Next.js và Tailwind CSS.</li><li>Am hiểu sâu sắc về JavaScript/TypeScript, DOM, và Server-side Rendering (SSR).</li><li>Có kinh nghiệm xây dựng ứng dụng PWA hoặc Mini App là một lợi thế cực lớn.</li></ul>',
+      phucLoi:
+        '<ul><li>Thưởng Tết từ 2 - 4 tháng lương tùy theo năng lực và hiệu quả kinh doanh.</li><li>Gói bảo hiểm sức khỏe hạng sang dành riêng cho cấp Senior và gia đình.</li><li>Cấp sẵn Macbook Pro M3 và màn hình rời ngay ngày đầu tiên nhận việc.</li></ul>',
+
+      mucLuongToiThieu: 35000000,
+      mucLuongToiDa: 60000000,
+      yeuCauKinhNghiem: 3,
+      capBac: 'Senior',
+      thanhPho: 'TP.HCM',
+      loaiHinh: 'Full-time',
+      hinhThucLamViec: 'Hybrid',
+
+      ngayDang: new Date(),
+      ngayHetHan: nextMonth,
+      luotXem: 750,
+      trangThai: 'Đang tuyển',
+      maNTD: hrMomoCuong.maNTD,
+      // maChiNhanh: cnMomoHCM.maChiNhanh, // Bỏ comment nếu DB của bạn bắt buộc phải có maChiNhanh
+    },
+  });
+
+  // Gắn kỹ năng cho Job của HR Cường
+  await prisma.congViecKyNang.createMany({
+    data: [
+      { maCongViec: jobMomoCuong.maCongViec, maKyNang: knReact.maKyNang },
+      { maCongViec: jobMomoCuong.maCongViec, maKyNang: knTS.maKyNang },
+    ],
+  });
+
   // Gắn kỹ năng cho Job
   await prisma.congViecKyNang.createMany({
     data: [
@@ -750,6 +801,18 @@ async function main() {
           'Chào anh/chị HR, em gửi CV ứng tuyển vị trí Senior Java Backend Engineer  ạ.',
       },
     ],
+  });
+
+  await prisma.donXinViec.create({
+    data: {
+      maCongViec: jobMomoCuong.maCongViec,
+      maUngVien: uvMai.maUngVien,
+      trangThai: 'CHUA_XEM',
+      ngayNop: new Date(),
+      fileCvUrl: '/uploads/cv/mai_tran_react_cv.pdf',
+      chiTiet:
+        '<p>Kính gửi anh Lê Hùng Cường,</p><p>Em thấy vị trí Senior React/Next.js Engineer rất phù hợp với định hướng công việc và kỹ năng của em. Em hi vọng có cơ hội đồng hành cùng MoMo.</p>',
+    },
   });
 
   await prisma.goiQuangCao.createMany({

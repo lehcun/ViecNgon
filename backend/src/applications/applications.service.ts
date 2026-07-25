@@ -7,12 +7,15 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateDonXinViecDto } from './dto/create-don-xin-viec.dto';
 import { ApplicationDetailResponse } from '@viecngon/types';
 import { MailerService } from '@nestjs-modules/mailer';
+import { GoogleCalendarService } from 'src/calender/google-calendar.service';
+import { ScheduleInterviewDto } from './dto/schedule-interview.dto';
 
 @Injectable()
 export class ApplicationsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly mailerService: MailerService,
+    private readonly googleCalendarService: GoogleCalendarService,
   ) {}
 
   async createApplication(dto: CreateDonXinViecDto, userId: string) {
@@ -282,5 +285,66 @@ export class ApplicationsService {
     });
 
     return { message: 'Đã gửi email và tạo thông báo thành công!' };
+  }
+
+  async scheduleInterview(
+    maDon: string,
+    dto: ScheduleInterviewDto,
+    hrEmail: string,
+  ) {
+    // 1. Tìm thông tin đơn ứng tuyển và email ứng viên
+    const application = await this.prisma.donXinViec.findUnique({
+      where: { maDon },
+      include: {
+        ungVien: { include: { taiKhoan: true } },
+      },
+    });
+
+    if (!application)
+      throw new NotFoundException('Không tìm thấy đơn xin việc');
+    const candidateEmail = application.ungVien.taiKhoan.email;
+
+    // 2. Gọi Google Calendar API để sinh link Meet
+    const googleEvent = await this.googleCalendarService.createInterviewEvent(
+      dto.tieuDe,
+      dto.moTa || '',
+      dto.thoiGian,
+      candidateEmail,
+      hrEmail,
+      dto.taoGoogleMeet,
+    );
+
+    const meetLink = googleEvent.hangoutLink || null;
+
+    // 3. Lưu vào Database (Sử dụng Transaction để toàn vẹn dữ liệu)
+    return await this.prisma.$transaction(async (tx) => {
+      // Cập nhật trạng thái đơn thành "Phỏng vấn"
+      await tx.donXinViec.update({
+        where: { maDon },
+        data: { trangThai: 'PHONG_VAN' },
+      });
+
+      // Tạo lịch vào bảng LICHPHONGVAN
+      const newInterview = await tx.lichPhongVan.create({
+        data: {
+          maDon: maDon,
+          thoiGian: new Date(dto.thoiGian),
+          linkMeeting: meetLink,
+          trangThaiLich: 'Đã lên lịch',
+        },
+      });
+
+      // Tạo thông báo cho ứng viên trên web
+      await tx.thongBao.create({
+        data: {
+          tieuDe: `Lịch phỏng vấn mới: ${dto.tieuDe}`,
+          noiDung: `Bạn có một lịch phỏng vấn vào lúc ${new Date(dto.thoiGian).toLocaleString()}. Vui lòng kiểm tra email để lấy link tham gia.`,
+          trangThai: 'CHUA_DOC',
+          maTaiKhoan: application.ungVien.maTaiKhoan,
+        },
+      });
+
+      return newInterview;
+    });
   }
 }
