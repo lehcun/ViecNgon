@@ -9,96 +9,7 @@ import {
   Star,
   Zap,
 } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
-import { toast } from "react-hot-toast";
-
-// ============================================================================
-// 1. INTERFACES & MOCK DATA (Khớp với Database thực tế)
-// ============================================================================
-export interface PackageResponse {
-  id: string;
-  name: string;
-  price: number;
-  soLuotDangTin: number;
-  thoiGianHieuLuc: number; // Tính bằng ngày
-  description: string;
-  features: string[];
-  isPopular?: boolean;
-}
-
-const MOCK_PACKAGES: PackageResponse[] = [
-  {
-    id: "pkg-basic",
-    name: "Cơ bản",
-    price: 0,
-    soLuotDangTin: 1,
-    thoiGianHieuLuc: 7,
-    description:
-      "Trải nghiệm tính năng đăng tin cơ bản dành cho các doanh nghiệp mới.",
-    features: [
-      "Đăng 1 tin tuyển dụng hiển thị 7 ngày",
-      "Tiếp cận kho CV ứng viên cơ bản",
-      "Hỗ trợ quản lý trạng thái hồ sơ",
-      "Hỗ trợ qua Email (Phản hồi 48h)",
-    ],
-    isPopular: false,
-  },
-  {
-    id: "pkg-standard",
-    name: "Tiêu chuẩn",
-    price: 1500000,
-    soLuotDangTin: 5,
-    thoiGianHieuLuc: 30,
-    description:
-      "Giải pháp phổ biến nhất giúp tuyển dụng nhanh chóng và hiệu quả.",
-    features: [
-      "Đăng 5 tin tuyển dụng hiển thị 30 ngày",
-      "Tin đăng được đánh dấu Nổi bật (Top 10)",
-      "Mở khóa tính năng Xem CV ứng viên Ẩn",
-      "Bộ lọc hồ sơ ứng viên bằng AI",
-      "Hỗ trợ chuyên viên CSKH riêng",
-    ],
-    isPopular: true, // Đánh dấu gói Nổi bật
-  },
-  {
-    id: "pkg-vip",
-    name: "Doanh nghiệp VIP",
-    price: 4990000,
-    soLuotDangTin: 999, // Đại diện cho Không giới hạn
-    thoiGianHieuLuc: 90,
-    description:
-      "Tối đa hóa sức mạnh thương hiệu tuyển dụng với đặc quyền VIP.",
-    features: [
-      "Đăng tin KHÔNG GIỚI HẠN trong 90 ngày",
-      "Gắn huy hiệu Doanh Nghiệp Uy Tín",
-      "Tự động gửi email mời ứng viên tiềm năng",
-      "API tích hợp hệ thống ATS nội bộ công ty",
-      "Báo cáo phân tích hiệu quả tuyển dụng",
-      "Hỗ trợ kỹ thuật 24/7",
-    ],
-    isPopular: false,
-  },
-];
-
-// ============================================================================
-// 2. CUSTOM HOOKS & HELPERS
-// ============================================================================
-const usePurchasePackage = () => {
-  return useMutation({
-    mutationFn: async (packageId: string) => {
-      // Giả lập thời gian xử lý API thanh toán (1 giây)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      return { success: true, packageId };
-    },
-    onSuccess: () => {
-      toast.success("Đang chuyển hướng đến cổng thanh toán...");
-      // TODO: Ở đây bạn sẽ dùng router.push() để chuyển sang trang Thanh toán (VNPay/Momo)
-    },
-    onError: () => {
-      toast.error("Có lỗi xảy ra khi khởi tạo giao dịch.");
-    },
-  });
-};
+import { usePackages } from "@/hooks/recruiter/usePackages";
 
 const formatCurrency = (amount: number) => {
   if (amount === 0) return "Miễn phí";
@@ -112,7 +23,7 @@ const formatCurrency = (amount: number) => {
 // 3. COMPONENT CHÍNH
 // ============================================================================
 export default function EmployerPricingPage() {
-  const { mutate: purchasePackage } = usePurchasePackage();
+  const { packages, isLoading } = usePackages();
 
   // State lưu trữ ID của gói đang được bấm mua để hiện loading đúng nút
   const [loadingPackageId, setLoadingPackageId] = useState<string | null>(null);
@@ -125,6 +36,9 @@ export default function EmployerPricingPage() {
       },
     });
   };
+
+  // Xử lý giao diện lúc đang tải
+  if (isLoading) return <div>Đang tải bảng giá...</div>;
 
   return (
     <div className="min-h-screen bg-slate-50 relative overflow-hidden font-sans">

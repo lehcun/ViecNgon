@@ -374,3 +374,25 @@ export interface ScheduleInterviewPayload {
   moTa?: string;
   taoGoogleMeet: boolean;
 }
+
+export interface PackageResponse {
+  maGoi: string;
+  tieuDe: string;
+  loaiQuangCao: string;
+  gia: number;
+  thoiGianHieuLuc: number;
+  soLuotDangTin: number;
+  features: string[];
+  isPopular?: boolean;
+}
+
+export interface CampaignResponse {
+  id: string;
+  tieuDe: string;
+  tenGoi: string;
+  giaTaiThoiDiemMua: number;
+  soLuotConLai: number;
+  ngayMua: string;
+  ngayKetThuc: string;
+  trangThai: "DANG_CHAY" | "DA_KET_THUC" | "CHO_THANH_TOAN";
+}

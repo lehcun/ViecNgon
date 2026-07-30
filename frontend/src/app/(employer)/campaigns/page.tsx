@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React from "react";
 // Đã loại bỏ import Link từ next/link để tránh lỗi môi trường preview
 import {
   ShoppingCart,
@@ -11,57 +11,9 @@ import {
   CreditCard,
   RefreshCcw,
 } from "lucide-react";
+import { useCampaigns } from "@/hooks/recruiter/useCampaigns";
 
-// ============================================================================
-// 1. INTERFACES & MOCK DATA (Ánh xạ từ bảng MUAQUANGCAO)
-// ============================================================================
-export interface CampaignResponse {
-  id: string;
-  tieuDe: string; // Tiêu đề chiến dịch mua
-  tenGoi: string; // Tên gói dịch vụ (Join từ bảng GOIQUANGCAO)
-  giaTaiThoiDiemMua: number;
-  soLuotConLai: number;
-  ngayMua: string;
-  ngayKetThuc: string;
-  trangThai: "DANG_CHAY" | "DA_KET_THUC" | "CHO_THANH_TOAN";
-}
-
-const MOCK_CAMPAIGNS: CampaignResponse[] = [
-  {
-    id: "CPG-001",
-    tieuDe: "Chiến dịch tuyển dụng Senior Q3/2026",
-    tenGoi: "Gói Tiêu chuẩn (Nổi bật)",
-    giaTaiThoiDiemMua: 1500000,
-    soLuotConLai: 3,
-    ngayMua: "2026-07-01T08:00:00Z",
-    ngayKetThuc: "2026-07-31T23:59:59Z",
-    trangThai: "DANG_CHAY",
-  },
-  {
-    id: "CPG-002",
-    tieuDe: "Tuyển thực tập sinh IT tháng 5",
-    tenGoi: "Gói Cơ bản",
-    giaTaiThoiDiemMua: 0,
-    soLuotConLai: 0,
-    ngayMua: "2026-05-10T09:30:00Z",
-    ngayKetThuc: "2026-05-17T23:59:59Z",
-    trangThai: "DA_KET_THUC",
-  },
-  {
-    id: "CPG-003",
-    tieuDe: "Đẩy mạnh tuyển dụng cuối năm",
-    tenGoi: "Doanh nghiệp VIP",
-    giaTaiThoiDiemMua: 4990000,
-    soLuotConLai: 999, // Đại diện không giới hạn
-    ngayMua: "2026-07-25T14:20:00Z",
-    ngayKetThuc: "2026-10-25T23:59:59Z",
-    trangThai: "CHO_THANH_TOAN",
-  },
-];
-
-// ============================================================================
-// 2. HELPERS (Hàm tiện ích)
-// ============================================================================
+// HELPERS (Hàm tiện ích)
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
   return `${`0${date.getDate()}`.slice(-2)}/${`0${date.getMonth() + 1}`.slice(-2)}/${date.getFullYear()}`;
@@ -79,19 +31,13 @@ const formatCurrency = (amount: number) => {
 // 3. COMPONENT CHÍNH
 // ============================================================================
 export default function CampaignsPage() {
-  // Thực tế sẽ dùng: const { data: campaigns } = useGetCampaigns();
-  const campaigns = MOCK_CAMPAIGNS;
+  const { campaigns, isLoading } = useCampaigns();
 
-  // Tính toán thống kê (Sử dụng useMemo để tối ưu render)
-  const stats = useMemo(() => {
-    const total = campaigns.length;
-    const active = campaigns.filter((c) => c.trangThai === "DANG_CHAY").length;
-    const remainingPosts = campaigns
-      .filter((c) => c.trangThai === "DANG_CHAY")
-      .reduce((sum, c) => sum + c.soLuotConLai, 0);
+  if (isLoading) return <div>Đang tải các gói...</div>;
 
-    return { total, active, remainingPosts };
-  }, [campaigns]);
+  const totalCredits = campaigns
+    .filter((c) => c.trangThai === "DANG_CHAY")
+    .reduce((sum, c) => sum + c.soLuotConLai, 0);
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-6 lg:p-8 font-sans">
@@ -136,7 +82,7 @@ export default function CampaignsPage() {
                 Tổng số chiến dịch
               </p>
               <h3 className="text-3xl font-extrabold text-slate-800">
-                {stats.total}
+                {campaigns.reduce((sum) => sum + 1, 0)}
               </h3>
             </div>
           </div>
@@ -151,7 +97,9 @@ export default function CampaignsPage() {
                 Gói đang hoạt động
               </p>
               <h3 className="text-3xl font-extrabold text-slate-800">
-                {stats.active}
+                {campaigns
+                  .filter((c) => c.trangThai === "DANG_CHAY")
+                  .reduce((sum) => sum + 1, 0)}
               </h3>
             </div>
           </div>
@@ -166,7 +114,7 @@ export default function CampaignsPage() {
                 Tổng lượt đăng tin còn lại
               </p>
               <h3 className="text-3xl font-extrabold text-blue-600">
-                {stats.remainingPosts > 100 ? "99+" : stats.remainingPosts}
+                {totalCredits}
               </h3>
             </div>
           </div>

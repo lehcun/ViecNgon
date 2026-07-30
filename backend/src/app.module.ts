@@ -12,6 +12,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { ApplicationsModule } from './applications/applications.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { NotificationModule } from './notification/notification.module';
+import { CampaignModule } from './campaign/campaign.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { NotificationModule } from './notification/notification.module';
       },
     }),
     NotificationModule,
+    CampaignModule,
   ],
   controllers: [AppController],
   providers: [AppService],
