@@ -31,7 +31,7 @@ export const usePackages = () => {
         ],
       }));
     },
-    staleTime: 10 * 60 * 1000, // Cache bảng giá trong 10 phút vì giá ít khi thay đổi
+    staleTime: 10 * 60 * 1000,
   });
 
   return {

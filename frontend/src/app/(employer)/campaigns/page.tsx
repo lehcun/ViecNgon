@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-// Đã loại bỏ import Link từ next/link để tránh lỗi môi trường preview
 import {
   ShoppingCart,
   Briefcase,
@@ -13,7 +12,6 @@ import {
 } from "lucide-react";
 import { useCampaigns } from "@/hooks/recruiter/useCampaigns";
 
-// HELPERS (Hàm tiện ích)
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
   return `${`0${date.getDate()}`.slice(-2)}/${`0${date.getMonth() + 1}`.slice(-2)}/${date.getFullYear()}`;

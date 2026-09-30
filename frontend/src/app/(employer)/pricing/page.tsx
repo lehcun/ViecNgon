@@ -1,6 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
 import {
   Check,
   FileText,
@@ -8,8 +11,10 @@ import {
   Loader2,
   Star,
   Zap,
+  ShoppingBag,
 } from "lucide-react";
 import { usePackages } from "@/hooks/recruiter/usePackages";
+import { PackageResponse } from "@viecngon/types";
 
 const formatCurrency = (amount: number) => {
   if (amount === 0) return "Miễn phí";
@@ -20,192 +25,195 @@ const formatCurrency = (amount: number) => {
 };
 
 // ============================================================================
-// 3. COMPONENT CHÍNH
+// COMPONENT CHÍNH: BẢNG GIÁ DỊCH VỤ TUYỂN DỤNG
 // ============================================================================
 export default function EmployerPricingPage() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const { packages, isLoading } = usePackages();
 
-  // State lưu trữ ID của gói đang được bấm mua để hiện loading đúng nút
   const [loadingPackageId, setLoadingPackageId] = useState<string | null>(null);
 
+  const purchaseMutation = useMutation({
+    mutationFn: async (maGoi: string) => {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/campaigns/purchase`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ maGoi }),
+          credentials: "include", // Bắt buộc gửi kèm JWT Cookie
+        },
+      );
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Thanh toán không thành công");
+      }
+
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success("Thanh toán và kích hoạt gói dịch vụ thành công!");
+      queryClient.invalidateQueries({ queryKey: ["my-campaigns"] });
+      router.push("/employer/campaigns");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Có lỗi xảy ra khi thực hiện giao dịch");
+    },
+    onSettled: () => {
+      setLoadingPackageId(null);
+    },
+  });
+
   const handlePurchase = (pkg: PackageResponse) => {
-    setLoadingPackageId(pkg.id);
-    purchasePackage(pkg.id, {
-      onSettled: () => {
-        setLoadingPackageId(null);
-      },
-    });
+    // Ưu tiên lấy maGoi từ CSDL, fallback sang id nếu có
+    const packageId = pkg.maGoi || (pkg as any).id;
+    setLoadingPackageId(packageId);
+    purchaseMutation.mutate(packageId);
   };
 
-  // Xử lý giao diện lúc đang tải
-  if (isLoading) return <div>Đang tải bảng giá...</div>;
+  // 1. MÀN HÌNH LOADING KHI ĐANG FETCH DỮ LIỆU BẢNG GIÁ
+  if (isLoading) {
+    return (
+      <div className="min-h-125 flex flex-col items-center justify-center py-12 px-4">
+        <Loader2 className="w-10 h-10 text-primary animate-spin mb-3" />
+        <p className="text-slate-600 font-medium text-sm">
+          Đang tải bảng giá dịch vụ...
+        </p>
+      </div>
+    );
+  }
 
+  // 2. MÀN HÌNH BẢNG GIÁ DỊCH VỤ
   return (
-    <div className="min-h-screen bg-slate-50 relative overflow-hidden font-sans">
-      {/* Background Decorator (Hiệu ứng vòng tròn mờ phía sau) */}
-      <div className="absolute top-0 inset-x-0 h-96 bg-linear-to-b from-blue-100/50 to-transparent pointer-events-none" />
-      <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-300/30 rounded-full blur-3xl opacity-50 pointer-events-none" />
-      <div className="absolute top-24 -right-24 w-125 h-125 bg-purple-300/20 rounded-full blur-3xl opacity-50 pointer-events-none" />
+    <div className="min-h-screen bg-slate-50/50 py-12 px-4 sm:px-6 lg:px-8">
+      {/* HEADER PAGE */}
+      <div className="max-w-4xl mx-auto text-center mb-12">
+        <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary mb-3">
+          <Zap size={14} /> Dịch vụ Tuyển dụng ViecNgon
+        </span>
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+          Bảng giá Gói Tuyển dụng & Quảng cáo
+        </h1>
+        <p className="mt-3 text-base sm:text-lg text-slate-600 max-w-2xl mx-auto">
+          Lựa chọn gói dịch vụ tối ưu để đăng tin, ghim vị trí nổi bật và tiếp
+          cận hàng ngàn ứng viên tiềm năng ngay hôm nay.
+        </p>
+      </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-8 z-10">
-        {/* --- HEADER --- */}
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className="text-blue-600 font-bold tracking-wider uppercase text-sm mb-2">
-            Bảng giá Dịch vụ
-          </h2>
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-slate-900 mb-4">
-            Đầu tư đúng chỗ, <br className="hidden sm:block" /> Tuyển dụng dễ
-            dàng
-          </h1>
-          <p className="text-slate-600 text-base md:text-lg">
-            Nâng cấp gói dịch vụ để tiếp cận hàng ngàn ứng viên tiềm năng trên
-            ViecNgon. Minh bạch, linh hoạt và không có phí ẩn.
-          </p>
-        </div>
+      {/* GRID DANH SÁCH GÓI DỊCH VỤ */}
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
+        {packages.map((pkg) => {
+          const packageId = pkg.maGoi || (pkg as any).id;
+          const isPurchasingThis = loadingPackageId === packageId;
+          const isPopular = pkg.isPopular;
 
-        {/* --- PRICING GRID --- */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-8 items-start">
-          {MOCK_PACKAGES.map((pkg) => {
-            const isPopular = pkg.isPopular;
-            const isLoading = loadingPackageId === pkg.id;
+          return (
+            <div
+              key={packageId}
+              className={`relative rounded-2xl bg-white transition-all duration-300 flex flex-col justify-between ${
+                isPopular
+                  ? "border-2 border-primary shadow-xl scale-105 z-10"
+                  : "border border-slate-200 shadow-sm hover:shadow-md hover:-translate-y-1"
+              }`}
+            >
+              {/* Badge "Phổ biến nhất" cho gói ở giữa */}
+              {isPopular && (
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-md flex items-center gap-1 uppercase tracking-wider">
+                  <Star size={13} className="fill-white" /> Phổ biến nhất
+                </div>
+              )}
 
-            return (
-              <div
-                key={pkg.id}
-                className={`relative flex flex-col bg-white rounded-3xl transition-all duration-300 ${
-                  isPopular
-                    ? "border-2 border-blue-600 shadow-xl shadow-blue-900/10 md:-translate-y-4 md:scale-105 z-10"
-                    : "border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-200"
-                }`}
-              >
-                {/* Badge "Phổ biến nhất" */}
-                {isPopular && (
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                    <span className="bg-linear-to-r from-blue-600 to-blue-500 text-white text-xs font-bold uppercase tracking-wider py-1.5 px-4 rounded-full flex items-center gap-1 shadow-md">
-                      <Star size={14} className="fill-white" /> Phổ biến nhất
+              {/* THÔNG TIN CHÍNH CỦA GÓI */}
+              <div className="p-6 sm:p-8 flex-1">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xl font-bold text-slate-900">
+                    {pkg.tieuDe}
+                  </h3>
+                  {pkg.loaiQuangCao && (
+                    <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-600">
+                      {pkg.loaiQuangCao}
+                    </span>
+                  )}
+                </div>
+
+                {/* Hiển thị Giá tiền */}
+                <div className="my-6 pb-6 border-b border-slate-100">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl sm:text-4xl font-extrabold text-slate-900">
+                      {formatCurrency(pkg.gia)}
                     </span>
                   </div>
-                )}
+                </div>
 
-                <div className="p-8 flex-1 flex flex-col">
-                  {/* Tên & Mô tả */}
-                  <h3 className="text-xl font-bold text-slate-800 mb-2">
-                    {pkg.name}
-                  </h3>
-                  <p className="text-sm text-slate-500 mb-6 min-h-10">
-                    {pkg.description}
-                  </p>
-
-                  {/* Giá tiền */}
-                  <div className="mb-6">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-3xl lg:text-4xl font-extrabold text-slate-900">
-                        {formatCurrency(pkg.price)}
-                      </span>
+                {/* Khối Thông số Cốt lõi */}
+                <div className="space-y-3 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <div className="flex items-center gap-3 text-sm font-semibold text-slate-700">
+                    <div className="p-1.5 bg-primary/10 text-primary rounded-lg shrink-0">
+                      <FileText size={18} />
                     </div>
-                    {pkg.price > 0 && (
-                      <p className="text-xs text-slate-400 mt-1">
-                        * Đã bao gồm thuế VAT
-                      </p>
-                    )}
+                    <span>{pkg.soLuotDangTin} lượt đăng tin tuyển dụng</span>
                   </div>
-
-                  {/* Thông số cốt lõi (Icon Box) */}
-                  <div className="flex flex-col gap-3 p-4 bg-slate-50 rounded-2xl mb-8 border border-slate-100">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100 text-blue-600 rounded-lg shrink-0">
-                        <FileText size={18} />
-                      </div>
-                      <div>
-                        <p className="text-[11px] text-slate-500 font-medium">
-                          Số lượt đăng tin
-                        </p>
-                        <p className="text-sm font-bold text-slate-800">
-                          {pkg.soLuotDangTin === 999
-                            ? "Không giới hạn"
-                            : `${pkg.soLuotDangTin} tin tuyển dụng`}
-                        </p>
-                      </div>
+                  <div className="flex items-center gap-3 text-sm font-semibold text-slate-700">
+                    <div className="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg shrink-0">
+                      <CalendarDays size={18} />
                     </div>
-
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-purple-100 text-purple-600 rounded-lg shrink-0">
-                        <CalendarDays size={18} />
-                      </div>
-                      <div>
-                        <p className="text-[11px] text-slate-500 font-medium">
-                          Thời gian hiệu lực
-                        </p>
-                        <p className="text-sm font-bold text-slate-800">
-                          {pkg.thoiGianHieuLuc} ngày hiển thị
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Danh sách Tính năng */}
-                  <div className="flex-1">
-                    <p className="text-sm font-bold text-slate-800 mb-4 uppercase tracking-wider">
-                      Tính năng bao gồm:
-                    </p>
-                    <ul className="flex flex-col gap-3">
-                      {pkg.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-start gap-3">
-                          <Check
-                            size={18}
-                            className="text-emerald-500 shrink-0 mt-0.5"
-                          />
-                          <span className="text-sm text-slate-600 leading-snug">
-                            {feature}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
+                    <span>Hiệu lực trong {pkg.thoiGianHieuLuc} ngày</span>
                   </div>
                 </div>
 
-                {/* Footer (Nút Mua) */}
-                <div className="p-8 pt-0 mt-auto">
-                  <button
-                    onClick={() => handlePurchase(pkg)}
-                    disabled={isLoading}
-                    className={`w-full py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${
-                      isPopular
-                        ? "bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-200"
-                        : "bg-white text-blue-600 border-2 border-blue-100 hover:border-blue-600 hover:bg-blue-50"
-                    } ${isLoading ? "opacity-70 cursor-not-allowed" : ""}`}
-                  >
-                    {isLoading ? (
-                      <Loader2 size={18} className="animate-spin" />
-                    ) : pkg.price === 0 ? (
-                      "Bắt đầu miễn phí"
-                    ) : (
-                      <>
-                        <Zap
-                          size={18}
-                          className={isPopular ? "fill-white" : "fill-none"}
+                {/* Danh sách Đặc quyền (Features) */}
+                <div className="space-y-3">
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    Quyền lợi gói bao gồm:
+                  </p>
+                  <ul className="space-y-2.5">
+                    {pkg.features?.map((feat, idx) => (
+                      <li
+                        key={idx}
+                        className="flex items-start gap-2.5 text-sm text-slate-600"
+                      >
+                        <Check
+                          size={16}
+                          className="text-emerald-500 shrink-0 mt-0.5"
                         />
-                        Mua ngay
-                      </>
-                    )}
-                  </button>
+                        <span>{feat}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
-            );
-          })}
-        </div>
 
-        {/* --- FAQ/Trust Note (Optional Extra Polish) --- */}
-        <div className="mt-16 text-center">
-          <p className="text-sm text-slate-500 flex items-center justify-center gap-2">
-            Thanh toán an toàn qua{" "}
-            <span className="font-bold text-slate-700">VNPay / MoMo</span>. Cần
-            hỗ trợ?
-            <a href="#" className="text-blue-600 hover:underline font-semibold">
-              Liên hệ bộ phận CSKH.
-            </a>
-          </p>
-        </div>
+              {/* NÚT MUA HÀNG O FOOTER */}
+              <div className="p-6 sm:p-8 pt-0 mt-auto">
+                <button
+                  onClick={() => handlePurchase(pkg)}
+                  disabled={!!loadingPackageId}
+                  className={`w-full py-3 px-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-md ${
+                    isPopular
+                      ? "bg-primary hover:bg-primary-hover text-white shadow-primary/20"
+                      : "bg-slate-900 hover:bg-slate-800 text-white shadow-slate-900/10"
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  {isPurchasingThis ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      <span>Đang xử lý giao dịch...</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingBag size={18} />
+                      <span>Mua ngay</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
