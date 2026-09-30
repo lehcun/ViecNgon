@@ -5,119 +5,82 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  FilePlus2,
+  PlusCircle,
   Briefcase,
   Users,
   Building2,
   CreditCard,
   Settings,
-  ChevronRight,
 } from "lucide-react";
-import { useRecruiterProfile } from "@/hooks/recruiter/useRecruiterProfile";
 
 export default function EmployerSidebar() {
-  const { recruiterProfile: recruiter } = useRecruiterProfile();
-
   const pathname = usePathname();
   const isActive = (path: string) => pathname === path;
 
-  const baseLinkClass =
-    "flex items-center gap-3 px-4 py-3 font-medium rounded-lg transition-colors";
-  const activeLinkClass = "bg-primary-light text-primary font-bold";
-  const inactiveLinkClass =
-    "text-slate-600 hover:bg-slate-50 hover:text-primary";
+  // Cấu hình các menu item theo đúng thứ tự trong ảnh
+  const menuItems = [
+    { name: "Tổng quan", path: "/employer-dashboard", icon: LayoutDashboard },
+    { name: "Đăng tin tuyển dụng", path: "/post-job", icon: PlusCircle },
+    { name: "Quản lý đăng tin", path: "/jobs", icon: Briefcase },
+    { name: "Quản lý ứng viên", path: "/applications", icon: Users },
+    {
+      name: "Hồ sơ công ty",
+      path: "/employer/company-profile",
+      icon: Building2,
+    },
+    {
+      name: "Gói dịch vụ & Hóa đơn",
+      path: "/campaigns",
+      icon: CreditCard,
+    },
+    { name: "Cài đặt tài khoản", path: "/employer/settings", icon: Settings },
+  ];
 
   return (
-    <>
-      {/* Card: Thông tin tài khoản HR */}
-      <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="w-12 h-12 bg-slate-100 border border-slate-200 rounded-lg flex items-center justify-center p-1">
-            <img
-              src="https://ui-avatars.com/api/?name=OTS&background=2563eb&color=fff"
-              alt="Company Logo"
-              className="rounded-md"
-            />
-          </div>
-          <div>
-            <h2 className="text-base font-bold text-slate-800 line-clamp-1">
-              {recruiter?.company?.name}
-            </h2>
-            <p className="text-slate-500 text-xs">Tài khoản: HR Manager</p>
-          </div>
-        </div>
+    <div className="flex flex-col bg-white h-full justify-between pb-6">
+      {/* --- MENU NAVIGATION --- */}
+      <div className="py-6 px-4">
+        <nav className="flex flex-col gap-2">
+          {menuItems.map((item) => {
+            const active = isActive(item.path);
+            const Icon = item.icon;
 
-        {/* Khối tín dụng (Liên kết với bài toán Paywall) */}
-        <div className="bg-linear-to-r from-slate-800 to-slate-900 rounded-lg p-4 text-white">
-          <p className="text-xs text-slate-300 mb-1">Lượt đăng tin còn lại</p>
-          <div className="flex items-end justify-between">
-            <span className="text-2xl font-black text-emerald-400">{3}</span>
-            <Link
-              href="/employer/billing"
-              className="text-xs font-semibold text-white hover:text-primary-light flex items-center gap-1 transition-colors"
-            >
-              Mua thêm <ChevronRight size={14} />
-            </Link>
-          </div>
-        </div>
-      </div>
+            return (
+              <Link
+                key={item.path}
+                href={item.path}
+                className={`relative flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-lg transition-all duration-200 ${
+                  active
+                    ? "bg-blue-50 text-blue-600"
+                    : "text-slate-600 hover:bg-slate-50 hover:text-blue-600"
+                }`}
+              >
+                {/* Thanh vạch dọc màu xanh ở sát lề bên trái khi Active */}
+                {active && (
+                  <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-1.5 h-8 bg-blue-600 rounded-r-md"></div>
+                )}
 
-      {/* Card: Menu Navigation */}
-      <div className="bg-white rounded-xl border border-slate-200 p-3 shadow-sm">
-        <nav className="flex flex-col gap-1">
-          <Link
-            href="/employer-dashboard"
-            className={`${baseLinkClass} ${isActive("/employer-dashboard") ? activeLinkClass : inactiveLinkClass}`}
-          >
-            <LayoutDashboard size={20} /> Tổng quan
-          </Link>
-          <Link
-            href="/post-job"
-            className={`${baseLinkClass} ${isActive("/post-job") ? activeLinkClass : inactiveLinkClass} text-primary font-bold`}
-          >
-            <FilePlus2 size={20} /> Đăng tin tuyển dụng
-          </Link>
-          <Link
-            href="/employer/jobs"
-            className={`${baseLinkClass} ${isActive("/employer/jobs") ? activeLinkClass : inactiveLinkClass}`}
-          >
-            <Briefcase size={20} /> Quản lý tin đăng
-          </Link>
-
-          <Link
-            href="candidates"
-            className={`${baseLinkClass} ${isActive("/candidates") ? activeLinkClass : inactiveLinkClass} justify-between`}
-          >
-            <div className="flex items-center gap-3">
-              <Users size={20} /> Quản lý ứng viên
-            </div>
-            <span className="bg-rose-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-              {recruiter?.recentApplicants.length}
-            </span>
-          </Link>
-
-          <div className="h-px bg-slate-100 my-2 mx-4"></div>
-
-          <Link
-            href="/employer/company-profile"
-            className={`${baseLinkClass} ${isActive("/employer/company-profile") ? activeLinkClass : inactiveLinkClass}`}
-          >
-            <Building2 size={20} /> Hồ sơ công ty
-          </Link>
-          <Link
-            href="/employer/billing"
-            className={`${baseLinkClass} ${isActive("/employer/billing") ? activeLinkClass : inactiveLinkClass}`}
-          >
-            <CreditCard size={20} /> Gói dịch vụ & Hóa đơn
-          </Link>
-          <Link
-            href="/employer/settings"
-            className={`${baseLinkClass} ${isActive("/employer/settings") ? activeLinkClass : inactiveLinkClass}`}
-          >
-            <Settings size={20} /> Cài đặt tài khoản
-          </Link>
+                <Icon
+                  size={20}
+                  strokeWidth={active ? 2.5 : 2}
+                  className={active ? "text-blue-600" : "text-slate-400"}
+                />
+                {item.name}
+              </Link>
+            );
+          })}
         </nav>
       </div>
-    </>
+
+      {/* --- BOX HỖ TRỢ (DƯỚI CÙNG) --- */}
+      <div className="p-4 mx-4 bg-slate-50 rounded-xl border border-slate-100">
+        <h4 className="text-sm font-bold text-slate-800 mb-2">Cần hỗ trợ?</h4>
+        <p className="text-xs text-slate-500 mb-3 leading-relaxed">
+          Liên hệ nhân viên chăm sóc tài khoản của bạn để được hỗ trợ đăng tin
+          tốt nhất.
+        </p>
+        <p className="text-sm font-bold text-blue-600">Hotline: 1900 1234</p>
+      </div>
+    </div>
   );
 }

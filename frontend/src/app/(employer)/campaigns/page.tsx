@@ -11,6 +11,7 @@ import {
   RefreshCcw,
 } from "lucide-react";
 import { useCampaigns } from "@/hooks/recruiter/useCampaigns";
+import Link from "next/link";
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -54,16 +55,15 @@ export default function CampaignsPage() {
             </p>
           </div>
 
-          <a
-            href="/employer/pricing"
+          <Link
+            href="/pricing"
             onClick={(e) => {
               e.preventDefault();
-              alert("Chuyển hướng đến trang /employer/pricing");
             }}
             className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md shadow-blue-200 transition-all active:scale-95 shrink-0"
           >
             <ShoppingCart size={18} /> Mua thêm gói
-          </a>
+          </Link>
         </div>
 
         {/* ========================================== */}

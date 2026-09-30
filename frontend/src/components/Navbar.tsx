@@ -8,6 +8,7 @@ import { useAuthStore } from "@/store/authStore";
 import { useUser } from "@/hooks/auth/useUser";
 import { useLogout } from "@/hooks/auth/useLogout";
 import NotificationDropdown from "./NotificationDropdown";
+import LogoViecNgon from "./LogoViecNgon";
 
 interface NavbarProps {
   variant?: "public" | "app"; // 'public' cho trang ngoài, 'app' cho Dashboard
@@ -53,15 +54,7 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         <div className="flex items-center gap-8">
           {/* Logo ViecNgon */}
-          <Link
-            href="/"
-            className="text-2xl font-bold flex items-center gap-1 cursor-pointer"
-          >
-            <div className="bg-primary rounded-full w-8 h-8 flex items-center justify-center text-white shadow-md">
-              V
-            </div>
-            <span className={logoTextColor}>iecNgon</span>
-          </Link>
+          <LogoViecNgon logoTextColor={logoTextColor} />
 
           {/* Navigation Links */}
           <ul
