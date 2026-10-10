@@ -7,7 +7,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
-import { SignupDto } from './dto/signup.dto';
+import { RegisterCandidateDto } from './dto/register-candidate.dto';
+import { RegisterEmployerDto } from './dto/register-employer.dto';
 
 @Injectable()
 export class AuthService {
@@ -60,9 +61,9 @@ export class AuthService {
     };
   }
 
-  //Chỉ dành cho ứng viên
-  async signup(signupDto: SignupDto) {
-    const { email, password, name, role } = signupDto;
+  //1. Đăng ký dành cho ứng viên
+  async registerCandidate(signupDto: RegisterCandidateDto) {
+    const { email, password, name } = signupDto;
 
     // 1. Kiểm tra email đã tồn tại chưa
     const existingUser = await this.prisma.taiKhoan.findUnique({
@@ -72,7 +73,7 @@ export class AuthService {
       throw new BadRequestException('Email này đã được sử dụng!');
     }
 
-    // 2. Hash password (độ mặn là 10)
+    // 2. Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // 3. Tạo tài khoản VÀ Profile tương ứng bằng Transaction
@@ -83,8 +84,8 @@ export class AuthService {
           email,
           matKhau: hashedPassword,
           tenNguoiDung: name,
-          vaiTro: role,
-          trangThai: 'HOATDONG', // Cấp trạng thái mặc định
+          vaiTro: 'UNGVIEN',
+          trangThai: 'HOATDONG',
         },
       });
 
@@ -102,7 +103,6 @@ export class AuthService {
       return account;
     });
 
-    // 4. Tạo Payload cho JWT giống hệt lúc Login
     const payload = {
       sub: newUser.maTaiKhoan,
       role: newUser.vaiTro,
@@ -112,7 +112,101 @@ export class AuthService {
 
     const { matKhau, ...userInfo } = newUser;
 
-    // 5. Trả về y hệt hàm login
+    return {
+      access_token: await this.jwtService.signAsync(payload),
+      user: {
+        id: userInfo.maTaiKhoan,
+        email: userInfo.email,
+        name: userInfo.tenNguoiDung,
+        role: userInfo.vaiTro,
+        status: userInfo.trangThai,
+      },
+    };
+  }
+
+  // 2. Đăng ký Nhà tuyển dụng (HR)
+  async registerEmployer(signupDto: RegisterEmployerDto) {
+    const email = signupDto.email;
+    const password = signupDto.password;
+    const name = signupDto.employerName;
+    const companyName = signupDto.companyName;
+    const maCongTyInput = signupDto.maCongTy;
+
+    // Kiểm tra email đã tồn tại chưa
+    const existingUser = await this.prisma.taiKhoan.findUnique({
+      where: { email },
+    });
+    if (existingUser) {
+      throw new BadRequestException('Email này đã được sử dụng trên hệ thống!');
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Tạo tài khoản, Công ty (nếu mới) VÀ Profile NTD bằng \$transaction
+    const newUser = await this.prisma.$transaction(async (tx) => {
+      // B1: Tạo bản ghi trong bảng TaiKhoan
+      const account = await tx.taiKhoan.create({
+        data: {
+          email,
+          matKhau: hashedPassword,
+          tenNguoiDung: name,
+          vaiTro: 'NHATUYENDUNG',
+          trangThai: 'CHODUYET',
+        },
+      });
+
+      // B2: Xử lý Công ty
+      let targetCompanyId = maCongTyInput;
+
+      // Nếu HR không chọn công ty có sẵn -> Tự động tạo Công ty mới từ tên công ty nhập vào
+      if (!targetCompanyId) {
+        if (!companyName) {
+          throw new BadRequestException(
+            'Vui lòng chọn công ty hoặc nhập tên công ty của bạn!',
+          );
+        }
+
+        // Tạo slug chuẩn SEO cho công ty mới
+        const slug =
+          companyName
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/đ/g, 'd')
+            .replace(/[^a-z0-9\s-]/g, '')
+            .trim()
+            .replace(/\s+/g, '-') + `-${Date.now().toString().slice(-4)}`;
+
+        const newCompany = await tx.congTy.create({
+          data: {
+            tenCongTy: companyName,
+            slug,
+          },
+        });
+        targetCompanyId = newCompany.maCongTy;
+      }
+
+      // B3: Tạo hồ sơ Nhà Tuyển Dụng liên kết với TaiKhoan và CongTy
+      await tx.nhaTuyenDung.create({
+        data: {
+          maTaiKhoan: account.maTaiKhoan,
+          maCongTy: targetCompanyId,
+        },
+      });
+
+      return account;
+    });
+
+    const payload = {
+      sub: newUser.maTaiKhoan,
+      role: newUser.vaiTro,
+      name: newUser.tenNguoiDung,
+      email: newUser.email,
+    };
+
+    const { matKhau, ...userInfo } = newUser;
+
     return {
       access_token: await this.jwtService.signAsync(payload),
       user: {

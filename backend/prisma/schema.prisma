@@ -196,7 +196,10 @@ model ChiNhanh {
 // 5. BẢNG NHÀ TUYỂN DỤNG (HR)
 // ---------------------------------------------------------
 model NhaTuyenDung {
-  maNTD String @id @default(uuid()) @db.VarChar(50)
+  maNTD       String  @id @default(uuid()) @db.VarChar(50)
+  hoTen       String? @db.NVarChar(100)
+  chucVu      String? @db.NVarChar(100) // VD: Head of HR, Recruiter
+  soDienThoai String? @db.VarChar(20)
 
   // Khóa ngoại
   maCongTy String @db.VarChar(50)

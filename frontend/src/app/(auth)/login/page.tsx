@@ -16,24 +16,6 @@ export default function LoginPage() {
         <div className="grow">
           <LoginForm />
         </div>
-
-        {/* Footer thông tin hỗ trợ */}
-        <footer className="text-center text-gray-500 text-sm mt-12">
-          <p className="mb-2">Bạn gặp khó khăn khi tạo tài khoản?</p>
-          <p>
-            Vui lòng gọi tới số{" "}
-            <a
-              href="tel:02466805588"
-              className="text-gray-700 font-semibold hover:underline"
-            >
-              (024) 6680 5588
-            </a>{" "}
-            (giờ hành chính).
-          </p>
-          <p className="mt-8">
-            © 2026 ViecNgon Vietnam Vietnam JSC. All Rights Reserved.
-          </p>
-        </footer>
       </div>
 
       {/* Cột bên phải: Banner đồ họa */}

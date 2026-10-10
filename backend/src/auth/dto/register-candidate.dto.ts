@@ -5,15 +5,9 @@ import {
   MinLength,
   MaxLength,
   Matches,
-  IsEnum,
 } from 'class-validator';
 
-export enum Role {
-  UNGVIEN = 'UNGVIEN',
-  NHATUYENDUNG = 'NHATUYENDUNG',
-}
-
-export class SignupDto {
+export class RegisterCandidateDto {
   @IsNotEmpty({ message: 'Email không được để trống' })
   @IsEmail({}, { message: 'Email không đúng định dạng (VD: tenban@gmail.com)' })
   @MaxLength(100, { message: 'Email không được vượt quá 100 ký tự' })
@@ -37,6 +31,10 @@ export class SignupDto {
   )
   password: string;
 
-  @IsEnum(Role, { message: 'Vai trò không hợp lệ' })
-  role: Role;
+  @IsString()
+  @IsNotEmpty({ message: 'Họ tên không được để trống' })
+  hoTen: string;
+
+  @IsString()
+  soDienThoai?: string;
 }

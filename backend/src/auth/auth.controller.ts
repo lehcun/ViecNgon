@@ -13,7 +13,8 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import express from 'express';
 import { JwtService } from '@nestjs/jwt';
-import { SignupDto } from './dto/signup.dto';
+import { RegisterCandidateDto } from './dto/register-candidate.dto';
+import { RegisterEmployerDto } from './dto/register-employer.dto';
 
 export interface JwtPayload {
   sub: number; // Thường dùng sub để lưu ID
@@ -80,18 +81,37 @@ export class AuthController {
     return { message: 'Đăng nhập thành công', user, access_token };
   }
 
-  @Post('signup')
-  async signup(
-    @Body() signupDto: SignupDto,
+  // Đăng ký cho Ứng viên (Public)
+  @Post('register/candidate')
+  async registerCandidate(
+    @Body() dto: RegisterCandidateDto,
     @Res({ passthrough: true }) res: express.Response,
   ) {
-    const result = await this.authService.signup(signupDto);
+    const result = await this.authService.registerCandidate(dto);
 
     res.cookie('access_token', result.access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 1000 * 60 * 60 * 24, // 1 ngày
+    });
+
+    return result.user;
+  }
+
+  // Đăng ký cho HR (Public)
+  @Post('register/employer')
+  async registerEmployer(
+    @Body() dto: RegisterEmployerDto,
+    @Res({ passthrough: true }) res: express.Response,
+  ) {
+    const result = await this.authService.registerEmployer(dto);
+
+    res.cookie('access_token', result.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 1000 * 60 * 60 * 24,
     });
 
     return result.user;

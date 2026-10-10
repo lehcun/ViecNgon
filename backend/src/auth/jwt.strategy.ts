@@ -15,7 +15,7 @@ interface payloadType {
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor() {
     super({
-      // BÍ  QUYẾT Ở ĐÂY: Viết một hàm tự động lấy Token từ Cookie
+      //Hàm tự động lấy Token từ Cookie
       jwtFromRequest: ExtractJwt.fromExtractors([
         (request: Request) => {
           const token = request?.cookies['access_token'] as string | null;
