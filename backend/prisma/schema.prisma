@@ -14,7 +14,11 @@ model TaiKhoan {
   maTaiKhoan   String  @id @default(uuid()) @db.VarChar(50)
   email        String  @unique @db.VarChar(100)
   tenNguoiDung String  @db.NVarChar(100)
-  matKhau      String  @db.VarChar(255)
+  matKhau      String?  @db.VarChar(255) // Cho phép NULL vì Google không cần mật khẩu local
+  
+  googleId     String?  @db.VarChar(255) // Lưu Google ID (sub)
+  provider     String   @default("LOCAL") @db.VarChar(20) // 'LOCAL' hoặc 'GOOGLE'
+  
   sdt          String? @db.VarChar(20)
   vaiTro       String  @db.VarChar(20)
   trangThai    String  @db.VarChar(20)

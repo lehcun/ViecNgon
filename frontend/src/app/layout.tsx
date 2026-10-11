@@ -1,10 +1,13 @@
 import { Metadata } from "next";
 import "./globals.css";
-import { Be_Vietnam_Pro, Geist } from "next/font/google";
-import QueryProvider from "@/providers/QueryProvider";
-import AuthProvider from "@/providers/AuthProvider";
+
 import { cn } from "@/lib/utils";
 import { Toaster } from "react-hot-toast";
+import { GoogleOAuthProvider } from "@react-oauth/google";
+
+import QueryProvider from "@/providers/QueryProvider";
+import AuthProvider from "@/providers/AuthProvider";
+import { Be_Vietnam_Pro, Geist } from "next/font/google";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -26,13 +29,17 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
+
   return (
     <html lang="vi" className={cn("font-sans", geist.variable)}>
       <body className={beVietnamPro.className}>
         <QueryProvider>
           <AuthProvider>
-            <main>{children}</main>
-            <Toaster position="top-right" reverseOrder={false} />
+            <GoogleOAuthProvider clientId={clientId}>
+              <main>{children}</main>
+              <Toaster position="top-right" reverseOrder={false} />
+            </GoogleOAuthProvider>
           </AuthProvider>
         </QueryProvider>
       </body>

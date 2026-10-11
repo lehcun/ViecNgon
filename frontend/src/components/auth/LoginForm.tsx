@@ -4,9 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FiEye, FiEyeOff } from "react-icons/fi";
-import Image from "next/image";
 import toast from "react-hot-toast";
 import { useLogin } from "@/hooks/auth/useLogin";
+import GoogleButton from "@/components/auth/GoogleButton";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
@@ -14,8 +14,6 @@ export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
 
   const router = useRouter();
-
-  // Gọi hook login
   const { login, isError, error, isPending } = useLogin();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -53,19 +51,8 @@ export default function LoginForm() {
         của ViecNgon.
       </p>
 
-      {/* --- NÚT ĐĂNG NHẬP GOOGLE --- */}
-      <button
-        type="button"
-        className="w-full flex items-center justify-center gap-3 py-2.5 border border-primary rounded-lg text-primary font-bold hover:bg-primary-light transition-all mb-6"
-      >
-        <Image
-          src="https://www.svgrepo.com/show/475656/google-color.svg"
-          alt="Google"
-          width={20}
-          height={20}
-        />
-        Đăng nhập với Google
-      </button>
+      {/* --- NÚT ĐĂNG NHẬP GOOGLE CUSTOM --- */}
+      <GoogleButton mode="login" />
 
       {/* --- DÒNG KẺ HOẶC --- */}
       <div className="flex items-center gap-4 mb-6">

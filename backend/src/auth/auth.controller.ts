@@ -15,6 +15,7 @@ import express from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { RegisterCandidateDto } from './dto/register-candidate.dto';
 import { RegisterEmployerDto } from './dto/register-employer.dto';
+import { GoogleAuthDto } from './dto/google-auth.dto';
 
 export interface JwtPayload {
   sub: number; // Thường dùng sub để lưu ID
@@ -115,5 +116,54 @@ export class AuthController {
     });
 
     return result.user;
+  }
+
+  // ==========================================
+  // OAUTH2: ĐĂNG KÝ BẰNG GOOGLE (Dành cho Ứng viên)
+  // ==========================================
+  @Post('google/register')
+  async googleRegister(
+    @Body() dto: GoogleAuthDto,
+    @Res({ passthrough: true }) res: express.Response,
+  ) {
+    const { access_token, user } = await this.authService.googleRegister(dto);
+
+    // Gắn JWT vào HttpOnly Cookie để bảo vệ khỏi tấn công XSS
+    res.cookie('access_token', access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 ngày
+    });
+
+    return {
+      message: 'Đăng ký tài khoản bằng Google thành công',
+      user, // Trả về thông tin user cơ bản để Frontend lưu vào State/Store
+    };
+  }
+
+  // ==========================================
+  // OAUTH2: ĐĂNG NHẬP BẰNG GOOGLE
+  // ==========================================
+  @HttpCode(HttpStatus.OK)
+  @Post('google/login')
+  async googleLogin(
+    @Body() dto: GoogleAuthDto,
+    @Res({ passthrough: true }) res: express.Response,
+  ) {
+    const { access_token, user } = await this.authService.googleLogin(dto);
+
+    // Gắn JWT vào HttpOnly Cookie
+    res.cookie('access_token', access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 ngày
+    });
+
+    return {
+      message: 'Đăng nhập bằng Google thành công',
+      user,
+    };
   }
 }

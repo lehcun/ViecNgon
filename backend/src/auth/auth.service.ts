@@ -6,16 +6,169 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { OAuth2Client } from 'google-auth-library';
 import { LoginDto } from './dto/login.dto';
 import { RegisterCandidateDto } from './dto/register-candidate.dto';
 import { RegisterEmployerDto } from './dto/register-employer.dto';
+import { GoogleAuthDto } from './dto/google-auth.dto';
+
+interface GoogleJwtPayload {
+  sub: string;
+  email: string;
+  name?: string;
+  picture?: string;
+}
 
 @Injectable()
 export class AuthService {
+  private googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
   constructor(
     private readonly prisma: PrismaService,
     private jwtService: JwtService,
   ) {}
+
+  // Helper dùng chung: Lấy Profile Ứng viên từ Google bằng Access Token
+  private async getGoogleUserInfo(accessToken: string) {
+    try {
+      const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (!res.ok) {
+        throw new UnauthorizedException(
+          'Access Token Google không hợp lệ hoặc đã hết hạn!',
+        );
+      }
+
+      const payload = (await res.json()) as GoogleJwtPayload;
+
+      if (!payload) {
+        throw new UnauthorizedException(
+          'Không lấy được thông tin email từ tài khoản Google!',
+        );
+      }
+
+      return payload;
+    } catch (error) {
+      throw new UnauthorizedException('Xác thực Google Token thất bại!');
+    }
+  }
+
+  // -------------------------------------------------------------
+  // 1. ĐĂNG KÝ BẰNG GOOGLE (Chỉ dành cho Ứng viên)
+  // -------------------------------------------------------------
+  async googleRegister(dto: GoogleAuthDto) {
+    const googlePayload = await this.getGoogleUserInfo(dto.accessToken);
+
+    const email = googlePayload.email;
+    const name = googlePayload.name || 'Ứng viên Google';
+    const picture = googlePayload.picture || null;
+    const googleId = googlePayload.sub;
+
+    const existingUser = await this.prisma.taiKhoan.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      throw new BadRequestException(
+        'Email này đã được đăng ký trên hệ thống. Vui lòng bấm Đăng nhập!',
+      );
+    }
+
+    // Tạo TaiKhoan và UngVien Profile bằng Transaction
+    const newUser = await this.prisma.$transaction(async (tx) => {
+      const account = await tx.taiKhoan.create({
+        data: {
+          email,
+          tenNguoiDung: name,
+          matKhau: '', // Đăng ký Google không có mật khẩu local, truyền chuỗi rỗng để thỏa mãn db.VarChar(255) Not Null
+          googleId,
+          provider: 'GOOGLE',
+          vaiTro: 'UNGVIEN',
+          trangThai: 'HOATDONG',
+        },
+      });
+
+      await tx.ungVien.create({
+        data: {
+          maTaiKhoan: account.maTaiKhoan,
+          tenUngVien: name,
+          avatarUrl: picture,
+          chuyenMon: 'Chưa cập nhật',
+          cvUrl: '',
+        },
+      });
+
+      return account;
+    });
+
+    const payload = {
+      sub: newUser.maTaiKhoan,
+      role: newUser.vaiTro,
+      name: newUser.tenNguoiDung,
+      email: email,
+    };
+
+    return {
+      access_token: await this.jwtService.signAsync(payload),
+      user: {
+        id: newUser.maTaiKhoan,
+        email: email,
+        name: newUser.tenNguoiDung,
+        role: newUser.vaiTro,
+        status: newUser.trangThai,
+      },
+    };
+  }
+
+  // -------------------------------------------------------------
+  // 2. ĐĂNG NHẬP BẰNG GOOGLE (Dành cho Ứng viên)
+  // -------------------------------------------------------------
+  async googleLogin(dto: GoogleAuthDto) {
+    const googlePayload = await this.getGoogleUserInfo(dto.accessToken);
+
+    const email = googlePayload.email;
+    const googleId = googlePayload.sub;
+
+    let user = await this.prisma.taiKhoan.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException(
+        'Tài khoản Google này chưa đăng ký. Vui lòng bấm Đăng ký trước!',
+      );
+    }
+
+    if (!user.googleId) {
+      user = await this.prisma.taiKhoan.update({
+        where: { maTaiKhoan: user.maTaiKhoan },
+        data: { googleId, provider: 'GOOGLE' },
+      });
+    }
+
+    if (user.trangThai === 'KHOA' || user.trangThai === 'INACTIVE') {
+      throw new UnauthorizedException('Tài khoản của bạn đã bị khóa!');
+    }
+
+    const payload = {
+      sub: user.maTaiKhoan,
+      role: user.vaiTro,
+      name: user.tenNguoiDung,
+      email: email,
+    };
+
+    return {
+      access_token: await this.jwtService.signAsync(payload),
+      user: {
+        id: user.maTaiKhoan,
+        email: email,
+        name: user.tenNguoiDung,
+        role: user.vaiTro,
+        status: user.trangThai,
+      },
+    };
+  }
 
   async login(loginDto: LoginDto) {
     // 1. Tìm tài khoản theo Email
@@ -24,6 +177,10 @@ export class AuthService {
     });
 
     if (!user) {
+      throw new UnauthorizedException('Email hoặc mật khẩu không chính xác');
+    }
+
+    if (!user.matKhau) {
       throw new UnauthorizedException('Email hoặc mật khẩu không chính xác');
     }
 

@@ -55,7 +55,7 @@ async function main() {
       email: 'lehcuong2907@gmail.com',
       tenNguoiDung: 'Lê Hùng Cường',
       matKhau: hashPassword,
-      sdt: '0815114XXX', // Bạn có thể điền sdt thật
+      sdt: '0815114200',
       vaiTro: 'NHATUYENDUNG',
       trangThai: 'Active',
     },

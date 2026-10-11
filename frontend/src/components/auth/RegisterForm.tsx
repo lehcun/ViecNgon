@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { FiEye, FiEyeOff, FiAlertCircle } from "react-icons/fi";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSignup } from "@/hooks/auth/useSignUp";
 import { RegisterResponse } from "@viecngon/types";
+import GoogleButton from "./GoogleButton";
 
 export default function RegisterForm() {
   const router = useRouter();
@@ -96,7 +96,7 @@ export default function RegisterForm() {
   };
 
   return (
-    <div className="w-full max-w-[480px] mx-auto flex flex-col font-sans">
+    <div className="w-full max-w-120 mx-auto flex flex-col font-sans">
       {/* --- HEADER --- */}
       <div className="flex items-center gap-2 mb-2">
         <span className="text-xl font-bold text-slate-800 tracking-tight">
@@ -133,19 +133,7 @@ export default function RegisterForm() {
         </label>
       </div>
 
-      <button
-        type="button"
-        disabled={!googleTerms}
-        className="w-full flex items-center justify-center gap-3 py-3 border border-slate-300 rounded-lg text-slate-700 font-bold hover:bg-slate-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed mb-6"
-      >
-        <Image
-          src="https://www.svgrepo.com/show/475656/google-color.svg"
-          alt="Google"
-          width={20}
-          height={20}
-        />
-        Đăng ký với Google
-      </button>
+      <GoogleButton mode="register" />
 
       {/* --- DIVIDER --- */}
       <div className="flex items-center gap-4 mb-6">
