@@ -18,13 +18,22 @@ import { RegisterEmployerDto } from './dto/register-employer.dto';
 import { GoogleAuthDto } from './dto/google-auth.dto';
 
 export interface JwtPayload {
-  sub: number; // Thường dùng sub để lưu ID
+  sub: number;
   email: string;
   tenNguoiDung: string;
   role?: string;
-  iat?: number; // Thời gian tạo token (thư viện tự thêm)
-  exp?: number; // Thời gian hết hạn (thư viện tự thêm)
+  iat?: number;
+  exp?: number;
 }
+
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax' as const,
+  maxAge: 1000 * 60 * 60 * 24 * 7, // 7 ngày
+  path: '/',
+};
+
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -51,6 +60,8 @@ export class AuthController {
     }
   }
 
+  // Đăng xuất
+  @HttpCode(HttpStatus.OK)
   @Post('logout')
   logout(@Res({ passthrough: true }) res: express.Response) {
     // Xóa cookie chứa token
@@ -70,14 +81,7 @@ export class AuthController {
   ) {
     const { access_token, user } = await this.authService.login(loginDto);
 
-    // console.log('Login: access_token: ', access_token);
-
-    res.cookie('access_token', access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 1000 * 60 * 60 * 24 * 7,
-    });
+    res.cookie('access_token', access_token, COOKIE_OPTIONS);
 
     return { message: 'Đăng nhập thành công', user, access_token };
   }
@@ -88,16 +92,12 @@ export class AuthController {
     @Body() dto: RegisterCandidateDto,
     @Res({ passthrough: true }) res: express.Response,
   ) {
-    const result = await this.authService.registerCandidate(dto);
+    const { access_token, user } =
+      await this.authService.registerCandidate(dto);
 
-    res.cookie('access_token', result.access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 1000 * 60 * 60 * 24, // 1 ngày
-    });
+    res.cookie('access_token', access_token, COOKIE_OPTIONS);
 
-    return result.user;
+    return { message: 'Đăng ký tài khoản thành công', user };
   }
 
   // Đăng ký cho HR (Public)
@@ -106,16 +106,11 @@ export class AuthController {
     @Body() dto: RegisterEmployerDto,
     @Res({ passthrough: true }) res: express.Response,
   ) {
-    const result = await this.authService.registerEmployer(dto);
+    const { access_token, user } = await this.authService.registerEmployer(dto);
 
-    res.cookie('access_token', result.access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 1000 * 60 * 60 * 24,
-    });
+    res.cookie('access_token', access_token, COOKIE_OPTIONS);
 
-    return result.user;
+    return { message: 'Đăng ký nhà tuyển dụng thành công', user };
   }
 
   // ==========================================
@@ -128,18 +123,9 @@ export class AuthController {
   ) {
     const { access_token, user } = await this.authService.googleRegister(dto);
 
-    // Gắn JWT vào HttpOnly Cookie để bảo vệ khỏi tấn công XSS
-    res.cookie('access_token', access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 ngày
-    });
+    res.cookie('access_token', access_token, COOKIE_OPTIONS);
 
-    return {
-      message: 'Đăng ký tài khoản bằng Google thành công',
-      user, // Trả về thông tin user cơ bản để Frontend lưu vào State/Store
-    };
+    return { message: 'Đăng ký tài khoản bằng Google thành công', user };
   }
 
   // ==========================================
@@ -153,17 +139,8 @@ export class AuthController {
   ) {
     const { access_token, user } = await this.authService.googleLogin(dto);
 
-    // Gắn JWT vào HttpOnly Cookie
-    res.cookie('access_token', access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 ngày
-    });
+    res.cookie('access_token', access_token, COOKIE_OPTIONS);
 
-    return {
-      message: 'Đăng nhập bằng Google thành công',
-      user,
-    };
+    return { message: 'Đăng nhập bằng Google thành công', user };
   }
 }

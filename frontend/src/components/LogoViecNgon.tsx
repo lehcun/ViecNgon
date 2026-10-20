@@ -14,7 +14,6 @@ const LogoViecNgon = ({
 }: LogoViecNgonProps) => {
   // Hàm xử lý hiển thị chữ phụ (Subtitle) tùy theo Role
   const renderSubtitle = () => {
-    // Dựa vào DB TAIKHOAN.VaiTro của bạn, có thể so sánh thêm với "NHATUYENDUNG"
     if (role === "employer" || role === "NHATUYENDUNG") {
       return (
         <span className="text-[10px] font-black tracking-widest text-primary uppercase mt-0.5">

@@ -3,10 +3,9 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell } from "lucide-react";
-import EmployerProfileDropdown from "./EmployerProfileDropdown";
 import EmployerNotificationDropdown from "./EmployerNotificationDropdown";
 import LogoViecNgon from "../LogoViecNgon";
+import EmployerDashboardDropdown from "./EmployerDashboardDropdown";
 
 export default function EmployerNavbar() {
   const pathname = usePathname();
@@ -56,7 +55,7 @@ export default function EmployerNavbar() {
           <div className="h-6 w-px bg-slate-700 hidden md:block mx-1"></div>
 
           {/* Component Dropdown Avatar */}
-          <EmployerProfileDropdown />
+          <EmployerDashboardDropdown />
         </div>
       </div>
     </header>

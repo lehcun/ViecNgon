@@ -158,6 +158,8 @@ export class AuthService {
       email: email,
     };
 
+    console.log(payload);
+
     return {
       access_token: await this.jwtService.signAsync(payload),
       user: {

@@ -17,10 +17,9 @@ export const metadata: Metadata = {
     "Hệ thống kết nối ứng viên và nhà tuyển dụng công nghệ hàng đầu.",
 };
 
-// Cấu hình font Be Vietnam Pro
 const beVietnamPro = Be_Vietnam_Pro({
-  subsets: ["latin", "vietnamese"], // Bắt buộc phải có "vietnamese" để hiển thị dấu chuẩn
-  weight: ["400", "500", "600", "700"], // Các độ đậm nhạt bạn muốn dùng
+  subsets: ["latin", "vietnamese"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 

@@ -32,7 +32,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   // Hàm này chỉ chạy khi Token hợp lệ. Nó sẽ nhét dữ liệu vào req.user
   validate(payload: payloadType) {
-    // payload chính là dữ liệu bạn đã nhét vào token lúc login (vd: sub(maTaiKhoan), vaiTro)
     return {
       id: payload.sub,
       role: payload.role,
