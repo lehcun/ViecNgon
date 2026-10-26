@@ -370,8 +370,6 @@ export class JobService {
       ];
     }
 
-    console.log(whereCondition);
-
     // Bước 2: Query database
     const [jobs, total] = await Promise.all([
       this.prisma.congViec.findMany({
@@ -394,8 +392,6 @@ export class JobService {
 
     // Bước 3: Format lại dữ liệu (Giống cách làm bên CompanyService)
     const formattedJobs = jobs.map((job) => this.formatJobData(job));
-
-    console.log(formattedJobs);
 
     return {
       data: formattedJobs,

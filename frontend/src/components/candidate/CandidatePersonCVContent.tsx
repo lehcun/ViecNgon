@@ -9,8 +9,6 @@ import { useCandidateProfile } from "@/hooks/candidate/useCandidateProfile";
 const CandidatePersonCVContent = () => {
   const { candidateProfile } = useCandidateProfile();
   const { user } = useAuthStore();
-  //   console.log("candidateProfile: ", candidateProfile);
-  //   console.log("user: ", user);
 
   return (
     <div className="w-full flex flex-col gap-6">

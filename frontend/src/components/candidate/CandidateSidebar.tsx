@@ -67,14 +67,14 @@ export default function CandidateSidebar() {
             <User size={20} /> Hồ sơ ViecNgon
           </Link>
           <Link
-            href="/dashboard/my-jobs"
-            className={`${baseLinkClass} ${isActive("/dashboard/my-jobs") ? activeLinkClass : inactiveLinkClass}`}
+            href="/my-jobs"
+            className={`${baseLinkClass} ${isActive("/my-jobs") ? activeLinkClass : inactiveLinkClass}`}
           >
             <Briefcase size={20} /> Việc làm của tôi
           </Link>
           <Link
-            href="/dashboard/invitations"
-            className={`${baseLinkClass} ${isActive("/dashboard/invitations") ? activeLinkClass : inactiveLinkClass} justify-between`}
+            href="/invitations"
+            className={`${baseLinkClass} ${isActive("/invitations") ? activeLinkClass : inactiveLinkClass} justify-between`}
           >
             <div className="flex items-center gap-3">
               <Mail size={20} /> Lời mời công việc
@@ -87,20 +87,20 @@ export default function CandidateSidebar() {
           <div className="h-px bg-slate-100 my-2 mx-4"></div>
 
           <Link
-            href="/dashboard/subscribe"
-            className={`${baseLinkClass} ${isActive("/dashboard/subscribe") ? activeLinkClass : inactiveLinkClass}`}
+            href="/subscribe"
+            className={`${baseLinkClass} ${isActive("/subscribe") ? activeLinkClass : inactiveLinkClass}`}
           >
             <Mail size={20} /> Đăng ký nhận email
           </Link>
           <Link
-            href="/dashboard/notifications"
-            className={`${baseLinkClass} ${isActive("/dashboard/notifications") ? activeLinkClass : inactiveLinkClass}`}
+            href="/notifications"
+            className={`${baseLinkClass} ${isActive("/notifications") ? activeLinkClass : inactiveLinkClass}`}
           >
             <Bell size={20} /> Thông báo
           </Link>
           <Link
-            href="/dashboard/settings"
-            className={`${baseLinkClass} ${isActive("/dashboard/settings") ? activeLinkClass : inactiveLinkClass}`}
+            href="/settings"
+            className={`${baseLinkClass} ${isActive("/settings") ? activeLinkClass : inactiveLinkClass}`}
           >
             <Settings size={20} /> Cài đặt
           </Link>

@@ -13,8 +13,6 @@ export const useRemoveJob = () => {
         },
       );
 
-      console.log(response);
-
       if (!response.ok) {
         throw new Error("Không thể xóa công việc này");
       }

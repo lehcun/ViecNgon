@@ -147,7 +147,6 @@ export function useCreateJob(initialCredits: number = 0) {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    console.log(user);
     if (!user) {
       alert("Bạn cần đăng nhập để thực hiện chức năng này!");
       return;

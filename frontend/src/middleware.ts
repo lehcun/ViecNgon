@@ -44,6 +44,11 @@ const routeAccessRules = [
     allowedRoles: ["UNGVIEN"],
     loginUrl: "/login",
   },
+  {
+    regex: /^\/job-it\/.*\/job_applications/,
+    allowedRoles: ["UNGVIEN"],
+    loginUrl: "/login",
+  },
 ];
 
 const authRoutes = ["/login", "/employer/login", "/admin/login", "/register"];
@@ -68,18 +73,23 @@ export function middleware(request: NextRequest) {
 
   // 4. KIỂM TRA QUYỀN TRUY CẬP (The Magic Loop)
   for (const rule of routeAccessRules) {
-    // Nếu URL hiện tại bắt đầu bằng một trong các prefix được bảo vệ
-    if (path.startsWith(rule.prefix)) {
-      // Nếu chưa có token -> Đẩy về trang đăng nhập tương ứng, có lưu lại callbackUrl
+    // KHI KIỂM TRA: Xem rule này dùng prefix hay regex
+    const isMatch = rule.prefix
+      ? path.startsWith(rule.prefix)
+      : rule.regex && rule.regex.test(path);
+
+    // Nếu đường dẫn người dùng đang vào khớp với quy tắc này
+    if (isMatch) {
+      // Nếu chưa có token -> Đẩy về trang đăng nhập tương ứng
       if (!token || !userRole) {
         const loginUrl = new URL(rule.loginUrl, request.url);
         loginUrl.searchParams.set("callbackUrl", path);
         return NextResponse.redirect(loginUrl);
       }
 
-      // Nếu có token nhưng ROLE không nằm trong danh sách cho phép -> Cấm truy cập
+      // Nếu có token nhưng ROLE không nằm trong danh sách -> Cấm truy cập
       if (!rule.allowedRoles.includes(userRole)) {
-        return NextResponse.redirect(new URL("/403-forbidden", request.url)); // Tới trang báo lỗi không có quyền (hoặc về "/")
+        return NextResponse.redirect(new URL("/403-forbidden", request.url));
       }
 
       // Vượt qua kiểm tra -> Cho phép đi tiếp

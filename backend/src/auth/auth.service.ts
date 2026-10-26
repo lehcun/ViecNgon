@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
@@ -11,6 +12,7 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterCandidateDto } from './dto/register-candidate.dto';
 import { RegisterEmployerDto } from './dto/register-employer.dto';
 import { GoogleAuthDto } from './dto/google-auth.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 interface GoogleJwtPayload {
   sub: string;
@@ -178,31 +180,38 @@ export class AuthService {
       where: { email: loginDto.email },
     });
 
+    // Trường hợp 1: Email chưa tồn tại trong hệ thống
     if (!user) {
-      throw new UnauthorizedException('Email hoặc mật khẩu không chính xác');
+      throw new UnauthorizedException(
+        'Email chưa tồn tại. Vui lòng đăng ký tài khoản!',
+      );
     }
 
-    if (!user.matKhau) {
-      throw new UnauthorizedException('Email hoặc mật khẩu không chính xác');
+    // Trường hợp 2: Tài khoản đã đăng ký bằng Google
+    // (matKhau là null / rỗng hoặc trường provider là GOOGLE)
+    if (!user.matKhau || user.provider === 'GOOGLE') {
+      throw new BadRequestException(
+        'Mail này đã được dùng để đăng ký bằng google',
+      );
     }
 
-    // 2. Kiểm tra mật khẩu (giả định mật khẩu trong DB đã được hash bằng bcrypt)
+    // 2. Kiểm tra mật khẩu mã hóa bằng bcrypt
     const isPasswordValid = await bcrypt.compare(
       loginDto.password,
       user.matKhau,
     );
 
+    // Trường hợp 3: Sai mật khẩu
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Email hoặc mật khẩu không chính xác');
+      throw new UnauthorizedException('Mật khẩu không chính xác!');
     }
 
-    // 3. Tạo Payload cho JWT (Chỉ lưu thông tin cơ bản, KHÔNG lưu mật khẩu)
+    // 3. Tạo Payload cho JWT (Chỉ lưu thông tin cơ bản, không lưu mật khẩu)
     const payload = {
       sub: user.maTaiKhoan,
       role: user.vaiTro,
       name: user.tenNguoiDung,
       email: user.email,
-      // avatarUrl: user.avatarUrl,
     };
 
     // 4. Trả về Token và thông tin user (loại bỏ mật khẩu)
@@ -376,5 +385,40 @@ export class AuthService {
         status: userInfo.trangThai,
       },
     };
+  }
+
+  async changePassword(maTaiKhoan: string, dto: ChangePasswordDto) {
+    // 1. Tìm tài khoản trong Database
+    const user = await this.prisma.taiKhoan.findUnique({
+      where: { maTaiKhoan },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Tài khoản không tồn tại trên hệ thống!');
+    }
+
+    // 2. Chặn đổi mật khẩu nếu là tài khoản đăng nhập bằng Google
+    if (user.provider === 'GOOGLE' || !user.matKhau) {
+      throw new BadRequestException(
+        'Tài khoản Google không hỗ trợ tính năng đổi mật khẩu!',
+      );
+    }
+
+    // 3. Kiểm tra mật khẩu cũ có khớp với DB hay không
+    const isPasswordValid = await bcrypt.compare(dto.matKhauCu, user.matKhau);
+    if (!isPasswordValid) {
+      throw new BadRequestException('Mật khẩu hiện tại không chính xác!');
+    }
+
+    // 4. Băm (Hash) mật khẩu mới trước khi lưu
+    const hashedNewPassword = await bcrypt.hash(dto.matKhauMoi, 10);
+
+    // 5. Cập nhật mật khẩu mới vào Database
+    await this.prisma.taiKhoan.update({
+      where: { maTaiKhoan },
+      data: { matKhau: hashedNewPassword },
+    });
+
+    return { message: 'Đổi mật khẩu thành công!' };
   }
 }

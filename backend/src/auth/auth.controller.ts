@@ -8,6 +8,8 @@ import {
   Get,
   Req,
   UnauthorizedException,
+  Patch,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -16,6 +18,9 @@ import { JwtService } from '@nestjs/jwt';
 import { RegisterCandidateDto } from './dto/register-candidate.dto';
 import { RegisterEmployerDto } from './dto/register-employer.dto';
 import { GoogleAuthDto } from './dto/google-auth.dto';
+import { CurrentUser } from './decorators/current-user.decorator';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 export interface JwtPayload {
   sub: number;
@@ -142,5 +147,18 @@ export class AuthController {
     res.cookie('access_token', access_token, COOKIE_OPTIONS);
 
     return { message: 'Đăng nhập bằng Google thành công', user };
+  }
+
+  // ==========================================
+  // ĐỔI MẬT KHẨU
+  // ==========================================
+  @UseGuards(JwtAuthGuard)
+  @Patch('change-password')
+  async changePassword(
+    @CurrentUser() user: { id: string }, // Lấy thông tin user đã được Guard giải mã từ Cookie
+    @Body() dto: ChangePasswordDto,
+  ) {
+    // Gọi Service xử lý bằng maTaiKhoan lấy trực tiếp từ Token, an toàn tuyệt đối trước việc giả mạo ID[cite: 4]
+    return await this.authService.changePassword(user.id, dto);
   }
 }
