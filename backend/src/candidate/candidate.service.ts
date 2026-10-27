@@ -8,6 +8,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateCandidateDto } from './dto/update-candidate.dto';
 import { CandidateProfileResponse } from '@viecngon/types';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { formatSalaryDisplay } from 'src/common/utils/format-salary';
 
 interface MockMulterFile {
   originalname: string;
@@ -230,5 +231,73 @@ export class CandidateService {
         'Không thể lưu CV vào hệ thống. Vui lòng thử lại.',
       );
     }
+  }
+
+  async getAppliedJobs(userId: string) {
+    // 1. Tìm thông tin Ứng viên từ mã tài khoản
+    const candidate = await this.prisma.ungVien.findUnique({
+      where: { maTaiKhoan: userId },
+      select: { maUngVien: true },
+    });
+
+    if (!candidate) {
+      throw new NotFoundException('Không tìm thấy thông tin hồ sơ ứng viên.');
+    }
+
+    // 2. Truy vấn danh sách đơn xin việc lồng sang Công việc và Công ty
+    const applications = await this.prisma.donXinViec.findMany({
+      where: { maUngVien: candidate.maUngVien },
+      orderBy: { ngayNop: 'desc' }, // Đơn mới nộp đưa lên đầu
+      include: {
+        congViec: {
+          include: {
+            nhaTuyenDung: {
+              include: {
+                congTy: {
+                  select: {
+                    tenCongTy: true,
+                    logoUrl: true,
+                    slug: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // 3. Format dữ liệu chuẩn hóa (Clean Data) trả về cho Frontend
+    return applications.map((app) => {
+      const job = app.congViec;
+      const company = job.nhaTuyenDung?.congTy;
+
+      return {
+        applicationId: app.maDon,
+        appliedDate: app.ngayNop,
+        applicationStatus: app.trangThai, // 'CHO_DUYET', 'DA_XEM', 'PHONG_VAN', 'TRUNG_TUYEN'...
+        cvUrl: app.fileCvUrl,
+        job: {
+          id: job.maCongViec,
+          title: job.tenCongViec,
+          slug: job.slug,
+          location: job.thanhPho,
+          workModel: job.hinhThucLamViec, // 'Remote', 'Hybrid', 'Tại văn phòng'
+          salaryDisplay: formatSalaryDisplay(
+            job.mucLuongToiThieu,
+            job.mucLuongToiDa,
+          ),
+          status: job.trangThai, // 'Đang tuyển', 'Đã đóng'
+          deadline: job.ngayHetHan,
+          company: company
+            ? {
+                name: company.tenCongTy,
+                logo: company.logoUrl,
+                slug: company.slug,
+              }
+            : null,
+        },
+      };
+    });
   }
 }

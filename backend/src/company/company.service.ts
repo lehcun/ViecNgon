@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CompanyDetailResponse, FormattedTopCompany } from '@viecngon/types';
+import { formatSalaryDisplay } from 'src/common/utils/format-salary';
 
 @Injectable()
 export class CompanyService {
@@ -138,29 +139,16 @@ export class CompanyService {
     const allActiveJobs = company.nhaTuyenDungs
       .flatMap((hr) => hr.congViecs)
       .map((job) => {
-        const min = job.mucLuongToiThieu ? Number(job.mucLuongToiThieu) : 0;
-        const max = job.mucLuongToiDa ? Number(job.mucLuongToiDa) : 0;
-
-        let salaryDisplay = '';
-
-        if (min === 0 && max === 0) {
-          salaryDisplay = 'Thỏa thuận';
-        } else if (min > 0 && max === 0) {
-          salaryDisplay = `Từ ${min.toLocaleString()} VNĐ`;
-        } else if (min === 0 && max > 0) {
-          salaryDisplay = `Lên đến ${max.toLocaleString()} VNĐ`;
-        } else {
-          // Trường hợp có cả min và max (Ví dụ: 10.000.000 - 20.000.000 VNĐ)
-          salaryDisplay = `${min.toLocaleString()} - ${max.toLocaleString()} VNĐ`;
-        }
-
         return {
           id: job.maCongViec,
           title: job.tenCongViec,
           slug: job.slug,
           salaryMin: job.mucLuongToiThieu ? Number(job.mucLuongToiThieu) : null,
           salaryMax: job.mucLuongToiDa ? Number(job.mucLuongToiDa) : null,
-          salaryDisplay: salaryDisplay,
+          salaryDisplay: formatSalaryDisplay(
+            job.mucLuongToiThieu,
+            job.mucLuongToiDa,
+          ),
           location: job.thanhPho,
           workModel: job.hinhThucLamViec ?? 'Linh hoạt',
           postedAt: job.ngayDang,

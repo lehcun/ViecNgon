@@ -6,6 +6,7 @@ import { CreateJobDto } from './dto/create-job.dto';
 import { GetJobsFilterDto } from './dto/get-jobs-filter.dto';
 import { Prisma } from '@prisma/client';
 import { JobDetailResponse } from '@viecngon/types';
+import { formatSalaryDisplay } from 'src/common/utils/format-salary';
 
 // 1. Interface cho Công Ty
 export interface CongTyData {
@@ -93,6 +94,13 @@ export interface JobWithRelations {
   nhaTuyenDung: NhaTuyenDungData;
   chiNhanh: ChiNhanhData | null; // Có thể null vì chiNhanh là optional
   congViecKyNangs: CongViecKyNangData[];
+}
+
+// 5. Interface cho Bảng trung gian Công Việc - Kỹ Năng
+export interface CongViecKyNangData {
+  maCongViec: string;
+  maKyNang: string;
+  kyNang: KyNangData; // Join bảng Kỹ Năng
 }
 
 @Injectable()
@@ -286,19 +294,6 @@ export class JobService {
     const min = job.mucLuongToiThieu ? Number(job.mucLuongToiThieu) : 0;
     const max = job.mucLuongToiDa ? Number(job.mucLuongToiDa) : 0;
 
-    let salaryDisplay = '';
-
-    if (min === 0 && max === 0) {
-      salaryDisplay = 'Thỏa thuận';
-    } else if (min > 0 && max === 0) {
-      salaryDisplay = `Từ ${min.toLocaleString()} VNĐ`;
-    } else if (min === 0 && max > 0) {
-      salaryDisplay = `Lên đến ${max.toLocaleString()} VNĐ`;
-    } else {
-      // Trường hợp có cả min và max (Ví dụ: 10.000.000 - 20.000.000 VNĐ)
-      salaryDisplay = `${min.toLocaleString()} - ${max.toLocaleString()} VNĐ`;
-    }
-
     // 3. Format lại dữ liệu cho Frontend dễ đọc (giống với Clean Architecture)
     const formattedJob = {
       id: job.maCongViec,
@@ -313,7 +308,10 @@ export class JobService {
       // Trả về cả min, max và chuỗi đã format
       salaryMin: min,
       salaryMax: max,
-      salaryDisplay: salaryDisplay,
+      salaryDisplay: formatSalaryDisplay(
+        job.mucLuongToiThieu,
+        job.mucLuongToiDa,
+      ),
 
       experience: job.yeuCauKinhNghiem,
       level: job.capBac,
@@ -443,16 +441,6 @@ export class JobService {
     const min = job.mucLuongToiThieu ? Number(job.mucLuongToiThieu) : 0;
     const max = job.mucLuongToiDa ? Number(job.mucLuongToiDa) : 0;
 
-    // Logic tính toán hiển thị lương (Copy từ logic bạn đã làm cho Company)
-    let salaryDisplay = 'Thỏa thuận';
-    if (min > 0 && max > 0) {
-      salaryDisplay = `${min.toLocaleString()} - ${max.toLocaleString()} VNĐ`;
-    } else if (min > 0) {
-      salaryDisplay = `Từ ${min.toLocaleString()} VNĐ`;
-    } else if (max > 0) {
-      salaryDisplay = `Lên đến ${max.toLocaleString()} VNĐ`;
-    }
-
     const company = job.nhaTuyenDung?.congTy;
 
     if (!company) {
@@ -470,7 +458,10 @@ export class JobService {
       benefits: job.phucLoi || '', // Chuyển String Tiptap thành mảng nếu cần
       salaryMin: min || null,
       salaryMax: max || null,
-      salaryDisplay: salaryDisplay,
+      salaryDisplay: formatSalaryDisplay(
+        job.mucLuongToiThieu,
+        job.mucLuongToiDa,
+      ),
       experience: job.yeuCauKinhNghiem,
       level: job.capBac,
       location: job.thanhPho,

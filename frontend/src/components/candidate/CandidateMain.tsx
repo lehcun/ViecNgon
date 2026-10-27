@@ -140,7 +140,10 @@ const CandidateMain = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {/* Card 1: Ứng tuyển */}
-          <div className="bg-primary-light rounded-xl p-5 relative overflow-hidden h-32 flex flex-col justify-between group cursor-pointer hover:shadow-md transition-shadow">
+          <Link
+            href={"/my-jobs/applied"}
+            className="bg-primary-light rounded-xl p-5 relative overflow-hidden h-32 flex flex-col justify-between group cursor-pointer hover:shadow-md transition-shadow"
+          >
             <span className="text-sm font-semibold text-slate-700 relative z-10 group-hover:text-blue-700 transition-colors">
               Việc làm đã ứng tuyển
             </span>
@@ -148,7 +151,7 @@ const CandidateMain = () => {
               0
             </span>
             <Send className="absolute -bottom-2 -right-2 w-16 h-16 text-blue-200/60 -rotate-12 group-hover:scale-110 transition-transform" />
-          </div>
+          </Link>
 
           {/* Card 2: Đã lưu */}
           <div className="bg-[#fff1f2] rounded-xl p-5 relative overflow-hidden h-32 flex flex-col justify-between group cursor-pointer hover:shadow-md transition-shadow">

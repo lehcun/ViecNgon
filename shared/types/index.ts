@@ -396,3 +396,25 @@ export interface CampaignResponse {
   ngayKetThuc: string;
   trangThai: "DANG_CHAY" | "DA_KET_THUC" | "CHO_THANH_TOAN";
 }
+
+export interface AppliedJobItem {
+  applicationId: string;
+  appliedDate: string;
+  applicationStatus: string; // 'CHO_DUYET' | 'DA_XEM' | 'PHU_HOP' | 'PHONG_VAN' | 'TRUNG_TUYEN' | 'KHONG_PHU_HOP'
+  cvUrl: string | null;
+  job: {
+    id: string;
+    title: string;
+    slug: string;
+    location: string | null;
+    workModel: string | null;
+    salaryDisplay: string;
+    status: string;
+    deadline: string | null;
+    company: {
+      name: string;
+      logo: string | null;
+      slug: string;
+    } | null;
+  };
+}

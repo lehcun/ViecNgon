@@ -15,16 +15,15 @@ import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('candidate')
+@UseGuards(jwtAuthGuard.JwtAuthGuard)
 export class CandidateController {
   constructor(private readonly candidateService: CandidateService) {}
 
-  @UseGuards(jwtAuthGuard.JwtAuthGuard)
   @Get('profile')
   async getProfile(@CurrentUser() user: jwtAuthGuard.AuthUser) {
     return await this.candidateService.getProfile(user.id);
   }
 
-  @UseGuards(jwtAuthGuard.JwtAuthGuard)
   @Patch('profile')
   async updateProfile(
     @CurrentUser() user: jwtAuthGuard.AuthUser,
@@ -34,7 +33,6 @@ export class CandidateController {
   }
 
   @Post('cv/upload-generated')
-  @UseGuards(jwtAuthGuard.JwtAuthGuard)
   @UseInterceptors(FileInterceptor('file')) // Nhận file từ field tên là "file"
   async uploadGeneratedCv(
     @CurrentUser() user: jwtAuthGuard.AuthUser,
@@ -44,5 +42,11 @@ export class CandidateController {
     const maTaiKhoan = user.id;
 
     return await this.candidateService.uploadGeneratedCv(maTaiKhoan, file);
+  }
+
+  @Get('applied-jobs')
+  async getAppliedJobs(@CurrentUser() user: { id: string }) {
+    // Lấy ID từ decorator, không truyền từ Frontend
+    return await this.candidateService.getAppliedJobs(user.id);
   }
 }

@@ -1,7 +1,7 @@
-import { getRelativeTime } from "@/utils/formatTime";
-import { CompanyDetailResponse } from "@viecngon/types";
-import { CheckCircle2, ChevronRight, Home, MapPin } from "lucide-react";
 import Link from "next/link";
+import { CheckCircle2, ChevronRight, Home, MapPin } from "lucide-react";
+import { CompanyDetailResponse } from "@viecngon/types";
+import { getRelativeTime } from "@/utils/formatTime";
 
 const CompanyJobLists = ({
   totalJobs,
