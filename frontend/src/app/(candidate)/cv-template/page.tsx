@@ -60,7 +60,7 @@ export default function CandidateCVTemplatePage() {
   const handleSetDefault = async () => {
     try {
       // 1. TẠO FILE PDF NGẦM NGAY KHI BẤM NÚT
-      const doc = <ActiveCVComponent data={profile} />;
+      const doc = <ActiveCVComponent data={profile ?? null} />;
       const asPdf = pdf(doc);
       const blob = await asPdf.toBlob();
 

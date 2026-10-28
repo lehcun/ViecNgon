@@ -34,17 +34,18 @@ export default function ITJobsPage() {
   // 2. GỌI HOOK FETCH DATA (Nó sẽ tự động chạy lại mỗi khi URL thay đổi)
   const { data: jobData, isLoading, isError } = useJobFilter(currentFilters);
 
-  // Quản lý việc làm đang được chọn để hiển thị ở cột phải
-  const [activeJob, setActiveJob] = useState<JobDetailResponse | null>(null);
+  // Chỉ lưu ID của job đang được người dùng chủ động click chọn
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
 
-  // Tự động chọn Job đầu tiên khi dữ liệu trả về thành công
-  useEffect(() => {
-    if (jobData?.data && jobData.data.length > 0) {
-      setActiveJob(jobData.data[0]);
-    } else {
-      setActiveJob(null);
-    }
-  }, [jobData]);
+  // Tự động tính toán activeJob ngay trong lúc render (Không dùng useEffect)
+  // 1. Tìm xem job user đang click có nằm trong danh sách hiện tại không
+  // 2. Nếu không có (hoặc user chưa click), tự động lấy job đầu tiên trong list
+  // 3. Nếu danh sách trống, trả về null
+  const activeJob =
+    jobData?.data?.find((job) => job.id === selectedJobId) ||
+    jobData?.data?.[0] ||
+    null;
+  // -------------------------
 
   // 3. HÀM CẬP NHẬT URL KHI NGƯỜI DÙNG CHỌN BỘ LỌC
   const handleFilterChange = (key: string, value: string) => {
@@ -271,7 +272,7 @@ export default function ITJobsPage() {
               jobData?.data.map((job: JobDetailResponse) => (
                 <div
                   key={job.id}
-                  onClick={() => setActiveJob(job)}
+                  onClick={() => setSelectedJobId(job.id)}
                   className={`bg-white rounded-xl p-5 cursor-pointer transition-all border-2 relative overflow-hidden flex flex-col ${
                     activeJob?.id === job.id
                       ? "border-primary shadow-md"

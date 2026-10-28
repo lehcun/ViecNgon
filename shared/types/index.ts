@@ -245,6 +245,7 @@ export interface DashboardJobItem {
   status: string;
   postedAt: string | Date;
   deadline: string | Date | null;
+  skills: string[] | null;
 }
 
 export interface RecruiterProfileResponse {

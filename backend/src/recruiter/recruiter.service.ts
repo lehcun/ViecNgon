@@ -44,6 +44,16 @@ export class RecruiterService {
             _count: {
               select: { donXinViecs: true },
             },
+            congViecKyNangs: {
+              select: {
+                kyNang: {
+                  select: {
+                    maKyNang: true,
+                    tenKyNang: true,
+                  },
+                },
+              },
+            },
             donXinViecs: {
               include: {
                 ungVien: {
@@ -103,7 +113,6 @@ export class RecruiterService {
       )
       .slice(0, 4);
 
-    // Return dữ liệu mapping sang Tiếng Anh
     return {
       recruiterId: recruiter.maNTD,
       accountId: recruiter.maTaiKhoan,
@@ -146,6 +155,8 @@ export class RecruiterService {
           status: job.trangThai, // Đang mở, Đã đóng...
           postedAt: job.ngayDang,
           deadline: job.ngayHetHan,
+          skills:
+            job.congViecKyNangs?.map((cvkn) => cvkn.kyNang.tenKyNang) || [],
         })),
       },
     };

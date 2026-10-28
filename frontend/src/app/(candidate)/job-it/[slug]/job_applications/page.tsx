@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   ChevronLeft,
   Eye,
@@ -39,8 +39,10 @@ export default function ApplyJobPage() {
     useCandidateProfile();
   const { mutate, isPending } = useApplyJob();
 
-  // States
-  const [cvOption, setCvOption] = useState<"existing" | "new">("existing");
+  // Chỉ lưu lựa chọn chủ động của user (ban đầu là null vì chưa chọn gì)
+  const [manualCvOption, setManualCvOption] = useState<
+    "existing" | "new" | null
+  >(null);
   const [coverLetter, setCoverLetter] = useState("");
   const [cvUrl, setCvUrl] = useState(""); // Dành cho trường hợp chọn Tải CV mới (Tích hợp upload sau)
 
@@ -54,12 +56,12 @@ export default function ApplyJobPage() {
   const existingCvDate = formatDateToLocal(defaultCv?.uploadedAt);
   const hasExistingCv = !!existingCvUrl;
 
-  // Nếu người dùng chưa có CV nào, tự động chuyển option sang "new" (Tải mới)
-  useEffect(() => {
-    if (profile && !hasExistingCv) {
-      setCvOption("new");
-    }
-  }, [profile, hasExistingCv]);
+  const cvOption =
+    manualCvOption !== null
+      ? manualCvOption
+      : hasExistingCv
+        ? "existing"
+        : "new";
 
   // Render màn hình Loading chung
   if (!user || isJobLoading || isProfileLoading) {
@@ -183,7 +185,7 @@ export default function ApplyJobPage() {
                       name="cvOption"
                       value="existing"
                       checked={cvOption === "existing"}
-                      onChange={() => setCvOption("existing")}
+                      onChange={() => setManualCvOption("existing")}
                       disabled={!hasExistingCv}
                       className="w-4 h-4 text-primary focus:ring-primary border-slate-300 mt-0.5"
                     />
@@ -202,7 +204,7 @@ export default function ApplyJobPage() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={handleOpenExistingCV}
-                          className="text-sm font-medium text-primary hover:underline text-left truncate max-w-[250px] sm:max-w-xs"
+                          className="text-sm font-medium text-primary hover:underline text-left truncate max-w-62.5 sm:max-w-xs"
                         >
                           {existingCvName}
                         </button>
@@ -235,7 +237,7 @@ export default function ApplyJobPage() {
                       name="cvOption"
                       value="new"
                       checked={cvOption === "new"}
-                      onChange={() => setCvOption("new")}
+                      onChange={() => setManualCvOption("new")}
                       className="w-4 h-4 text-primary focus:ring-primary border-slate-300"
                     />
                     <span className="font-semibold text-slate-800 text-sm">

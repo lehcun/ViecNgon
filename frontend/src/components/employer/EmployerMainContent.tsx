@@ -47,7 +47,10 @@ const EmployerMainContent = () => {
   } = useJobMetrics();
   const { mutate: removeJob } = useRemoveJob();
 
-  const [currentTime, setCurrentTime] = useState("Đang cập nhật...");
+  const currentTime =
+    metrics || recruiter
+      ? `Cập nhật lúc: ${new Date().toLocaleTimeString("vi-VN")}`
+      : "Đang cập nhật...";
 
   // State quản lý Modal Xóa
   const [deleteModal, setDeleteModal] = useState({
@@ -56,12 +59,6 @@ const EmployerMainContent = () => {
     jobTitle: "",
   });
   const [isConfirmDeleteChecked, setIsConfirmDeleteChecked] = useState(false);
-
-  useEffect(() => {
-    if (metrics || recruiter) {
-      setCurrentTime(`Cập nhật lúc: ${new Date().toLocaleTimeString("vi-VN")}`);
-    }
-  }, [metrics, recruiter]);
 
   // ================= XỬ LÝ HÀNH ĐỘNG =================
   const openDeleteModal = (jobId: string, jobTitle: string) => {
@@ -300,7 +297,7 @@ const EmployerMainContent = () => {
 
         {/* Inputs Row */}
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
-          <div className="relative flex-1 min-w-[280px]">
+          <div className="relative flex-1 min-w-70">
             <Search
               size={20}
               className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
@@ -387,12 +384,14 @@ const EmployerMainContent = () => {
                           </div>
                           {/* Mock Data Stack cho đẹp layout, bạn có thể thay bằng job.skills nếu API có */}
                           <div className="flex flex-wrap gap-1.5 mt-1">
-                            <span className="bg-primary/10 text-primary px-2 py-0.5 rounded text-[11px] font-bold">
-                              IT
-                            </span>
-                            <span className="bg-primary/10 text-primary px-2 py-0.5 rounded text-[11px] font-bold">
-                              Tech
-                            </span>
+                            {job.skills?.map((skill) => (
+                              <span
+                                key={skill}
+                                className="bg-primary/10 text-primary px-2 py-0.5 rounded text-[11px] font-bold"
+                              >
+                                {skill}
+                              </span>
+                            ))}
                           </div>
                         </div>
                       </td>
@@ -559,7 +558,7 @@ const EmployerMainContent = () => {
           MODAL XÓA BÀI ĐĂNG (CUSTOM UI)
       ========================================== */}
       {deleteModal.isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-200">
+        <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-200">
           <div className="bg-white rounded-2xl max-w-lg w-full p-8 shadow-2xl relative overflow-hidden flex flex-col gap-6 animate-in zoom-in-95 duration-200">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center shrink-0 border border-rose-100">
