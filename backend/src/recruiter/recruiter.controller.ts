@@ -25,4 +25,9 @@ export class RecruiterController {
   ) {
     return this.recruiterService.updateProfile(user.id, updateDto);
   }
+
+  @Get('job/metrics')
+  async getJobMetrics(@CurrentUser() user: { id: string }) {
+    return await this.recruiterService.getJobMetrics(user.id);
+  }
 }

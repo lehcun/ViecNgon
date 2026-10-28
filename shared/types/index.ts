@@ -418,3 +418,22 @@ export interface AppliedJobItem {
     } | null;
   };
 }
+
+export interface RecruiterJobMetricsResponse {
+  totalJobs: {
+    count: number;
+    changeThisMonth: number;
+  };
+  activeJobs: {
+    count: number;
+  };
+  pendingJobs: {
+    count: number;
+    avgReviewTimeText: string;
+  };
+  totalApplications: {
+    count: number;
+    percentChangeThisWeek: number;
+  };
+  averageResponseRate: number;
+}
