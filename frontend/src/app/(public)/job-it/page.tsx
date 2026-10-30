@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import {
   Search,
@@ -193,9 +193,7 @@ export default function ITJobsPage() {
         {/* 3. Header & Bộ lọc (Filters) */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-slate-800 mb-4">
-            {isLoading
-              ? "Đang tìm kiếm..."
-              : `${jobData?.total || 0} việc làm IT tại Việt Nam`}
+            {isLoading && "Đang tìm kiếm..."}
           </h1>
 
           <div className="flex flex-wrap items-center justify-between gap-3">
