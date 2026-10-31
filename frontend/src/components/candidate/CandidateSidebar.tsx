@@ -67,7 +67,7 @@ export default function CandidateSidebar() {
             <User size={20} /> Hồ sơ ViecNgon
           </Link>
           <Link
-            href="/my-jobs"
+            href="/my-jobs/applied"
             className={`${baseLinkClass} ${isActive("/my-jobs") ? activeLinkClass : inactiveLinkClass}`}
           >
             <Briefcase size={20} /> Việc làm của tôi
