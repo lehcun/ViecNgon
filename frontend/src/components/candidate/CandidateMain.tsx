@@ -8,6 +8,7 @@ import {
   Send,
   Heart,
   MailOpen,
+  Loader2,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { useCandidateProfile } from "@/hooks/candidate/useCandidateProfile";
@@ -17,8 +18,40 @@ const CandidateMain = () => {
   const profileCompletion = 69; // Giả lập dữ liệu % hoàn thành hồ sơ
   const arcLength = 220; // Chu vi của nửa vòng tròn SVG
 
-  const { candidateProfile } = useCandidateProfile();
+  const { candidateProfile, isLoading, isError } = useCandidateProfile();
   const { user } = useAuthStore();
+
+  if (isLoading) {
+    return (
+      <div className="w-full flex flex-col gap-6 animate-pulse">
+        <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 flex items-center gap-6">
+          <div className="w-24 h-24 bg-slate-200 rounded-full shrink-0"></div>
+          <div className="flex-1 space-y-3">
+            <div className="h-6 bg-slate-200 rounded w-1/3"></div>
+            <div className="h-4 bg-slate-200 rounded w-1/2"></div>
+            <div className="h-4 bg-slate-200 rounded w-1/4"></div>
+          </div>
+        </div>
+        <div className="h-44 bg-white rounded-xl border border-slate-200 p-6"></div>
+        <div className="h-44 bg-white rounded-xl border border-slate-200 p-6"></div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="p-8 text-center bg-white rounded-xl border border-red-200 shadow-sm text-red-600 font-medium">
+        Không thể tải thông tin hồ sơ ứng viên. Vui lòng thử đăng nhập lại.
+      </div>
+    );
+  }
+
+  const displayName =
+    candidateProfile?.account?.userName || user?.name || "Ứng viên";
+  const displayProfession =
+    candidateProfile?.profession || "Chưa cập nhật chuyên môn";
+  const displayEmail =
+    candidateProfile?.account?.email || user?.email || "Chưa cập nhật email";
 
   return (
     <div className="w-full flex flex-col gap-6">
@@ -26,18 +59,22 @@ const CandidateMain = () => {
       <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row items-center sm:items-start gap-6">
         <div className="w-24 h-24 bg-primary text-white text-4xl font-bold flex items-center justify-center rounded-full shadow-md shrink-0">
           C
+          {displayName.charAt(0).toUpperCase()}
         </div>
         <div className="flex-1 text-center sm:text-left">
           <h1 className="text-2xl font-bold text-slate-800 mb-2">
             {candidateProfile?.account.userName}
+            {displayName}
           </h1>
           <div className="space-y-2 text-slate-600 text-sm">
             <p className="flex items-center justify-center sm:justify-start gap-2">
               <Briefcase size={16} className="text-slate-400" />
               {candidateProfile?.profession}
+              {displayProfession}
             </p>
             <p className="flex items-center justify-center sm:justify-start gap-2">
               <Mail size={16} className="text-slate-400" /> {user?.email}
+              <Mail size={16} className="text-slate-400" /> {displayEmail}
             </p>
           </div>
           <Link
@@ -99,7 +136,7 @@ const CandidateMain = () => {
             mẫu CV IT chuyên nghiệp.
           </p>
           <Link
-            href="/dashboard/profile"
+            href="/cv-profile"
             className="inline-flex items-center gap-1 text-primary font-semibold hover:underline"
           >
             Nâng cấp hồ sơ <ChevronRight size={16} />
@@ -133,6 +170,7 @@ const CandidateMain = () => {
       </div>
 
       {/* 4. HOẠT ĐỘNG CỦA BẠN (MỚI THÊM) */}
+      {/* 4. HOẠT ĐỘNG CỦA BẠN */}
       <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm">
         <h2 className="text-xl font-bold text-slate-800 mb-6">
           Hoạt động của bạn

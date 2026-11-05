@@ -1,30 +1,59 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// 1. TỐI ƯU HÓA HÀM DECODE (Sử dụng chuẩn Buffer của Edge Runtime, chống crash)
-function getRoleFromToken(token: string): string | null {
+interface DecodedToken {
+  role: string;
+  isExpired: boolean;
+}
+
+/**
+ * Bản đồ chuyển hướng về Dashboard chính thức theo từng vai trò người dùng
+ */
+const ROLE_DASHBOARD_MAP: Record<string, string> = {
+  ADMIN: "/admin",
+  NHATUYENDUNG: "/employer-dashboard",
+  UNGVIEN: "/dashboard",
+};
+
+/**
+ * Giải mã JWT an toàn trong Edge Runtime
+ * Kiểm tra cả tính hợp lệ của Payload và thời hạn hết hạn (exp)
+ */
+function decodeToken(token: string): DecodedToken | null {
   try {
     const payloadBase64 = token.split(".")[1];
     if (!payloadBase64) return null;
 
-    // Đảm bảo padding Base64 chuẩn
     const base64 = payloadBase64.replace(/-/g, "+").replace(/_/g, "/");
     const jsonPayload = Buffer.from(base64, "base64").toString("utf-8");
-
     const parsed = JSON.parse(jsonPayload);
-    return parsed?.role || null;
+
+    if (!parsed?.role) return null;
+
+    // Kiểm tra thời hạn exp (exp tính bằng giây, Date.now() tính bằng ms)
+    const isExpired =
+      typeof parsed.exp === "number" ? parsed.exp * 1000 < Date.now() : false;
+
+    return {
+      role: parsed.role,
+      isExpired,
+    };
   } catch (error) {
-    console.error("JWT Decode Error:", error);
-    return null; // Token lỗi thì coi như không có quyền
+    console.error("JWT Decode Error in Middleware:", error);
+    return null;
   }
 }
 
-// 2. ĐỊNH NGHĨA QUY TẮC BẢO MẬT (RBAC - Role Based Access Control)
-// Thêm bớt quyền hoặc route chỉ cần sửa ở mảng này, không cần đụng vào logic if/else
+// Định nghĩa quy tắc bảo mật theo vai trò (RBAC)
 const routeAccessRules = [
   { prefix: "/admin", allowedRoles: ["ADMIN"], loginUrl: "/admin/login" },
   {
     prefix: "/employer-dashboard",
+    allowedRoles: ["NHATUYENDUNG"],
+    loginUrl: "/employer/login",
+  },
+  {
+    prefix: "/employer",
     allowedRoles: ["NHATUYENDUNG"],
     loginUrl: "/employer/login",
   },
@@ -38,7 +67,24 @@ const routeAccessRules = [
     allowedRoles: ["NHATUYENDUNG"],
     loginUrl: "/employer/login",
   },
+  {
+    prefix: "/jobs",
+    allowedRoles: ["NHATUYENDUNG"],
+    loginUrl: "/employer/login",
+  },
+  {
+    prefix: "/applications",
+    allowedRoles: ["NHATUYENDUNG"],
+    loginUrl: "/employer/login",
+  },
+  {
+    prefix: "/campaigns",
+    allowedRoles: ["NHATUYENDUNG"],
+    loginUrl: "/employer/login",
+  },
   { prefix: "/dashboard", allowedRoles: ["UNGVIEN"], loginUrl: "/login" },
+  { prefix: "/my-jobs", allowedRoles: ["UNGVIEN"], loginUrl: "/login" },
+  { prefix: "/cv-profile", allowedRoles: ["UNGVIEN"], loginUrl: "/login" },
   {
     prefix: "/job_applications",
     allowedRoles: ["UNGVIEN"],
@@ -57,42 +103,67 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get("access_token")?.value;
   const path = request.nextUrl.pathname;
 
-  // Lấy Role từ token hiện tại
-  const userRole = token ? getRoleFromToken(token) : null;
+  const decoded = token ? decodeToken(token) : null;
+  const isTokenValid = Boolean(decoded && !decoded.isExpired);
+  const userRole = isTokenValid && decoded ? decoded.role : null;
 
-  // 3. XỬ LÝ REDIRECT KHI ĐÃ LOGIN MÀ VÀO TRANG AUTH (Login/Register)
-  if (token && userRole && authRoutes.includes(path)) {
-    const redirectMap: Record<string, string> = {
-      ADMIN: "/admin",
-      NHATUYENDUNG: "/employer-dashboard",
-      UNGVIEN: "/dashboard",
-    };
-    const redirectTo = redirectMap[userRole] || "/";
+  // 1. NẾU TOKEN ĐÃ HẾT HẠN (Expired):
+  // Xóa sạch cookie rác và bắt buộc đăng nhập lại nếu vào trang bảo vệ
+  if (token && decoded?.isExpired) {
+    for (const rule of routeAccessRules) {
+      const isMatch = rule.prefix
+        ? path.startsWith(rule.prefix)
+        : rule.regex && rule.regex.test(path);
+
+      if (isMatch) {
+        const loginUrl = new URL(rule.loginUrl, request.url);
+        loginUrl.searchParams.set("callbackUrl", path);
+        const response = NextResponse.redirect(loginUrl);
+        response.cookies.delete("access_token");
+        return response;
+      }
+    }
+  }
+
+  // 2. XỬ LÝ REDIRECT KHI ĐÃ ĐĂNG NHẬP HỢP LỆ MÀ VÀO TRANG AUTH (Login / Register)
+  if (isTokenValid && userRole && authRoutes.includes(path)) {
+    const redirectTo = ROLE_DASHBOARD_MAP[userRole] || "/";
     return NextResponse.redirect(new URL(redirectTo, request.url));
   }
 
-  // 4. KIỂM TRA QUYỀN TRUY CẬP (The Magic Loop)
+  // 3. KIỂM TRA QUYỀN TRUY CẬP (RBAC Access Control)
   for (const rule of routeAccessRules) {
-    // KHI KIỂM TRA: Xem rule này dùng prefix hay regex
     const isMatch = rule.prefix
       ? path.startsWith(rule.prefix)
       : rule.regex && rule.regex.test(path);
 
-    // Nếu đường dẫn người dùng đang vào khớp với quy tắc này
     if (isMatch) {
-      // Nếu chưa có token -> Đẩy về trang đăng nhập tương ứng
-      if (!token || !userRole) {
+      // 3.1. Nếu chưa có token hợp lệ -> Chuyển hướng về trang đăng nhập tương ứng
+      if (!isTokenValid || !userRole) {
         const loginUrl = new URL(rule.loginUrl, request.url);
         loginUrl.searchParams.set("callbackUrl", path);
-        return NextResponse.redirect(loginUrl);
+        const response = NextResponse.redirect(loginUrl);
+        if (token) {
+          response.cookies.delete("access_token");
+        }
+        return response;
       }
 
-      // Nếu có token nhưng ROLE không nằm trong danh sách -> Cấm truy cập
+      // 3.2. Nếu có token nhưng ROLE KHÔNG ĐƯỢC PHÉP truy cập trang này
+      // (Ví dụ: Nhà tuyển dụng cố vào /dashboard của Ứng viên, hoặc Ứng viên cố vào /employer-dashboard)
+      // -> Thay vì báo lỗi 403-forbidden, tự động chuyển hướng người dùng về Dashboard tương ứng của họ
       if (!rule.allowedRoles.includes(userRole)) {
-        return NextResponse.redirect(new URL("/403-forbidden", request.url));
+        const targetDashboard = ROLE_DASHBOARD_MAP[userRole] || "/";
+
+        // Tránh vòng lặp nếu đường dẫn hiện tại chính là đích đến
+        if (path !== targetDashboard) {
+          return NextResponse.redirect(new URL(targetDashboard, request.url));
+        }
+
+        return NextResponse.redirect(new URL("/", request.url));
       }
 
-      // Vượt qua kiểm tra -> Cho phép đi tiếp
+      // Hợp lệ -> Cho phép đi tiếp
       break;
     }
   }
@@ -100,10 +171,9 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// 5. MATCHER BẢO TRÌ SẠCH SẼ
+// Bỏ qua các file tĩnh, ảnh, api nội bộ để tối ưu hiệu năng
 export const config = {
   matcher: [
-    // Bỏ qua các file tĩnh, ảnh, api nội bộ để tăng tốc hiệu năng
     "/((?!api|_next/static|_next/image|favicon.ico|public).*)",
   ],
 };

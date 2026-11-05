@@ -44,7 +44,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   @Get('me')
   async getProfile(@Req() req: express.Request) {
@@ -57,10 +57,18 @@ export class AuthController {
 
     try {
       const payload = await this.jwtService.verifyAsync<JwtPayload>(token);
-      return payload;
+      return {
+        id: payload.sub,
+        sub: payload.sub,
+        email: payload.email,
+        name: payload.tenNguoiDung,
+        role: payload.role,
+        exp: payload.exp,
+        iat: payload.iat,
+      };
     } catch {
       throw new UnauthorizedException(
-        'Token không hợp lệ hoặc đã hết hạn & err: ',
+        'Token không hợp lệ hoặc đã hết hạn',
       );
     }
   }

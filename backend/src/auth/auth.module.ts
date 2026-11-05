@@ -6,14 +6,13 @@ import { JwtStrategy } from './jwt.strategy';
 
 @Module({
   imports: [
-    AuthModule,
     JwtModule.register({
       global: true,
       secret: process.env.JWT_SECRET || 'secret',
-      signOptions: { expiresIn: '1d' },
+      signOptions: { expiresIn: '7d' }, // Đồng bộ 7 ngày với COOKIE_OPTIONS
     }),
   ],
   providers: [AuthService, JwtStrategy],
   controllers: [AuthController],
 })
-export class AuthModule {}
+export class AuthModule { }
