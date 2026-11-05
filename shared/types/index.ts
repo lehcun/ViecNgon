@@ -33,6 +33,15 @@ export interface Job {
 //   portfolios: Array<{ tieuDe: string; projectUrl: string | null }>;
 // }
 
+export interface Company {
+  id: string;
+  name: string;
+  logo: string | null;
+  location: string | null;
+  jobs: number;
+  slug: string;
+}
+
 export interface FormattedTopCompany {
   id: string;
   name: string;
@@ -438,3 +447,6 @@ export interface RecruiterJobMetricsResponse {
   };
   averageResponseRate: number;
 }
+
+// Employer / Company Profile Management
+export * from "./company-profile.types";

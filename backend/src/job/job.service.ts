@@ -1,6 +1,6 @@
 import slugify from 'slugify';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import sanitizeHtml from 'sanitize-html';
+import { sanitizeRichText } from 'src/common/utils/sanitize-html.util';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateJobDto } from './dto/create-job.dto';
 import { GetJobsFilterDto } from './dto/get-jobs-filter.dto';
@@ -109,35 +109,7 @@ export class JobService {
 
   // Hàm private để dọn dẹp HTML dùng chung
   private sanitizeContent(htmlContent?: string): string | null {
-    if (!htmlContent) return null;
-    return sanitizeHtml(htmlContent, {
-      allowedTags: [
-        'b',
-        'i',
-        'em',
-        'strong',
-        'a',
-        'p',
-        'h1',
-        'h2',
-        'h3',
-        'h4',
-        'h5',
-        'h6',
-        'ul',
-        'li',
-        'ol',
-        'br',
-        'span',
-        'div',
-        'u',
-      ],
-      allowedAttributes: {
-        a: ['href', 'target'],
-        span: ['style'],
-        p: ['style'],
-      },
-    });
+    return sanitizeRichText(htmlContent);
   }
 
   async create(createJobDto: CreateJobDto) {

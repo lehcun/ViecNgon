@@ -13,6 +13,7 @@ import { ApplicationsModule } from './applications/applications.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { NotificationModule } from './notification/notification.module';
 import { CampaignModule } from './campaign/campaign.module';
+import { CompanyProfileModule } from './company-profile/company-profile.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { CampaignModule } from './campaign/campaign.module';
     SkillModule,
     CloudinaryModule,
     ApplicationsModule,
+    CompanyProfileModule,
     MailerModule.forRoot({
       transport: {
         host: process.env.MAIL_HOST,
