@@ -450,3 +450,4 @@ export interface RecruiterJobMetricsResponse {
 
 // Employer / Company Profile Management
 export * from "./company-profile.types";
+export * from "./employer-job.types";

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Bold, Italic, List, ListOrdered, Heading2 } from "lucide-react";
@@ -25,6 +26,13 @@ const RichTextEditor = ({ value, onChange }: RichTextEditorProps) => {
       onChange(editor.getHTML());
     },
   });
+
+  // Đồng bộ nội dung editor khi prop value thay đổi từ bên ngoài (như chèn template mẫu hoặc reset form)
+  useEffect(() => {
+    if (editor && value !== editor.getHTML()) {
+      editor.commands.setContent(value || "");
+    }
+  }, [value, editor]);
 
   if (!editor) {
     return null;

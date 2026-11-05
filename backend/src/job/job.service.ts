@@ -1,11 +1,22 @@
 import slugify from 'slugify';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { sanitizeRichText } from 'src/common/utils/sanitize-html.util';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateJobDto } from './dto/create-job.dto';
 import { GetJobsFilterDto } from './dto/get-jobs-filter.dto';
+import { GetEmployerJobsQueryDto } from './dto/get-employer-jobs-query.dto';
+import { UpdateJobDto } from './dto/update-job.dto';
+import { RepostJobDto } from './dto/repost-job.dto';
 import { Prisma } from '@prisma/client';
-import { JobDetailResponse } from '@viecngon/types';
+import {
+  JobDetailResponse,
+  EmployerJobListItem,
+  EmployerJobDetailResponse,
+} from '@viecngon/types';
 import { formatSalaryDisplay } from 'src/common/utils/format-salary';
 
 // 1. Interface cho Công Ty
@@ -105,7 +116,7 @@ export interface CongViecKyNangData {
 
 @Injectable()
 export class JobService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   // Hàm private để dọn dẹp HTML dùng chung
   private sanitizeContent(htmlContent?: string): string | null {
@@ -135,7 +146,28 @@ export class JobService {
         'Không tìm thấy thông tin nhà tuyển dụng cho tài khoản này.',
       );
     }
-    // 3. Lưu vào Database
+    // 3. Xử lý an toàn trường maChiNhanh:
+    // Kiểm tra chi nhánh có tồn tại và thuộc đúng công ty của NTD hay không
+    let validatedChiNhanhId: string | null = null;
+    const rawBranchId = createJobDto.maChiNhanh?.trim();
+    if (
+      rawBranchId &&
+      rawBranchId !== '' &&
+      rawBranchId !== 'null' &&
+      rawBranchId !== 'undefined'
+    ) {
+      const chiNhanh = await this.prisma.chiNhanh.findFirst({
+        where: {
+          maChiNhanh: rawBranchId,
+          maCongTy: nhaTuyenDung.maCongTy,
+        },
+      });
+      if (chiNhanh) {
+        validatedChiNhanhId = chiNhanh.maChiNhanh;
+      }
+    }
+
+    // 4. Lưu vào Database
     return this.prisma.congViec.create({
       data: {
         ...jobData,
@@ -143,6 +175,7 @@ export class JobService {
         moTa: cleanMoTa,
         yeuCauCongViec: cleanYeuCau,
         phucLoi: cleanPhucLoi,
+        maChiNhanh: validatedChiNhanhId,
         maNTD: nhaTuyenDung.maNTD,
         congViecKyNangs: {
           create: kyNangs.map((id) => ({
@@ -208,6 +241,24 @@ export class JobService {
     }
     if (typeof updateData.phucLoi === 'string') {
       dataToUpdate.phucLoi = this.sanitizeContent(updateData.phucLoi);
+    }
+
+    // Xử lý an toàn trường maChiNhanh khi update
+    if ('maChiNhanh' in updateData) {
+      const rawBranchId = updateData.maChiNhanh?.trim();
+      if (
+        rawBranchId &&
+        rawBranchId !== '' &&
+        rawBranchId !== 'null' &&
+        rawBranchId !== 'undefined'
+      ) {
+        const branchExists = await this.prisma.chiNhanh.findUnique({
+          where: { maChiNhanh: rawBranchId },
+        });
+        dataToUpdate.maChiNhanh = branchExists ? branchExists.maChiNhanh : null;
+      } else {
+        dataToUpdate.maChiNhanh = null;
+      }
     }
 
     // Cập nhật ngày cập nhật mới nhất
@@ -463,5 +514,587 @@ export class JobService {
         otPolicy: company.chinhSachOT,
       },
     };
+  }
+
+  // =====================================================================
+  // EMPLOYER JOB MANAGEMENT METHODS (QUẢN LÝ BÀI ĐĂNG TUYỂN DỤNG)
+  // =====================================================================
+
+  /**
+   * 1. Lấy danh sách tin tuyển dụng của công ty (có tìm kiếm, lọc theo status và phân trang)
+   */
+  async getEmployerJobs(userId: string, query: GetEmployerJobsQueryDto) {
+    const {
+      search,
+      status = 'ALL',
+      sortBy = 'newest',
+    } = query;
+
+    // Đảm bảo page và limit luôn luôn là kiểu number nguyên (Int), tránh lỗi PrismaClientValidationError khi query từ HTTP URL
+    const pageNum = Math.max(1, Number(query.page) || 1);
+    const limitNum = Math.max(1, Math.min(100, Number(query.limit) || 10));
+    const skip = (pageNum - 1) * limitNum;
+
+    const nhaTuyenDung = await this.prisma.nhaTuyenDung.findUnique({
+      where: { maTaiKhoan: userId },
+    });
+    if (!nhaTuyenDung) {
+      throw new NotFoundException('Không tìm thấy thông tin nhà tuyển dụng.');
+    }
+
+    const now = new Date();
+
+    // Lấy toàn bộ bài đăng thuộc công ty để tính countsByStatus chính xác cho Tabs
+    const allCompanyJobs = await this.prisma.congViec.findMany({
+      where: {
+        nhaTuyenDung: { maCongTy: nhaTuyenDung.maCongTy },
+      },
+      select: {
+        maCongViec: true,
+        trangThai: true,
+        ngayHetHan: true,
+      },
+    });
+
+    const countsByStatus = {
+      ALL: allCompanyJobs.length,
+      DA_DUYET: 0,
+      CHO_DUYET: 0,
+      TU_CHUOI: 0,
+      NHAP: 0,
+      HET_HAN: 0,
+      DA_AN: 0,
+    };
+
+    allCompanyJobs.forEach((j) => {
+      const isExpired = j.ngayHetHan ? new Date(j.ngayHetHan) < now : false;
+      const st = j.trangThai?.trim();
+
+      if (isExpired || st === 'HET_HAN' || st === 'Hết hạn') {
+        countsByStatus.HET_HAN++;
+      } else if (st === 'CHO_DUYET' || st === 'Chờ duyệt') {
+        countsByStatus.CHO_DUYET++;
+      } else if (st === 'DA_AN' || st === 'Đã ẩn' || st === 'Đã đóng') {
+        countsByStatus.DA_AN++;
+      } else if (st === 'TU_CHUOI' || st === 'Từ chối') {
+        countsByStatus.TU_CHUOI++;
+      } else if (st === 'NHAP' || st === 'Nháp') {
+        countsByStatus.NHAP++;
+      } else if (
+        st === 'DA_DUYET' ||
+        st === 'DANG_TUYEN' ||
+        st === 'Đang tuyển'
+      ) {
+        countsByStatus.DA_DUYET++;
+      } else {
+        countsByStatus.DA_DUYET++;
+      }
+    });
+
+    // Xây dựng điều kiện WHERE cho query phân trang
+    const whereCondition: Prisma.CongViecWhereInput = {
+      nhaTuyenDung: { maCongTy: nhaTuyenDung.maCongTy },
+    };
+
+    // Lọc theo keyword tìm kiếm
+    if (search && search.trim() !== '') {
+      const term = search.trim();
+      whereCondition.OR = [
+        { tenCongViec: { contains: term } },
+        { thanhPho: { contains: term } },
+        { capBac: { contains: term } },
+      ];
+    }
+
+    // Lọc theo trạng thái
+    if (status && status !== 'ALL') {
+      const upperStatus = status.toUpperCase();
+      if (upperStatus === 'HET_HAN') {
+        whereCondition.OR = [
+          { trangThai: { in: ['HET_HAN', 'Hết hạn'] } },
+          { ngayHetHan: { lt: now } },
+        ];
+      } else if (upperStatus === 'DA_DUYET' || upperStatus === 'DANG_TUYEN') {
+        whereCondition.AND = [
+          { trangThai: { in: ['DA_DUYET', 'DANG_TUYEN', 'Đang tuyển'] } },
+          { OR: [{ ngayHetHan: null }, { ngayHetHan: { gte: now } }] },
+        ];
+      } else if (upperStatus === 'CHO_DUYET') {
+        whereCondition.trangThai = { in: ['CHO_DUYET', 'Chờ duyệt'] };
+      } else if (upperStatus === 'DA_AN') {
+        whereCondition.trangThai = { in: ['DA_AN', 'Đã ẩn', 'Đã đóng'] };
+      } else if (upperStatus === 'TU_CHUOI') {
+        whereCondition.trangThai = { in: ['TU_CHUOI', 'Từ chối'] };
+      } else if (upperStatus === 'NHAP') {
+        whereCondition.trangThai = { in: ['NHAP', 'Nháp'] };
+      }
+    }
+
+    // Xác định thứ tự sắp xếp
+    let orderBy: Prisma.CongViecOrderByWithRelationInput = { ngayDang: 'desc' };
+    if (sortBy === 'expiring_soon') {
+      orderBy = { ngayHetHan: 'asc' };
+    } else if (sortBy === 'most_viewed') {
+      orderBy = { luotXem: 'desc' };
+    }
+
+    const [total, jobs] = await Promise.all([
+      this.prisma.congViec.count({ where: whereCondition }),
+      this.prisma.congViec.findMany({
+        where: whereCondition,
+        skip,
+        take: limitNum,
+        orderBy,
+        include: {
+          chiNhanh: true,
+          congViecKyNangs: {
+            include: { kyNang: true },
+          },
+          _count: {
+            select: { donXinViecs: true },
+          },
+        },
+      }),
+    ]);
+
+    const formattedJobs: EmployerJobListItem[] = jobs.map((job) => {
+      const isExpired = job.ngayHetHan ? new Date(job.ngayHetHan) < now : false;
+      const min = job.mucLuongToiThieu ? Number(job.mucLuongToiThieu) : null;
+      const max = job.mucLuongToiDa ? Number(job.mucLuongToiDa) : null;
+
+      let mappedStatus = job.trangThai;
+      if (isExpired) {
+        mappedStatus = 'HET_HAN';
+      } else if (
+        job.trangThai === 'Đang tuyển' ||
+        job.trangThai === 'DANG_TUYEN'
+      ) {
+        mappedStatus = 'DA_DUYET';
+      } else if (job.trangThai === 'Chờ duyệt') {
+        mappedStatus = 'CHO_DUYET';
+      } else if (job.trangThai === 'Đã đóng' || job.trangThai === 'Đã ẩn') {
+        mappedStatus = 'DA_AN';
+      }
+
+      return {
+        id: job.maCongViec,
+        title: job.tenCongViec,
+        slug: job.slug,
+        salaryDisplay: formatSalaryDisplay(
+          job.mucLuongToiThieu,
+          job.mucLuongToiDa,
+        ),
+        minSalary: min,
+        maxSalary: max,
+        experienceYears: job.yeuCauKinhNghiem,
+        level: job.capBac,
+        city: job.thanhPho,
+        jobType: job.loaiHinh,
+        workModel: job.hinhThucLamViec,
+        status: mappedStatus,
+        postedAt: job.ngayDang.toISOString(),
+        deadline: job.ngayHetHan ? job.ngayHetHan.toISOString() : null,
+        updatedAt: job.ngayCapNhat.toISOString(),
+        views: job.luotXem,
+        applicationsCount: job._count.donXinViecs,
+        skills: job.congViecKyNangs.map((ck) => ({
+          id: ck.kyNang.maKyNang,
+          name: ck.kyNang.tenKyNang,
+        })),
+        branch: job.chiNhanh
+          ? {
+            id: job.chiNhanh.maChiNhanh,
+            city: job.chiNhanh.thanhPho,
+            address: job.chiNhanh.diaChi,
+          }
+          : null,
+        isExpired,
+      };
+    });
+
+    return {
+      data: formattedJobs,
+      meta: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(total / limitNum) || 1,
+      },
+      countsByStatus,
+    };
+  }
+
+  /**
+   * 2. Lấy chi tiết tin tuyển dụng của NTD (dùng để xem và pre-fill Form chỉnh sửa)
+   */
+  async getEmployerJobById(
+    userId: string,
+    jobId: string,
+  ): Promise<EmployerJobDetailResponse> {
+    const nhaTuyenDung = await this.prisma.nhaTuyenDung.findUnique({
+      where: { maTaiKhoan: userId },
+    });
+    if (!nhaTuyenDung) {
+      throw new NotFoundException('Không tìm thấy thông tin nhà tuyển dụng.');
+    }
+
+    const job = await this.prisma.congViec.findUnique({
+      where: { maCongViec: jobId },
+      include: {
+        nhaTuyenDung: true,
+        chiNhanh: true,
+        congViecKyNangs: {
+          include: { kyNang: true },
+        },
+        _count: {
+          select: { donXinViecs: true },
+        },
+      },
+    });
+
+    if (!job) {
+      throw new NotFoundException(
+        `Không tìm thấy tin tuyển dụng với ID: ${jobId}`,
+      );
+    }
+
+    // Kiểm tra quyền sở hữu (cùng maNTD hoặc cùng maCongTy)
+    if (
+      job.nhaTuyenDung.maCongTy !== nhaTuyenDung.maCongTy &&
+      job.maNTD !== nhaTuyenDung.maNTD
+    ) {
+      throw new ForbiddenException(
+        'Bạn không có quyền truy cập tin tuyển dụng này.',
+      );
+    }
+
+    const isExpired = job.ngayHetHan
+      ? new Date(job.ngayHetHan) < new Date()
+      : false;
+
+    return {
+      maCongViec: job.maCongViec,
+      tenCongViec: job.tenCongViec,
+      slug: job.slug,
+      moTa: job.moTa,
+      yeuCauCongViec: job.yeuCauCongViec,
+      phucLoi: job.phucLoi,
+      mucLuongToiThieu: job.mucLuongToiThieu
+        ? Number(job.mucLuongToiThieu)
+        : null,
+      mucLuongToiDa: job.mucLuongToiDa ? Number(job.mucLuongToiDa) : null,
+      yeuCauKinhNghiem: job.yeuCauKinhNghiem,
+      capBac: job.capBac,
+      thanhPho: job.thanhPho,
+      loaiHinh: job.loaiHinh,
+      hinhThucLamViec: job.hinhThucLamViec,
+      ngayDang: job.ngayDang.toISOString(),
+      ngayHetHan: job.ngayHetHan ? job.ngayHetHan.toISOString() : null,
+      ngayCapNhat: job.ngayCapNhat.toISOString(),
+      luotXem: job.luotXem,
+      trangThai: job.trangThai,
+      maChiNhanh: job.maChiNhanh,
+      kyNangs: job.congViecKyNangs.map((ck) => ck.maKyNang),
+      skills: job.congViecKyNangs.map((ck) => ({
+        id: ck.kyNang.maKyNang,
+        name: ck.kyNang.tenKyNang,
+      })),
+      branch: job.chiNhanh
+        ? {
+          id: job.chiNhanh.maChiNhanh,
+          city: job.chiNhanh.thanhPho,
+          address: job.chiNhanh.diaChi,
+        }
+        : null,
+      applicationsCount: job._count.donXinViecs,
+      isExpired,
+    };
+  }
+
+  /**
+   * 3. Chỉnh sửa tin tuyển dụng với Sanitize Rich Text & Kiểm tra quyền sở hữu
+   */
+  async updateEmployerJob(userId: string, jobId: string, dto: UpdateJobDto) {
+    const nhaTuyenDung = await this.prisma.nhaTuyenDung.findUnique({
+      where: { maTaiKhoan: userId },
+    });
+    if (!nhaTuyenDung) {
+      throw new NotFoundException('Không tìm thấy thông tin nhà tuyển dụng.');
+    }
+
+    const existingJob = await this.prisma.congViec.findUnique({
+      where: { maCongViec: jobId },
+      include: { nhaTuyenDung: true },
+    });
+    if (!existingJob) {
+      throw new NotFoundException(
+        `Không tìm thấy tin tuyển dụng với ID: ${jobId}`,
+      );
+    }
+
+    if (
+      existingJob.nhaTuyenDung.maCongTy !== nhaTuyenDung.maCongTy &&
+      existingJob.maNTD !== nhaTuyenDung.maNTD
+    ) {
+      throw new ForbiddenException(
+        'Bạn không có quyền chỉnh sửa tin tuyển dụng này.',
+      );
+    }
+
+    const { kyNangs, ...fields } = dto;
+    const dataToUpdate: Prisma.CongViecUpdateInput = {};
+
+    // 1. Sanitize Rich Text
+    if (fields.moTa !== undefined) {
+      dataToUpdate.moTa = this.sanitizeContent(fields.moTa);
+    }
+    if (fields.yeuCauCongViec !== undefined) {
+      dataToUpdate.yeuCauCongViec = this.sanitizeContent(fields.yeuCauCongViec);
+    }
+    if (fields.phucLoi !== undefined) {
+      dataToUpdate.phucLoi = this.sanitizeContent(fields.phucLoi);
+    }
+
+    // 2. Title & Slug
+    if (fields.tenCongViec && fields.tenCongViec.trim() !== '') {
+      dataToUpdate.tenCongViec = fields.tenCongViec.trim();
+      if (fields.tenCongViec.trim() !== existingJob.tenCongViec) {
+        const baseSlug = slugify(fields.tenCongViec.trim(), {
+          lower: true,
+          locale: 'vi',
+        });
+        dataToUpdate.slug = `${baseSlug}-${Date.now()}`;
+      }
+    }
+
+    // 3. Regular fields
+    if (fields.capBac !== undefined) dataToUpdate.capBac = fields.capBac;
+    if (fields.loaiHinh !== undefined) dataToUpdate.loaiHinh = fields.loaiHinh;
+    if (fields.hinhThucLamViec !== undefined)
+      dataToUpdate.hinhThucLamViec = fields.hinhThucLamViec;
+    if (fields.thanhPho !== undefined)
+      dataToUpdate.thanhPho = fields.thanhPho?.trim() || null;
+    if (fields.yeuCauKinhNghiem !== undefined)
+      dataToUpdate.yeuCauKinhNghiem = fields.yeuCauKinhNghiem;
+    if (fields.mucLuongToiThieu !== undefined)
+      dataToUpdate.mucLuongToiThieu = fields.mucLuongToiThieu;
+    if (fields.mucLuongToiDa !== undefined)
+      dataToUpdate.mucLuongToiDa = fields.mucLuongToiDa;
+    if (fields.ngayHetHan !== undefined) {
+      dataToUpdate.ngayHetHan = fields.ngayHetHan
+        ? new Date(fields.ngayHetHan)
+        : null;
+    }
+
+    // 4. Branch validation
+    if ('maChiNhanh' in fields) {
+      const rawBranch = fields.maChiNhanh?.trim();
+      if (
+        rawBranch &&
+        rawBranch !== '' &&
+        rawBranch !== 'null' &&
+        rawBranch !== 'undefined' &&
+        fields.hinhThucLamViec !== 'Remote'
+      ) {
+        const branch = await this.prisma.chiNhanh.findFirst({
+          where: {
+            maChiNhanh: rawBranch,
+            maCongTy: nhaTuyenDung.maCongTy,
+          },
+        });
+        dataToUpdate.chiNhanh = branch
+          ? { connect: { maChiNhanh: branch.maChiNhanh } }
+          : { disconnect: true };
+      } else {
+        dataToUpdate.chiNhanh = { disconnect: true };
+      }
+    }
+
+    // 5. Quy tắc chuyển trạng thái: Nếu tin đang hiển thị mà sửa thông tin chính (Title, Mô tả, Yêu cầu)
+    // Hệ thống tự động chuyển về 'CHO_DUYET' (nếu không có trangThai truyền vào)
+    const isCriticalFieldChanged =
+      (fields.tenCongViec && fields.tenCongViec !== existingJob.tenCongViec) ||
+      (fields.moTa && fields.moTa !== existingJob.moTa) ||
+      (fields.yeuCauCongViec &&
+        fields.yeuCauCongViec !== existingJob.yeuCauCongViec);
+
+    if (fields.trangThai) {
+      dataToUpdate.trangThai = fields.trangThai;
+    } else if (
+      (existingJob.trangThai === 'DA_DUYET' ||
+        existingJob.trangThai === 'Đang tuyển') &&
+      isCriticalFieldChanged
+    ) {
+      dataToUpdate.trangThai = 'CHO_DUYET';
+    }
+
+    dataToUpdate.ngayCapNhat = new Date();
+
+    // 6. Prisma Transaction cập nhật Job và bảng trung gian Kỹ năng
+    return this.prisma.$transaction(async (tx) => {
+      if (Array.isArray(kyNangs)) {
+        await tx.congViecKyNang.deleteMany({
+          where: { maCongViec: jobId },
+        });
+        if (kyNangs.length > 0) {
+          await tx.congViecKyNang.createMany({
+            data: kyNangs.map((id) => ({
+              maCongViec: jobId,
+              maKyNang: id,
+            })),
+          });
+        }
+      }
+
+      return tx.congViec.update({
+        where: { maCongViec: jobId },
+        data: dataToUpdate,
+        include: {
+          chiNhanh: true,
+          congViecKyNangs: { include: { kyNang: true } },
+        },
+      });
+    });
+  }
+
+  /**
+   * 4. Đăng lại / Gia hạn tin tuyển dụng đã hết hạn hoặc tạm ẩn
+   */
+  async repostEmployerJob(userId: string, jobId: string, dto: RepostJobDto) {
+    const nhaTuyenDung = await this.prisma.nhaTuyenDung.findUnique({
+      where: { maTaiKhoan: userId },
+    });
+    if (!nhaTuyenDung) {
+      throw new NotFoundException('Không tìm thấy thông tin nhà tuyển dụng.');
+    }
+
+    const job = await this.prisma.congViec.findUnique({
+      where: { maCongViec: jobId },
+      include: { nhaTuyenDung: true },
+    });
+    if (!job) {
+      throw new NotFoundException(
+        `Không tìm thấy tin tuyển dụng với ID: ${jobId}`,
+      );
+    }
+
+    if (
+      job.nhaTuyenDung.maCongTy !== nhaTuyenDung.maCongTy &&
+      job.maNTD !== nhaTuyenDung.maNTD
+    ) {
+      throw new ForbiddenException(
+        'Bạn không có quyền đăng lại tin tuyển dụng này.',
+      );
+    }
+
+    // Tính toán ngày hết hạn mới: mặc định +30 ngày kể từ hiện tại nếu không cung cấp
+    let newDeadline: Date;
+    if (dto.ngayHetHanMoi) {
+      newDeadline = new Date(dto.ngayHetHanMoi);
+    } else {
+      newDeadline = new Date();
+      newDeadline.setDate(newDeadline.getDate() + 30);
+    }
+
+    return this.prisma.congViec.update({
+      where: { maCongViec: jobId },
+      data: {
+        ngayDang: new Date(),
+        ngayHetHan: newDeadline,
+        trangThai: 'DA_DUYET', // Kích hoạt lại tin
+        ngayCapNhat: new Date(),
+      },
+      include: {
+        chiNhanh: true,
+        congViecKyNangs: { include: { kyNang: true } },
+      },
+    });
+  }
+
+  /**
+   * 5. Tạm ẩn / Kích hoạt lại tin tuyển dụng
+   */
+  async toggleJobVisibility(userId: string, jobId: string) {
+    const nhaTuyenDung = await this.prisma.nhaTuyenDung.findUnique({
+      where: { maTaiKhoan: userId },
+    });
+    if (!nhaTuyenDung) {
+      throw new NotFoundException('Không tìm thấy thông tin nhà tuyển dụng.');
+    }
+
+    const job = await this.prisma.congViec.findUnique({
+      where: { maCongViec: jobId },
+      include: { nhaTuyenDung: true },
+    });
+    if (!job) {
+      throw new NotFoundException(
+        `Không tìm thấy tin tuyển dụng với ID: ${jobId}`,
+      );
+    }
+
+    if (
+      job.nhaTuyenDung.maCongTy !== nhaTuyenDung.maCongTy &&
+      job.maNTD !== nhaTuyenDung.maNTD
+    ) {
+      throw new ForbiddenException(
+        'Bạn không có quyền thao tác tin tuyển dụng này.',
+      );
+    }
+
+    const isCurrentlyHidden =
+      job.trangThai === 'DA_AN' ||
+      job.trangThai === 'Đã đóng' ||
+      job.trangThai === 'Đã ẩn';
+
+    const newStatus = isCurrentlyHidden ? 'DA_DUYET' : 'DA_AN';
+
+    return this.prisma.congViec.update({
+      where: { maCongViec: jobId },
+      data: {
+        trangThai: newStatus,
+        ngayCapNhat: new Date(),
+      },
+    });
+  }
+
+  /**
+   * 6. Xóa tin tuyển dụng an toàn có kiểm tra quyền sở hữu
+   */
+  async removeEmployerJob(userId: string, jobId: string) {
+    const nhaTuyenDung = await this.prisma.nhaTuyenDung.findUnique({
+      where: { maTaiKhoan: userId },
+    });
+    if (!nhaTuyenDung) {
+      throw new NotFoundException('Không tìm thấy thông tin nhà tuyển dụng.');
+    }
+
+    const job = await this.prisma.congViec.findUnique({
+      where: { maCongViec: jobId },
+      include: { nhaTuyenDung: true },
+    });
+    if (!job) {
+      throw new NotFoundException(
+        `Không tìm thấy tin tuyển dụng với ID: ${jobId}`,
+      );
+    }
+
+    if (
+      job.nhaTuyenDung.maCongTy !== nhaTuyenDung.maCongTy &&
+      job.maNTD !== nhaTuyenDung.maNTD
+    ) {
+      throw new ForbiddenException('Bạn không có quyền xóa tin tuyển dụng này.');
+    }
+
+    // Xóa liên kết kỹ năng trước, sau đó xóa tin tuyển dụng
+    await this.prisma.$transaction([
+      this.prisma.congViecKyNang.deleteMany({
+        where: { maCongViec: jobId },
+      }),
+      this.prisma.congViec.delete({
+        where: { maCongViec: jobId },
+      }),
+    ]);
+
+    return { message: 'Xóa tin tuyển dụng thành công.' };
   }
 }

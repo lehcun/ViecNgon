@@ -1,6 +1,9 @@
+"use client";
+
 import { useAuthStore } from "@/store/authStore";
 import { useRouter } from "next/navigation";
 import { useState, ChangeEvent, FormEvent } from "react";
+import toast from "react-hot-toast";
 
 // 1. Định nghĩa Type cho Form State (Khớp với UI nhập liệu)
 export interface JobFormState {
@@ -14,10 +17,10 @@ export interface JobFormState {
   capBac: string;
   thanhPho: string;
   loaiHinh: string;
-  hinhThucLamViec: string; // [BỔ SUNG: Remote, Tại văn phòng...]
-  maChiNhanh: string; // [BỔ SUNG: Tùy chọn chi nhánh]
+  hinhThucLamViec: string; // Remote, TaiVanPhong, Hybrid
+  maChiNhanh: string; // Mã chi nhánh (Tùy chọn)
   ngayHetHan: string;
-  negotiable: boolean; // Field phụ trợ riêng cho UI (Lương thỏa thuận)
+  negotiable: boolean; // Lương thỏa thuận
   kyNangs: string[];
 }
 
@@ -33,8 +36,8 @@ export interface CreateCongViecPayload {
   capBac?: string;
   thanhPho?: string;
   loaiHinh: string;
-  hinhThucLamViec?: string; // [BỔ SUNG]
-  maChiNhanh?: string; // [BỔ SUNG]
+  hinhThucLamViec?: string;
+  maChiNhanh?: string;
   ngayDang: string; // Backend yêu cầu ISOString
   ngayHetHan?: string; // Backend yêu cầu ISOString
   trangThai: string;
@@ -44,7 +47,6 @@ export interface CreateCongViecPayload {
 
 export function useCreateJob(initialCredits: number = 0) {
   const { user } = useAuthStore();
-
   const router = useRouter();
 
   // --- UI STATES ---
@@ -58,8 +60,8 @@ export function useCreateJob(initialCredits: number = 0) {
     tenCongViec: "",
     capBac: "",
     loaiHinh: "",
-    hinhThucLamViec: "", // [BỔ SUNG: Khởi tạo rỗng]
-    maChiNhanh: "", // [BỔ SUNG: Khởi tạo rỗng]
+    hinhThucLamViec: "",
+    maChiNhanh: "",
     thanhPho: "",
     yeuCauKinhNghiem: "",
     ngayHetHan: "",
@@ -87,14 +89,35 @@ export function useCreateJob(initialCredits: number = 0) {
         return { ...prev, [name]: checked };
       }
 
-      // 2. Xử lý Input Number (Ép kiểu ngay khi nhập để tránh lỗi chuỗi)
+      // 2. Xử lý Input Number
       if (type === "number") {
         return { ...prev, [name]: value === "" ? "" : Number(value) };
       }
 
-      // 3. Xử lý Input Text/Date/Select
+      // 3. Khi người dùng chọn hình thức "Remote" (Làm từ xa)
+      // Tự động reset maChiNhanh về rỗng để tránh vướng khóa ngoại P2003
+      if (name === "hinhThucLamViec" && value === "Remote") {
+        return {
+          ...prev,
+          hinhThucLamViec: value,
+          maChiNhanh: "",
+        };
+      }
+
+      // 4. Xử lý Input Text/Date/Select
       return { ...prev, [name]: value };
     });
+  };
+
+  // Cập nhật giá trị trường tự do
+  const setFieldValue = <K extends keyof JobFormState>(
+    field: K,
+    value: JobFormState[K],
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
   };
 
   // Xử lý riêng cho Rich Text Editor
@@ -110,13 +133,11 @@ export function useCreateJob(initialCredits: number = 0) {
     setFormData((prev) => {
       const isSelected = prev.kyNangs.includes(skillId);
       if (isSelected) {
-        // Nếu đã chọn thì gỡ ra (filter)
         return {
           ...prev,
           kyNangs: prev.kyNangs.filter((id) => id !== skillId),
         };
       } else {
-        // Nếu chưa chọn thì thêm vào mảng
         return { ...prev, kyNangs: [...prev.kyNangs, skillId] };
       }
     });
@@ -148,7 +169,7 @@ export function useCreateJob(initialCredits: number = 0) {
     e.preventDefault();
 
     if (!user) {
-      alert("Bạn cần đăng nhập để thực hiện chức năng này!");
+      toast.error("Bạn cần đăng nhập để thực hiện chức năng này!");
       return;
     }
 
@@ -160,7 +181,7 @@ export function useCreateJob(initialCredits: number = 0) {
 
     // Kiểm tra phải chọn ít nhất 1 kỹ năng
     if (formData.kyNangs.length === 0) {
-      alert("Vui lòng chọn ít nhất 1 kỹ năng cho công việc này!");
+      toast.error("Vui lòng chọn ít nhất 1 kỹ năng chuyên môn cho công việc!");
       return;
     }
 
@@ -168,18 +189,22 @@ export function useCreateJob(initialCredits: number = 0) {
 
     try {
       // 2. CHUẨN HÓA DỮ LIỆU THÀNH DTO TRƯỚC KHI GỬI (Data Transformation)
+      // Đảm bảo maChiNhanh không bao giờ gửi chuỗi rỗng "" hoặc khoảng trắng
+      const cleanBranchId =
+        formData.hinhThucLamViec === "Remote" ||
+        !formData.maChiNhanh ||
+        formData.maChiNhanh.trim() === ""
+          ? undefined
+          : formData.maChiNhanh.trim();
+
       const payload: CreateCongViecPayload = {
         tenCongViec: formData.tenCongViec.trim(),
         capBac: formData.capBac || undefined,
         loaiHinh: formData.loaiHinh,
-
-        // [BỔ SUNG] Nếu ko chọn gửi undefined để DB lưu null
         hinhThucLamViec: formData.hinhThucLamViec || undefined,
-        maChiNhanh: formData.maChiNhanh || undefined,
-
+        maChiNhanh: cleanBranchId,
         thanhPho: formData.thanhPho.trim() || undefined,
 
-        // Nếu chọn "Lương thỏa thuận", ta gửi undefined để DB lưu Null
         mucLuongToiThieu: formData.negotiable
           ? undefined
           : (formData.mucLuongToiThieu as number) || undefined,
@@ -196,40 +221,42 @@ export function useCreateJob(initialCredits: number = 0) {
         yeuCauCongViec: formData.yeuCauCongViec || undefined,
         phucLoi: formData.phucLoi || undefined,
 
-        // Format Date thành chuẩn ISO 8601 theo yêu cầu của Class-validator ở Backend
         ngayDang: new Date().toISOString(),
         ngayHetHan:
           formData.ngayHetHan && !isNaN(new Date(formData.ngayHetHan).getTime())
             ? new Date(formData.ngayHetHan).toISOString()
             : undefined,
 
-        // Tự động gán các trường hệ thống
         trangThai: "Đang tuyển",
-        maTaiKhoan: user.sub, // Lấy từ authStore
-
+        maTaiKhoan: user.sub,
         kyNangs: formData.kyNangs,
       };
 
-      console.log("🚀 Payload chuẩn bị gửi lên NestJS:", payload);
-
-      // 3. Gọi API (Giả lập)
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/job`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+      const res = await fetch(`${apiUrl}/job`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error("Lỗi khi gọi API Backend");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        const errorMsg =
+          (Array.isArray(errorData?.message)
+            ? errorData.message.join(", ")
+            : errorData?.message) || "Lỗi khi gọi API tạo việc làm.";
+        throw new Error(errorMsg);
+      }
 
-      // 4. Thành công
-      alert("Đăng tin thành công!");
+      toast.success("Đăng tin tuyển dụng thành công!");
       setRemainingCredits((prev) => prev - 1);
       resetForm();
 
       router.push("/employer-dashboard");
-    } catch (error) {
+    } catch (error: any) {
       console.error("❌ Lỗi đăng tin:", error);
-      alert("Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.");
+      toast.error(error?.message || "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.");
     } finally {
       setIsLoading(false);
     }
@@ -247,6 +274,7 @@ export function useCreateJob(initialCredits: number = 0) {
     handleRichTextChange,
     handleSubmit,
     handleToggleSkill,
+    setFieldValue,
     resetForm,
 
     // Close Modal

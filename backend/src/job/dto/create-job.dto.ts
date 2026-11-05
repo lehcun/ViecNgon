@@ -64,7 +64,7 @@ export class CreateJobDto {
 
   @IsOptional()
   @IsString()
-  maChiNhanh?: string;
+  maChiNhanh?: string | null;
 
   @IsArray()
   @IsString({ each: true }) // Kiểm tra đảm bảo mỗi phần tử trong mảng đều là chuỗi (string)
