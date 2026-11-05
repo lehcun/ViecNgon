@@ -1,9 +1,20 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    root: path.resolve(__dirname, ".."),
+  },
   images: {
-    domains: ["example.com", "res.cloudinary.com"], // cho phép load ảnh từ Cloudinary
     remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "example.com",
+      },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+      },
       {
         protocol: "https",
         hostname: "**", // Cho phép tất cả domains (cẩn thận với security)
