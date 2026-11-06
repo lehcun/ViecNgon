@@ -6,9 +6,15 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateCandidateDto } from './dto/update-candidate.dto';
+import { CreateExperienceDto, UpdateExperienceDto } from './dto/experience.dto';
+import { CreateEducationDto, UpdateEducationDto } from './dto/education.dto';
+import { CreateCertificateDto, UpdateCertificateDto } from './dto/certificate.dto';
+import { CreatePortfolioDto, UpdatePortfolioDto } from './dto/portfolio.dto';
+import { CreateCvFileDto } from './dto/cv-file.dto';
 import { CandidateProfileResponse } from '@viecngon/types';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { formatSalaryDisplay } from 'src/common/utils/format-salary';
+import { sanitizeRichText } from 'src/common/utils/sanitize-html.util';
 
 interface MockMulterFile {
   originalname: string;
@@ -21,11 +27,28 @@ export class CandidateService {
   constructor(
     private prisma: PrismaService,
     private cloudinaryService: CloudinaryService,
-  ) {}
+  ) { }
 
-  //  Lấy thông tin chi tiết ứng viên dựa trên ID tài khoản đang login
+  /**
+   * Helper tìm kiếm Ứng viên theo mã tài khoản đăng nhập
+   * Ngăn chặn hoàn toàn lỗi IDOR bằng cách xác thực sở hữu qua token userId
+   */
+  async getCandidateByUserId(userId: string) {
+    const candidate = await this.prisma.ungVien.findUnique({
+      where: { maTaiKhoan: userId },
+    });
+
+    if (!candidate) {
+      throw new NotFoundException('Không tìm thấy hồ sơ ứng viên tương ứng với tài khoản này.');
+    }
+
+    return candidate;
+  }
+
+  // =========================================================================
+  // 1. READ: LẤY FULL HỒ SƠ ỨNG VIÊN
+  // =========================================================================
   async getProfile(maTaiKhoan: string): Promise<CandidateProfileResponse> {
-    // 1. Kéo toàn bộ dữ liệu từ Database
     const profile = await this.prisma.ungVien.findUnique({
       where: { maTaiKhoan: maTaiKhoan },
       include: {
@@ -36,6 +59,7 @@ export class CandidateService {
         chungChis: { orderBy: { ngayCap: 'desc' } },
         ngoaiNgus: true,
         danhSachFileCv: { orderBy: { ngayTaiLen: 'desc' } },
+        portfolios: true,
       },
     });
 
@@ -45,31 +69,26 @@ export class CandidateService {
       );
     }
 
-    // HÀM HELPER XỬ LÝ NGÀY THÁNG Ở BACKEND (Chuyển thành MM/YYYY)
     const formatMonthYear = (date: Date | null | undefined): string => {
       if (!date) return '';
       return `${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
     };
 
-    // ========================================================
-    // 🔥 LOGIC MỚI: TÌM SẴN THÔNG TIN FILE CV MẶC ĐỊNH Ở BACKEND
-    // ========================================================
     const defaultFileDb = profile.maFileCvMacDinh
       ? profile.danhSachFileCv.find(
-          (f) => f.maFileCv === profile.maFileCvMacDinh,
-        )
+        (f) => f.maFileCv === profile.maFileCvMacDinh,
+      )
       : null;
 
     const defaultCvFile = defaultFileDb
       ? {
-          id: defaultFileDb.maFileCv,
-          fileName: defaultFileDb.tenFile,
-          fileUrl: defaultFileDb.fileUrl,
-          uploadedAt: defaultFileDb.ngayTaiLen,
-        }
+        id: defaultFileDb.maFileCv,
+        fileName: defaultFileDb.tenFile,
+        fileUrl: defaultFileDb.fileUrl,
+        uploadedAt: defaultFileDb.ngayTaiLen,
+      }
       : null;
 
-    // 2. Format dữ liệu chuẩn hóa sang tiếng Anh trả về Frontend
     return {
       candidateId: profile.maUngVien,
       accountId: profile.maTaiKhoan,
@@ -85,8 +104,6 @@ export class CandidateService {
       aboutMe: profile.gioiThieuBanThan,
       defaultCvType: profile.loaiCvMacDinh,
       defaultCvFileId: profile.maFileCvMacDinh,
-
-      // TRẢ VỀ LUÔN OBJECT CHỨA THÔNG TIN FILE MẶC ĐỊNH
       defaultCvFile: defaultCvFile,
 
       account: {
@@ -139,13 +156,24 @@ export class CandidateService {
         fileUrl: file.fileUrl,
         uploadedAt: file.ngayTaiLen,
       })),
+
+      portfolios: (profile.portfolios || []).map((p) => ({
+        id: p.maPortfolio,
+        title: p.tieuDe,
+        description: p.moTa,
+        projectUrl: p.projectUrl,
+      })),
     };
   }
 
-  // Cập nhật thông tin (Dùng Transaction để update 2 bảng cùng lúc)
+  // =========================================================================
+  // 2. UPDATE PROFILE: CẬP NHẬT THÔNG TIN CÁ NHÂN (TRANSACTION + SANITIZE)
+  // =========================================================================
   async updateProfile(userId: string, data: UpdateCandidateDto) {
+    const cleanAboutMe = data.aboutMe !== undefined ? sanitizeRichText(data.aboutMe) : undefined;
+
     return await this.prisma.$transaction(async (tx) => {
-      // 1. Cập nhật bảng TaiKhoan
+      // 1. Cập nhật bảng TaiKhoan nếu có thay đổi
       if (data.userName || data.phoneNumber) {
         await tx.taiKhoan.update({
           where: { maTaiKhoan: userId },
@@ -168,54 +196,382 @@ export class CandidateService {
           chuyenMon: data.profession,
           cvUrl: data.cvUrl,
           diaChi: data.address,
+          gioiThieuBanThan: cleanAboutMe,
+          loaiCvMacDinh: data.defaultCvType,
+          maFileCvMacDinh: data.defaultCvFileId,
+          trangThaiPortfolio: data.trangThaiPortfolio,
         },
       });
 
       return {
-        message: 'Cập nhật thành công',
+        message: 'Cập nhật hồ sơ thành công',
         candidateId: updatedProfile.maUngVien,
       };
     });
   }
 
+  // =========================================================================
+  // 3. CRUD SUB-ENTITIES: KINH NGHIỆM LÀM VIỆC (EXPERIENCES)
+  // =========================================================================
+  async createExperience(userId: string, dto: CreateExperienceDto) {
+    const candidate = await this.getCandidateByUserId(userId);
+    const cleanDescription = dto.description ? sanitizeRichText(dto.description) : null;
+
+    const experience = await this.prisma.kinhNghiem.create({
+      data: {
+        tenCongTy: dto.companyName,
+        viTri: dto.position,
+        ngayBatDau: new Date(dto.startDate),
+        ngayKetThuc: dto.endDate ? new Date(dto.endDate) : null,
+        moTaChiTiet: cleanDescription,
+        maUngVien: candidate.maUngVien,
+      },
+    });
+
+    return {
+      message: 'Thêm kinh nghiệm làm việc thành công',
+      data: experience,
+    };
+  }
+
+  async updateExperience(userId: string, id: string, dto: UpdateExperienceDto) {
+    const candidate = await this.getCandidateByUserId(userId);
+
+    const existing = await this.prisma.kinhNghiem.findFirst({
+      where: { maKinhNghiem: id, maUngVien: candidate.maUngVien },
+    });
+
+    if (!existing) {
+      throw new NotFoundException('Không tìm thấy mục kinh nghiệm làm việc này hoặc bạn không có quyền chỉnh sửa.');
+    }
+
+    const cleanDescription = dto.description !== undefined ? sanitizeRichText(dto.description) : undefined;
+
+    const updated = await this.prisma.kinhNghiem.update({
+      where: { maKinhNghiem: id },
+      data: {
+        tenCongTy: dto.companyName,
+        viTri: dto.position,
+        ngayBatDau: dto.startDate ? new Date(dto.startDate) : undefined,
+        ngayKetThuc: dto.endDate !== undefined ? (dto.endDate ? new Date(dto.endDate) : null) : undefined,
+        moTaChiTiet: cleanDescription,
+      },
+    });
+
+    return {
+      message: 'Cập nhật kinh nghiệm làm việc thành công',
+      data: updated,
+    };
+  }
+
+  async deleteExperience(userId: string, id: string) {
+    const candidate = await this.getCandidateByUserId(userId);
+
+    const existing = await this.prisma.kinhNghiem.findFirst({
+      where: { maKinhNghiem: id, maUngVien: candidate.maUngVien },
+    });
+
+    if (!existing) {
+      throw new NotFoundException('Không tìm thấy mục kinh nghiệm làm việc này hoặc bạn không có quyền xóa.');
+    }
+
+    await this.prisma.kinhNghiem.delete({
+      where: { maKinhNghiem: id },
+    });
+
+    return { message: 'Xóa kinh nghiệm làm việc thành công' };
+  }
+
+  // =========================================================================
+  // 4. CRUD SUB-ENTITIES: HỌC VẤN (EDUCATIONS)
+  // =========================================================================
+  async createEducation(userId: string, dto: CreateEducationDto) {
+    const candidate = await this.getCandidateByUserId(userId);
+
+    const education = await this.prisma.hocVan.create({
+      data: {
+        tenTruong: dto.schoolName,
+        nganhHoc: dto.major,
+        ngayBatDau: new Date(dto.startDate),
+        ngayTotNghiep: dto.endDate ? new Date(dto.endDate) : null,
+        gpa: dto.gpa || null,
+        maUngVien: candidate.maUngVien,
+      },
+    });
+
+    return {
+      message: 'Thêm học vấn thành công',
+      data: education,
+    };
+  }
+
+  async updateEducation(userId: string, id: string, dto: UpdateEducationDto) {
+    const candidate = await this.getCandidateByUserId(userId);
+
+    const existing = await this.prisma.hocVan.findFirst({
+      where: { maHocVan: id, maUngVien: candidate.maUngVien },
+    });
+
+    if (!existing) {
+      throw new NotFoundException('Không tìm thấy thông tin học vấn này hoặc bạn không có quyền chỉnh sửa.');
+    }
+
+    const updated = await this.prisma.hocVan.update({
+      where: { maHocVan: id },
+      data: {
+        tenTruong: dto.schoolName,
+        nganhHoc: dto.major,
+        ngayBatDau: dto.startDate ? new Date(dto.startDate) : undefined,
+        ngayTotNghiep: dto.endDate !== undefined ? (dto.endDate ? new Date(dto.endDate) : null) : undefined,
+        gpa: dto.gpa,
+      },
+    });
+
+    return {
+      message: 'Cập nhật học vấn thành công',
+      data: updated,
+    };
+  }
+
+  async deleteEducation(userId: string, id: string) {
+    const candidate = await this.getCandidateByUserId(userId);
+
+    const existing = await this.prisma.hocVan.findFirst({
+      where: { maHocVan: id, maUngVien: candidate.maUngVien },
+    });
+
+    if (!existing) {
+      throw new NotFoundException('Không tìm thấy thông tin học vấn này hoặc bạn không có quyền xóa.');
+    }
+
+    await this.prisma.hocVan.delete({
+      where: { maHocVan: id },
+    });
+
+    return { message: 'Xóa học vấn thành công' };
+  }
+
+  // =========================================================================
+  // 5. CRUD SUB-ENTITIES: CHỨNG CHỈ (CERTIFICATES)
+  // =========================================================================
+  async createCertificate(userId: string, dto: CreateCertificateDto) {
+    const candidate = await this.getCandidateByUserId(userId);
+
+    const certificate = await this.prisma.chungChi.create({
+      data: {
+        tenChungChi: dto.name,
+        toChucCap: dto.organization,
+        ngayCap: new Date(dto.issueDate),
+        ngayHetHan: dto.expirationDate ? new Date(dto.expirationDate) : null,
+        maUngVien: candidate.maUngVien,
+      },
+    });
+
+    return {
+      message: 'Thêm chứng chỉ thành công',
+      data: certificate,
+    };
+  }
+
+  async updateCertificate(userId: string, id: string, dto: UpdateCertificateDto) {
+    const candidate = await this.getCandidateByUserId(userId);
+
+    const existing = await this.prisma.chungChi.findFirst({
+      where: { maChungChi: id, maUngVien: candidate.maUngVien },
+    });
+
+    if (!existing) {
+      throw new NotFoundException('Không tìm thấy chứng chỉ này hoặc bạn không có quyền chỉnh sửa.');
+    }
+
+    const updated = await this.prisma.chungChi.update({
+      where: { maChungChi: id },
+      data: {
+        tenChungChi: dto.name,
+        toChucCap: dto.organization,
+        ngayCap: dto.issueDate ? new Date(dto.issueDate) : undefined,
+        ngayHetHan: dto.expirationDate !== undefined ? (dto.expirationDate ? new Date(dto.expirationDate) : null) : undefined,
+      },
+    });
+
+    return {
+      message: 'Cập nhật chứng chỉ thành công',
+      data: updated,
+    };
+  }
+
+  async deleteCertificate(userId: string, id: string) {
+    const candidate = await this.getCandidateByUserId(userId);
+
+    const existing = await this.prisma.chungChi.findFirst({
+      where: { maChungChi: id, maUngVien: candidate.maUngVien },
+    });
+
+    if (!existing) {
+      throw new NotFoundException('Không tìm thấy chứng chỉ này hoặc bạn không có quyền xóa.');
+    }
+
+    await this.prisma.chungChi.delete({
+      where: { maChungChi: id },
+    });
+
+    return { message: 'Xóa chứng chỉ thành công' };
+  }
+
+  // =========================================================================
+  // 6. CRUD SUB-ENTITIES: DỰ ÁN NỔI BẬT (PORTFOLIOS)
+  // =========================================================================
+  async createPortfolio(userId: string, dto: CreatePortfolioDto) {
+    const candidate = await this.getCandidateByUserId(userId);
+
+    const portfolio = await this.prisma.portfolio.create({
+      data: {
+        tieuDe: dto.title,
+        moTa: dto.description || null,
+        projectUrl: dto.projectUrl || null,
+        maUngVien: candidate.maUngVien,
+      },
+    });
+
+    return {
+      message: 'Thêm dự án nổi bật thành công',
+      data: portfolio,
+    };
+  }
+
+  async updatePortfolio(userId: string, id: string, dto: UpdatePortfolioDto) {
+    const candidate = await this.getCandidateByUserId(userId);
+
+    const existing = await this.prisma.portfolio.findFirst({
+      where: { maPortfolio: id, maUngVien: candidate.maUngVien },
+    });
+
+    if (!existing) {
+      throw new NotFoundException('Không tìm thấy dự án này hoặc bạn không có quyền chỉnh sửa.');
+    }
+
+    const updated = await this.prisma.portfolio.update({
+      where: { maPortfolio: id },
+      data: {
+        tieuDe: dto.title,
+        moTa: dto.description,
+        projectUrl: dto.projectUrl,
+      },
+    });
+
+    return {
+      message: 'Cập nhật dự án thành công',
+      data: updated,
+    };
+  }
+
+  async deletePortfolio(userId: string, id: string) {
+    const candidate = await this.getCandidateByUserId(userId);
+
+    const existing = await this.prisma.portfolio.findFirst({
+      where: { maPortfolio: id, maUngVien: candidate.maUngVien },
+    });
+
+    if (!existing) {
+      throw new NotFoundException('Không tìm thấy dự án này hoặc bạn không có quyền xóa.');
+    }
+
+    await this.prisma.portfolio.delete({
+      where: { maPortfolio: id },
+    });
+
+    return { message: 'Xóa dự án thành công' };
+  }
+
+  // =========================================================================
+  // 7. CRUD SUB-ENTITIES: FILE CV (CV FILES)
+  // =========================================================================
+  async createCvFile(userId: string, dto: CreateCvFileDto) {
+    const candidate = await this.getCandidateByUserId(userId);
+
+    return await this.prisma.$transaction(async (tx) => {
+      const newFileCv = await tx.fileCv.create({
+        data: {
+          tenFile: dto.fileName,
+          fileUrl: dto.fileUrl,
+          maUngVien: candidate.maUngVien,
+        },
+      });
+
+      if (dto.isDefault) {
+        await tx.ungVien.update({
+          where: { maUngVien: candidate.maUngVien },
+          data: {
+            maFileCvMacDinh: newFileCv.maFileCv,
+            loaiCvMacDinh: 'PDF',
+          },
+        });
+      }
+
+      return {
+        message: 'Thêm file CV thành công',
+        data: newFileCv,
+      };
+    });
+  }
+
+  async deleteCvFile(userId: string, id: string) {
+    const candidate = await this.getCandidateByUserId(userId);
+
+    const existing = await this.prisma.fileCv.findFirst({
+      where: { maFileCv: id, maUngVien: candidate.maUngVien },
+    });
+
+    if (!existing) {
+      throw new NotFoundException('Không tìm thấy file CV này hoặc bạn không có quyền xóa.');
+    }
+
+    return await this.prisma.$transaction(async (tx) => {
+      // Nếu file này đang là file mặc định, reset về null
+      if (candidate.maFileCvMacDinh === id) {
+        await tx.ungVien.update({
+          where: { maUngVien: candidate.maUngVien },
+          data: {
+            maFileCvMacDinh: null,
+            loaiCvMacDinh: 'ONLINE',
+          },
+        });
+      }
+
+      await tx.fileCv.delete({
+        where: { maFileCv: id },
+      });
+
+      return { message: 'Xóa file CV thành công' };
+    });
+  }
+
+  // =========================================================================
+  // 8. TẠO & UPLOAD CV TỪ MẪU WEB (PDF RENDERER)
+  // =========================================================================
   async uploadGeneratedCv(maTaiKhoan: string, file: MockMulterFile) {
     if (!file) {
       throw new BadRequestException('Không tìm thấy file CV.');
     }
 
     try {
-      // 1. Upload file lên Cloud (Thực hiện NGOÀI transaction để tránh khóa Database quá lâu)
       const fileUrl = await this.cloudinaryService.uploadCvPdf(file);
+      const ungVien = await this.getCandidateByUserId(maTaiKhoan);
 
-      // Tìm maUngVien theo maTaiKhoan
-      const ungVien = await this.prisma.ungVien.findUnique({
-        where: { maTaiKhoan: maTaiKhoan },
-        select: { maUngVien: true },
-      });
-
-      if (!ungVien) {
-        throw new NotFoundException(
-          'Không tìm thấy ứng viên với tài khoản này.',
-        );
-      }
-
-      // 2. Mở Transaction để ghi dữ liệu
       return await this.prisma.$transaction(async (tx) => {
-        // 2.1 Tạo bản ghi mới trong bảng FileCv
         const newFileCv = await tx.fileCv.create({
           data: {
             tenFile: file.originalname || 'CV_ViecNgon.pdf',
             fileUrl: fileUrl,
-            maUngVien: ungVien.maUngVien, // Khóa ngoại
+            maUngVien: ungVien.maUngVien,
           },
         });
 
-        // 2.2 Cập nhật bảng UngVien
         await tx.ungVien.update({
           where: { maUngVien: ungVien.maUngVien },
           data: {
-            loaiCvMacDinh: 'ONLINE', // Đặt loại CV mặc định là ONLINE
-            maFileCvMacDinh: newFileCv.maFileCv, // Trỏ đến ID của file vừa tạo
+            loaiCvMacDinh: 'ONLINE',
+            maFileCvMacDinh: newFileCv.maFileCv,
           },
         });
 
@@ -233,21 +589,15 @@ export class CandidateService {
     }
   }
 
+  // =========================================================================
+  // 9. DANH SÁCH VIỆC LÀM ĐÃ ỨNG TUYỂN
+  // =========================================================================
   async getAppliedJobs(userId: string) {
-    // 1. Tìm thông tin Ứng viên từ mã tài khoản
-    const candidate = await this.prisma.ungVien.findUnique({
-      where: { maTaiKhoan: userId },
-      select: { maUngVien: true },
-    });
+    const candidate = await this.getCandidateByUserId(userId);
 
-    if (!candidate) {
-      throw new NotFoundException('Không tìm thấy thông tin hồ sơ ứng viên.');
-    }
-
-    // 2. Truy vấn danh sách đơn xin việc lồng sang Công việc và Công ty
     const applications = await this.prisma.donXinViec.findMany({
       where: { maUngVien: candidate.maUngVien },
-      orderBy: { ngayNop: 'desc' }, // Đơn mới nộp đưa lên đầu
+      orderBy: { ngayNop: 'desc' },
       include: {
         congViec: {
           include: {
@@ -267,7 +617,6 @@ export class CandidateService {
       },
     });
 
-    // 3. Format dữ liệu chuẩn hóa (Clean Data) trả về cho Frontend
     return applications.map((app) => {
       const job = app.congViec;
       const company = job.nhaTuyenDung?.congTy;
@@ -275,26 +624,26 @@ export class CandidateService {
       return {
         applicationId: app.maDon,
         appliedDate: app.ngayNop,
-        applicationStatus: app.trangThai, // 'CHO_DUYET', 'DA_XEM', 'PHONG_VAN', 'TRUNG_TUYEN'...
+        applicationStatus: app.trangThai,
         cvUrl: app.fileCvUrl,
         job: {
           id: job.maCongViec,
           title: job.tenCongViec,
           slug: job.slug,
           location: job.thanhPho,
-          workModel: job.hinhThucLamViec, // 'Remote', 'Hybrid', 'Tại văn phòng'
+          workModel: job.hinhThucLamViec,
           salaryDisplay: formatSalaryDisplay(
             job.mucLuongToiThieu,
             job.mucLuongToiDa,
           ),
-          status: job.trangThai, // 'Đang tuyển', 'Đã đóng'
+          status: job.trangThai,
           deadline: job.ngayHetHan,
           company: company
             ? {
-                name: company.tenCongTy,
-                logo: company.logoUrl,
-                slug: company.slug,
-              }
+              name: company.tenCongTy,
+              logo: company.logoUrl,
+              slug: company.slug,
+            }
             : null,
         },
       };

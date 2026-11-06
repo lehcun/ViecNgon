@@ -14,18 +14,121 @@ import {
   Link as LinkIcon,
   Bot,
   FileText,
+  ExternalLink,
+  Briefcase,
+  GraduationCap,
+  Award,
+  FolderGit2,
 } from "lucide-react";
+import toast from "react-hot-toast";
 import PersonalInfoModal from "@/components/candidate/PersonalInfoModal";
+import AboutMeModal from "@/components/candidate/modals/AboutMeModal";
+import ExperienceModal from "@/components/candidate/modals/ExperienceModal";
+import EducationModal from "@/components/candidate/modals/EducationModal";
+import CertificateModal from "@/components/candidate/modals/CertificateModal";
+import PortfolioModal from "@/components/candidate/modals/PortfolioModal";
+import ConfirmDeleteModal from "@/components/candidate/modals/ConfirmDeleteModal";
 import { useCandidateProfile } from "@/hooks/candidate/useCandidateProfile";
+import { useManageCandidateItems } from "@/hooks/candidate/useManageCandidateItems";
 import { formatDateToDDMMYYYY } from "@/utils/date";
 import { CandidateProfileResponse } from "@viecngon/types";
 
+type SubEntityType = "experience" | "education" | "certificate" | "portfolio";
+
+interface DeleteModalState {
+  isOpen: boolean;
+  type: SubEntityType | null;
+  id: string | null;
+  title: string;
+  message: string;
+}
+
 export default function CandidateProfilePage() {
   const { candidateProfile, isLoading, isError } = useCandidateProfile();
+  const {
+    deleteExperience,
+    isDeletingExperience,
+    deleteEducation,
+    isDeletingEducation,
+    deleteCertificate,
+    isDeletingCertificate,
+    deletePortfolio,
+    isDeletingPortfolio,
+  } = useManageCandidateItems();
 
-  //Các state
+  // State các Modal chỉnh sửa
   const [isEditInfoOpen, setIsEditInfoOpen] = useState(false);
-  const profileCompletion = 71;
+  const [isAboutMeOpen, setIsAboutMeOpen] = useState(false);
+
+  // Modal cho Experiences
+  const [experienceModal, setExperienceModal] = useState<{
+    isOpen: boolean;
+    data: CandidateProfileResponse["experiences"][number] | null;
+  }>({ isOpen: false, data: null });
+
+  // Modal cho Educations
+  const [educationModal, setEducationModal] = useState<{
+    isOpen: boolean;
+    data: CandidateProfileResponse["educations"][number] | null;
+  }>({ isOpen: false, data: null });
+
+  // Modal cho Certificates
+  const [certificateModal, setCertificateModal] = useState<{
+    isOpen: boolean;
+    data: CandidateProfileResponse["certificates"][number] | null;
+  }>({ isOpen: false, data: null });
+
+  // Modal cho Portfolios
+  const [portfolioModal, setPortfolioModal] = useState<{
+    isOpen: boolean;
+    data: CandidateProfileResponse["portfolios"][number] | null;
+  }>({ isOpen: false, data: null });
+
+  // Modal xác nhận xoá
+  const [deleteModal, setDeleteModal] = useState<DeleteModalState>({
+    isOpen: false,
+    type: null,
+    id: null,
+    title: "",
+    message: "",
+  });
+
+  const isDeletingAny =
+    isDeletingExperience ||
+    isDeletingEducation ||
+    isDeletingCertificate ||
+    isDeletingPortfolio;
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteModal.id || !deleteModal.type) return;
+
+    try {
+      switch (deleteModal.type) {
+        case "experience":
+          await deleteExperience(deleteModal.id);
+          toast.success("Xoá kinh nghiệm làm việc thành công!");
+          break;
+        case "education":
+          await deleteEducation(deleteModal.id);
+          toast.success("Xoá học vấn thành công!");
+          break;
+        case "certificate":
+          await deleteCertificate(deleteModal.id);
+          toast.success("Xoá chứng chỉ thành công!");
+          break;
+        case "portfolio":
+          await deletePortfolio(deleteModal.id);
+          toast.success("Xoá dự án nổi bật thành công!");
+          break;
+      }
+      setDeleteModal((prev) => ({ ...prev, isOpen: false }));
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Có lỗi xảy ra";
+      toast.error(msg);
+    }
+  };
+
+  const profileCompletion = 75;
   const arcLength = 220;
 
   if (isLoading) {
@@ -60,7 +163,7 @@ export default function CandidateProfilePage() {
   if (isError || !candidateProfile) {
     return (
       <div className="p-8 text-center bg-white rounded-xl border border-red-200 shadow-sm text-red-600 font-medium">
-        Không thể tải thông tin hồ sơ ứng viên. Vui lòng thử lại.
+        Không thể tải thông tin hồ sơ ứng viên. Vui lòng thử đăng nhập lại.
       </div>
     );
   }
@@ -70,21 +173,75 @@ export default function CandidateProfilePage() {
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 relative">
-      {/* Các Model nhập */}
+      {/* ========================================================
+          CÁC MODAL THÊM / SỬA / XOÁ
+      ======================================================== */}
+      {/* 1. Modal Thông tin cá nhân */}
       <PersonalInfoModal
-        key={isEditInfoOpen ? "open" : "closed"} // Dòng này là phép thuật của React
+        key={isEditInfoOpen ? "personal-open" : "personal-closed"}
         isOpen={isEditInfoOpen}
         onClose={() => setIsEditInfoOpen(false)}
         initialData={candidateProfile}
       />
 
-      {/* ==================== CỘT GIỮA (NỘI DUNG CHÍNH) ==================== */}
+      {/* 2. Modal Giới thiệu bản thân */}
+      <AboutMeModal
+        key={isAboutMeOpen ? "aboutme-open" : "aboutme-closed"}
+        isOpen={isAboutMeOpen}
+        onClose={() => setIsAboutMeOpen(false)}
+        initialValue={candidateProfile.aboutMe}
+      />
+
+      {/* 3. Modal Kinh nghiệm làm việc */}
+      <ExperienceModal
+        key={experienceModal.isOpen ? `exp-${experienceModal.data?.id || "new"}` : "exp-closed"}
+        isOpen={experienceModal.isOpen}
+        onClose={() => setExperienceModal({ isOpen: false, data: null })}
+        initialData={experienceModal.data}
+      />
+
+      {/* 4. Modal Học vấn */}
+      <EducationModal
+        key={educationModal.isOpen ? `edu-${educationModal.data?.id || "new"}` : "edu-closed"}
+        isOpen={educationModal.isOpen}
+        onClose={() => setEducationModal({ isOpen: false, data: null })}
+        initialData={educationModal.data}
+      />
+
+      {/* 5. Modal Chứng chỉ */}
+      <CertificateModal
+        key={certificateModal.isOpen ? `cert-${certificateModal.data?.id || "new"}` : "cert-closed"}
+        isOpen={certificateModal.isOpen}
+        onClose={() => setCertificateModal({ isOpen: false, data: null })}
+        initialData={certificateModal.data}
+      />
+
+      {/* 6. Modal Dự án nổi bật */}
+      <PortfolioModal
+        key={portfolioModal.isOpen ? `port-${portfolioModal.data?.id || "new"}` : "port-closed"}
+        isOpen={portfolioModal.isOpen}
+        onClose={() => setPortfolioModal({ isOpen: false, data: null })}
+        initialData={portfolioModal.data}
+      />
+
+      {/* 7. Modal Xác nhận xoá chung */}
+      <ConfirmDeleteModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal((prev) => ({ ...prev, isOpen: false }))}
+        onConfirm={handleDeleteConfirm}
+        title={deleteModal.title}
+        message={deleteModal.message}
+        isPending={isDeletingAny}
+      />
+
+      {/* ==================== CỘT TRÁI & GIỮA (NỘI DUNG CHÍNH) ==================== */}
       <div className="xl:col-span-2 flex flex-col gap-6">
         {/* 1. Header Profile Card */}
         <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm relative group">
           <button
             onClick={() => setIsEditInfoOpen(true)}
-            className="absolute top-6 right-6 text-slate-400 hover:text-primary transition-colors p-1"
+            className="absolute top-6 right-6 text-slate-400 hover:text-primary transition-colors p-1 rounded-md hover:bg-slate-50"
+            title="Chỉnh sửa thông tin cơ bản"
           >
             <Edit3 size={20} />
           </button>
@@ -115,24 +272,24 @@ export default function CandidateProfilePage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 pt-6 border-t border-slate-100">
             <div className="flex items-center gap-3 text-sm text-slate-600">
-              <Mail size={16} className="text-slate-400" />
-              {candidateProfile.account.email}
+              <Mail size={16} className="text-slate-400 shrink-0" />
+              <span className="truncate">{candidateProfile.account.email}</span>
             </div>
             <div className="flex items-center gap-3 text-sm text-slate-600">
-              <Phone size={16} className="text-slate-400" />
-              {candidateProfile.account.phoneNumber || "Chưa cập nhật SĐT"}
+              <Phone size={16} className="text-slate-400 shrink-0" />
+              <span>{candidateProfile.account.phoneNumber || "Chưa cập nhật SĐT"}</span>
             </div>
             <div className="flex items-center gap-3 text-sm text-slate-600">
-              <Calendar size={16} className="text-slate-400" />
-              {formatDateToDDMMYYYY(candidateProfile.dateOfBirth)}
+              <Calendar size={16} className="text-slate-400 shrink-0" />
+              <span>{formatDateToDDMMYYYY(candidateProfile.dateOfBirth)}</span>
             </div>
             <div className="flex items-center gap-3 text-sm text-slate-600">
-              <User size={16} className="text-slate-400" />
-              {candidateProfile.gender || "Chưa cập nhật"}
+              <User size={16} className="text-slate-400 shrink-0" />
+              <span>{candidateProfile.gender || "Chưa cập nhật"}</span>
             </div>
             <div className="flex items-center gap-3 text-sm text-slate-600">
-              <MapPin size={16} className="text-slate-400" />
-              {candidateProfile.address || "Chưa cập nhật địa chỉ"}
+              <MapPin size={16} className="text-slate-400 shrink-0" />
+              <span className="truncate">{candidateProfile.address || "Chưa cập nhật địa chỉ"}</span>
             </div>
             <div className="flex items-center gap-3 text-sm text-slate-600">
               <LinkIcon size={16} className="text-slate-400 shrink-0" />
@@ -164,121 +321,96 @@ export default function CandidateProfilePage() {
             <h2 className="text-lg font-bold text-slate-800">
               Giới thiệu bản thân
             </h2>
-            <button className="text-slate-400 hover:text-primary transition-colors p-1">
-              <Edit3 size={20} />
+            <button
+              onClick={() => setIsAboutMeOpen(true)}
+              className="text-slate-400 hover:text-primary transition-colors p-1.5 rounded-md hover:bg-slate-50 cursor-pointer"
+              title="Chỉnh sửa giới thiệu bản thân"
+            >
+              <Edit3 size={18} />
             </button>
           </div>
-          {/* Render HTML từ Tiptap bằng dangerouslySetInnerHTML */}
-          <div
-            className="prose prose-slate prose-li:marker:text-rose-500 max-w-none text-slate-700"
-            dangerouslySetInnerHTML={{ __html: candidateProfile.aboutMe || "" }}
-          />
-        </div>
-
-        {/* 3. Học vấn */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm">
-          <div className="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
-            <h2 className="text-lg font-bold text-slate-800">Học vấn</h2>
-            <button className="text-primary hover:bg-primary-light p-1.5 rounded-md transition-colors">
-              <PlusCircle size={22} />
-            </button>
-          </div>
-
-          {candidateProfile?.educations?.length > 0 ? (
-            candidateProfile.educations.map(
-              (item: CandidateProfileResponse["educations"][number]) => {
-                return (
-                  <div key={item.id} className="group relative mb-6 last:mb-0">
-                    <div className="flex justify-between items-start mb-1">
-                      <h3 className="font-bold text-slate-800">
-                        {item.schoolName}
-                      </h3>
-                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button className="text-slate-400 hover:text-primary p-1">
-                          <Edit3 size={16} />
-                        </button>
-                        <button className="text-slate-400 hover:text-rose-500 p-1">
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </div>
-
-                    <p className="text-sm text-slate-600 font-medium mb-1">
-                      {item.major}
-                    </p>
-
-                    <p className="text-xs text-slate-500 mb-3 uppercase">
-                      {item.startDate} -{" "}
-                      {item.endDate ? item.endDate : "HIỆN TẠI"}
-                    </p>
-
-                    {/* Chỉ hiển thị GPA nếu ứng viên có nhập */}
-                    {item.gpa && (
-                      <p className="text-sm text-slate-600">{item.gpa} GPA</p>
-                    )}
-                  </div>
-                );
-              },
-            )
+          {candidateProfile.aboutMe ? (
+            <div
+              className="prose prose-slate prose-li:marker:text-primary max-w-none text-slate-700 text-sm leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: candidateProfile.aboutMe }}
+            />
           ) : (
             <p className="text-sm text-slate-500 italic">
-              Chưa có thông tin học vấn.
+              Chưa cập nhật phần giới thiệu bản thân. Bấm vào biểu tượng chỉnh sửa để thêm thông tin thu hút nhà tuyển dụng.
             </p>
           )}
         </div>
 
-        {/* 4. Kinh nghiệm làm việc */}
+        {/* 3. Kinh nghiệm làm việc */}
         <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm">
           <div className="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
-            <h2 className="text-lg font-bold text-slate-800">
-              Kinh nghiệm làm việc
-            </h2>
-            <button className="text-primary hover:bg-primary-light p-1.5 rounded-md transition-colors">
-              <PlusCircle size={22} />
+            <div className="flex items-center gap-2">
+              <Briefcase size={20} className="text-primary" />
+              <h2 className="text-lg font-bold text-slate-800">
+                Kinh nghiệm làm việc
+              </h2>
+            </div>
+            <button
+              onClick={() => setExperienceModal({ isOpen: true, data: null })}
+              className="text-primary hover:bg-primary-light p-1.5 rounded-md transition-colors flex items-center gap-1 text-sm font-semibold cursor-pointer"
+            >
+              <PlusCircle size={20} />
+              <span>Thêm mới</span>
             </button>
           </div>
 
-          {/* Duyệt mảng experiences từ dữ liệu API */}
           {candidateProfile?.experiences?.length > 0 ? (
-            candidateProfile.experiences.map(
-              (item: CandidateProfileResponse["experiences"][number]) => (
-                <div key={item.id} className="group relative mb-6 last:mb-0">
-                  <div className="flex justify-between items-start mb-1">
-                    {/* Tên vị trí công việc */}
-                    <h3 className="font-bold text-slate-800">
-                      {item.position}
-                    </h3>
-                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="text-slate-400 hover:text-primary p-1">
-                        <Edit3 size={16} />
-                      </button>
-                      <button className="text-slate-400 hover:text-rose-500 p-1">
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
+            candidateProfile.experiences.map((item) => (
+              <div
+                key={item.id}
+                className="group relative mb-6 last:mb-0 border-b border-dashed border-slate-100 pb-6 last:border-none last:pb-0"
+              >
+                <div className="flex justify-between items-start mb-1">
+                  <h3 className="font-bold text-slate-800 text-base">
+                    {item.position}
+                  </h3>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => setExperienceModal({ isOpen: true, data: item })}
+                      className="text-slate-400 hover:text-primary p-1.5 rounded-md hover:bg-slate-50 cursor-pointer"
+                      title="Sửa"
+                    >
+                      <Edit3 size={16} />
+                    </button>
+                    <button
+                      onClick={() =>
+                        setDeleteModal({
+                          isOpen: true,
+                          type: "experience",
+                          id: item.id,
+                          title: "Xoá kinh nghiệm làm việc",
+                          message: `Bạn có chắc chắn muốn xoá kinh nghiệm làm việc "${item.position} tại ${item.companyName}" không?`,
+                        })
+                      }
+                      className="text-slate-400 hover:text-rose-500 p-1.5 rounded-md hover:bg-slate-50 cursor-pointer"
+                      title="Xoá"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
-
-                  {/* Tên công ty */}
-                  <p className="text-sm text-slate-600 font-medium mb-1">
-                    {item.companyName}
-                  </p>
-
-                  {/* Thời gian làm việc */}
-                  <p className="text-xs text-slate-500 mb-3 uppercase">
-                    {item.startDate} -{" "}
-                    {item.endDate ? item.endDate : "HIỆN TẠI"}
-                  </p>
-
-                  {/* Render nội dung HTML an toàn cho phần mô tả */}
-                  {item.description && (
-                    <div
-                      className="text-sm text-slate-600 prose prose-sm max-w-none mt-2"
-                      dangerouslySetInnerHTML={{ __html: item.description }}
-                    />
-                  )}
                 </div>
-              ),
-            )
+
+                <p className="text-sm text-slate-700 font-medium mb-1">
+                  {item.companyName}
+                </p>
+
+                <p className="text-xs text-slate-500 mb-2 uppercase font-medium">
+                  {item.startDate} - {item.endDate ? item.endDate : "HIỆN TẠI"}
+                </p>
+
+                {item.description && (
+                  <div
+                    className="text-sm text-slate-600 prose prose-sm max-w-none mt-2 leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: item.description }}
+                  />
+                )}
+              </div>
+            ))
           ) : (
             <p className="text-sm text-slate-500 italic">
               Chưa có thông tin kinh nghiệm làm việc.
@@ -286,126 +418,228 @@ export default function CandidateProfilePage() {
           )}
         </div>
 
-        {/* 8. Dự án */}
+        {/* 4. Học vấn */}
         <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm">
           <div className="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
-            <h2 className="text-lg font-bold text-slate-800">Dự án nổi bật</h2>
-            <button className="text-primary hover:bg-primary-light p-1.5 rounded-md transition-colors">
-              <PlusCircle size={22} />
-            </button>
-          </div>
-
-          <p className="text-sm text-slate-500 italic">Chưa nhập dự án nào.</p>
-        </div>
-
-        {/* 5. Kỹ năng */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm">
-          <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-4">
-            <h2 className="text-lg font-bold text-slate-800">Kỹ năng</h2>
-            <button className="text-primary hover:bg-primary-light p-1.5 rounded-md transition-colors">
-              <PlusCircle size={22} />
-            </button>
-          </div>
-
-          {/* Banner Cập nhật nhanh */}
-          <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 flex items-center gap-2 mb-6 cursor-pointer hover:bg-blue-100 transition-colors">
-            <Edit3 size={16} className="text-blue-600" />
-            <p className="text-sm text-slate-600">
-              <span className="text-blue-600 font-semibold">
-                Cập nhật nhanh
-              </span>{" "}
-              mức độ thông thạo cho kỹ năng
-            </p>
-          </div>
-
-          <div className="group relative">
-            <div className="flex justify-between items-start mb-3">
-              <h3 className="font-bold text-slate-800 text-sm">Core Skills</h3>
-              <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button className="text-slate-400 hover:text-primary p-1">
-                  <Edit3 size={16} />
-                </button>
-                <button className="text-slate-400 hover:text-rose-500 p-1">
-                  <Trash2 size={16} />
-                </button>
-              </div>
+            <div className="flex items-center gap-2">
+              <GraduationCap size={20} className="text-primary" />
+              <h2 className="text-lg font-bold text-slate-800">Học vấn</h2>
             </div>
+            <button
+              onClick={() => setEducationModal({ isOpen: true, data: null })}
+              className="text-primary hover:bg-primary-light p-1.5 rounded-md transition-colors flex items-center gap-1 text-sm font-semibold cursor-pointer"
+            >
+              <PlusCircle size={20} />
+              <span>Thêm mới</span>
+            </button>
+          </div>
 
-            {/* Duyệt mảng skills từ dữ liệu API */}
-            {candidateProfile?.skills?.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {candidateProfile.skills.map(
-                  (skill: CandidateProfileResponse["skills"][number]) => (
-                    <span
-                      key={skill.skillId}
-                      className="inline-flex items-center px-3 py-1.5 rounded-full border border-slate-200 text-sm text-slate-700 bg-white shadow-sm hover:border-primary transition-colors cursor-default"
+          {candidateProfile?.educations?.length > 0 ? (
+            candidateProfile.educations.map((item) => (
+              <div
+                key={item.id}
+                className="group relative mb-6 last:mb-0 border-b border-dashed border-slate-100 pb-6 last:border-none last:pb-0"
+              >
+                <div className="flex justify-between items-start mb-1">
+                  <h3 className="font-bold text-slate-800 text-base">
+                    {item.schoolName}
+                  </h3>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => setEducationModal({ isOpen: true, data: item })}
+                      className="text-slate-400 hover:text-primary p-1.5 rounded-md hover:bg-slate-50 cursor-pointer"
+                      title="Sửa"
                     >
-                      <strong>{skill.skillName}</strong>
-                      {/* Hiển thị level (ví dụ: Khá, Giỏi) */}
-                      {skill.level && (
-                        <span className="text-slate-500 ml-1.5 text-xs font-medium">
-                          ({skill.level})
-                        </span>
-                      )}
-                    </span>
-                  ),
+                      <Edit3 size={16} />
+                    </button>
+                    <button
+                      onClick={() =>
+                        setDeleteModal({
+                          isOpen: true,
+                          type: "education",
+                          id: item.id,
+                          title: "Xoá thông tin học vấn",
+                          message: `Bạn có chắc chắn muốn xoá học vấn tại trường "${item.schoolName}" không?`,
+                        })
+                      }
+                      className="text-slate-400 hover:text-rose-500 p-1.5 rounded-md hover:bg-slate-50 cursor-pointer"
+                      title="Xoá"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+
+                <p className="text-sm text-slate-700 font-medium mb-1">
+                  {item.major}
+                </p>
+
+                <p className="text-xs text-slate-500 mb-2 uppercase font-medium">
+                  {item.startDate} - {item.endDate ? item.endDate : "HIỆN TẠI"}
+                </p>
+
+                {item.gpa && (
+                  <p className="text-sm text-slate-600 font-medium">
+                    GPA: <span className="text-slate-800">{item.gpa}</span>
+                  </p>
                 )}
               </div>
-            ) : (
-              <p className="text-sm text-slate-500 italic">
-                Chưa có thông tin kỹ năng.
-              </p>
-            )}
+            ))
+          ) : (
+            <p className="text-sm text-slate-500 italic">
+              Chưa có thông tin học vấn.
+            </p>
+          )}
+        </div>
+
+        {/* 5. Dự án nổi bật (Portfolio) */}
+        <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+          <div className="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
+            <div className="flex items-center gap-2">
+              <FolderGit2 size={20} className="text-primary" />
+              <h2 className="text-lg font-bold text-slate-800">Dự án nổi bật</h2>
+            </div>
+            <button
+              onClick={() => setPortfolioModal({ isOpen: true, data: null })}
+              className="text-primary hover:bg-primary-light p-1.5 rounded-md transition-colors flex items-center gap-1 text-sm font-semibold cursor-pointer"
+            >
+              <PlusCircle size={20} />
+              <span>Thêm mới</span>
+            </button>
           </div>
+
+          {candidateProfile?.portfolios && candidateProfile.portfolios.length > 0 ? (
+            candidateProfile.portfolios.map((item) => (
+              <div
+                key={item.id}
+                className="group relative mb-6 last:mb-0 border-b border-dashed border-slate-100 pb-6 last:border-none last:pb-0"
+              >
+                <div className="flex justify-between items-start mb-1">
+                  <h3 className="font-bold text-slate-800 text-base">
+                    {item.title}
+                  </h3>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => setPortfolioModal({ isOpen: true, data: item })}
+                      className="text-slate-400 hover:text-primary p-1.5 rounded-md hover:bg-slate-50 cursor-pointer"
+                      title="Sửa"
+                    >
+                      <Edit3 size={16} />
+                    </button>
+                    <button
+                      onClick={() =>
+                        setDeleteModal({
+                          isOpen: true,
+                          type: "portfolio",
+                          id: item.id,
+                          title: "Xoá dự án nổi bật",
+                          message: `Bạn có chắc chắn muốn xoá dự án "${item.title}" không?`,
+                        })
+                      }
+                      className="text-slate-400 hover:text-rose-500 p-1.5 rounded-md hover:bg-slate-50 cursor-pointer"
+                      title="Xoá"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+
+                {item.projectUrl && (
+                  <div className="mb-2">
+                    <Link
+                      href={
+                        item.projectUrl.startsWith("http")
+                          ? item.projectUrl
+                          : `https://${item.projectUrl}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-medium"
+                    >
+                      <ExternalLink size={12} />
+                      {item.projectUrl}
+                    </Link>
+                  </div>
+                )}
+
+                {item.description && (
+                  <p className="text-sm text-slate-600 whitespace-pre-line leading-relaxed">
+                    {item.description}
+                  </p>
+                )}
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-slate-500 italic">
+              Chưa có dự án nào được cập nhật. Hãy thêm các dự án tâm đắc của bạn!
+            </p>
+          )}
         </div>
 
         {/* 6. Chứng chỉ */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm  ">
+        <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm">
           <div className="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
-            <h2 className="text-lg font-bold text-slate-800">Chứng chỉ</h2>
-            <button className="text-primary hover:bg-primary-light p-1.5 rounded-md transition-colors">
-              <PlusCircle size={22} />
+            <div className="flex items-center gap-2">
+              <Award size={20} className="text-primary" />
+              <h2 className="text-lg font-bold text-slate-800">Chứng chỉ</h2>
+            </div>
+            <button
+              onClick={() => setCertificateModal({ isOpen: true, data: null })}
+              className="text-primary hover:bg-primary-light p-1.5 rounded-md transition-colors flex items-center gap-1 text-sm font-semibold cursor-pointer"
+            >
+              <PlusCircle size={20} />
+              <span>Thêm mới</span>
             </button>
           </div>
 
-          {/* Duyệt mảng certificates từ dữ liệu API */}
           {candidateProfile?.certificates?.length > 0 ? (
-            candidateProfile.certificates.map(
-              (item: CandidateProfileResponse["certificates"][number]) => (
-                <div
-                  key={item.id}
-                  className="group relative mb-6 last:mb-0 border-b border-dashed border-slate-100 pb-4 last:border-none last:pb-0"
-                >
-                  <div className="flex justify-between items-start mb-1">
-                    {/* Tên chứng chỉ */}
-                    <h3 className="font-bold text-slate-800 text-base">
-                      {item.name}
-                    </h3>
-                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="text-slate-400 hover:text-primary p-1">
-                        <Edit3 size={16} />
-                      </button>
-                      <button className="text-slate-400 hover:text-rose-500 p-1">
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
+            candidateProfile.certificates.map((item) => (
+              <div
+                key={item.id}
+                className="group relative mb-6 last:mb-0 border-b border-dashed border-slate-100 pb-4 last:border-none last:pb-0"
+              >
+                <div className="flex justify-between items-start mb-1">
+                  <h3 className="font-bold text-slate-800 text-base">
+                    {item.name}
+                  </h3>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => setCertificateModal({ isOpen: true, data: item })}
+                      className="text-slate-400 hover:text-primary p-1.5 rounded-md hover:bg-slate-50 cursor-pointer"
+                      title="Sửa"
+                    >
+                      <Edit3 size={16} />
+                    </button>
+                    <button
+                      onClick={() =>
+                        setDeleteModal({
+                          isOpen: true,
+                          type: "certificate",
+                          id: item.id,
+                          title: "Xoá chứng chỉ",
+                          message: `Bạn có chắc chắn muốn xoá chứng chỉ "${item.name}" không?`,
+                        })
+                      }
+                      className="text-slate-400 hover:text-rose-500 p-1.5 rounded-md hover:bg-slate-50 cursor-pointer"
+                      title="Xoá"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
-
-                  {/* Tổ chức cấp */}
-                  <p className="text-sm text-slate-600 font-medium mb-1">
-                    {item.organization}
-                  </p>
-
-                  {/* Thời gian hiệu lực */}
-                  <p className="text-xs text-slate-500 uppercase">
-                    {item.issueDate}
-                    {item.expirationDate
-                      ? ` - ${item.expirationDate}`
-                      : " - Vô thời hạn"}
-                  </p>
                 </div>
-              ),
-            )
+
+                <p className="text-sm text-slate-700 font-medium mb-1">
+                  {item.organization}
+                </p>
+
+                <p className="text-xs text-slate-500 uppercase font-medium">
+                  {item.issueDate}
+                  {item.expirationDate
+                    ? ` - ${item.expirationDate}`
+                    : " - Vô thời hạn"}
+                </p>
+              </div>
+            ))
           ) : (
             <p className="text-sm text-slate-500 italic">
               Chưa có thông tin chứng chỉ.
@@ -413,53 +647,33 @@ export default function CandidateProfilePage() {
           )}
         </div>
 
-        {/* 7. Ngoại ngữ */}
+        {/* 7. Kỹ năng */}
         <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm">
           <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-4">
-            <h2 className="text-lg font-bold text-slate-800">Ngoại ngữ</h2>
-            <button className="text-primary hover:bg-primary-light p-1.5 rounded-md transition-colors">
-              <PlusCircle size={22} />
-            </button>
+            <h2 className="text-lg font-bold text-slate-800">Kỹ năng</h2>
           </div>
 
-          <div className="group relative">
-            {/* Duyệt mảng languages từ dữ liệu API */}
-            {candidateProfile?.languages?.length > 0 ? (
-              <div className="flex flex-wrap gap-3">
-                {candidateProfile.languages.map(
-                  (lang: CandidateProfileResponse["languages"][number]) => (
-                    <div
-                      key={lang.id}
-                      className="flex items-center justify-between w-full sm:w-[calc(50%-0.375rem)] px-4 py-3 rounded-lg border border-slate-200 bg-white hover:border-primary transition-colors group/lang relative"
-                    >
-                      <div>
-                        <h3 className="font-bold text-slate-800 text-sm">
-                          {lang.name}
-                        </h3>
-                        <p className="text-xs text-slate-500 font-medium mt-0.5">
-                          {lang.proficiency}
-                        </p>
-                      </div>
-
-                      {/* Các nút hành động (Sửa/Xóa) sẽ hiện khi hover vào từng thẻ ngôn ngữ */}
-                      <div className="flex items-center gap-1 opacity-0 group-hover/lang:opacity-100 transition-opacity">
-                        <button className="text-slate-400 hover:text-primary p-1.5 rounded-full hover:bg-slate-50">
-                          <Edit3 size={14} />
-                        </button>
-                        <button className="text-slate-400 hover:text-rose-500 p-1.5 rounded-full hover:bg-slate-50">
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  ),
-                )}
-              </div>
-            ) : (
-              <p className="text-sm text-slate-500 italic">
-                Chưa có thông tin ngoại ngữ.
-              </p>
-            )}
-          </div>
+          {candidateProfile?.skills?.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {candidateProfile.skills.map((skill) => (
+                <span
+                  key={skill.skillId}
+                  className="inline-flex items-center px-3 py-1.5 rounded-full border border-slate-200 text-sm text-slate-700 bg-white shadow-sm hover:border-primary transition-colors cursor-default"
+                >
+                  <strong>{skill.skillName}</strong>
+                  {skill.level && (
+                    <span className="text-slate-500 ml-1.5 text-xs font-medium">
+                      ({skill.level})
+                    </span>
+                  )}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500 italic">
+              Chưa có thông tin kỹ năng.
+            </p>
+          )}
         </div>
       </div>
 
@@ -471,13 +685,9 @@ export default function CandidateProfilePage() {
             Độ hoàn thiện hồ sơ
           </h2>
 
-          {/* Biểu đồ nửa vầng trăng */}
           <div className="flex justify-center mb-6">
             <div className="relative w-40 h-24 overflow-hidden">
-              <svg
-                viewBox="0 0 200 100"
-                className="w-full h-auto drop-shadow-sm"
-              >
+              <svg viewBox="0 0 200 100" className="w-full h-auto drop-shadow-sm">
                 <path
                   d="M 20 90 A 70 70 0 0 1 180 90"
                   fill="none"
@@ -509,52 +719,25 @@ export default function CandidateProfilePage() {
             </div>
           </div>
 
-          {/* Khung chat Mascot */}
           <div className="flex items-end gap-3 mb-6">
             <div className="bg-slate-50 border border-slate-200 rounded-2xl rounded-br-none p-3 text-[13px] text-slate-600 relative flex-1 shadow-sm">
               Chúc mừng! Bạn đã sẵn sàng để tạo CV. Tiếp tục hoàn thiện hồ sơ để
               CV của bạn thêm thu hút.
-              {/* Mũi nhọn của bong bóng chat */}
               <div className="absolute -bottom-px -right-2 w-2 h-2 bg-slate-50 border-b border-r border-slate-200 transform rotate-45"></div>
             </div>
-            {/* Mascot Icon giả lập */}
             <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center shrink-0 border border-slate-200 text-slate-500">
               <Bot size={24} />
             </div>
           </div>
 
-          {/* Nút xem CV và tải xuống PDF */}
-          {candidateProfile && (
-            <Link
-              href="/cv-template"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-all shadow-sm hover:shadow-md w-fit"
-            >
-              <FileText size={20} />
-              Xem và tải CV
-            </Link>
-          )}
+          <Link
+            href="/cv-template"
+            className="inline-flex items-center justify-center gap-2 w-full px-6 py-3 bg-primary hover:bg-primary-hover text-white rounded-xl font-medium transition-all shadow-md shadow-primary/20 text-sm"
+          >
+            <FileText size={18} />
+            Xem và tải CV mẫu
+          </Link>
         </div>
-
-        {/* Widget 2: Cập nhật nhanh bằng CV */}
-        {/* <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-          <div className="flex gap-4 items-start mb-6">
-            <div>   
-              <h3 className="font-bold text-slate-800 mb-2">
-                Cập nhật nhanh hồ sơ của bạn
-              </h3>
-              <p className="text-sm text-slate-600">
-                Điền nhanh hồ sơ bằng CV của bạn chỉ với ít phút.
-              </p>
-            </div>
-            <div className="w-16 h-16 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0 text-blue-300">
-              <FileText size={32} />
-            </div>
-          </div>
-
-          <button className="w-full border-2 border-primary text-primary hover:bg-primary-50 font-bold py-2.5 rounded-lg transition-colors">
-            Điền hồ sơ tự động
-          </button>
-        </div> */}
       </div>
     </div>
   );

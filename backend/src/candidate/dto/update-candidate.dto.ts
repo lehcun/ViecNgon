@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsNumber, IsDateString } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsDateString, IsIn } from 'class-validator';
 
 export class UpdateCandidateDto {
   @IsOptional()
@@ -10,7 +10,6 @@ export class UpdateCandidateDto {
   phoneNumber?: string;
 
   @IsOptional()
-  // Sử dụng IsDateString để đảm bảo định dạng chuỗi ngày tháng (ISO 8601) hợp lệ
   @IsDateString()
   dateOfBirth?: string;
 
@@ -37,4 +36,20 @@ export class UpdateCandidateDto {
   @IsOptional()
   @IsString()
   address?: string;
+
+  @IsOptional()
+  @IsString()
+  aboutMe?: string;
+
+  @IsOptional()
+  @IsIn(['ONLINE', 'PDF'])
+  defaultCvType?: string;
+
+  @IsOptional()
+  @IsString()
+  defaultCvFileId?: string;
+
+  @IsOptional()
+  @IsString()
+  trangThaiPortfolio?: string;
 }

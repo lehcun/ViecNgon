@@ -271,6 +271,7 @@ export default function CVTemplate({
       { id: "lang-2", name: "Tiếng Nhật", proficiency: "N4" },
     ],
     uploadedCvs: [],
+    portfolios: [],
   };
 
   return (

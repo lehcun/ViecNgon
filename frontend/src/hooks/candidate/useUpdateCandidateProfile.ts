@@ -32,6 +32,7 @@ export const useUpdateCandidateProfile = () => {
 
   return {
     updateCandidateProfile: mutation.mutate,
+    updateCandidateProfileAsync: mutation.mutateAsync,
     isPending: mutation.isPending,
     isSuccess: mutation.isSuccess,
     isError: mutation.isError,

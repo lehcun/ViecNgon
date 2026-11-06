@@ -210,6 +210,13 @@ export interface CandidateProfileResponse {
     fileUrl: string;
     uploadedAt: Date | string;
   }[];
+
+  portfolios: {
+    id: string;
+    title: string;
+    description: string | null;
+    projectUrl: string | null;
+  }[];
 }
 
 export interface UpdateCandidatePayload {
@@ -222,6 +229,52 @@ export interface UpdateCandidatePayload {
   profession?: string;
   cvUrl?: string;
   address?: string;
+  aboutMe?: string;
+  defaultCvType?: string;
+  defaultCvFileId?: string;
+}
+
+export interface CreateExperiencePayload {
+  companyName: string;
+  position: string;
+  startDate: string;
+  endDate?: string | null;
+  description?: string | null;
+}
+
+export interface UpdateExperiencePayload extends Partial<CreateExperiencePayload> {}
+
+export interface CreateEducationPayload {
+  schoolName: string;
+  major: string;
+  startDate: string;
+  endDate?: string | null;
+  gpa?: string | null;
+}
+
+export interface UpdateEducationPayload extends Partial<CreateEducationPayload> {}
+
+export interface CreateCertificatePayload {
+  name: string;
+  organization: string;
+  issueDate: string;
+  expirationDate?: string | null;
+}
+
+export interface UpdateCertificatePayload extends Partial<CreateCertificatePayload> {}
+
+export interface CreatePortfolioPayload {
+  title: string;
+  description?: string | null;
+  projectUrl?: string | null;
+}
+
+export interface UpdatePortfolioPayload extends Partial<CreatePortfolioPayload> {}
+
+export interface CreateCvFilePayload {
+  fileName: string;
+  fileUrl: string;
+  isDefault?: boolean;
 }
 
 export interface RegisterResponse {
