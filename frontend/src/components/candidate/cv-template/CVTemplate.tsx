@@ -208,6 +208,7 @@ export default function CVTemplate({
       "Lập trình viên Fullstack với hơn 5 năm kinh nghiệm phát triển các ứng dụng web quy mô lớn. Đam mê tối ưu hóa hiệu năng hệ thống và kiến trúc microservices.",
     defaultCvType: "ONLINE",
     defaultCvFileId: null,
+    defaultCvFile: null,
     account: {
       email: "hoang.nguyen@gmail.com",
       userName: "hoangnguyen",

@@ -26,13 +26,23 @@ export default function ProfileDropdown({
 }: DropProps) {
   if (!user) return null;
 
+  const userInitial = (user?.name || "U").charAt(0).toUpperCase();
+
   return (
     <div className="relative group cursor-pointer">
       {/* Vùng hiển thị Avatar trên thanh Nav */}
       <div className="flex items-center gap-2">
-        <div className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center font-bold text-sm shadow-sm group-hover:shadow-md transition-all">
-          C
-        </div>
+        {user?.avatarUrl ? (
+          <img
+            src={user.avatarUrl}
+            alt={user.name}
+            className="w-8 h-8 rounded-full object-cover shadow-sm group-hover:shadow-md transition-all"
+          />
+        ) : (
+          <div className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center font-bold text-sm shadow-sm group-hover:shadow-md transition-all">
+            {userInitial}
+          </div>
+        )}
       </div>
 
       {/* Cây cầu tàng hình giúp giữ trạng thái hover khi di chuột xuống menu */}
@@ -42,9 +52,17 @@ export default function ProfileDropdown({
       <div className="absolute top-[calc(100%+12px)] right-0 w-72 bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] border border-slate-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0 z-50 overflow-hidden">
         {/* Header của Dropdown (Thông tin User) */}
         <div className="flex items-center gap-3 p-4 border-b border-slate-100 bg-slate-50/50">
-          <div className="w-11 h-11 bg-primary text-white rounded-full flex items-center justify-center font-bold text-lg shadow-inner">
-            C
-          </div>
+          {user?.avatarUrl ? (
+            <img
+              src={user.avatarUrl}
+              alt={user.name}
+              className="w-11 h-11 rounded-full object-cover shadow-inner"
+            />
+          ) : (
+            <div className="w-11 h-11 bg-primary text-white rounded-full flex items-center justify-center font-bold text-lg shadow-inner">
+              {userInitial}
+            </div>
+          )}
           <div className="flex-1 overflow-hidden">
             <p className="font-bold text-slate-800 truncate">{user?.name}</p>
             <p className="text-xs text-slate-500 truncate">{user?.email}</p>

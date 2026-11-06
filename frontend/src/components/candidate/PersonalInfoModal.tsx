@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { X, Camera, Trash2, Calendar, ChevronDown } from "lucide-react";
-// Đảm bảo import đúng đường dẫn hook của bạn
+import toast from "react-hot-toast";
 import { useUpdateCandidateProfile } from "@/hooks/candidate/useUpdateCandidateProfile";
 import { CandidateProfileResponse } from "@viecngon/types";
 
@@ -21,7 +21,7 @@ const getInitialFormData = (data?: CandidateProfileResponse | null) => {
     : "";
 
   return {
-    userName: data?.account?.userName || "",
+    userName: data?.candidateName || data?.account?.userName || "",
     profession: data?.profession || "",
     phoneNumber: data?.account?.phoneNumber || "",
     dateOfBirth: formattedDate,
@@ -29,6 +29,7 @@ const getInitialFormData = (data?: CandidateProfileResponse | null) => {
     street: addressParts[0] || "",
     city: addressParts[1] || "Đà Nẵng",
     cvUrl: data?.cvUrl || "",
+    avatarUrl: data?.avatarUrl || "",
   };
 };
 
@@ -43,6 +44,7 @@ export default function PersonalInfoModal({
   const [formData, setFormData] = useState(() =>
     getInitialFormData(initialData),
   );
+  const [showAvatarInput, setShowAvatarInput] = useState(false);
 
   // Hàm xử lý chung khi người dùng gõ vào input
   const handleChange = (
@@ -67,15 +69,16 @@ export default function PersonalInfoModal({
       gender: formData.gender,
       address: fullAddress,
       cvUrl: formData.cvUrl,
+      avatarUrl: formData.avatarUrl,
     };
 
     updateCandidateProfile(payload, {
       onSuccess: () => {
-        alert("Cập nhật thành công!");
+        toast.success("Cập nhật thông tin thành công!");
         onClose(); // Đóng modal khi thành công
       },
       onError: (error) => {
-        alert("Có lỗi xảy ra, vui lòng thử lại!");
+        toast.error("Có lỗi xảy ra, vui lòng thử lại!");
         console.error(error);
       },
     });
@@ -103,21 +106,60 @@ export default function PersonalInfoModal({
 
         <div className="flex-1 overflow-y-auto p-6 md:p-8">
           <div className="flex flex-col md:flex-row gap-10">
-            {/* ... Phần Avatar giữ nguyên ... */}
+            {/* Avatar section */}
             <div className="flex flex-col items-center gap-4 w-full md:w-1/4">
-              <div className="w-32 h-32 rounded-full bg-[#044d3a] text-white flex items-center justify-center text-5xl font-semibold shadow-md">
-                {formData.userName
-                  ? formData.userName.charAt(0).toUpperCase()
-                  : "C"}
+              <div className="relative group">
+                {formData.avatarUrl ? (
+                  <img
+                    src={formData.avatarUrl}
+                    alt={formData.userName || "Avatar"}
+                    className="w-32 h-32 rounded-full object-cover shadow-md border-2 border-slate-200"
+                  />
+                ) : (
+                  <div className="w-32 h-32 rounded-full bg-primary text-white flex items-center justify-center text-5xl font-semibold shadow-md">
+                    {formData.userName
+                      ? formData.userName.charAt(0).toUpperCase()
+                      : "U"}
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-4 text-sm font-medium">
-                <button className="flex items-center gap-1 text-primary hover:text-primary-hover transition-colors">
-                  <Camera size={16} /> Sửa
+                <button
+                  type="button"
+                  onClick={() => setShowAvatarInput((prev) => !prev)}
+                  className="flex items-center gap-1 text-primary hover:text-primary-hover transition-colors cursor-pointer"
+                >
+                  <Camera size={16} />{" "}
+                  {formData.avatarUrl ? "Đổi ảnh" : "Thêm ảnh"}
                 </button>
-                <button className="flex items-center gap-1 text-slate-500 hover:text-rose-500 transition-colors">
-                  <Trash2 size={16} /> Xoá
-                </button>
+                {formData.avatarUrl && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData((prev) => ({ ...prev, avatarUrl: "" }))
+                    }
+                    className="flex items-center gap-1 text-slate-500 hover:text-rose-500 transition-colors cursor-pointer"
+                  >
+                    <Trash2 size={16} /> Xoá
+                  </button>
+                )}
               </div>
+
+              {showAvatarInput && (
+                <div className="w-full mt-2 animate-in fade-in duration-150">
+                  <label className="block text-[11px] text-slate-500 font-medium mb-1 text-center">
+                    Đường dẫn ảnh (URL)
+                  </label>
+                  <input
+                    type="url"
+                    name="avatarUrl"
+                    value={formData.avatarUrl}
+                    onChange={handleChange}
+                    placeholder="https://example.com/avatar.jpg"
+                    className="w-full text-xs p-2 border border-slate-300 rounded-md focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                  />
+                </div>
+              )}
             </div>
 
             <div className="w-full md:w-3/4 flex flex-col gap-4">

@@ -21,16 +21,52 @@ import { formatDateToDDMMYYYY } from "@/utils/date";
 import { CandidateProfileResponse } from "@viecngon/types";
 
 export default function CandidateProfilePage() {
-  const { candidateProfile } = useCandidateProfile();
-
-  console.log("candidateProfile: ", candidateProfile);
+  const { candidateProfile, isLoading, isError } = useCandidateProfile();
 
   //Các state
   const [isEditInfoOpen, setIsEditInfoOpen] = useState(false);
   const profileCompletion = 71;
   const arcLength = 220;
 
-  if (!candidateProfile) return <h2>Ứng viên ko xác định</h2>;
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 animate-pulse">
+        <div className="xl:col-span-2 flex flex-col gap-6">
+          <div className="bg-white rounded-xl border border-slate-200 p-8 shadow-sm">
+            <div className="flex items-center gap-5 mb-6">
+              <div className="w-20 h-20 bg-slate-200 rounded-full"></div>
+              <div className="space-y-3 flex-1">
+                <div className="h-6 bg-slate-200 rounded w-1/3"></div>
+                <div className="h-4 bg-slate-200 rounded w-1/4"></div>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6 border-t border-slate-100">
+              <div className="h-4 bg-slate-200 rounded w-3/4"></div>
+              <div className="h-4 bg-slate-200 rounded w-3/4"></div>
+              <div className="h-4 bg-slate-200 rounded w-3/4"></div>
+              <div className="h-4 bg-slate-200 rounded w-3/4"></div>
+            </div>
+          </div>
+          <div className="h-40 bg-white rounded-xl border border-slate-200 p-6"></div>
+          <div className="h-60 bg-white rounded-xl border border-slate-200 p-6"></div>
+        </div>
+        <div className="flex flex-col gap-6">
+          <div className="h-64 bg-white rounded-xl border border-slate-200 p-6"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError || !candidateProfile) {
+    return (
+      <div className="p-8 text-center bg-white rounded-xl border border-red-200 shadow-sm text-red-600 font-medium">
+        Không thể tải thông tin hồ sơ ứng viên. Vui lòng thử lại.
+      </div>
+    );
+  }
+
+  const candidateDisplayName =
+    candidateProfile.candidateName || candidateProfile.account.userName;
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 relative">
@@ -54,15 +90,25 @@ export default function CandidateProfilePage() {
           </button>
 
           <div className="flex items-center gap-5 mb-6">
-            <div className="w-20 h-20 bg-primary text-white rounded-full flex items-center justify-center text-3xl font-bold shadow-md">
-              C
+            <div className="shrink-0">
+              {candidateProfile.avatarUrl ? (
+                <img
+                  src={candidateProfile.avatarUrl}
+                  alt={candidateDisplayName}
+                  className="w-20 h-20 rounded-full object-cover shadow-md"
+                />
+              ) : (
+                <div className="w-20 h-20 bg-primary text-white rounded-full flex items-center justify-center text-3xl font-bold shadow-md">
+                  {candidateDisplayName.charAt(0).toUpperCase()}
+                </div>
+              )}
             </div>
             <div>
               <h1 className="text-2xl font-bold text-slate-800">
-                {candidateProfile.account.userName}
+                {candidateDisplayName}
               </h1>
               <p className="text-slate-600 font-medium mt-1">
-                {candidateProfile.profession}
+                {candidateProfile.profession || "Chưa cập nhật chuyên môn"}
               </p>
             </div>
           </div>
@@ -74,7 +120,7 @@ export default function CandidateProfilePage() {
             </div>
             <div className="flex items-center gap-3 text-sm text-slate-600">
               <Phone size={16} className="text-slate-400" />
-              {candidateProfile.account.phoneNumber}
+              {candidateProfile.account.phoneNumber || "Chưa cập nhật SĐT"}
             </div>
             <div className="flex items-center gap-3 text-sm text-slate-600">
               <Calendar size={16} className="text-slate-400" />
@@ -82,21 +128,32 @@ export default function CandidateProfilePage() {
             </div>
             <div className="flex items-center gap-3 text-sm text-slate-600">
               <User size={16} className="text-slate-400" />
-              {candidateProfile.gender}
+              {candidateProfile.gender || "Chưa cập nhật"}
             </div>
             <div className="flex items-center gap-3 text-sm text-slate-600">
               <MapPin size={16} className="text-slate-400" />
-              {candidateProfile.address}
+              {candidateProfile.address || "Chưa cập nhật địa chỉ"}
             </div>
             <div className="flex items-center gap-3 text-sm text-slate-600">
-              <LinkIcon size={16} className="text-slate-400" />
-              <Link
-                href="https://github.com/lehcun"
-                target="_blank"
-                className="hover:text-primary transition-colors"
-              >
-                github.com/lehcun
-              </Link>
+              <LinkIcon size={16} className="text-slate-400 shrink-0" />
+              {candidateProfile.cvUrl ? (
+                <Link
+                  href={
+                    candidateProfile.cvUrl.startsWith("http")
+                      ? candidateProfile.cvUrl
+                      : `https://${candidateProfile.cvUrl}`
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline transition-colors truncate max-w-[200px]"
+                >
+                  {candidateProfile.cvUrl.replace(/^https?:\/\//, "")}
+                </Link>
+              ) : (
+                <span className="text-slate-400 italic">
+                  Chưa cập nhật website / link
+                </span>
+              )}
             </div>
           </div>
         </div>

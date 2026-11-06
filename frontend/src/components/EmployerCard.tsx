@@ -30,7 +30,7 @@ export default function EmployerCard(company: Company) {
           className={`relative z-10 w-28 h-28 sm:w-32 sm:h-32 rounded-2xl shadow-[0_12px_30px_rgba(0,0,0,0.15)] flex items-center justify-center p-5 mb-6 transition-transform duration-300 group-hover:-translate-y-1`}
         >
           <Image
-            src={company.logo}
+            src={company.logo || "https://placehold.co/120x120?text=Company"}
             alt={company.name}
             width={90}
             height={90}

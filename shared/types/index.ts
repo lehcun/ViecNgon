@@ -9,6 +9,8 @@ export interface User {
   email: string;
   name: string;
   sdt?: string;
+  avatar?: string;
+  avatarUrl?: string;
   role: "ADMIN" | "UNGVIEN" | "NHATUYENDUNG";
   // status: "ACTIVE" | "INACTIVE";
   exp: number;

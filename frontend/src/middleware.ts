@@ -44,7 +44,20 @@ function decodeToken(token: string): DecodedToken | null {
   }
 }
 
-// Định nghĩa quy tắc bảo mật theo vai trò (RBAC)
+/**
+ * Danh sách các đường dẫn Xác thực & Công khai không yêu cầu đăng nhập
+ */
+const authRoutes = [
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/employer", // Trang giới thiệu & đăng ký tuyển dụng của NTD
+  "/employer/login",
+  "/employer/forgot-password",
+  "/admin/login",
+];
+
+// Định nghĩa quy tắc bảo mật theo vai trò (RBAC) cho các route được bảo vệ
 const routeAccessRules = [
   { prefix: "/admin", allowedRoles: ["ADMIN"], loginUrl: "/admin/login" },
   {
@@ -53,7 +66,27 @@ const routeAccessRules = [
     loginUrl: "/employer/login",
   },
   {
-    prefix: "/employer",
+    prefix: "/employer/company-profile",
+    allowedRoles: ["NHATUYENDUNG"],
+    loginUrl: "/employer/login",
+  },
+  {
+    prefix: "/employer/jobs",
+    allowedRoles: ["NHATUYENDUNG"],
+    loginUrl: "/employer/login",
+  },
+  {
+    prefix: "/employer/applications",
+    allowedRoles: ["NHATUYENDUNG"],
+    loginUrl: "/employer/login",
+  },
+  {
+    prefix: "/employer/campaigns",
+    allowedRoles: ["NHATUYENDUNG"],
+    loginUrl: "/employer/login",
+  },
+  {
+    prefix: "/employer/pricing",
     allowedRoles: ["NHATUYENDUNG"],
     loginUrl: "/employer/login",
   },
@@ -82,6 +115,16 @@ const routeAccessRules = [
     allowedRoles: ["NHATUYENDUNG"],
     loginUrl: "/employer/login",
   },
+  {
+    prefix: "/company-profile",
+    allowedRoles: ["NHATUYENDUNG"],
+    loginUrl: "/employer/login",
+  },
+  {
+    prefix: "/pricing",
+    allowedRoles: ["NHATUYENDUNG"],
+    loginUrl: "/employer/login",
+  },
   { prefix: "/dashboard", allowedRoles: ["UNGVIEN"], loginUrl: "/login" },
   { prefix: "/my-jobs", allowedRoles: ["UNGVIEN"], loginUrl: "/login" },
   { prefix: "/cv-profile", allowedRoles: ["UNGVIEN"], loginUrl: "/login" },
@@ -97,23 +140,48 @@ const routeAccessRules = [
   },
 ];
 
-const authRoutes = ["/login", "/employer/login", "/admin/login", "/register"];
-
 export function middleware(request: NextRequest) {
   const token = request.cookies.get("access_token")?.value;
   const path = request.nextUrl.pathname;
+  // Chuẩn hóa path loại bỏ trailing slash nếu có
+  const normalizedPath =
+    path.length > 1 && path.endsWith("/") ? path.slice(0, -1) : path;
 
   const decoded = token ? decodeToken(token) : null;
   const isTokenValid = Boolean(decoded && !decoded.isExpired);
   const userRole = isTokenValid && decoded ? decoded.role : null;
 
-  // 1. NẾU TOKEN ĐÃ HẾT HẠN (Expired):
-  // Xóa sạch cookie rác và bắt buộc đăng nhập lại nếu vào trang bảo vệ
+  // 1. NẾU LÀ TRANG AUTH CÔNG KHAI (Login, Register, Forgot Password...)
+  const isAuthPage = authRoutes.some(
+    (authPath) =>
+      normalizedPath === authPath || normalizedPath.startsWith(`${authPath}/`),
+  );
+
+  if (isAuthPage) {
+    // 1.1. Nếu người dùng ĐÃ ĐĂNG NHẬP VỚI TOKEN HỢP LỆ -> Chuyển hướng về Dashboard tương ứng
+    if (isTokenValid && userRole) {
+      const redirectTo = ROLE_DASHBOARD_MAP[userRole] || "/";
+      return NextResponse.redirect(new URL(redirectTo, request.url));
+    }
+
+    // 1.2. Nếu CHƯA ĐĂNG NHẬP hoặc TOKEN ĐÃ HẾT HẠN:
+    // Cho phép xem trang auth bình thường! (nếu token hết hạn thì xóa cookie để dọn dẹp)
+    const response = NextResponse.next();
+    if (token && decoded?.isExpired) {
+      response.cookies.delete("access_token");
+    }
+    return response;
+  }
+
+  // 2. NẾU TOKEN ĐÃ HẾT HẠN (Expired) KHI VÀO TRANG BẢO VỆ:
+  // Xóa sạch cookie rác và bắt buộc đăng nhập lại
   if (token && decoded?.isExpired) {
     for (const rule of routeAccessRules) {
+      if (normalizedPath === rule.loginUrl) continue;
+
       const isMatch = rule.prefix
-        ? path.startsWith(rule.prefix)
-        : rule.regex && rule.regex.test(path);
+        ? normalizedPath.startsWith(rule.prefix)
+        : rule.regex && rule.regex.test(normalizedPath);
 
       if (isMatch) {
         const loginUrl = new URL(rule.loginUrl, request.url);
@@ -125,17 +193,14 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // 2. XỬ LÝ REDIRECT KHI ĐÃ ĐĂNG NHẬP HỢP LỆ MÀ VÀO TRANG AUTH (Login / Register)
-  if (isTokenValid && userRole && authRoutes.includes(path)) {
-    const redirectTo = ROLE_DASHBOARD_MAP[userRole] || "/";
-    return NextResponse.redirect(new URL(redirectTo, request.url));
-  }
-
   // 3. KIỂM TRA QUYỀN TRUY CẬP (RBAC Access Control)
   for (const rule of routeAccessRules) {
+    // Tuyệt đối không áp dụng quy tắc nếu đang ở chính trang loginUrl của rule
+    if (normalizedPath === rule.loginUrl) continue;
+
     const isMatch = rule.prefix
-      ? path.startsWith(rule.prefix)
-      : rule.regex && rule.regex.test(path);
+      ? normalizedPath.startsWith(rule.prefix)
+      : rule.regex && rule.regex.test(normalizedPath);
 
     if (isMatch) {
       // 3.1. Nếu chưa có token hợp lệ -> Chuyển hướng về trang đăng nhập tương ứng
@@ -156,7 +221,7 @@ export function middleware(request: NextRequest) {
         const targetDashboard = ROLE_DASHBOARD_MAP[userRole] || "/";
 
         // Tránh vòng lặp nếu đường dẫn hiện tại chính là đích đến
-        if (path !== targetDashboard) {
+        if (normalizedPath !== targetDashboard) {
           return NextResponse.redirect(new URL(targetDashboard, request.url));
         }
 
