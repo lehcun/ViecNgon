@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { sanitizeRichText } from 'src/common/utils/sanitize-html.util';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -138,6 +139,12 @@ export class JobService {
     const cleanPhucLoi = this.sanitizeContent(createJobDto.phucLoi);
 
     const { kyNangs, maTaiKhoan, ...jobData } = createJobDto;
+
+    if (!maTaiKhoan) {
+      throw new BadRequestException(
+        'Không xác định được tài khoản nhà tuyển dụng. Vui lòng đăng nhập lại.',
+      );
+    }
 
     const nhaTuyenDung = await this.prisma.nhaTuyenDung.findUnique({
       where: { maTaiKhoan },

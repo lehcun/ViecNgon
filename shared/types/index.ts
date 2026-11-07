@@ -5,7 +5,8 @@ export interface LoginResponse {
 }
 
 export interface User {
-  sub: string;
+  id?: string;
+  sub?: string;
   email: string;
   name: string;
   sdt?: string;
@@ -13,8 +14,8 @@ export interface User {
   avatarUrl?: string;
   role: "ADMIN" | "UNGVIEN" | "NHATUYENDUNG";
   // status: "ACTIVE" | "INACTIVE";
-  exp: number;
-  iat: number;
+  exp?: number;
+  iat?: number;
 }
 
 export interface Job {
@@ -23,17 +24,6 @@ export interface Job {
   mucLuongToiThieu: number;
   mucLuongToiDa: number;
 }
-
-// export interface Candidate {
-//   id: string;
-//   tenUngVien: string;
-//   chuyenMon: string;
-//   soNamKinhNghiem: number;
-//   avatarUrl: string | null;
-//   diaChi: string | null;
-//   kyNangs: Array<{ mucDo: string; kyNang: { tenKyNang: string } }>;
-//   portfolios: Array<{ tieuDe: string; projectUrl: string | null }>;
-// }
 
 export interface Company {
   id: string;
@@ -281,7 +271,7 @@ export interface CreateExperiencePayload {
   description?: string | null;
 }
 
-export interface UpdateExperiencePayload extends Partial<CreateExperiencePayload> {}
+export interface UpdateExperiencePayload extends Partial<CreateExperiencePayload> { }
 
 export interface CreateEducationPayload {
   schoolName: string;
@@ -291,7 +281,7 @@ export interface CreateEducationPayload {
   gpa?: string | null;
 }
 
-export interface UpdateEducationPayload extends Partial<CreateEducationPayload> {}
+export interface UpdateEducationPayload extends Partial<CreateEducationPayload> { }
 
 export interface CreateCertificatePayload {
   name: string;
@@ -300,7 +290,7 @@ export interface CreateCertificatePayload {
   expirationDate?: string | null;
 }
 
-export interface UpdateCertificatePayload extends Partial<CreateCertificatePayload> {}
+export interface UpdateCertificatePayload extends Partial<CreateCertificatePayload> { }
 
 export interface CreatePortfolioPayload {
   title: string;
@@ -308,7 +298,7 @@ export interface CreatePortfolioPayload {
   projectUrl?: string | null;
 }
 
-export interface UpdatePortfolioPayload extends Partial<CreatePortfolioPayload> {}
+export interface UpdatePortfolioPayload extends Partial<CreatePortfolioPayload> { }
 
 export interface CreateCvFilePayload {
   fileName: string;

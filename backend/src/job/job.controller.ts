@@ -24,11 +24,17 @@ export class JobController {
   constructor(
     private readonly jobService: JobService,
     private readonly jwtService: JwtService,
-  ) {}
+  ) { }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() createJobDto: CreateJobDto) {
+  create(@Body() createJobDto: CreateJobDto, @Req() req: Request) {
+    if (!createJobDto.maTaiKhoan) {
+      const cookieUserId = this.extractUserIdFromCookie(req);
+      if (cookieUserId) {
+        createJobDto.maTaiKhoan = cookieUserId;
+      }
+    }
     return this.jobService.create(createJobDto);
   }
 

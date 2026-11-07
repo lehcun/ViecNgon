@@ -168,7 +168,8 @@ export function useCreateJob(initialCredits: number = 0) {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    if (!user) {
+    const userId = user?.id || user?.sub;
+    if (!user || !userId) {
       toast.error("Bạn cần đăng nhập để thực hiện chức năng này!");
       return;
     }
@@ -192,8 +193,8 @@ export function useCreateJob(initialCredits: number = 0) {
       // Đảm bảo maChiNhanh không bao giờ gửi chuỗi rỗng "" hoặc khoảng trắng
       const cleanBranchId =
         formData.hinhThucLamViec === "Remote" ||
-        !formData.maChiNhanh ||
-        formData.maChiNhanh.trim() === ""
+          !formData.maChiNhanh ||
+          formData.maChiNhanh.trim() === ""
           ? undefined
           : formData.maChiNhanh.trim();
 
@@ -228,7 +229,7 @@ export function useCreateJob(initialCredits: number = 0) {
             : undefined,
 
         trangThai: "Đang tuyển",
-        maTaiKhoan: user.sub,
+        maTaiKhoan: userId,
         kyNangs: formData.kyNangs,
       };
 

@@ -59,8 +59,9 @@ export class CreateJobDto {
   @IsString()
   trangThai: string;
 
+  @IsOptional()
   @IsString()
-  maTaiKhoan: string;
+  maTaiKhoan?: string;
 
   @IsOptional()
   @IsString()

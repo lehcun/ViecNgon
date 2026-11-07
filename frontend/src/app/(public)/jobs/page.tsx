@@ -86,7 +86,7 @@ function JobsPageContent() {
             </div>
 
             {/* Cột Phải: Khung Xem Nhanh Preview Skeleton (7/12) */}
-            <div className="hidden lg:block lg:col-span-7">
+            <div className="hidden lg:block lg:col-span-7 sticky top-20 md:top-24 self-start z-30">
               <div className="bg-white rounded-2xl border border-slate-200 p-6 h-[600px] animate-pulse"></div>
             </div>
           </div>
@@ -135,8 +135,8 @@ function JobsPageContent() {
               />
             </div>
 
-            {/* Cột Phải: Khung Xem Nhanh Job Preview (Mở rộng 7/12 - Sticky trên Desktop) */}
-            <div className="hidden lg:block lg:col-span-7">
+            {/* Cột Phải: Khung Xem Nhanh Job Preview (Mở rộng 7/12 - Dính vào màn hình khi cuộn chuột) */}
+            <div className="hidden lg:block lg:col-span-7 sticky top-20 md:top-24 self-start z-30">
               <JobDetailPreviewPane job={activeJob} />
             </div>
           </div>

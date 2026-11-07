@@ -27,7 +27,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   // Helper dùng chung: Lấy Profile Ứng viên từ Google bằng Access Token
   private async getGoogleUserInfo(accessToken: string) {
@@ -115,6 +115,7 @@ export class AuthService {
       access_token: await this.jwtService.signAsync(payload),
       user: {
         id: newUser.maTaiKhoan,
+        sub: newUser.maTaiKhoan,
         email: email,
         name: newUser.tenNguoiDung,
         role: newUser.vaiTro,
@@ -166,6 +167,7 @@ export class AuthService {
       access_token: await this.jwtService.signAsync(payload),
       user: {
         id: user.maTaiKhoan,
+        sub: user.maTaiKhoan,
         email: email,
         name: user.tenNguoiDung,
         role: user.vaiTro,
@@ -221,6 +223,7 @@ export class AuthService {
       access_token: await this.jwtService.signAsync(payload),
       user: {
         id: userInfo.maTaiKhoan,
+        sub: userInfo.maTaiKhoan,
         email: userInfo.email,
         name: userInfo.tenNguoiDung,
         role: userInfo.vaiTro,
@@ -284,6 +287,7 @@ export class AuthService {
       access_token: await this.jwtService.signAsync(payload),
       user: {
         id: userInfo.maTaiKhoan,
+        sub: userInfo.maTaiKhoan,
         email: userInfo.email,
         name: userInfo.tenNguoiDung,
         role: userInfo.vaiTro,
@@ -379,6 +383,7 @@ export class AuthService {
       access_token: await this.jwtService.signAsync(payload),
       user: {
         id: userInfo.maTaiKhoan,
+        sub: userInfo.maTaiKhoan,
         email: userInfo.email,
         name: userInfo.tenNguoiDung,
         role: userInfo.vaiTro,

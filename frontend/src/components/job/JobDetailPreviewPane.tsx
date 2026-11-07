@@ -21,7 +21,7 @@ interface JobDetailPreviewPaneProps {
 export default function JobDetailPreviewPane({ job }: JobDetailPreviewPaneProps) {
   if (!job) {
     return (
-      <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-400 sticky top-24 shadow-xs">
+      <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-400 shadow-xs">
         <Briefcase size={40} className="mx-auto mb-3 opacity-40 text-slate-400" />
         <p className="text-sm font-semibold text-slate-600">
           Chọn một công việc để xem nhanh thông tin chi tiết
@@ -36,7 +36,7 @@ export default function JobDetailPreviewPane({ job }: JobDetailPreviewPaneProps)
     "https://images.unsplash.com/photo-1549923746-c502d488b3ea?q=80&w=200&auto=format&fit=crop";
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-7 shadow-xs sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto">
+    <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-7 shadow-xs max-h-[calc(100vh-6.5rem)] overflow-y-auto">
       {/* 1. Header: Logo, Tên, Công ty */}
       <div className="flex items-start gap-4 pb-5 border-b border-slate-100">
         <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-xl border border-slate-100 p-2 shrink-0 bg-white flex items-center justify-center shadow-xs overflow-hidden">
