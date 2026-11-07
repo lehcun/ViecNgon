@@ -111,7 +111,7 @@ export default function ProfileDropdown({
             <Mail size={18} className="text-slate-400" /> Đăng ký nhận email
           </Link>
           <Link
-            href="/dashboard/notifications"
+            href="/notifications"
             className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-600 hover:text-primary hover:bg-primary-light/50 rounded-lg transition-colors"
           >
             <Bell size={18} className="text-slate-400" /> Thông báo

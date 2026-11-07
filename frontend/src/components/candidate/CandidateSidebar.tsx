@@ -12,10 +12,12 @@ import {
   ToggleRight,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
+import { useNotifications } from "@/hooks/useNotifications";
 
 export default function CandidateSidebar() {
   const pathname = usePathname();
   const { user } = useAuthStore();
+  const { unreadCount } = useNotifications();
 
   const isActive = (path: string) => pathname === path;
 
@@ -94,9 +96,19 @@ export default function CandidateSidebar() {
           </Link>
           <Link
             href="/notifications"
-            className={`${baseLinkClass} ${isActive("/notifications") ? activeLinkClass : inactiveLinkClass}`}
+            className={`justify-between ${baseLinkClass} ${isActive("/notifications") || isActive("/candidate/notifications")
+                ? activeLinkClass
+                : inactiveLinkClass
+              }`}
           >
-            <Bell size={20} /> Thông báo
+            <div className="flex items-center gap-3">
+              <Bell size={20} /> Thông báo
+            </div>
+            {unreadCount > 0 && (
+              <span className="w-5 h-5 flex items-center justify-center bg-rose-500 text-white text-xs font-bold rounded-full shadow-sm">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
           </Link>
           <Link
             href="/settings"

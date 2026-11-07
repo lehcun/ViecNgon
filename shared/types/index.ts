@@ -432,6 +432,21 @@ export interface NotificationItemResponse {
   createdAt: string | Date;
 }
 
+export interface NotificationListResponse {
+  data: NotificationItemResponse[];
+  total: number;
+  allCount: number;
+  unreadCount: number;
+  readCount: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface UnreadCountResponse {
+  count: number;
+}
+
 export interface ScheduleInterviewPayload {
   maDon: string;
   tieuDe: string;
