@@ -150,6 +150,14 @@ export interface JobDetailResponse {
   views: number;
   status: string;
   skills: string[];
+  branch?: {
+    id: string;
+    city: string;
+    address: string;
+    mapUrl?: string | null;
+  } | null;
+  isApplied?: boolean;
+  applicationStatus?: string | null;
   company: {
     id: string;
     name: string;
@@ -158,6 +166,7 @@ export interface JobDetailResponse {
     companyModel: string | null;
     industry: string | null;
     size: string | null;
+    address?: string | null;
     country: string | null;
     workingTime: string | null;
     otPolicy: string | null;

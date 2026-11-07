@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString, IsUrl } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateDonXinViecDto {
   @IsNotEmpty({ message: 'Mã công việc không được để trống' })
@@ -11,6 +11,13 @@ export class CreateDonXinViecDto {
 
   @IsOptional()
   @IsString()
-  // @IsUrl()
-  fileCvUrl?: string; // Link file CV (PDF) đã upload lên server/cloud
+  coverLetter?: string; // Alias cho thư ứng tuyển
+
+  @IsOptional()
+  @IsString()
+  maCvFile?: string; // Mã file CV đã tải lên trong hệ thống
+
+  @IsOptional()
+  @IsString()
+  fileCvUrl?: string; // Link file CV (PDF) trực tiếp
 }

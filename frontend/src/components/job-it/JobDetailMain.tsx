@@ -1,295 +1,659 @@
+"use client";
+
 import React, { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Building2,
   Clock,
   DollarSign,
-  ExternalLink,
-  Heart,
-  Mail,
   MapPin,
-  PlayCircle,
+  Briefcase,
+  Award,
+  Calendar,
+  Eye,
+  Send,
+  CheckCircle,
+  Heart,
+  Share2,
+  FileText,
+  X,
+  Loader2,
+  Sparkles,
+  ExternalLink,
+  ChevronRight,
+  AlertCircle,
 } from "lucide-react";
 import { JobDetailResponse } from "@viecngon/types";
-import { getRelativeTime } from "@/utils/formatTime";
+import { getRelativeTime } from "@/components/NotificationDropdown";
 import { useAuthStore } from "@/store/authStore";
-import { useRouter } from "next/navigation";
+import { useApplyJob, useRelatedJobs } from "@/hooks/job/useJobDetail";
+import { useCandidateProfile } from "@/hooks/candidate/useCandidateProfile";
+import toast from "react-hot-toast";
 
-const JobDetailMain = ({ job }: { job?: JobDetailResponse }) => {
-  const { isAuthenticated, user } = useAuthStore();
+interface JobDetailMainProps {
+  job?: JobDetailResponse;
+  isLoading?: boolean;
+}
+
+export default function JobDetailMain({
+  job,
+  isLoading = false,
+}: JobDetailMainProps) {
   const router = useRouter();
-
+  const { isAuthenticated, user } = useAuthStore();
   const [isSaved, setIsSaved] = useState(false);
-  if (job === undefined) return <h2>loading...</h2>;
+  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const [coverLetter, setCoverLetter] = useState("");
+  const [selectedCvOption, setSelectedCvOption] = useState<"profile" | "manual">("profile");
+  const [customCvUrl, setCustomCvUrl] = useState("");
 
-  const handleApply = () => {
+  const { candidateProfile } = useCandidateProfile();
+  const applyMutation = useApplyJob(job?.slug);
+  const { relatedJobs, isLoading: isRelatedLoading } = useRelatedJobs(
+    job?.slug || job?.id || "",
+  );
+
+  // 1. SKELETON LOADING STATE
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-6 animate-pulse">
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 space-y-5 shadow-xs">
+          <div className="h-8 bg-slate-200 rounded-lg w-3/4" />
+          <div className="h-5 bg-slate-200 rounded w-1/3" />
+          <div className="h-10 bg-slate-200 rounded-xl w-48" />
+          <div className="flex gap-4 pt-4">
+            <div className="h-12 bg-slate-200 rounded-xl flex-1" />
+            <div className="h-12 w-12 bg-slate-200 rounded-xl" />
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-slate-100">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-12 bg-slate-100 rounded-lg" />
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 space-y-4 shadow-xs">
+          <div className="h-6 bg-slate-200 rounded w-1/4" />
+          <div className="h-4 bg-slate-100 rounded w-full" />
+          <div className="h-4 bg-slate-100 rounded w-5/6" />
+          <div className="h-4 bg-slate-100 rounded w-4/6" />
+        </div>
+      </div>
+    );
+  }
+
+  // 2. ERROR / NOT FOUND STATE
+  if (!job) {
+    return (
+      <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-xs">
+        <AlertCircle size={48} className="mx-auto text-amber-500 mb-3" />
+        <h2 className="text-xl font-bold text-slate-800 mb-2">
+          Không tìm thấy công việc
+        </h2>
+        <p className="text-sm text-slate-500 mb-6 max-w-md mx-auto">
+          Công việc này có thể đã hết hạn nhận hồ sơ hoặc đã được nhà tuyển dụng gỡ xuống.
+        </p>
+        <Link
+          href="/job-it"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover text-white text-sm font-bold rounded-xl shadow-md shadow-primary/25 transition-all"
+        >
+          <span>Khám phá việc làm khác</span>
+          <ChevronRight size={16} />
+        </Link>
+      </div>
+    );
+  }
+
+  // 3. HANDLERS
+  const handleOpenApplyModal = () => {
     if (!isAuthenticated) {
-      router.push("/auth/login");
-    } else {
-      router.push(`/job-it/${job.slug}/job_applications`);
+      toast.error("Vui lòng đăng nhập để ứng tuyển công việc này!");
+      router.push(`/login?callbackUrl=/job-it/${job.slug}`);
+      return;
+    }
+    setIsApplyModalOpen(true);
+  };
+
+  const handleCopyLink = () => {
+    if (typeof window !== "undefined") {
+      navigator.clipboard.writeText(window.location.href);
+      toast.success("Đã sao chép liên kết vào bộ nhớ tạm!");
+    }
+  };
+
+  const handleSubmitApplication = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const payloadCvUrl =
+      selectedCvOption === "profile"
+        ? candidateProfile?.defaultCvFile?.fileUrl || candidateProfile?.cvUrl
+        : customCvUrl;
+
+    applyMutation.mutate(
+      {
+        maCongViec: job.id,
+        coverLetter: coverLetter.trim() || undefined,
+        chiTiet: coverLetter.trim() || undefined,
+        maCvFile: candidateProfile?.defaultCvFile?.id || undefined,
+        fileCvUrl: payloadCvUrl || undefined,
+      },
+      {
+        onSuccess: () => {
+          setIsApplyModalOpen(false);
+          setCoverLetter("");
+        },
+      },
+    );
+  };
+
+  // Helper render content (hỗ trợ cả HTML và văn bản thuần)
+  const renderFormattedContent = (content?: string | null) => {
+    if (!content) {
+      return (
+        <p className="text-slate-400 italic text-sm">
+          Chưa có thông tin chi tiết.
+        </p>
+      );
+    }
+
+    const hasHtmlTags = /<\/?[a-z][\s\S]*>/i.test(content);
+    if (hasHtmlTags) {
+      return (
+        <div
+          className="prose prose-slate max-w-none text-slate-700 leading-relaxed text-sm sm:text-base prose-headings:font-bold prose-a:text-primary hover:prose-a:underline"
+          dangerouslySetInnerHTML={{ __html: content }}
+        />
+      );
+    }
+
+    return (
+      <div className="space-y-2 text-slate-700 text-sm sm:text-base leading-relaxed whitespace-pre-line">
+        {content}
+      </div>
+    );
+  };
+
+  // Format hạn nộp hồ sơ
+  const formatDeadline = (dateString?: Date | string | null) => {
+    if (!dateString) return "Tuyển liên tục";
+    try {
+      const d = new Date(dateString);
+      if (isNaN(d.getTime())) return "Tuyển liên tục";
+      return `${`0${d.getDate()}`.slice(-2)}/${`0${d.getMonth() + 1}`.slice(-2)}/${d.getFullYear()}`;
+    } catch {
+      return "Tuyển liên tục";
     }
   };
 
   return (
     <>
-      {/* Card 1: Header Job */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:p-8">
-        <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800 mb-2">
-          {job.title}
-        </h1>
-        <p className="text-lg text-slate-600 font-medium mb-3">
-          {job.company.name}
-        </p>
-
-        <div className="flex items-center gap-2 text-emerald-600 font-bold bg-emerald-50 w-max px-3 py-1.5 rounded-lg mb-6">
-          <DollarSign size={18} /> {job.salaryDisplay}
-        </div>
-
-        {/* Nút Ứng tuyển & Lưu */}
-        <div className="flex items-center gap-4 mb-8">
-          <button
-            type="button"
-            onClick={handleApply}
-            className="flex-1 bg-primary hover:bg-primary-hover text-white font-bold py-3.5 rounded-lg shadow-md shadow-primary/20 transition-all active:scale-95 text-lg"
-          >
-            Ứng tuyển ngay
-          </button>
-          <button
-            onClick={() => setIsSaved(!isSaved)}
-            className={`w-14 h-14 flex items-center justify-center border-2 rounded-lg transition-colors ${isSaved ? "border-rose-500 text-rose-500 bg-rose-50" : "border-slate-200 text-slate-400 hover:border-rose-300 hover:text-rose-400"}`}
-          >
-            <Heart size={24} fill={isSaved ? "currentColor" : "none"} />
-          </button>
-        </div>
-
-        {/* Video/Image Grid Giả lập */}
-        <div className="grid grid-cols-2 gap-2 mb-8">
-          <div className="relative rounded-lg overflow-hidden h-40 bg-slate-800 cursor-pointer group">
-            <img
-              src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=800&auto=format&fit=crop"
-              alt="Office"
-              className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
-            />
-            <PlayCircle
-              size={40}
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all"
-            />
-          </div>
-          <div className="relative rounded-lg overflow-hidden h-40 bg-slate-800 cursor-pointer group">
-            <img
-              src="https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=800&auto=format&fit=crop"
-              alt="Team"
-              className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
-            />
-            <PlayCircle
-              size={40}
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all"
-            />
-          </div>
-        </div>
-
-        {/* Job Meta Info */}
-        <div className="space-y-3 text-sm text-slate-600 mb-6">
-          <p className="flex items-start gap-2">
-            <MapPin size={18} className="mt-0.5 text-slate-400 shrink-0" />
-            <a href="#" className="hover:text-primary transition-colors">
-              {job.location}
-              <ExternalLink size={14} className="inline mb-1" />
-            </a>
-          </p>
-          <p className="flex items-center gap-2">
-            <Building2 size={18} className="text-slate-400" /> {job.workModel}
-          </p>
-          <p className="flex items-center gap-2">
-            <Clock size={18} className="text-slate-400" />
-            {getRelativeTime(job.postedAt)}
-          </p>
-        </div>
-
-        <div className="h-px bg-slate-100 my-6"></div>
-
-        {/* Tags */}
-        <div className="grid grid-cols-[100px_1fr] gap-4 items-center mb-4">
-          <span className="text-sm font-semibold text-slate-700">Kỹ năng:</span>
-          <div className="flex flex-wrap gap-2">
-            {job.skills.map((skill) => (
-              <span
-                key={skill}
-                className="px-3 py-1 border border-slate-200 rounded-full text-xs font-medium text-slate-600 hover:border-primary hover:text-primary transition-colors cursor-pointer"
-              >
-                {skill}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-[100px_1fr] gap-4 items-center">
-          <span className="text-sm font-semibold text-slate-700">
-            Lĩnh vực:
-          </span>
-          <span className="text-sm font-medium text-slate-600">
-            Nghiên cứu & Phát triển (R&D)
-          </span>
-        </div>
-      </div>
-
-      {/* Card 2: 3 Lý do gia nhập */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:p-8">
-        <h2 className="text-xl font-bold text-slate-800 mb-4">
-          Lý do để gia nhập công ty
-        </h2>
-        {/* Render HTML từ Tiptap bằng dangerouslySetInnerHTML */}
-        <div
-          className="prose prose-slate prose-li:marker:text-rose-500 max-w-none text-slate-700"
-          dangerouslySetInnerHTML={{ __html: job.benefits || "" }}
-        />
-      </div>
-
-      {/* Card 3: Chi tiết công việc (Mô tả) */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:p-8">
-        <h2 className="text-xl font-bold text-slate-800 mb-6 pb-4 border-b border-slate-100">
-          Chi tiết công việc
-        </h2>
-
-        <div className="prose prose-slate max-w-none prose-p:text-slate-600 prose-li:text-slate-600">
-          <h3 className="text-lg font-bold text-slate-800 mb-3">
-            Get to know the Role:
-          </h3>
-          <p className="mb-4">
-            We are looking for an Engineering Manager to lead our Core Transport
-            team. You will be responsible for building high-performance systems
-            that handle millions of requests per minute...
-          </p>
-
-          <h3 className="text-lg font-bold text-slate-800 mb-3 mt-6">
-            The day-to-day activities:
-          </h3>
-          <ul className="list-disc pl-5 space-y-2 mb-6">
-            <li>
-              Lead, mentor, and grow a team of talented software engineers.
-            </li>
-            <li>Design and implement scalable microservices using Golang.</li>
-            <li>
-              Collaborate with Product Managers to define technical roadmaps.
-            </li>
-          </ul>
-
-          <h3 className="text-lg font-bold text-slate-800 mb-3 mt-6">
-            Life at Grab:
-          </h3>
-          <p className="mb-4">
-            We care about your well-being at Grab, here are some of the global
-            benefits we offer:
-          </p>
-          <ul className="list-disc pl-5 space-y-2">
-            <li>
-              We have your back with <strong>Term Life Insurance</strong> and
-              comprehensive <strong>Medical Insurance</strong>.
-            </li>
-            <li>
-              With <strong>GrabFlex</strong>, create a benefits package that
-              suits your needs.
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      {/* Việc làm tương tự */}
-      <div className="mt-8">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-slate-800">
-            Việc làm tương tự dành cho bạn
-          </h2>
-        </div>
-
-        {/* Alert Đăng ký nhận việc */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 shadow-sm">
-          <span className="text-sm font-medium text-slate-600">
-            {isAuthenticated
-              ? `Nhận các việc làm tương tự qua email ${user?.email}`
-              : "Đăng nhập để nhận việc làm qua email"}
-          </span>
-          <button
-            disabled={!isAuthenticated}
-            onClick={() => {}}
-            className="whitespace-nowrap px-4 py-2 border-2 border-rose-500 text-rose-500 hover:bg-rose-50 font-bold rounded-lg transition-colors flex items-center gap-2 text-sm"
-          >
-            <Mail size={16} /> Nhận thông báo
-          </button>
-        </div>
-
-        {/* Lưới Việc làm tương tự (2 cột) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Job Card 1 */}
-          <div className="bg-white border border-slate-200 rounded-xl p-5 hover:border-primary hover:shadow-md transition-all cursor-pointer relative overflow-hidden">
-            <div className="absolute top-0 right-0 bg-rose-500 text-white text-[10px] font-black px-2 py-1 rounded-bl-lg">
-              🔥 SUPER HOT
+      <div className="flex flex-col gap-6">
+        {/* ========================================================
+            CARD 1: HEADER CÔNG VIỆC + NÚT ỨNG TUYỂN
+        ======================================================== */}
+        <div className="bg-white rounded-2xl shadow-xs border border-slate-200 p-6 md:p-8">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 leading-tight">
+                {job.title}
+              </h1>
+              <p className="text-sm sm:text-base font-semibold text-slate-600 mt-1.5 line-clamp-1">
+                {job.company?.name}
+              </p>
             </div>
-            <div className="flex items-center gap-3 mb-3 mt-1">
-              <div className="w-12 h-12 border border-slate-100 rounded bg-slate-50 flex items-center justify-center p-1">
+            {job.company?.logo && (
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl border border-slate-100 bg-white p-2 shrink-0 flex items-center justify-center shadow-xs overflow-hidden">
                 <img
-                  src="https://ui-avatars.com/api/?name=OTS&background=fff&color=2563eb"
-                  alt="Logo"
-                  className="rounded"
+                  src={job.company.logo}
+                  alt={job.company.name}
+                  className="w-full h-full object-contain"
                 />
               </div>
+            )}
+          </div>
+
+          {/* Mức lương nổi bật */}
+          <div className="mt-4 inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-50 text-emerald-700 rounded-xl font-black text-base sm:text-lg">
+            <DollarSign size={20} className="-ml-1 shrink-0 text-emerald-600" />
+            <span>{job.salaryDisplay}</span>
+          </div>
+
+          {/* Nút Ứng tuyển & Lưu tin */}
+          <div className="flex items-center gap-3 mt-6">
+            {job.isApplied ? (
+              <div className="flex-1 inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-base border border-emerald-200">
+                <CheckCircle size={20} className="text-emerald-600 shrink-0" />
+                <span>
+                  Đã ứng tuyển {job.applicationStatus ? `(${job.applicationStatus})` : ""}
+                </span>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleOpenApplyModal}
+                className="flex-1 inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold text-base shadow-md shadow-primary/25 transition-all active:scale-[0.98] cursor-pointer"
+              >
+                <Send size={18} />
+                <span>Ứng tuyển ngay</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setIsSaved(!isSaved)}
+              className={`p-3.5 border rounded-xl transition-all cursor-pointer ${isSaved
+                ? "border-rose-400 bg-rose-50 text-rose-500"
+                : "border-slate-200 text-slate-400 hover:border-rose-300 hover:text-rose-400 bg-white"
+                }`}
+              title={isSaved ? "Bỏ lưu việc" : "Lưu việc làm"}
+            >
+              <Heart size={20} fill={isSaved ? "currentColor" : "none"} />
+            </button>
+
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              className="p-3.5 border border-slate-200 text-slate-400 hover:border-primary hover:text-primary rounded-xl transition-all bg-white cursor-pointer"
+              title="Sao chép liên kết"
+            >
+              <Share2 size={20} />
+            </button>
+          </div>
+
+          {/* Lưới Thông số Chi tiết */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-8 pt-6 border-t border-slate-100 text-xs sm:text-sm">
+            {/* Địa điểm */}
+            <div className="flex items-start gap-2.5 text-slate-600">
+              <MapPin size={18} className="text-slate-400 shrink-0 mt-0.5" />
               <div>
-                <h3 className="font-bold text-slate-800 line-clamp-2">
-                  Technical Architect (Golang/NodeJS)
-                </h3>
-                <p className="text-xs text-slate-500 mt-1">
-                  ONE Tech Stop Vietnam
+                <p className="text-[11px] text-slate-400 font-medium">Địa điểm</p>
+                <p className="font-semibold text-slate-800 line-clamp-1">
+                  {job.location || "Toàn quốc"}
                 </p>
               </div>
             </div>
-            <div className="flex flex-wrap gap-1.5 mb-4">
-              <span className="px-2 py-1 bg-slate-100 text-slate-600 text-[10px] rounded font-medium">
-                Golang
-              </span>
-              <span className="px-2 py-1 bg-slate-100 text-slate-600 text-[10px] rounded font-medium">
-                System Architecture
-              </span>
+
+            {/* Hình thức làm việc */}
+            <div className="flex items-start gap-2.5 text-slate-600">
+              <Briefcase size={18} className="text-slate-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-[11px] text-slate-400 font-medium">Hình thức</p>
+                <p className="font-semibold text-slate-800">
+                  {job.workModel || "Toàn thời gian"}
+                </p>
+              </div>
             </div>
-            <div className="flex items-center gap-1 text-emerald-600 text-sm font-bold border-t border-slate-100 pt-3">
-              <DollarSign size={16} /> 2,000 - 4,000 USD
+
+            {/* Cấp bậc */}
+            <div className="flex items-start gap-2.5 text-slate-600">
+              <Award size={18} className="text-slate-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-[11px] text-slate-400 font-medium">Cấp bậc</p>
+                <p className="font-semibold text-slate-800">
+                  {job.level || "Không yêu cầu"}
+                </p>
+              </div>
+            </div>
+
+            {/* Kinh nghiệm */}
+            <div className="flex items-start gap-2.5 text-slate-600">
+              <Sparkles size={18} className="text-slate-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-[11px] text-slate-400 font-medium">Kinh nghiệm</p>
+                <p className="font-semibold text-slate-800">
+                  {job.experience !== null && job.experience !== undefined
+                    ? `${job.experience} năm`
+                    : "Không yêu cầu"}
+                </p>
+              </div>
+            </div>
+
+            {/* Hạn nộp */}
+            <div className="flex items-start gap-2.5 text-slate-600">
+              <Calendar size={18} className="text-slate-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-[11px] text-slate-400 font-medium">Hạn nộp hồ sơ</p>
+                <p className="font-semibold text-slate-800">
+                  {formatDeadline(job.deadline)}
+                </p>
+              </div>
+            </div>
+
+            {/* Lượt xem */}
+            <div className="flex items-start gap-2.5 text-slate-600">
+              <Eye size={18} className="text-slate-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-[11px] text-slate-400 font-medium">Lượt xem</p>
+                <p className="font-semibold text-slate-800">
+                  {job.views || 0} lượt xem
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* Job Card 2 */}
-          <div className="bg-white border border-slate-200 rounded-xl p-5 hover:border-primary hover:shadow-md transition-all cursor-pointer relative overflow-hidden">
-            <div className="absolute top-0 right-0 bg-amber-500 text-white text-[10px] font-black px-2 py-1 rounded-bl-lg">
-              HOT
-            </div>
-            <div className="flex items-center gap-3 mb-3 mt-1">
-              <div className="w-12 h-12 border border-slate-100 rounded bg-slate-50 flex items-center justify-center p-1">
-                <img
-                  src="https://ui-avatars.com/api/?name=VNG&background=fff&color=f97316"
-                  alt="Logo"
-                  className="rounded"
-                />
-              </div>
-              <div>
-                <h3 className="font-bold text-slate-800 line-clamp-2">
-                  Engineering Manager (Payment)
-                </h3>
-                <p className="text-xs text-slate-500 mt-1">VNG Corporation</p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-1.5 mb-4">
-              <span className="px-2 py-1 bg-slate-100 text-slate-600 text-[10px] rounded font-medium">
-                Team Management
-              </span>
-              <span className="px-2 py-1 bg-slate-100 text-slate-600 text-[10px] rounded font-medium">
-                Java
+          {/* Chi nhánh làm việc cụ thể nếu có */}
+          {job.branch?.address && (
+            <div className="mt-4 p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-start gap-2 text-xs text-slate-600">
+              <MapPin size={16} className="text-primary shrink-0 mt-0.5" />
+              <span>
+                <strong className="text-slate-700">Chi nhánh:</strong>{" "}
+                {job.branch.address} ({job.branch.city})
               </span>
             </div>
-            <div className="flex items-center gap-1 text-emerald-600 text-sm font-bold border-t border-slate-100 pt-3">
-              <DollarSign size={16} /> Thương lượng
+          )}
+
+          {/* Tags Kỹ năng */}
+          {job.skills && job.skills.length > 0 && (
+            <div className="mt-6 pt-5 border-t border-slate-100">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mr-1">
+                  Kỹ năng:
+                </span>
+                {job.skills.map((skill) => (
+                  <span
+                    key={skill}
+                    className="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200/60 hover:border-primary hover:text-primary transition-colors cursor-default"
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
             </div>
+          )}
+        </div>
+
+        {/* ========================================================
+            CARD 2: PHÚC LỢI & LÝ DO GIA NHẬP CÔNG TY
+        ======================================================== */}
+        {job.benefits && (
+          <div className="bg-white rounded-2xl shadow-xs border border-slate-200 p-6 md:p-8">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900 mb-4 pb-3 border-b border-slate-100 flex items-center gap-2">
+              <Sparkles size={20} className="text-primary" />
+              <span>Phúc lợi & Lý do gia nhập</span>
+            </h2>
+            {renderFormattedContent(job.benefits)}
           </div>
+        )}
+
+        {/* ========================================================
+            CARD 3: MÔ TẢ CÔNG VIỆC
+        ======================================================== */}
+        <div className="bg-white rounded-2xl shadow-xs border border-slate-200 p-6 md:p-8">
+          <h2 className="text-lg sm:text-xl font-bold text-slate-900 mb-4 pb-3 border-b border-slate-100">
+            Mô tả công việc
+          </h2>
+          {renderFormattedContent(job.description)}
+        </div>
+
+        {/* ========================================================
+            CARD 4: YÊU CẦU CÔNG VIỆC
+        ======================================================== */}
+        {job.requirements && (
+          <div className="bg-white rounded-2xl shadow-xs border border-slate-200 p-6 md:p-8">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900 mb-4 pb-3 border-b border-slate-100">
+              Yêu cầu ứng viên
+            </h2>
+            {renderFormattedContent(job.requirements)}
+          </div>
+        )}
+
+        {/* ========================================================
+            CARD 5: VIỆC LÀM TƯƠNG TỰ (API 2)
+        ======================================================== */}
+        <div className="mt-2">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900">
+              Việc làm tương tự dành cho bạn
+            </h2>
+            <Link
+              href="/job-it"
+              className="text-xs sm:text-sm font-semibold text-primary hover:underline inline-flex items-center gap-1"
+            >
+              <span>Xem tất cả</span>
+              <ChevronRight size={14} />
+            </Link>
+          </div>
+
+          {isRelatedLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-pulse">
+              {[1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3"
+                >
+                  <div className="h-5 bg-slate-200 rounded w-3/4" />
+                  <div className="h-4 bg-slate-100 rounded w-1/2" />
+                  <div className="h-4 bg-slate-100 rounded w-1/3" />
+                </div>
+              ))}
+            </div>
+          ) : relatedJobs && relatedJobs.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {relatedJobs.slice(0, 4).map((item) => (
+                <Link
+                  key={item.id}
+                  href={`/job-it/${item.slug}`}
+                  className="group bg-white rounded-2xl border border-slate-200 p-5 hover:border-primary/60 hover:shadow-md transition-all flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-start gap-3">
+                      <div className="w-12 h-12 rounded-xl border border-slate-100 bg-white p-1.5 shrink-0 flex items-center justify-center overflow-hidden">
+                        <img
+                          src={
+                            item.company?.logo ||
+                            "https://placehold.co/100x100?text=Logo"
+                          }
+                          alt={item.company?.name || "Logo"}
+                          className="w-full h-full object-contain"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src =
+                              "https://placehold.co/100x100?text=Logo";
+                          }}
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-bold text-sm sm:text-base text-slate-900 group-hover:text-primary transition-colors line-clamp-1">
+                          {item.title}
+                        </h3>
+                        <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">
+                          {item.company?.name}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 text-xs font-black text-emerald-600">
+                      {item.salaryDisplay}
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5 mt-3">
+                      {item.location && (
+                        <span className="text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                          {item.location}
+                        </span>
+                      )}
+                      {item.skills?.slice(0, 3).map((sk) => (
+                        <span
+                          key={sk}
+                          className="text-[11px] font-medium text-slate-600 bg-slate-50 border border-slate-200/70 px-2 py-0.5 rounded"
+                        >
+                          {sk}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] text-slate-400 flex items-center justify-between">
+                    <span>Đăng {getRelativeTime(item.postedAt)}</span>
+                    <span className="text-primary font-bold group-hover:underline">
+                      Chi tiết &rsaquo;
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-400 text-sm">
+              Hiện chưa có việc làm tương tự nào khác.
+            </div>
+          )}
         </div>
       </div>
+
+      {/* ========================================================
+          MODAL ỨNG TUYỂN CÔNG VIỆC TRỰC TIẾP
+      ======================================================== */}
+      {isApplyModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
+            {/* Nút đóng */}
+            <button
+              onClick={() => setIsApplyModalOpen(false)}
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors"
+            >
+              <X size={20} />
+            </button>
+
+            {/* Tiêu đề modal */}
+            <div className="mb-6">
+              <h3 className="text-xl font-bold text-slate-900">
+                Ứng tuyển vị trí
+              </h3>
+              <p className="text-sm font-semibold text-primary mt-1 line-clamp-1">
+                {job.title}
+              </p>
+              <p className="text-xs text-slate-500 mt-0.5">
+                tại {job.company?.name}
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmitApplication} className="space-y-5">
+              {/* Thông tin ứng viên */}
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 space-y-2 text-xs sm:text-sm">
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Họ và tên:</span>
+                  <span className="font-bold text-slate-800">
+                    {candidateProfile?.candidateName || user?.name || "Ứng viên"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Email:</span>
+                  <span className="font-semibold text-slate-800">
+                    {user?.email || "Chưa cập nhật"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Lựa chọn CV */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                  Chọn hồ sơ / CV để nộp:
+                </label>
+                <div className="space-y-2">
+                  <label
+                    onClick={() => setSelectedCvOption("profile")}
+                    className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${selectedCvOption === "profile"
+                      ? "border-primary bg-primary-light/40 ring-1 ring-primary/20"
+                      : "border-slate-200 hover:border-slate-300"
+                      }`}
+                  >
+                    <input
+                      type="radio"
+                      name="cvOption"
+                      checked={selectedCvOption === "profile"}
+                      onChange={() => setSelectedCvOption("profile")}
+                      className="mt-1 text-primary focus:ring-primary"
+                    />
+                    <div className="flex-1 min-w-0 text-xs sm:text-sm">
+                      <p className="font-bold text-slate-800">
+                        Hồ sơ trực tuyến ViecNgon
+                      </p>
+                      <p className="text-slate-500 text-xs mt-0.5 truncate">
+                        {candidateProfile?.defaultCvFile?.fileName ||
+                          candidateProfile?.cvUrl ||
+                          "Sử dụng thông tin hồ sơ và CV hiện có trong tài khoản"}
+                      </p>
+                    </div>
+                  </label>
+
+                  <label
+                    onClick={() => setSelectedCvOption("manual")}
+                    className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${selectedCvOption === "manual"
+                      ? "border-primary bg-primary-light/40 ring-1 ring-primary/20"
+                      : "border-slate-200 hover:border-slate-300"
+                      }`}
+                  >
+                    <input
+                      type="radio"
+                      name="cvOption"
+                      checked={selectedCvOption === "manual"}
+                      onChange={() => setSelectedCvOption("manual")}
+                      className="mt-1 text-primary focus:ring-primary"
+                    />
+                    <div className="flex-1 min-w-0 text-xs sm:text-sm">
+                      <p className="font-bold text-slate-800">
+                        Nhập liên kết CV ngoài (Google Drive / Notion / Portfolio)
+                      </p>
+                      {selectedCvOption === "manual" && (
+                        <input
+                          type="url"
+                          placeholder="https://..."
+                          value={customCvUrl}
+                          onChange={(e) => setCustomCvUrl(e.target.value)}
+                          className="mt-2 w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-primary"
+                          required={selectedCvOption === "manual"}
+                        />
+                      )}
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Thư giới thiệu / Cover letter */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Thư giới thiệu (Không bắt buộc):
+                </label>
+                <textarea
+                  rows={4}
+                  value={coverLetter}
+                  onChange={(e) => setCoverLetter(e.target.value)}
+                  placeholder="Gửi vài lời chia sẻ tới nhà tuyển dụng về lý do bạn phù hợp với vị trí này..."
+                  className="w-full px-3.5 py-2.5 text-xs sm:text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 resize-none"
+                />
+              </div>
+
+              {/* Nút xác nhận nộp */}
+              <div className="flex items-center gap-3 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setIsApplyModalOpen(false)}
+                  className="flex-1 py-3 px-4 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-xs sm:text-sm transition-colors cursor-pointer"
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="submit"
+                  disabled={applyMutation.isPending}
+                  className="flex-1 py-3 px-4 rounded-xl bg-primary hover:bg-primary-hover disabled:bg-primary/60 text-white font-bold text-xs sm:text-sm shadow-md shadow-primary/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  {applyMutation.isPending ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>Đang nộp...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send size={16} />
+                      <span>Xác nhận Ứng tuyển</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </>
   );
-};
-
-export default JobDetailMain;
+}

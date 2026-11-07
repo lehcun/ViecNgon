@@ -287,88 +287,8 @@ export class JobService {
     return { message: 'Xóa việc làm thành công' };
   }
 
-  async getJobBySlug(slug: string) {
-    // 1. Tìm công việc dựa vào slug
-    const job = await this.prisma.congViec.findUnique({
-      where: { slug },
-      include: {
-        nhaTuyenDung: {
-          include: {
-            congTy: true, // Join luôn để lấy thông tin Công ty (Tên, Logo...)
-          },
-        },
-        congViecKyNangs: {
-          include: {
-            kyNang: true, // Join lấy tên các kỹ năng của công việc này
-          },
-        },
-      },
-    });
-
-    if (!job) {
-      throw new NotFoundException(`Không tìm thấy công việc này!`);
-    }
-
-    // 2. Tăng số lượt xem (luotXem) lên 1 ngay dưới nền
-    await this.prisma.congViec.update({
-      where: { slug },
-      data: { luotXem: { increment: 1 } },
-    });
-
-    const min = job.mucLuongToiThieu ? Number(job.mucLuongToiThieu) : 0;
-    const max = job.mucLuongToiDa ? Number(job.mucLuongToiDa) : 0;
-
-    // 3. Format lại dữ liệu cho Frontend dễ đọc (giống với Clean Architecture)
-    const formattedJob = {
-      id: job.maCongViec,
-      title: job.tenCongViec,
-      slug: job.slug,
-      description: job.moTa,
-      requirements: job.yeuCauCongViec,
-      // Xử lý biến chuỗi JSON thành mảng
-      benefits: job.phucLoi,
-
-      // Ép kiểu Decimal sang Number cho Frontend
-      // Trả về cả min, max và chuỗi đã format
-      salaryMin: min,
-      salaryMax: max,
-      salaryDisplay: formatSalaryDisplay(
-        job.mucLuongToiThieu,
-        job.mucLuongToiDa,
-      ),
-
-      experience: job.yeuCauKinhNghiem,
-      level: job.capBac,
-
-      location: job.thanhPho,
-      type: job.loaiHinh,
-      workModel: job.hinhThucLamViec,
-
-      postedAt: job.ngayDang,
-      deadline: job.ngayHetHan,
-      updatedAt: job.ngayCapNhat,
-      views: job.luotXem + 1, // Trả về số lượt xem mới nhất
-      status: job.trangThai,
-
-      // Mổ xẻ lấy mảng tên kỹ năng: ['React', 'Node.js']
-      skills: job.congViecKyNangs.map((cvkn) => cvkn.kyNang.tenKyNang),
-
-      // Thông tin công ty
-      company: {
-        id: job.nhaTuyenDung.congTy.maCongTy,
-        name: job.nhaTuyenDung.congTy.tenCongTy,
-        logo: job.nhaTuyenDung.congTy.logoUrl,
-        slug: job.nhaTuyenDung.congTy.slug,
-        companyModel: job.nhaTuyenDung.congTy.moHinhCongTy,
-        industry: job.nhaTuyenDung.congTy.linhVuc,
-        size: job.nhaTuyenDung.congTy.quyMo,
-        country: job.nhaTuyenDung.congTy.quocGia,
-        workingTime: job.nhaTuyenDung.congTy.thoiGianLamViec,
-        otPolicy: job.nhaTuyenDung.congTy.chinhSachOT,
-      },
-    };
-
-    return formattedJob;
+  async getJobBySlug(slug: string, userId?: string) {
+    return this.getJobDetail(slug, userId);
   }
 
   async getJobs(filters: SearchJobsDto | GetJobsFilterDto) {
@@ -589,44 +509,143 @@ export class JobService {
       }
 
   /**
-   * Lấy chi tiết một công việc theo Slug
-   * Học tập từ hàm getCompanyDetailBySlug()
+   * Lấy chi tiết một công việc theo Slug hoặc ID
+   * Kèm kiểm tra trạng thái ứng tuyển nếu user đã đăng nhập
+   * Tự động tăng lượt xem tin
    */
-  async getJobDetailBySlug(slug: string): Promise < JobDetailResponse > {
-        const job = await this.prisma.congViec.findUnique({
-          where: { slug },
+  async getJobDetail(
+    slugOrId: string,
+    userId?: string,
+  ): Promise<JobDetailResponse> {
+    const job = await this.prisma.congViec.findFirst({
+      where: {
+        OR: [{ slug: slugOrId }, { maCongViec: slugOrId }],
+      },
+      include: {
+        nhaTuyenDung: {
           include: {
-            nhaTuyenDung: {
-              include: {
-                congTy: true,
-              },
-            },
-            congViecKyNangs: {
-              include: {
-                kyNang: true,
-              },
-            },
-            chiNhanh: true, // Lấy thêm thông tin chi nhánh nếu cần
+            congTy: true,
           },
-        });
+        },
+        congViecKyNangs: {
+          include: {
+            kyNang: true,
+          },
+        },
+        chiNhanh: true,
+      },
+    });
 
-        if(!job) {
-          throw new NotFoundException('Không tìm thấy tin tuyển dụng này');
-        }
+    if (!job) {
+      throw new NotFoundException('Không tìm thấy tin tuyển dụng này');
+    }
 
-    // Tăng lượt xem tin (Logic bổ sung thường có trong Job Detail)
+    // Tăng lượt xem tin lên 1
     await this.prisma.congViec.update({
-          where: { maCongViec: job.maCongViec },
-          data: { luotXem: { increment: 1 } },
+      where: { maCongViec: job.maCongViec },
+      data: { luotXem: { increment: 1 } },
+    });
+    job.luotXem += 1;
+
+    // Kiểm tra trạng thái ứng tuyển nếu user đã đăng nhập
+    let applicationInfo: { isApplied: boolean; status?: string | null } = {
+      isApplied: false,
+      status: null,
+    };
+
+    if (userId) {
+      const candidate = await this.prisma.ungVien.findUnique({
+        where: { maTaiKhoan: userId },
+        select: { maUngVien: true },
+      });
+
+      if (candidate) {
+        const applied = await this.prisma.donXinViec.findFirst({
+          where: {
+            maCongViec: job.maCongViec,
+            maUngVien: candidate.maUngVien,
+          },
+          select: { trangThai: true },
         });
 
-        return this.formatJobData(job);
+        if (applied) {
+          applicationInfo = {
+            isApplied: true,
+            status: applied.trangThai,
+          };
+        }
       }
+    }
+
+    return this.formatJobData(job as any, applicationInfo);
+  }
+
+  async getJobDetailBySlug(
+    slug: string,
+    userId?: string,
+  ): Promise<JobDetailResponse> {
+    return this.getJobDetail(slug, userId);
+  }
+
+  /**
+   * Lấy danh sách 4-5 công việc tương tự (cùng chuyên môn, công ty hoặc cùng kỹ năng)
+   */
+  async getRelatedJobs(slugOrId: string): Promise<JobDetailResponse[]> {
+    const job = await this.prisma.congViec.findFirst({
+      where: {
+        OR: [{ slug: slugOrId }, { maCongViec: slugOrId }],
+      },
+      include: {
+        nhaTuyenDung: true,
+        congViecKyNangs: true,
+      },
+    });
+
+    if (!job) {
+      return [];
+    }
+
+    const skillIds = job.congViecKyNangs.map((k) => k.maKyNang);
+
+    const relatedJobs = await this.prisma.congViec.findMany({
+      where: {
+        maCongViec: { not: job.maCongViec },
+        trangThai: { in: ['DA_DUYET', 'Đang tuyển'] },
+        OR: [
+          { nhaTuyenDung: { maCongTy: job.nhaTuyenDung.maCongTy } },
+          ...(skillIds.length > 0
+            ? [{ congViecKyNangs: { some: { maKyNang: { in: skillIds } } } }]
+            : []),
+          ...(job.thanhPho ? [{ thanhPho: job.thanhPho }] : []),
+        ],
+      },
+      take: 4,
+      orderBy: { ngayDang: 'desc' },
+      include: {
+        nhaTuyenDung: {
+          include: {
+            congTy: true,
+          },
+        },
+        chiNhanh: true,
+        congViecKyNangs: {
+          include: {
+            kyNang: true,
+          },
+        },
+      },
+    });
+
+    return relatedJobs.map((j) => this.formatJobData(j as any));
+  }
 
   /**
    * Hàm Helper để format dữ liệu Job đồng nhất (Private)
    */
-  private formatJobData(job: JobWithRelations) {
+  private formatJobData(
+    job: JobWithRelations,
+    applicationInfo?: { isApplied: boolean; status?: string | null },
+  ): JobDetailResponse {
     const min = job.mucLuongToiThieu ? Number(job.mucLuongToiThieu) : 0;
     const max = job.mucLuongToiDa ? Number(job.mucLuongToiDa) : 0;
 
@@ -644,7 +663,7 @@ export class JobService {
       slug: job.slug,
       description: job.moTa,
       requirements: job.yeuCauCongViec,
-      benefits: job.phucLoi || '', // Chuyển String Tiptap thành mảng nếu cần
+      benefits: job.phucLoi || '',
       salaryMin: min || null,
       salaryMax: max || null,
       salaryDisplay: formatSalaryDisplay(
@@ -661,12 +680,20 @@ export class JobService {
       updatedAt: job.ngayCapNhat,
       views: job.luotXem,
       status: job.trangThai,
-      // Map kỹ năng từ bảng trung gian
       skills:
         job.congViecKyNangs
           ?.map((ck: CongViecKyNangData) => ck.kyNang?.tenKyNang)
           .filter(Boolean) || [],
-      // Thông tin công ty lồng bên trong
+      branch: job.chiNhanh
+        ? {
+            id: job.chiNhanh.maChiNhanh,
+            city: job.chiNhanh.thanhPho,
+            address: job.chiNhanh.diaChi,
+            mapUrl: job.chiNhanh.mapUrl,
+          }
+        : null,
+      isApplied: applicationInfo?.isApplied ?? false,
+      applicationStatus: applicationInfo?.status ?? null,
       company: {
         id: company.maCongTy,
         name: company.tenCongTy,
@@ -675,6 +702,7 @@ export class JobService {
         companyModel: company.moHinhCongTy,
         industry: company.linhVuc,
         size: company.quyMo,
+        address: company.diaChi,
         country: company.quocGia,
         workingTime: company.thoiGianLamViec,
         otPolicy: company.chinhSachOT,

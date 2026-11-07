@@ -14,9 +14,9 @@ import { ApplicationsService } from './applications.service';
 import { SendEmailDto } from './dto/send-email.dto';
 import { ScheduleInterviewDto } from './dto/schedule-interview.dto';
 
-@Controller('applications')
+@Controller(['applications', 'candidate/applications'])
 export class ApplicationsController {
-  constructor(private readonly applicationService: ApplicationsService) {}
+  constructor(private readonly applicationService: ApplicationsService) { }
 
   // =========================================================
   // 1. API DÀNH CHO ỨNG VIÊN (CANDIDATE)

@@ -5,12 +5,9 @@ import Link from "next/link";
 import {
   ExternalLink,
   MapPin,
-  DollarSign,
-  Clock,
   Briefcase,
   Award,
-  Building2,
-  Calendar,
+  Clock,
   Send,
   Globe,
   Users,
@@ -25,7 +22,7 @@ export default function JobDetailPreviewPane({ job }: JobDetailPreviewPaneProps)
   if (!job) {
     return (
       <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-400 sticky top-24 shadow-xs">
-        <Briefcase size={40} className="mx-auto mb-3 opacity-40" />
+        <Briefcase size={40} className="mx-auto mb-3 opacity-40 text-slate-400" />
         <p className="text-sm font-semibold text-slate-600">
           Chọn một công việc để xem nhanh thông tin chi tiết
         </p>
@@ -39,10 +36,10 @@ export default function JobDetailPreviewPane({ job }: JobDetailPreviewPaneProps)
     "https://images.unsplash.com/photo-1549923746-c502d488b3ea?q=80&w=200&auto=format&fit=crop";
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto">
+    <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-7 shadow-xs sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto">
       {/* 1. Header: Logo, Tên, Công ty */}
       <div className="flex items-start gap-4 pb-5 border-b border-slate-100">
-        <div className="w-16 h-16 rounded-xl border border-slate-100 p-2 shrink-0 bg-white flex items-center justify-center shadow-xs overflow-hidden">
+        <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-xl border border-slate-100 p-2 shrink-0 bg-white flex items-center justify-center shadow-xs overflow-hidden">
           <img
             src={companyLogo}
             alt={company?.name || "Company Logo"}
@@ -55,56 +52,59 @@ export default function JobDetailPreviewPane({ job }: JobDetailPreviewPaneProps)
         </div>
 
         <div className="flex-1 min-w-0">
-          <h2 className="text-lg font-bold text-slate-900 leading-snug">
+          <Link
+            href={`/jobs/${job.slug}`}
+            className="text-lg sm:text-xl font-bold text-slate-900 leading-snug hover:text-primary transition-colors block"
+          >
             {job.title}
-          </h2>
+          </Link>
           <p className="text-sm font-medium text-slate-600 mt-1 line-clamp-1">
             {company?.name}
           </p>
 
-          <div className="mt-2 text-base font-black text-emerald-600">
+          <div className="mt-2 text-base sm:text-lg font-black text-emerald-600">
             {job.salaryDisplay}
           </div>
         </div>
       </div>
 
       {/* 2. Nút Hành động */}
-      <div className="flex items-center gap-2.5 py-4 border-b border-slate-100">
+      <div className="flex items-center gap-3 py-4 border-b border-slate-100">
         <Link
-          href={`/job-it/${job.slug}`}
-          className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-4 bg-primary hover:bg-primary-hover text-white text-sm font-bold rounded-xl shadow-md shadow-primary/25 transition-all text-center"
+          href={`/jobs/${job.slug}`}
+          className="flex-1 inline-flex items-center justify-center gap-2 py-3 px-5 bg-primary hover:bg-primary-hover text-white text-sm font-bold rounded-xl shadow-md shadow-primary/25 transition-all text-center cursor-pointer"
         >
-          <Send size={15} />
+          <Send size={16} />
           <span>Ứng tuyển ngay</span>
         </Link>
 
         <Link
-          href={`/job-it/${job.slug}`}
+          href={`/jobs/${job.slug}`}
           target="_blank"
-          className="p-2.5 border border-slate-200 hover:border-primary hover:text-primary rounded-xl text-slate-600 transition-colors"
-          title="Mở tab mới"
+          className="p-3 border border-slate-200 hover:border-primary hover:text-primary rounded-xl text-slate-600 transition-colors cursor-pointer"
+          title="Mở trong tab mới"
         >
           <ExternalLink size={18} />
         </Link>
       </div>
 
-      {/* 3. Lưới thông số quan trọng */}
-      <div className="grid grid-cols-2 gap-3 py-4 border-b border-slate-100 text-xs">
+      {/* 3. Lưới thông số quan trọng (Được mở rộng hiển thị 4 cột) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 py-4 border-b border-slate-100 text-xs">
         <div className="flex items-center gap-2 text-slate-600">
-          <MapPin size={15} className="text-slate-400 shrink-0" />
+          <MapPin size={16} className="text-slate-400 shrink-0" />
           <span className="truncate">{job.location || "Toàn quốc"}</span>
         </div>
         <div className="flex items-center gap-2 text-slate-600">
-          <Briefcase size={15} className="text-slate-400 shrink-0" />
-          <span>{job.workModel || "Linh hoạt"}</span>
+          <Briefcase size={16} className="text-slate-400 shrink-0" />
+          <span className="truncate">{job.workModel || "Linh hoạt"}</span>
         </div>
         <div className="flex items-center gap-2 text-slate-600">
-          <Award size={15} className="text-slate-400 shrink-0" />
-          <span>{job.level || "Tất cả cấp bậc"}</span>
+          <Award size={16} className="text-slate-400 shrink-0" />
+          <span className="truncate">{job.level || "Tất cả cấp bậc"}</span>
         </div>
         <div className="flex items-center gap-2 text-slate-600">
-          <Clock size={15} className="text-slate-400 shrink-0" />
-          <span>
+          <Clock size={16} className="text-slate-400 shrink-0" />
+          <span className="truncate">
             {job.experience ? `${job.experience} năm KN` : "Không yêu cầu KN"}
           </span>
         </div>
@@ -120,7 +120,7 @@ export default function JobDetailPreviewPane({ job }: JobDetailPreviewPaneProps)
             {job.skills.map((s) => (
               <span
                 key={s}
-                className="px-2.5 py-1 text-xs font-semibold rounded-md bg-primary-light text-primary border border-primary/20"
+                className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-primary-light text-primary border border-primary/20"
               >
                 {s}
               </span>
@@ -136,7 +136,7 @@ export default function JobDetailPreviewPane({ job }: JobDetailPreviewPaneProps)
         </h3>
         {job.description ? (
           <div
-            className="text-xs sm:text-sm text-slate-600 prose prose-sm max-w-none leading-relaxed"
+            className="text-xs sm:text-sm text-slate-700 prose prose-slate max-w-none leading-relaxed"
             dangerouslySetInnerHTML={{ __html: job.description }}
           />
         ) : (
@@ -151,7 +151,7 @@ export default function JobDetailPreviewPane({ job }: JobDetailPreviewPaneProps)
             Yêu cầu ứng viên
           </h3>
           <div
-            className="text-xs sm:text-sm text-slate-600 prose prose-sm max-w-none leading-relaxed"
+            className="text-xs sm:text-sm text-slate-700 prose prose-slate max-w-none leading-relaxed"
             dangerouslySetInnerHTML={{ __html: job.requirements }}
           />
         </div>
@@ -164,7 +164,7 @@ export default function JobDetailPreviewPane({ job }: JobDetailPreviewPaneProps)
             Quyền lợi & Phúc lợi
           </h3>
           <div
-            className="text-xs sm:text-sm text-slate-600 prose prose-sm max-w-none leading-relaxed"
+            className="text-xs sm:text-sm text-slate-700 prose prose-slate max-w-none leading-relaxed"
             dangerouslySetInnerHTML={{ __html: job.benefits }}
           />
         </div>
@@ -190,12 +190,16 @@ export default function JobDetailPreviewPane({ job }: JobDetailPreviewPaneProps)
               <p className="flex items-center gap-2">
                 <Globe size={14} className="text-slate-400" />
                 <a
-                  href={company.website}
+                  href={
+                    company.website.startsWith("http")
+                      ? company.website
+                      : `https://${company.website}`
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-primary hover:underline truncate"
                 >
-                  {company.website}
+                  {company.website.replace(/^https?:\/\//, "")}
                 </a>
               </p>
             )}
@@ -205,4 +209,3 @@ export default function JobDetailPreviewPane({ job }: JobDetailPreviewPaneProps)
     </div>
   );
 }
-

@@ -16,55 +16,69 @@ export class ApplicationsService {
     private readonly prisma: PrismaService,
     private readonly mailerService: MailerService,
     private readonly googleCalendarService: GoogleCalendarService,
-  ) {}
+  ) { }
 
   async createApplication(dto: CreateDonXinViecDto, userId: string) {
-    const { maCongViec, chiTiet, fileCvUrl } = dto;
+    const { maCongViec, chiTiet, coverLetter, maCvFile, fileCvUrl } = dto;
 
-    // 1. Kiểm tra xem Công việc có tồn tại và đang mở không
+    // 1. Kiểm tra hồ sơ Ứng viên từ userId (maTaiKhoan)
+    const candidate = await this.prisma.ungVien.findUnique({
+      where: { maTaiKhoan: userId },
+      include: { danhSachFileCv: true },
+    });
+
+    if (!candidate) {
+      throw new NotFoundException('Hồ sơ ứng viên này không tồn tại.');
+    }
+
+    // 2. Kiểm tra xem Công việc có tồn tại và còn hạn nộp hồ sơ không
     const job = await this.prisma.congViec.findUnique({
-      where: { maCongViec: maCongViec },
+      where: { maCongViec },
     });
 
     if (!job) {
       throw new NotFoundException('Công việc này không tồn tại.');
     }
-    // if (job.trangThai !== 'Đang tuyển') {
-    //   throw new BadRequestException(
-    //     'Công việc này đã đóng hoặc hết hạn tuyển dụng.',
-    //   );
-    // }
 
-    // 2. Kiểm tra xem Ứng viên này đã nộp đơn cho công việc này chưa
+    if (job.ngayHetHan && new Date(job.ngayHetHan) < new Date()) {
+      throw new BadRequestException('Công việc này đã hết hạn nhận hồ sơ ứng tuyển.');
+    }
+
+    // 3. Kiểm tra xem Ứng viên này đã từng nộp đơn cho công việc này chưa
     const existingApplication = await this.prisma.donXinViec.findFirst({
       where: {
-        maCongViec: maCongViec,
-        maUngVien: userId,
+        maCongViec,
+        maUngVien: candidate.maUngVien,
       },
     });
 
     if (existingApplication) {
-      throw new BadRequestException('Bạn đã nộp đơn cho công việc này rồi.');
+      throw new BadRequestException('Bạn đã nộp hồ sơ cho công việc này rồi.');
     }
 
-    const candidate = await this.prisma.ungVien.findUnique({
-      where: { maTaiKhoan: userId },
-      select: { maUngVien: true },
-    });
-
-    if (!candidate) {
-      throw new NotFoundException('Ứng viên này không tồn tại.');
+    // 4. Xác định URL file CV
+    let finalCvUrl = fileCvUrl;
+    if (!finalCvUrl && maCvFile) {
+      const selectedFile = candidate.danhSachFileCv?.find(
+        (f) => f.maFileCv === maCvFile,
+      );
+      if (selectedFile) {
+        finalCvUrl = selectedFile.fileUrl;
+      }
+    }
+    if (!finalCvUrl) {
+      finalCvUrl = candidate.cvUrl || undefined;
     }
 
-    // 3. Tiến hành lưu Đơn xin việc vào cơ sở dữ liệu
+    // 5. Tiến hành lưu Đơn xin việc vào cơ sở dữ liệu
     const newApplication = await this.prisma.donXinViec.create({
       data: {
-        maCongViec: maCongViec,
+        maCongViec,
         maUngVien: candidate.maUngVien,
-        chiTiet: chiTiet,
-        fileCvUrl: fileCvUrl,
-        ngayNop: new Date(), // Set thời gian thực tế lúc nộp
-        trangThai: 'Chờ xử lý', // Trạng thái mặc định ban đầu
+        chiTiet: coverLetter || chiTiet || null,
+        fileCvUrl: finalCvUrl,
+        ngayNop: new Date(),
+        trangThai: 'Chờ xử lý',
       },
     });
 
