@@ -44,8 +44,8 @@ export const getNotificationIcon = (title: string, content: string) => {
     text.includes("thư mời")
   ) {
     return {
-      icon: <Mail size={16} />,
-      bg: "bg-blue-100 text-blue-600",
+      icon: <Mail size={18} />,
+      bg: "bg-blue-50 text-blue-600",
     };
   }
 
@@ -57,14 +57,14 @@ export const getNotificationIcon = (title: string, content: string) => {
     text.includes("sự kiện")
   ) {
     return {
-      icon: <Megaphone size={16} />,
-      bg: "bg-indigo-100 text-indigo-600",
+      icon: <Megaphone size={18} />,
+      bg: "bg-blue-50 text-blue-600",
     };
   }
 
   return {
-    icon: <Briefcase size={16} />,
-    bg: "bg-slate-100 text-slate-600",
+    icon: <Briefcase size={18} />,
+    bg: "bg-slate-100 text-slate-500",
   };
 };
 
@@ -197,8 +197,8 @@ export default function NotificationDropdown() {
                     key={notif.id}
                     onClick={() => handleNotificationClick(notif)}
                     className={`relative w-full flex items-start gap-3 p-3.5 text-left transition-colors cursor-pointer ${isUnread
-                        ? "bg-indigo-50/40 hover:bg-indigo-50/80"
-                        : "bg-white hover:bg-slate-50"
+                      ? "bg-indigo-50/40 hover:bg-indigo-50/80"
+                      : "bg-white hover:bg-slate-50"
                       }`}
                   >
                     {/* Icon */}
@@ -212,8 +212,8 @@ export default function NotificationDropdown() {
                     <div className="flex-1 min-w-0 pr-3">
                       <p
                         className={`text-xs sm:text-sm mb-1 line-clamp-1 ${isUnread
-                            ? "font-bold text-slate-900"
-                            : "font-semibold text-slate-700"
+                          ? "font-bold text-slate-900"
+                          : "font-semibold text-slate-700"
                           }`}
                       >
                         {notif.title}

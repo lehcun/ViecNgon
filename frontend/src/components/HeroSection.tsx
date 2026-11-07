@@ -1,69 +1,132 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { MapPin, ChevronDown, Search, Flame } from "lucide-react";
 
+const POPULAR_TAGS = [
+  "Java",
+  "ReactJS",
+  "NodeJS",
+  "NestJS",
+  "Prisma",
+  "Docker",
+  "SQL Server",
+];
+
+const POPULAR_CITIES = [
+  { value: "", label: "Tất cả thành phố" },
+  { value: "Hồ Chí Minh", label: "Hồ Chí Minh" },
+  { value: "Hà Nội", label: "Hà Nội" },
+  { value: "Đà Nẵng", label: "Đà Nẵng" },
+  { value: "Cần Thơ", label: "Cần Thơ" },
+  { value: "Hải Phòng", label: "Hải Phòng" },
+];
+
 export default function HeroSection() {
+  const router = useRouter();
+  const [keyword, setKeyword] = useState("");
+  const [thanhPho, setThanhPho] = useState("");
+
+  const handleSearch = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+
+    const params = new URLSearchParams();
+    if (keyword.trim()) {
+      params.set("keyword", keyword.trim());
+    }
+    if (thanhPho && thanhPho.trim()) {
+      params.set("thanhPho", thanhPho.trim());
+    }
+
+    const query = params.toString();
+    router.push(query ? `/job-it?${query}` : "/job-it");
+  };
+
+  const handleTagClick = (tag: string) => {
+    router.push(`/job-it?keyword=${encodeURIComponent(tag)}`);
+  };
+
   return (
-    <section className="bg-linear-to-r from-[#020c1b] via-[#0f2a5c] to-[#0a192f] pt-32 pb-12 px-6">
-      <div className="max-w-5xl mx-auto">
-        <h1 className="text-white text-3xl md:text-4xl font-bold mb-8">
-          15 Việc làm IT &quot;Ngon&quot;
-        </h1>
+      <section className="bg-linear-to-r from-[#020c1b] via-[#0f2a5c] to-[#0a192f] pt-32 pb-14 px-6 shadow-inner">
+        <div className="max-w-5xl mx-auto">
+            {/* Tiêu đề */}
+            <h1 className="text-white text-3xl md:text-4xl font-bold mb-8 tracking-tight">
+              15 Việc làm IT &quot;Ngon&quot;
+            </h1>
 
-        {/* Search Box */}
-        <div className="flex flex-col md:flex-row bg-white rounded-md p-1 gap-2 shadow-lg mb-6">
-          <div className="flex items-center px-3 md:w-56 border-b md:border-b-0 md:border-r border-gray-300 text-gray-600">
-            <MapPin size={18} className="mr-2 text-blue-600" />
-            <select className="w-full bg-transparent outline-none cursor-pointer text-sm py-3 appearance-none">
-              <option>Tất cả thành phố</option>
-              <option>Hồ Chí Minh</option>
-              <option>Hà Nội</option>
-              <option>Đà Nẵng</option>
-            </select>
-            <ChevronDown size={16} className="ml-auto pointer-events-none" />
-          </div>
+                  {/* Khung tìm kiếm */}
+                  <form
+                    onSubmit={handleSearch}
+                    className="flex flex-col md:flex-row bg-white rounded-lg p-1.5 gap-2 shadow-2xl mb-6 items-center"
+                  >
+                    {/* Chọn thành phố */}
+                    <div className="flex items-center px-3 w-full md:w-56 border-b md:border-b-0 md:border-r border-slate-200 text-slate-700">
+                      <MapPin size={18} className="mr-2 text-primary shrink-0" />
+                      <select
+                        value={thanhPho}
+                        onChange={(e) => setThanhPho(e.target.value)}
+                        className="w-full bg-transparent outline-none cursor-pointer text-sm py-2.5 appearance-none font-medium text-slate-800"
+                      >
+                        {POPULAR_CITIES.map((city) => (
+                          <option key={city.value} value={city.value}>
+                            {city.label}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown
+                        size={16}
+                        className="ml-auto text-slate-400 pointer-events-none shrink-0"
+                      />
+                    </div>
 
-          <div className="flex-1 flex items-center px-3">
-            <input
-              type="text"
-              placeholder="Nhập từ khoá theo kỹ năng, chức vụ, công ty..."
-              className="w-full bg-transparent outline-none text-sm py-3 text-gray-800 placeholder-gray-400"
-            />
-          </div>
+                      {/* Nhập từ khoá */}
+                      <div className="flex-1 flex items-center px-3 w-full">
+                        <input
+                          type="text"
+                          value={keyword}
+                          onChange={(e) => setKeyword(e.target.value)}
+                          placeholder="Nhập từ khoá theo kỹ năng, chức vụ, công ty..."
+                          className="w-full bg-transparent outline-none text-sm py-2.5 text-slate-800 placeholder-slate-400 font-medium"
+                        />
+                      </div>
 
-          <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded flex items-center justify-center gap-2 transition shadow-md shadow-blue-500/30">
-            <Search size={18} />
-            Tìm Kiếm
-          </button>
-        </div>
+                    {/* Nút Tìm Kiếm */}
+                    <button
+                      type="submit"
+                      className="w-full md:w-auto bg-primary hover:bg-primary-hover text-white font-bold py-3 px-8 rounded-md flex items-center justify-center gap-2 transition shadow-md shadow-primary/30 shrink-0 cursor-pointer text-sm active:scale-98"
+                    >
+                      <Search size={18} />
+                      <span>Tìm Kiếm</span>
+                    </button>
+                  </form>
 
-        {/* Tag Suggestions */}
-        <div className="flex flex-wrap items-center gap-3 text-sm">
-          <span className="text-slate-300">Mọi người đang tìm kiếm:</span>
-          {[
-            "Java",
-            "ReactJS",
-            "NodeJS",
-            "NestJS",
-            "Prisma",
-            "Docker",
-            "SQL Server",
-          ].map((tag) => (
-            <span
+        {/* Gợi ý từ khoá phổ biến */}
+        <div className="flex flex-wrap items-center gap-2.5 text-sm">
+          <span className="text-slate-300 text-xs sm:text-sm">
+            Mọi người đang tìm kiếm:
+          </span>
+          {POPULAR_TAGS.map((tag) => (
+            <button
               key={tag}
-              className="border border-blue-500/50 bg-slate-800/50 text-blue-200 px-3 py-1 rounded-full cursor-pointer hover:bg-blue-600 hover:text-white hover:border-blue-500 transition"
+              type="button"
+              onClick={() => handleTagClick(tag)}
+              className="border border-blue-900/60 bg-slate-900/50 text-slate-300 px-3.5 py-1 rounded-full cursor-pointer hover:bg-primary hover:text-white hover:border-primary transition text-xs font-medium"
             >
               {tag}
-            </span>
-          ))}
-        </div>
+            </button>
+                    ))}
+                  </div>
 
-        {/* Banner Promo Ticker */}
-        <div className="mt-8 bg-black/30 border border-blue-800/50 rounded-md p-3 flex items-center gap-2 text-sm text-blue-100">
-          <Flame className="text-blue-400" size={18} />
-          <span className="font-bold">Cơ hội nhận 100K</span>
-          <span>Tải lên CV & làm khảo sát trong tháng 4!</span>
-        </div>
-      </div>
-    </section>
-  );
+                    {/* Banner thông báo ưu đãi */}
+                    <div className="mt-8 bg-black/40 border border-blue-900/40 rounded-lg p-3 flex items-center gap-2 text-sm text-blue-100 backdrop-blur-xs">
+                      <Flame className="text-blue-400 shrink-0" size={18} />
+                      <span className="font-bold">Cơ hội nhận 100K</span>
+                      <span className="text-slate-300">
+                        Tải lên CV &amp; làm khảo sát trong tháng 4!
+                      </span>
+                    </div>
+                  </div>
+                </section>
+                );
 }

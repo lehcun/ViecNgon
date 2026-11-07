@@ -15,17 +15,18 @@ import {
 
 export default function EmployerSidebar() {
   const pathname = usePathname();
-  const isActive = (path: string) => pathname === path;
+  const isActive = (path: string) =>
+    pathname === path || (path !== "/employer-dashboard" && pathname.startsWith(`${path}/`));
 
   // Cấu hình các menu item theo đúng thứ tự trong ảnh
   const menuItems = [
     { name: "Tổng quan", path: "/employer-dashboard", icon: LayoutDashboard },
     { name: "Đăng tin tuyển dụng", path: "/post-job", icon: PlusCircle },
-    { name: "Quản lý đăng tin", path: "/jobs", icon: Briefcase },
+    { name: "Quản lý đăng tin", path: "/employer-jobs", icon: Briefcase },
     { name: "Quản lý ứng viên", path: "/applications", icon: Users },
     {
       name: "Hồ sơ công ty",
-      path: "/employer/company-profile",
+      path: "/employer-company-profile",
       icon: Building2,
     },
     {
@@ -49,11 +50,10 @@ export default function EmployerSidebar() {
               <Link
                 key={item.path}
                 href={item.path}
-                className={`relative flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-lg transition-all duration-200 ${
-                  active
+                className={`relative flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-lg transition-all duration-200 ${active
                     ? "bg-blue-50 text-blue-600"
                     : "text-slate-600 hover:bg-slate-50 hover:text-blue-600"
-                }`}
+                  }`}
               >
                 {/* Thanh vạch dọc màu xanh ở sát lề bên trái khi Active */}
                 {active && (

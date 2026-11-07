@@ -100,6 +100,35 @@ export interface JobFilterParams {
   page?: string;
 }
 
+export interface SearchJobsQuery {
+  keyword?: string;
+  thanhPho?: string;
+  hinhThucLamViec?: string;
+  loaiHinh?: string;
+  capBac?: string;
+  yeuCauKinhNghiem?: number | string;
+  mucLuongMin?: number | string;
+  mucLuongMax?: number | string;
+  salaryRange?: string;
+  negotiable?: boolean | string;
+  sortBy?: "NEWEST" | "SALARY_DESC" | "MOST_VIEWED" | string;
+  page?: number | string;
+  limit?: number | string;
+}
+
+export interface JobSearchResultResponse {
+  data: JobDetailResponse[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
 export interface JobDetailResponse {
   id: string;
   title: string;
@@ -132,6 +161,7 @@ export interface JobDetailResponse {
     country: string | null;
     workingTime: string | null;
     otPolicy: string | null;
+    website: string | null;
   };
 }
 

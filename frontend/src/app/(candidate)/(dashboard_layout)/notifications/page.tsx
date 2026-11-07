@@ -63,12 +63,10 @@ export default function CandidateNotificationsPage() {
   return (
     <div className="w-full flex flex-col gap-6">
       <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
-        {/* HEADER: TIÊU ĐỀ & NÚT ĐÃ ĐỌC TẤT CẢ */}
-        <div className="flex items-center justify-between pb-6 border-b border-slate-100">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-blue-50 text-primary flex items-center justify-center">
-              <Bell size={22} />
-            </div>
+        {/* HEADER: TIÊU ĐỀ & NÚT ĐÃ ĐỌC TẤT CẢ (Marker 3) */}
+        <div className="flex items-center justify-between pb-5 border-b border-slate-100">
+          <div className="flex items-center gap-2.5">
+            <Bell className="w-6 h-6 text-primary" />
             <h1 className="text-xl sm:text-2xl font-bold text-slate-800">
               Thông báo của bạn
             </h1>
@@ -89,24 +87,24 @@ export default function CandidateNotificationsPage() {
           </button>
         </div>
 
-        {/* TABS BỘ LỌC: TẤT CẢ | CHƯA ĐỌC | ĐÃ ĐỌC */}
+        {/* TABS BỘ LỌC (Marker 2): TẤT CẢ | CHƯA ĐỌC | ĐÃ ĐỌC */}
         <div className="flex items-center gap-6 border-b border-slate-100 mt-4 text-sm font-medium">
           {/* Tab 1: Tất cả */}
           <button
             type="button"
             onClick={() => handleTabChange("ALL")}
-            className={`pb-3.5 flex items-center gap-2 transition-all relative cursor-pointer ${
+            className={`pb-3 flex items-center gap-2 transition-all relative cursor-pointer ${
               activeTab === "ALL"
                 ? "text-primary font-bold border-b-2 border-primary"
-                : "text-slate-500 hover:text-slate-800"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             <span>Tất cả</span>
             <span
-              className={`px-2 py-0.5 rounded-full text-xs font-bold transition-colors ${
+              className={`text-xs font-bold transition-colors ${
                 activeTab === "ALL"
-                  ? "bg-primary text-white"
-                  : "bg-slate-100 text-slate-600"
+                  ? "bg-primary text-white px-2 py-0.5 rounded-full"
+                  : "text-slate-500 font-normal"
               }`}
             >
               {allCount}
@@ -117,20 +115,18 @@ export default function CandidateNotificationsPage() {
           <button
             type="button"
             onClick={() => handleTabChange("UNREAD")}
-            className={`pb-3.5 flex items-center gap-2 transition-all relative cursor-pointer ${
+            className={`pb-3 flex items-center gap-2 transition-all relative cursor-pointer ${
               activeTab === "UNREAD"
                 ? "text-primary font-bold border-b-2 border-primary"
-                : "text-slate-500 hover:text-slate-800"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             <span>Chưa đọc</span>
             <span
-              className={`px-2 py-0.5 rounded-full text-xs font-bold transition-colors ${
+              className={`text-xs font-bold transition-colors ${
                 activeTab === "UNREAD"
-                  ? "bg-primary text-white"
-                  : unreadCount > 0
-                  ? "bg-rose-50 text-rose-600"
-                  : "bg-slate-100 text-slate-600"
+                  ? "bg-primary text-white px-2 py-0.5 rounded-full"
+                  : "text-slate-500 font-normal"
               }`}
             >
               {unreadCount}
@@ -141,18 +137,18 @@ export default function CandidateNotificationsPage() {
           <button
             type="button"
             onClick={() => handleTabChange("READ")}
-            className={`pb-3.5 flex items-center gap-2 transition-all relative cursor-pointer ${
+            className={`pb-3 flex items-center gap-2 transition-all relative cursor-pointer ${
               activeTab === "READ"
                 ? "text-primary font-bold border-b-2 border-primary"
-                : "text-slate-500 hover:text-slate-800"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             <span>Đã đọc</span>
             <span
-              className={`px-2 py-0.5 rounded-full text-xs font-bold transition-colors ${
+              className={`text-xs font-bold transition-colors ${
                 activeTab === "READ"
-                  ? "bg-primary text-white"
-                  : "bg-slate-100 text-slate-600"
+                  ? "bg-primary text-white px-2 py-0.5 rounded-full"
+                  : "text-slate-500 font-normal"
               }`}
             >
               {readCount}
@@ -161,13 +157,13 @@ export default function CandidateNotificationsPage() {
         </div>
 
         {/* DANH SÁCH THÔNG BÁO */}
-        <div className="mt-4 divide-y divide-slate-100">
+        <div className="mt-2 divide-y divide-slate-100">
           {isLoading ? (
             /* Skeleton Loading State */
             <div className="py-6 space-y-4 animate-pulse">
               {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="flex items-start gap-4 p-4 rounded-xl">
-                  <div className="w-12 h-12 bg-slate-200 rounded-2xl shrink-0"></div>
+                  <div className="w-11 h-11 bg-slate-200 rounded-full shrink-0"></div>
                   <div className="flex-1 space-y-2">
                     <div className="h-4 bg-slate-200 rounded w-1/3"></div>
                     <div className="h-3 bg-slate-200 rounded w-3/4"></div>
@@ -206,44 +202,40 @@ export default function CandidateNotificationsPage() {
                 <div
                   key={item.id}
                   onClick={() => handleNotificationClick(item)}
-                  className={`relative flex items-start gap-4 p-4 sm:p-5 rounded-2xl transition-all duration-200 cursor-pointer ${
-                    isUnread
-                      ? "bg-indigo-50/40 hover:bg-indigo-50/80"
-                      : "bg-white hover:bg-slate-50"
-                  }`}
+                  className="group flex items-start gap-4 py-5 px-2 sm:px-3 hover:bg-slate-50/70 rounded-xl transition-all duration-150 cursor-pointer"
                 >
                   {/* Icon loại thông báo */}
                   <div
-                    className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-xs ${bg}`}
+                    className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 ${bg}`}
                   >
                     {icon}
                   </div>
 
                   {/* Nội dung thông báo */}
-                  <div className="flex-1 min-w-0 pr-6">
+                  <div className="flex-1 min-w-0 pr-4">
                     <h3
-                      className={`text-sm sm:text-base leading-snug ${
+                      className={`text-[15px] leading-snug transition-colors ${
                         isUnread
-                          ? "font-bold text-slate-900"
-                          : "font-semibold text-slate-800"
+                          ? "font-bold text-slate-900 group-hover:text-primary"
+                          : "font-medium text-slate-800"
                       }`}
                     >
                       {item.title}
                     </h3>
-                    <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed line-clamp-2 sm:line-clamp-none">
+                    <p className="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed">
                       {item.content}
                     </p>
-                    <span className="inline-block text-[11px] font-medium text-slate-400 mt-2">
+                    <span className="inline-block text-xs font-normal text-slate-400 mt-1.5">
                       {getRelativeTime(item.createdAt)}
                     </span>
                   </div>
 
-                  {/* Chấm tròn biểu thị Chưa đọc */}
-                  {isUnread && (
-                    <div className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2">
-                      <div className="w-2.5 h-2.5 bg-primary rounded-full shadow-[0_0_0_4px_rgba(37,99,235,0.15)]"></div>
-                    </div>
-                  )}
+                  {/* Marker 4 (Chấm tròn xanh Chưa đọc) / Marker 5 (Đã đọc không có chấm) */}
+                  <div className="w-5 flex items-center justify-center self-center shrink-0">
+                    {isUnread && (
+                      <span className="w-2.5 h-2.5 bg-primary rounded-full shadow-[0_0_0_3px_rgba(25,103,210,0.18)]" />
+                    )}
+                  </div>
                 </div>
               );
             })

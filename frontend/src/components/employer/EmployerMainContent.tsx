@@ -206,7 +206,7 @@ const EmployerMainContent = () => {
               Tin tuyển dụng gần đây
             </h2>
             <Link
-              href="/employer/jobs"
+              href="/employer-jobs"
               className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
             >
               Xem tất cả tin tuyển dụng
@@ -251,11 +251,10 @@ const EmployerMainContent = () => {
                       {/* Status Badge */}
                       <div className="w-32 text-left sm:text-right">
                         <span
-                          className={`inline-block px-3 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider ${
-                            isActive
+                          className={`inline-block px-3 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider ${isActive
                               ? "bg-emerald-100 text-emerald-700"
                               : "bg-slate-100 text-slate-500"
-                          }`}
+                            }`}
                         >
                           {isActive ? "Đang nhận hồ sơ" : "Hết hạn / Đã đóng"}
                         </span>

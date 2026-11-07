@@ -13,23 +13,18 @@ import {
 } from '@nestjs/common';
 import { JobService } from './job.service';
 import { CreateJobDto } from './dto/create-job.dto';
-import { GetJobsFilterDto } from './dto/get-jobs-filter.dto';
+import { SearchJobsDto } from './dto/search-jobs.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
-@Controller('job')
+@Controller(['jobs', 'job'])
 export class JobController {
-  constructor(private readonly jobService: JobService) {}
+  constructor(private readonly jobService: JobService) { }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
   create(@Body() createJobDto: CreateJobDto) {
     return this.jobService.create(createJobDto);
   }
-
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.jobService.findOne(id);
-  // }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateData: Partial<CreateJobDto>) {
@@ -42,14 +37,20 @@ export class JobController {
     return await this.jobService.remove(id);
   }
 
+  /**
+   * Public API: Tìm kiếm và bộ lọc chi tiết việc làm
+   * Endpoint: GET /jobs và GET /job
+   */
   @Get()
-  async getJobs(@Query() filterDto: GetJobsFilterDto) {
-    // @Query() tự động lấy các tham số trên thanh URL nhét vào object filterDto
-    return this.jobService.getJobs(filterDto);
-  }
+  async getJobs(@Query() query: SearchJobsDto) {
+      return this.jobService.getJobs(query);
+    }
 
-  @Get(':slug')
-  async getJobDetail(@Param('slug') slug: string) {
-    return this.jobService.getJobBySlug(slug);
+    /**
+     * Public API: Lấy chi tiết công việc theo Slug
+     */
+    @Get(':slug')
+    async getJobDetail(@Param('slug') slug: string) {
+      return this.jobService.getJobBySlug(slug);
+    }
   }
-}

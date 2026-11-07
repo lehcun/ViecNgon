@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import PortfolioHero from "@/components/portfolio/PortfolioHero";
 import PortfolioFeatures from "@/components/portfolio/PortfolioFeatures";
 import PortfolioSteps from "@/components/portfolio/PortfolioSteps";
-import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
   title: "Tạo Portfolio IT Chuẩn | ViecNgon",
@@ -12,11 +11,10 @@ export const metadata: Metadata = {
 
 export default function PortfolioLandingPage() {
   return (
-    <main className="min-h-screen bg-primary-dark selection:bg-primary selection:text-white">
-      <Navbar />
+    <div className="w-full flex-1 flex flex-col bg-primary-dark selection:bg-primary selection:text-white pt-20">
       <PortfolioHero />
       <PortfolioFeatures />
       <PortfolioSteps />
-    </main>
+    </div>
   );
 }

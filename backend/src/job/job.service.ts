@@ -8,6 +8,7 @@ import { sanitizeRichText } from 'src/common/utils/sanitize-html.util';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateJobDto } from './dto/create-job.dto';
 import { GetJobsFilterDto } from './dto/get-jobs-filter.dto';
+import { SearchJobsDto, JobSortBy } from './dto/search-jobs.dto';
 import { GetEmployerJobsQueryDto } from './dto/get-employer-jobs-query.dto';
 import { UpdateJobDto } from './dto/update-job.dto';
 import { RepostJobDto } from './dto/repost-job.dto';
@@ -370,92 +371,257 @@ export class JobService {
     return formattedJob;
   }
 
-  async getJobs(filters: GetJobsFilterDto) {
-    const { thanhPho, loaiHinh, hinhThucLamViec, mucLuong, page = 1 } = filters;
-    const limit = 10;
-    const skip = (Number(page) - 1) * limit;
+  async getJobs(filters: SearchJobsDto | GetJobsFilterDto) {
+      const page = Math.max(1, Number(filters.page) || 1);
+      const limit = Math.max(1, Number((filters as SearchJobsDto).limit) || 10);
+      const skip = (page - 1) * limit;
 
-    // Bước 1: Xây dựng điều kiện Where (Type-safe)
-    const whereCondition: Prisma.CongViecWhereInput = {
-      trangThai: 'Đang tuyển',
-    };
+      const {
+        keyword,
+        thanhPho,
+        loaiHinh,
+        hinhThucLamViec,
+        capBac,
+        yeuCauKinhNghiem,
+        mucLuongMin,
+        mucLuongMax,
+        salaryRange,
+        negotiable,
+        sortBy = JobSortBy.NEWEST,
+      } = filters as SearchJobsDto;
 
-    if (thanhPho) whereCondition.thanhPho = { contains: thanhPho };
-    if (loaiHinh) whereCondition.loaiHinh = loaiHinh;
-    if (hinhThucLamViec) whereCondition.hinhThucLamViec = hinhThucLamViec;
+      // Hỗ trợ tham số cũ mucLuong nếu có
+      const legacySalary = (filters as GetJobsFilterDto).mucLuong;
 
-    if (mucLuong) {
-      whereCondition.OR = [
-        { mucLuongToiDa: { gte: Number(mucLuong) } },
-        { mucLuongToiThieu: { gte: Number(mucLuong) } },
-      ];
-    }
+      const now = new Date();
 
-    // Bước 2: Query database
-    const [jobs, total] = await Promise.all([
-      this.prisma.congViec.findMany({
-        where: whereCondition,
-        skip,
-        take: limit,
-        orderBy: { ngayDang: 'desc' },
-        include: {
-          nhaTuyenDung: {
-            include: { congTy: true },
-          },
-          chiNhanh: true,
-          congViecKyNangs: {
-            include: { kyNang: true },
-          },
+      // Bước 1: Xây dựng điều kiện Where (Type-safe 100%)
+      const andConditions: Prisma.CongViecWhereInput[] = [
+        // 1. Ràng buộc trạng thái: Chỉ lấy các tin được duyệt / đang tuyển
+        {
+          OR: [
+            { trangThai: 'DA_DUYET' },
+            { trangThai: 'Đang tuyển' },
+            { trangThai: 'ACTIVE' },
+          ],
         },
-      }),
-      this.prisma.congViec.count({ where: whereCondition }),
-    ]);
+        // 2. Ràng buộc thời hạn: Chưa hết hạn
+        {
+          OR: [{ ngayHetHan: null }, { ngayHetHan: { gte: now } }],
+        },
+      ];
 
-    // Bước 3: Format lại dữ liệu (Giống cách làm bên CompanyService)
-    const formattedJobs = jobs.map((job) => this.formatJobData(job));
+      // 3. Tìm kiếm theo từ khóa (Tên công việc, Tên công ty hoặc Kỹ năng)
+      if (keyword && keyword.trim()) {
+        const kw = keyword.trim();
+        andConditions.push({
+          OR: [
+            { tenCongViec: { contains: kw } },
+            { nhaTuyenDung: { congTy: { tenCongTy: { contains: kw } } } },
+            {
+              congViecKyNangs: {
+                some: {
+                  kyNang: {
+                    tenKyNang: { contains: kw },
+                  },
+                },
+              },
+            },
+          ],
+        });
+      }
 
-    return {
-      data: formattedJobs,
-      total,
-      page,
-      totalPages: Math.ceil(total / limit),
-    };
-  }
+      // 4. Lọc theo Thành phố
+      if (thanhPho && thanhPho.trim()) {
+        andConditions.push({ thanhPho: { contains: thanhPho.trim() } });
+      }
+
+      // 5. Lọc theo Loại hình (Full-time, Part-time, Freelance)
+      if (loaiHinh && loaiHinh.trim()) {
+        andConditions.push({ loaiHinh: { contains: loaiHinh.trim() } });
+      }
+
+      // 6. Lọc theo Hình thức làm việc (Remote, Tại văn phòng, Hybrid)
+      if (hinhThucLamViec && hinhThucLamViec.trim()) {
+        andConditions.push({
+          hinhThucLamViec: { contains: hinhThucLamViec.trim() },
+        });
+      }
+
+      // 7. Lọc theo Cấp bậc (Intern, Fresher, Junior, Senior, Manager)
+      if (capBac && capBac.trim()) {
+        andConditions.push({ capBac: { contains: capBac.trim() } });
+      }
+
+      // 8. Lọc theo Số năm kinh nghiệm
+      if (yeuCauKinhNghiem !== undefined && yeuCauKinhNghiem !== null) {
+        const expNum = Number(yeuCauKinhNghiem);
+        if (!isNaN(expNum)) {
+          if (expNum === 0) {
+            // Chưa có kinh nghiệm: yêu cầu 0 năm hoặc không yêu cầu
+            andConditions.push({
+              OR: [{ yeuCauKinhNghiem: null }, { yeuCauKinhNghiem: 0 }],
+            });
+          } else {
+            // Tìm việc phù hợp với số năm kinh nghiệm <= expNum
+            andConditions.push({
+              OR: [
+                { yeuCauKinhNghiem: null },
+                { yeuCauKinhNghiem: { lte: expNum } },
+              ],
+            });
+          }
+        }
+      }
+
+      // 9. Lọc theo Mức lương
+      if (negotiable || salaryRange === 'NEGOTIABLE') {
+        andConditions.push({
+          OR: [
+            { mucLuongToiThieu: null, mucLuongToiDa: null },
+            { mucLuongToiDa: { lte: 0 } },
+          ],
+        });
+      } else if (salaryRange) {
+        switch (salaryRange) {
+          case 'UNDER_10': // Dưới 10 triệu
+            andConditions.push({
+              mucLuongToiDa: { lte: 10000000, gt: 0 },
+            });
+            break;
+          case '10_20': // 10 - 20 triệu
+            andConditions.push({
+              AND: [
+                { mucLuongToiThieu: { lte: 20000000 } },
+                { mucLuongToiDa: { gte: 10000000 } },
+              ],
+            });
+            break;
+          case '20_30': // 20 - 30 triệu
+            andConditions.push({
+              AND: [
+                { mucLuongToiThieu: { lte: 30000000 } },
+                { mucLuongToiDa: { gte: 20000000 } },
+              ],
+            });
+            break;
+          case 'OVER_30': // Trên 30 triệu
+            andConditions.push({
+              mucLuongToiDa: { gte: 30000000 },
+            });
+            break;
+        }
+      } else if (mucLuongMin !== undefined || mucLuongMax !== undefined) {
+        if (mucLuongMin !== undefined) {
+          andConditions.push({
+            OR: [
+              { mucLuongToiDa: { gte: Number(mucLuongMin) } },
+              { mucLuongToiThieu: { gte: Number(mucLuongMin) } },
+            ],
+          });
+        }
+        if (mucLuongMax !== undefined) {
+          andConditions.push({
+            OR: [
+              { mucLuongToiThieu: { lte: Number(mucLuongMax) } },
+              { mucLuongToiDa: { lte: Number(mucLuongMax) } },
+            ],
+          });
+        }
+      } else if (legacySalary) {
+        andConditions.push({
+          OR: [
+            { mucLuongToiDa: { gte: Number(legacySalary) } },
+            { mucLuongToiThieu: { gte: Number(legacySalary) } },
+          ],
+        });
+      }
+
+      const whereCondition: Prisma.CongViecWhereInput = {
+        AND: andConditions,
+      };
+
+        // Sắp xếp
+        let orderBy: Prisma.CongViecOrderByWithRelationInput = {
+          ngayDang: 'desc',
+        };
+        if (sortBy === JobSortBy.SALARY_DESC) {
+          orderBy = { mucLuongToiDa: 'desc' };
+        } else if (sortBy === JobSortBy.MOST_VIEWED) {
+          orderBy = { luotXem: 'desc' };
+        }
+
+        // Bước 2: Query database
+        const [jobs, total] = await Promise.all([
+          this.prisma.congViec.findMany({
+            where: whereCondition,
+            skip,
+            take: limit,
+            orderBy,
+            include: {
+              nhaTuyenDung: {
+                include: { congTy: true },
+              },
+              chiNhanh: true,
+              congViecKyNangs: {
+                include: { kyNang: true },
+              },
+            },
+          }),
+          this.prisma.congViec.count({ where: whereCondition }),
+        ]);
+
+        // Bước 3: Format dữ liệu chuẩn
+        const formattedJobs = jobs.map((job) => this.formatJobData(job));
+
+        return {
+          data: formattedJobs,
+          meta: {
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit) || 1,
+          },
+          total,
+          page,
+          totalPages: Math.ceil(total / limit) || 1,
+        };
+      }
 
   /**
    * Lấy chi tiết một công việc theo Slug
    * Học tập từ hàm getCompanyDetailBySlug()
    */
-  async getJobDetailBySlug(slug: string): Promise<JobDetailResponse> {
-    const job = await this.prisma.congViec.findUnique({
-      where: { slug },
-      include: {
-        nhaTuyenDung: {
+  async getJobDetailBySlug(slug: string): Promise < JobDetailResponse > {
+        const job = await this.prisma.congViec.findUnique({
+          where: { slug },
           include: {
-            congTy: true,
+            nhaTuyenDung: {
+              include: {
+                congTy: true,
+              },
+            },
+            congViecKyNangs: {
+              include: {
+                kyNang: true,
+              },
+            },
+            chiNhanh: true, // Lấy thêm thông tin chi nhánh nếu cần
           },
-        },
-        congViecKyNangs: {
-          include: {
-            kyNang: true,
-          },
-        },
-        chiNhanh: true, // Lấy thêm thông tin chi nhánh nếu cần
-      },
-    });
+        });
 
-    if (!job) {
-      throw new NotFoundException('Không tìm thấy tin tuyển dụng này');
-    }
+        if(!job) {
+          throw new NotFoundException('Không tìm thấy tin tuyển dụng này');
+        }
 
     // Tăng lượt xem tin (Logic bổ sung thường có trong Job Detail)
     await this.prisma.congViec.update({
-      where: { maCongViec: job.maCongViec },
-      data: { luotXem: { increment: 1 } },
-    });
+          where: { maCongViec: job.maCongViec },
+          data: { luotXem: { increment: 1 } },
+        });
 
-    return this.formatJobData(job);
-  }
+        return this.formatJobData(job);
+      }
 
   /**
    * Hàm Helper để format dữ liệu Job đồng nhất (Private)
@@ -512,6 +678,7 @@ export class JobService {
         country: company.quocGia,
         workingTime: company.thoiGianLamViec,
         otPolicy: company.chinhSachOT,
+        website: company.website,
       },
     };
   }

@@ -7,13 +7,12 @@ import { useAuthStore } from "@/store/authStore";
 const PROTECTED_PREFIXES = [
   "/dashboard",
   "/employer-dashboard",
-  "/employer/jobs",
-  "/employer/company-profile",
+  "/employer-jobs",
+  "/employer-company-profile",
   "/employer/applications",
   "/employer/campaigns",
   "/employer/pricing",
   "/post-job",
-  "/jobs",
   "/applications",
   "/campaigns",
   "/company-profile",
@@ -87,7 +86,7 @@ export default function AuthProvider({
           const isEmployerRoute =
             normalized.startsWith("/employer") ||
             normalized.startsWith("/post-job") ||
-            normalized.startsWith("/jobs") ||
+            normalized.startsWith("/employer-jobs") ||
             normalized.startsWith("/applications") ||
             normalized.startsWith("/campaigns") ||
             normalized.startsWith("/company-profile");

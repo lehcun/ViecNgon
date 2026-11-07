@@ -66,42 +66,17 @@ const routeAccessRules = [
     loginUrl: "/employer/login",
   },
   {
-    prefix: "/employer/company-profile",
+    prefix: "/employer-jobs",
     allowedRoles: ["NHATUYENDUNG"],
     loginUrl: "/employer/login",
   },
   {
-    prefix: "/employer/jobs",
-    allowedRoles: ["NHATUYENDUNG"],
-    loginUrl: "/employer/login",
-  },
-  {
-    prefix: "/employer/applications",
-    allowedRoles: ["NHATUYENDUNG"],
-    loginUrl: "/employer/login",
-  },
-  {
-    prefix: "/employer/campaigns",
-    allowedRoles: ["NHATUYENDUNG"],
-    loginUrl: "/employer/login",
-  },
-  {
-    prefix: "/employer/pricing",
+    prefix: "/employer-company-profile",
     allowedRoles: ["NHATUYENDUNG"],
     loginUrl: "/employer/login",
   },
   {
     prefix: "/post-job",
-    allowedRoles: ["NHATUYENDUNG"],
-    loginUrl: "/employer/login",
-  },
-  {
-    prefix: "/jobs/manage",
-    allowedRoles: ["NHATUYENDUNG"],
-    loginUrl: "/employer/login",
-  },
-  {
-    prefix: "/jobs",
     allowedRoles: ["NHATUYENDUNG"],
     loginUrl: "/employer/login",
   },

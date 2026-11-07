@@ -4,7 +4,7 @@ import { FaYoutube, FaFacebook } from "react-icons/fa";
 
 export default function Footer() {
   return (
-    <footer className="relative bg-[#0a0a0a] text-slate-300 border-t border-slate-800 overflow-hidden mt-20">
+    <footer className="relative bg-[#0a0a0a] text-slate-300 border-t border-slate-800 overflow-hidden mt-auto">
       {/* Hiệu ứng ánh sáng và đường cong lượn sóng góc phải */}
       <div className="absolute right-0 top-0 bottom-0 w-full md:w-1/2 pointer-events-none overflow-hidden">
         <div className="absolute right-[-10%] top-[-20%] w-200 h-200 rounded-full border border-primary/10 opacity-30"></div>

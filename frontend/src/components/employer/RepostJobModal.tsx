@@ -51,7 +51,7 @@ export default function RepostJobModal({
 
     if (option === "EDIT") {
       onClose();
-      router.push(`/employer/jobs/${jobId}/edit?repost=true`);
+      router.push(`/employer-jobs/${jobId}/edit?repost=true`);
       return;
     }
 
