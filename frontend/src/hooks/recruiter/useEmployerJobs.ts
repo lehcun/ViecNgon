@@ -4,19 +4,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type {
   EmployerJobsResponse,
   EmployerJobStatus,
+  EmployerJobsQueryParams,
   RepostJobPayload,
 } from "@viecngon/types";
 import toast from "react-hot-toast";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-
-export interface EmployerJobsQueryParams {
-  page?: number;
-  limit?: number;
-  search?: string;
-  status?: EmployerJobStatus | string;
-  sortBy?: "newest" | "expiring_soon" | "most_viewed" | string;
-}
 
 export const EMPLOYER_JOBS_QUERY_KEY = ["employerJobs"] as const;
 

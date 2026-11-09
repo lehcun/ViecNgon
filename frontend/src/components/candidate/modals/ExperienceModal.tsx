@@ -4,16 +4,7 @@ import React, { useState } from "react";
 import { X, Loader2, Calendar } from "lucide-react";
 import toast from "react-hot-toast";
 import { useManageCandidateItems } from "@/hooks/candidate/useManageCandidateItems";
-import { CandidateProfileResponse } from "@viecngon/types";
-
-interface ExperienceItem {
-  id: string;
-  companyName: string;
-  position: string;
-  startDate: string;
-  endDate: string | null;
-  description: string | null;
-}
+import { ExperienceItem } from "@viecngon/types";
 
 interface ExperienceModalProps {
   isOpen: boolean;

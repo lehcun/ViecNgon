@@ -48,11 +48,10 @@ export default function PublicEmployerDropdown() {
     <div className="relative" ref={dropdownRef}>
       {/* ================= NÚT TRIGGER ================= */}
       <div
-        className={`flex items-center gap-3 cursor-pointer select-none group border rounded-full px-1.5 py-1.5 pr-4 transition-all duration-200 ${
-          isOpen
+        className={`flex items-center gap-3 cursor-pointer select-none group border rounded-full px-1.5 py-1.5 pr-4 transition-all duration-200 ${isOpen
             ? "border-slate-200 bg-white shadow-sm"
             : "border-transparent bg-slate-200 hover:bg-slate-50"
-        }`}
+          }`}
         onClick={() => setIsOpen(!isOpen)}
       >
         <div className="w-9 h-9 rounded-full overflow-hidden shrink-0">
@@ -124,7 +123,7 @@ export default function PublicEmployerDropdown() {
               </Link>
 
               <Link
-                href="/employer-dashboard/jobs/create"
+                href="/post-job"
                 onClick={() => setIsOpen(false)}
                 className="flex items-center gap-3 px-4 py-3 bg-primary-light hover:bg-primary-light/80 text-primary font-semibold text-sm rounded-xl transition-colors"
               >

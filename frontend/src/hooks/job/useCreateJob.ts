@@ -1,49 +1,10 @@
 "use client";
 
 import { useAuthStore } from "@/store/authStore";
+import { JobFormState, CreateCongViecPayload } from "@viecngon/types";
 import { useRouter } from "next/navigation";
 import { useState, ChangeEvent, FormEvent } from "react";
 import toast from "react-hot-toast";
-
-// 1. Định nghĩa Type cho Form State (Khớp với UI nhập liệu)
-export interface JobFormState {
-  tenCongViec: string;
-  moTa: string;
-  yeuCauCongViec: string;
-  phucLoi: string;
-  mucLuongToiThieu: number | "";
-  mucLuongToiDa: number | "";
-  yeuCauKinhNghiem: number | "";
-  capBac: string;
-  thanhPho: string;
-  loaiHinh: string;
-  hinhThucLamViec: string; // Remote, TaiVanPhong, Hybrid
-  maChiNhanh: string; // Mã chi nhánh (Tùy chọn)
-  ngayHetHan: string;
-  negotiable: boolean; // Lương thỏa thuận
-  kyNangs: string[];
-}
-
-// 2. Định nghĩa Type cho DTO gửi lên Backend (Khớp 100% với NestJS DTO)
-export interface CreateCongViecPayload {
-  tenCongViec: string;
-  moTa?: string;
-  yeuCauCongViec?: string;
-  phucLoi?: string;
-  mucLuongToiThieu?: number;
-  mucLuongToiDa?: number;
-  yeuCauKinhNghiem?: number;
-  capBac?: string;
-  thanhPho?: string;
-  loaiHinh: string;
-  hinhThucLamViec?: string;
-  maChiNhanh?: string;
-  ngayDang: string; // Backend yêu cầu ISOString
-  ngayHetHan?: string; // Backend yêu cầu ISOString
-  trangThai: string;
-  maTaiKhoan: string;
-  kyNangs: string[];
-}
 
 export function useCreateJob(initialCredits: number = 0) {
   const { user } = useAuthStore();

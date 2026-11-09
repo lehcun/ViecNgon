@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Phone, Mail, Send } from "lucide-react";
 import { FaYoutube, FaFacebook } from "react-icons/fa";
+import LogoViecNgon from "@/components/LogoViecNgon";
 
 export default function Footer() {
   return (
@@ -18,29 +19,26 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8">
           {/* Cột 1: Logo & Social (Chiếm 2 cột trên Desktop để logo rộng rãi) */}
           <div className="lg:col-span-2">
-            <Link href="/" className="inline-block mb-4">
-              <div className="text-3xl font-extrabold flex items-center gap-1 cursor-pointer">
-                <div className="bg-primary rounded-full w-9 h-9 flex items-center justify-center text-white shadow-lg shadow-primary/30">
-                  V
-                </div>
-                <span className="text-white tracking-tight">iecNgon</span>
-              </div>
-            </Link>
+            <div className="inline-block mb-4">
+              <LogoViecNgon logoTextColor="text-white" />
+            </div>
             <p className="text-xs font-bold text-slate-400 mb-8 tracking-[0.2em] uppercase">
               Tiếp lợi thế - Nối thành công
             </p>
             <div className="flex gap-4">
               <a
                 href="#"
-                className="w-10 h-10 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-white transition-all shadow-sm"
+                aria-label="Facebook"
+                className="group w-10 h-10 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center hover:bg-primary hover:border-primary transition-all shadow-sm"
               >
-                <FaFacebook className="text-blue-600" size={20} /> Facebook
+                <FaFacebook className="text-[#1877F2] group-hover:text-white transition-colors" size={20} />
               </a>
               <a
                 href="#"
-                className="w-10 h-10 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-white transition-all shadow-sm"
+                aria-label="Youtube"
+                className="group w-10 h-10 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center hover:bg-primary hover:border-primary transition-all shadow-sm"
               >
-                <FaYoutube className="text-blue-600" size={20} /> Youtube
+                <FaYoutube className="text-[#FF0000] group-hover:text-white transition-colors" size={20} />
               </a>
             </div>
           </div>

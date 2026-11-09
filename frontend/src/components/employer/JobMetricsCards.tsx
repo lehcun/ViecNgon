@@ -11,26 +11,7 @@ import {
   TrendingUp,
   TrendingDown,
 } from "lucide-react";
-
-// Định nghĩa Interface dựa trên response từ Backend của bạn
-export interface RecruiterJobMetricsResponse {
-  totalJobs: {
-    count: number;
-    changeThisMonth: number;
-  };
-  activeJobs: {
-    count: number;
-  };
-  pendingJobs: {
-    count: number;
-    avgReviewTimeText: string;
-  };
-  totalApplications: {
-    count: number;
-    percentChangeThisWeek: number;
-  };
-  averageResponseRate: number;
-}
+import { RecruiterJobMetricsResponse } from "@viecngon/types";
 
 interface JobMetricsCardsProps {
   metrics?: RecruiterJobMetricsResponse;
@@ -167,11 +148,10 @@ export default function JobMetricsCards({
           </div>
           {appsPercentChange !== 0 && (
             <div
-              className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-md ${
-                appsPercentChange > 0
+              className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-md ${appsPercentChange > 0
                   ? "text-emerald-600 bg-emerald-50"
                   : "text-rose-600 bg-rose-50"
-              }`}
+                }`}
             >
               {appsPercentChange > 0 ? (
                 <TrendingUp size={14} />

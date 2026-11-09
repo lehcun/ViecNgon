@@ -1,28 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateRecruiterDto } from './dto/update-recruiter.dto';
+import { RecruiterJobMetricsResponse } from '@viecngon/types';
 
-export interface RecruiterJobMetricsResponse {
-  totalJobs: {
-    count: number;
-    changeThisMonth: number; // Ví dụ: +4 tháng này
-  };
-  activeJobs: {
-    count: number; // Số vị trí đang hoạt động ('DANG_TUYEN')
-  };
-  pendingJobs: {
-    count: number; // Số tin đang chờ Admin kiểm duyệt ('CHO_DUYET')
-    avgReviewTimeText: string; // "~2h xét duyệt"
-  };
-  totalApplications: {
-    count: number; // Tổng số CV đã nộp
-    percentChangeThisWeek: number; // Ví dụ: +23% tuần này
-  };
-  averageResponseRate: number; // Ví dụ: 94.2 (%)
-}
 @Injectable()
 export class RecruiterService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   // 1. Lấy hồ sơ nhà tuyển dụng (Gộp cả thông tin công ty)
   async getProfile(userId: string) {

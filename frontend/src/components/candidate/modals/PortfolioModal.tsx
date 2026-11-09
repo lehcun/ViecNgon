@@ -4,13 +4,7 @@ import React, { useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useManageCandidateItems } from "@/hooks/candidate/useManageCandidateItems";
-
-interface PortfolioItem {
-  id: string;
-  title: string;
-  description: string | null;
-  projectUrl: string | null;
-}
+import { PortfolioItem } from "@viecngon/types";
 
 interface PortfolioModalProps {
   isOpen: boolean;

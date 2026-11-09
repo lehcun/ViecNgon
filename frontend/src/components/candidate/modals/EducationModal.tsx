@@ -4,15 +4,7 @@ import React, { useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useManageCandidateItems } from "@/hooks/candidate/useManageCandidateItems";
-
-interface EducationItem {
-  id: string;
-  schoolName: string;
-  major: string;
-  startDate: string;
-  endDate: string | null;
-  gpa: string | null;
-}
+import { EducationItem } from "@viecngon/types";
 
 interface EducationModalProps {
   isOpen: boolean;

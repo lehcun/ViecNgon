@@ -1,24 +1,7 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { JobDetailResponse } from "@viecngon/types";
+import { JobDetailResponse, JobFilterParams, JobResponse } from "@viecngon/types";
 
-// 1. Định nghĩa Type cho các tham số truyền vào (Khớp với DTO ở Backend)
-export interface JobFilterParams {
-  thanhPho?: string;
-  loaiHinh?: string;
-  hinhThucLamViec?: string;
-  mucLuong?: string;
-  page?: string;
-}
-
-// 2. Định nghĩa Type cho dữ liệu trả về (Dựa theo Prisma Schema)
-export interface JobResponse {
-  data: JobDetailResponse[];
-  total: number;
-  page: number;
-  totalPages: number;
-}
-
-// 3. Hàm Fetch API
+// Hàm Fetch API
 const fetchJobs = async (filters: JobFilterParams): Promise<JobResponse> => {
   // Tạo đối tượng URLSearchParams để tự động xử lý các dấu ? và &
   const params = new URLSearchParams();

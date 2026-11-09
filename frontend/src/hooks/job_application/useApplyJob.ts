@@ -1,10 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-
-export interface ApplyJobPayload {
-  maCongViec: string;
-  chiTiet?: string;
-  fileCvUrl?: string;
-}
+import { ApplyJobPayload } from "@viecngon/types";
 
 // 2. Hàm gọi API thuần (Fetch)
 const applyForJobAPI = async (payload: ApplyJobPayload) => {

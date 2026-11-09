@@ -132,3 +132,13 @@ export interface RepostJobPayload {
   updateContent?: boolean;
 }
 
+/** Query params tìm kiếm & lọc danh sách tin tuyển dụng của NTD */
+export interface EmployerJobsQueryParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: EmployerJobStatus | string;
+  sortBy?: "newest" | "expiring_soon" | "most_viewed" | string;
+}
+
+

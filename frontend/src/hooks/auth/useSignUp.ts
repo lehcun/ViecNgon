@@ -1,11 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-
-export interface SignupPayload {
-  email: string;
-  name: string;
-  password: string;
-  role: "UNGVIEN" | "NHATUYENDUNG";
-}
+import { SignupPayload } from "@viecngon/types";
 
 export const useSignup = () => {
   return useMutation({

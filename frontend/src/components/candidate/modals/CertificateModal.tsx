@@ -4,14 +4,7 @@ import React, { useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useManageCandidateItems } from "@/hooks/candidate/useManageCandidateItems";
-
-interface CertificateItem {
-  id: string;
-  name: string;
-  organization: string;
-  issueDate: string;
-  expirationDate: string | null;
-}
+import { CertificateItem } from "@viecngon/types";
 
 interface CertificateModalProps {
   isOpen: boolean;
@@ -91,8 +84,8 @@ export default function CertificateModal({
       expirationDate: noExpiry
         ? null
         : expirationMonth
-        ? toIsoDate(expirationMonth)
-        : null,
+          ? toIsoDate(expirationMonth)
+          : null,
     };
 
     try {

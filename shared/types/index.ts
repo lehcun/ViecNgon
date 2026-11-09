@@ -1,8 +1,32 @@
-export interface LoginResponse {
-  message: string;
-  user: User;
-  access_token: string;
+/**
+ * =====================================================================
+ * VIECNGON SHARED TYPES & INTERFACES
+ * ---------------------------------------------------------------------
+ * Khai báo Types / Interfaces dùng chung giữa Backend (NestJS) và Frontend (Next.js).
+ *
+ * ⚠️ QUY TẮC MONOREPO:
+ * File này CHỈ CHỨA `type` và `interface`.
+ * KHÔNG export `const`, `enum` hay runtime object để đảm bảo an toàn tuyệt đối
+ * khi Backend require qua CommonJS runtime.
+ * =====================================================================
+ */
+
+// =====================================================================
+// 1. COMMON & PAGINATION TYPES
+// =====================================================================
+
+export interface PaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
+
+// =====================================================================
+// 2. AUTHENTICATION & USER TYPES
+// =====================================================================
+
+export type UserRole = "ADMIN" | "UNGVIEN" | "NHATUYENDUNG";
 
 export interface User {
   id?: string;
@@ -12,18 +36,43 @@ export interface User {
   sdt?: string;
   avatar?: string;
   avatarUrl?: string;
-  role: "ADMIN" | "UNGVIEN" | "NHATUYENDUNG";
-  // status: "ACTIVE" | "INACTIVE";
+  role: UserRole;
   exp?: number;
   iat?: number;
 }
 
-export interface Job {
-  maCongViec: string;
-  tenCongViec: string;
-  mucLuongToiThieu: number;
-  mucLuongToiDa: number;
+export interface LoginResponse {
+  message: string;
+  user: User;
+  access_token: string;
 }
+
+export interface SignupPayload {
+  email: string;
+  name: string;
+  password: string;
+  role: "UNGVIEN" | "NHATUYENDUNG";
+}
+
+export interface RegisterResponse {
+  accessToken: string;
+  user: {
+    id: string;
+    email: string;
+    role: string;
+    name: string;
+    status: string;
+  };
+}
+
+export interface ChangePasswordPayload {
+  matKhauCu: string;
+  matKhauMoi: string;
+}
+
+// =====================================================================
+// 3. COMPANY (PUBLIC) TYPES
+// =====================================================================
 
 export interface Company {
   id: string;
@@ -41,6 +90,18 @@ export interface FormattedTopCompany {
   location: string | null;
   slug: string;
   jobs: number;
+}
+
+export interface CompanyActiveJobItem {
+  id: string;
+  title: string;
+  slug: string;
+  salaryDisplay: string;
+  location: string | null;
+  postedAt: string | Date;
+  skills: string[];
+  benefits: string;
+  workModel: string;
 }
 
 export interface CompanyDetailResponse {
@@ -62,33 +123,45 @@ export interface CompanyDetailResponse {
   workingTime: string | null;
   otPolicy: string | null;
   totalJobs: number;
-  activeJobs: {
-    id: string;
-    title: string;
-    slug: string;
-    salaryDisplay: string;
-    location: string | null;
-    postedAt: string | Date;
-    skills: string[];
-    benefits: string;
-    workModel: string;
-    // isHot?: boolean;
-  }[];
+  activeJobs: CompanyActiveJobItem[];
 }
+
+// =====================================================================
+// 4. JOB & SKILL TYPES (PUBLIC, SEARCH, FILTER & DB RELATIONS)
+// =====================================================================
+
+export interface Job {
+  maCongViec: string;
+  tenCongViec: string;
+  mucLuongToiThieu: number;
+  mucLuongToiDa: number;
+}
+
+export interface SkillResponse {
+  id: string;
+  name: string;
+}
+
 export interface JobFilterParams {
   thanhPho?: string;
   loaiHinh?: string;
   hinhThucLamViec?: string;
-
   /**
-   * Lọc theo mức lương tối thiểu mong muốn (USD hoặc VNĐ tùy thiết kế)
-   * Lưu ý: Ở Frontend khi lấy từ URL xuống nó sẽ là chuỗi (string),
-   * khi gửi xuống Backend (NestJS) thì Class-validator sẽ ép kiểu về Number.
-   * VD: "500", "1000", "2000"
+   * Lọc theo mức lương tối thiểu mong muốn (VD: "500", "1000", "2000").
+   * Ở Frontend lấy từ URL là string, xuống Backend sẽ được ép kiểu về Number.
    */
   mucLuong?: string;
   page?: string;
 }
+
+export interface JobResponse {
+  data: JobDetailResponse[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
+export type SearchJobsSortBy = "NEWEST" | "SALARY_DESC" | "MOST_VIEWED" | string;
 
 export interface SearchJobsQuery {
   keyword?: string;
@@ -101,22 +174,39 @@ export interface SearchJobsQuery {
   mucLuongMax?: number | string;
   salaryRange?: string;
   negotiable?: boolean | string;
-  sortBy?: "NEWEST" | "SALARY_DESC" | "MOST_VIEWED" | string;
+  sortBy?: SearchJobsSortBy;
   page?: number | string;
   limit?: number | string;
 }
 
 export interface JobSearchResultResponse {
   data: JobDetailResponse[];
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
+  meta: PaginationMeta;
   total: number;
   page: number;
   totalPages: number;
+}
+
+export interface JobBranchSummary {
+  id: string;
+  city: string;
+  address: string;
+  mapUrl?: string | null;
+}
+
+export interface JobCompanySummary {
+  id: string;
+  name: string;
+  logo: string | null;
+  slug: string;
+  companyModel: string | null;
+  industry: string | null;
+  size: string | null;
+  address?: string | null;
+  country: string | null;
+  workingTime: string | null;
+  otPolicy: string | null;
+  website: string | null;
 }
 
 export interface JobDetailResponse {
@@ -140,28 +230,195 @@ export interface JobDetailResponse {
   views: number;
   status: string;
   skills: string[];
-  branch?: {
-    id: string;
-    city: string;
-    address: string;
-    mapUrl?: string | null;
-  } | null;
+  branch?: JobBranchSummary | null;
   isApplied?: boolean;
   applicationStatus?: string | null;
-  company: {
-    id: string;
-    name: string;
-    logo: string | null;
-    slug: string;
-    companyModel: string | null;
-    industry: string | null;
-    size: string | null;
-    address?: string | null;
-    country: string | null;
-    workingTime: string | null;
-    otPolicy: string | null;
-    website: string | null;
-  };
+  company: JobCompanySummary;
+}
+
+/** Form state khi tạo/sửa công việc trên UI */
+export interface JobFormState {
+  tenCongViec: string;
+  moTa: string;
+  yeuCauCongViec: string;
+  phucLoi: string;
+  mucLuongToiThieu: number | "";
+  mucLuongToiDa: number | "";
+  yeuCauKinhNghiem: number | "";
+  capBac: string;
+  thanhPho: string;
+  loaiHinh: string;
+  hinhThucLamViec: string;
+  maChiNhanh: string;
+  ngayHetHan: string;
+  negotiable: boolean;
+  kyNangs: string[];
+}
+
+/** Payload gửi lên Backend khi tạo mới tin tuyển dụng */
+export interface CreateCongViecPayload {
+  tenCongViec: string;
+  moTa?: string;
+  yeuCauCongViec?: string;
+  phucLoi?: string;
+  mucLuongToiThieu?: number;
+  mucLuongToiDa?: number;
+  yeuCauKinhNghiem?: number;
+  capBac?: string;
+  thanhPho?: string;
+  loaiHinh: string;
+  hinhThucLamViec?: string;
+  maChiNhanh?: string;
+  ngayDang: string;
+  ngayHetHan?: string;
+  trangThai: string;
+  maTaiKhoan: string;
+  kyNangs: string[];
+}
+
+// --- Database Join / Formatting Relation Types ---
+
+export interface CongTyData {
+  maCongTy: string;
+  tenCongTy: string;
+  slug: string;
+  moTa: string | null;
+  phucLoi: string | null;
+  thanhPho: string | null;
+  tenPhapLy: string | null;
+  chuyenMon: string | null;
+  aboutMe: string | null;
+  logoUrl: string | null;
+  website: string | null;
+  diaChi: string | null;
+  moHinhCongTy: string | null;
+  linhVuc: string | null;
+  quyMo: string | null;
+  quocGia: string | null;
+  thoiGianLamViec: string | null;
+  chinhSachOT: string | null;
+  giaiThuong: string | null;
+}
+
+export interface NhaTuyenDungData {
+  maNTD: string;
+  maCongTy: string;
+  maTaiKhoan: string;
+  congTy: CongTyData;
+}
+
+export interface ChiNhanhData {
+  maChiNhanh: string;
+  maCongTy: string;
+  thanhPho: string;
+  diaChi: string;
+  mapUrl: string | null;
+}
+
+export interface KyNangData {
+  maKyNang: string;
+  tenKyNang: string;
+}
+
+export interface CongViecKyNangData {
+  maCongViec: string;
+  maKyNang: string;
+  kyNang: KyNangData;
+}
+
+export interface JobWithRelations<TDecimal = any> {
+  maCongViec: string;
+  tenCongViec: string;
+  slug: string;
+  moTa: string | null;
+  yeuCauCongViec: string | null;
+  phucLoi: string | null;
+  mucLuongToiThieu: TDecimal | null;
+  mucLuongToiDa: TDecimal | null;
+  yeuCauKinhNghiem: number | null;
+  capBac: string | null;
+  thanhPho: string | null;
+  loaiHinh: string;
+  hinhThucLamViec: string | null;
+  ngayDang: Date;
+  ngayHetHan: Date | null;
+  ngayCapNhat: Date;
+  luotXem: number;
+  trangThai: string;
+  maNTD: string;
+  maChiNhanh: string | null;
+  nhaTuyenDung: NhaTuyenDungData;
+  chiNhanh: ChiNhanhData | null;
+  congViecKyNangs: CongViecKyNangData[];
+}
+
+// =====================================================================
+// 5. CANDIDATE & CV PROFILE TYPES
+// =====================================================================
+
+export interface CandidateSkillItem {
+  skillId: string;
+  skillName: string;
+  level: string | null;
+}
+
+export interface ExperienceItem {
+  id: string;
+  companyName: string;
+  position: string;
+  startDate: string;
+  endDate: string | null;
+  description: string | null;
+}
+
+export interface EducationItem {
+  id: string;
+  schoolName: string;
+  major: string;
+  startDate: string;
+  endDate: string | null;
+  gpa: string | null;
+}
+
+export interface CertificateItem {
+  id: string;
+  name: string;
+  organization: string;
+  issueDate: string;
+  expirationDate: string | null;
+}
+
+export interface LanguageItem {
+  id: string;
+  name: string;
+  proficiency: string;
+}
+
+export interface UploadedCvItem {
+  id: string;
+  fileName: string;
+  fileUrl: string;
+  uploadedAt: Date | string;
+}
+
+export interface PortfolioItem {
+  id: string;
+  title: string;
+  description: string | null;
+  projectUrl: string | null;
+}
+
+export interface CandidateDefaultCvFile {
+  id: string;
+  fileName: string;
+  fileUrl: string;
+  uploadedAt: Date;
+}
+
+export interface CandidateAccountInfo {
+  email: string;
+  userName: string;
+  phoneNumber: string | null;
 }
 
 export interface CandidateProfileResponse {
@@ -176,76 +433,20 @@ export interface CandidateProfileResponse {
   cvUrl: string | null;
   address: string | null;
 
-  // --- CÁC TRƯỜNG MỚI BỔ SUNG CHO HYBRID CV ---
-  aboutMe: string | null; // Giới thiệu bản thân
-  defaultCvType: string; // 'ONLINE' hoặc 'PDF'
-  defaultCvFileId: string | null; // ID của file CV mặc định (nếu chọn PDF)
+  // Hybrid CV fields
+  aboutMe: string | null;
+  defaultCvType: string; // 'ONLINE' | 'PDF'
+  defaultCvFileId: string | null;
+  defaultCvFile: CandidateDefaultCvFile | null;
 
-  defaultCvFile: {
-    id: string;
-    fileName: string;
-    fileUrl: string;
-    uploadedAt: Date;
-  } | null;
-
-  account: {
-    email: string;
-    userName: string;
-    phoneNumber: string | null;
-  };
-
-  skills: {
-    skillId: string;
-    skillName: string;
-    level: string | null;
-  }[];
-
-  // --- CÁC MẢNG DỮ LIỆU LỒNG NHAU (HỒ SƠ TRỰC TUYẾN) ---
-  experiences: {
-    id: string;
-    companyName: string;
-    position: string;
-    startDate: string;
-    endDate: string | null;
-    description: string | null;
-  }[];
-
-  educations: {
-    id: string;
-    schoolName: string;
-    major: string;
-    startDate: string;
-    endDate: string | null;
-    gpa: string | null;
-  }[];
-
-  certificates: {
-    id: string;
-    name: string;
-    organization: string;
-    issueDate: string;
-    expirationDate: string | null;
-  }[];
-
-  languages: {
-    id: string;
-    name: string;
-    proficiency: string;
-  }[];
-
-  uploadedCvs: {
-    id: string;
-    fileName: string;
-    fileUrl: string;
-    uploadedAt: Date | string;
-  }[];
-
-  portfolios: {
-    id: string;
-    title: string;
-    description: string | null;
-    projectUrl: string | null;
-  }[];
+  account: CandidateAccountInfo;
+  skills: CandidateSkillItem[];
+  experiences: ExperienceItem[];
+  educations: EducationItem[];
+  certificates: CertificateItem[];
+  languages: LanguageItem[];
+  uploadedCvs: UploadedCvItem[];
+  portfolios: PortfolioItem[];
 }
 
 export interface UpdateCandidatePayload {
@@ -271,7 +472,7 @@ export interface CreateExperiencePayload {
   description?: string | null;
 }
 
-export interface UpdateExperiencePayload extends Partial<CreateExperiencePayload> { }
+export type UpdateExperiencePayload = Partial<CreateExperiencePayload>;
 
 export interface CreateEducationPayload {
   schoolName: string;
@@ -281,7 +482,7 @@ export interface CreateEducationPayload {
   gpa?: string | null;
 }
 
-export interface UpdateEducationPayload extends Partial<CreateEducationPayload> { }
+export type UpdateEducationPayload = Partial<CreateEducationPayload>;
 
 export interface CreateCertificatePayload {
   name: string;
@@ -290,7 +491,7 @@ export interface CreateCertificatePayload {
   expirationDate?: string | null;
 }
 
-export interface UpdateCertificatePayload extends Partial<CreateCertificatePayload> { }
+export type UpdateCertificatePayload = Partial<CreateCertificatePayload>;
 
 export interface CreatePortfolioPayload {
   title: string;
@@ -298,7 +499,7 @@ export interface CreatePortfolioPayload {
   projectUrl?: string | null;
 }
 
-export interface UpdatePortfolioPayload extends Partial<CreatePortfolioPayload> { }
+export type UpdatePortfolioPayload = Partial<CreatePortfolioPayload>;
 
 export interface CreateCvFilePayload {
   fileName: string;
@@ -306,16 +507,39 @@ export interface CreateCvFilePayload {
   isDefault?: boolean;
 }
 
-export interface RegisterResponse {
-  accessToken: string;
-  user: {
+export interface ApplyJobPayload {
+  maCongViec: string;
+  maCvFile?: string;
+  coverLetter?: string;
+  chiTiet?: string;
+  fileCvUrl?: string;
+}
+
+export interface AppliedJobItem {
+  applicationId: string;
+  appliedDate: string;
+  applicationStatus: string; // 'CHO_DUYET' | 'DA_XEM' | 'PHU_HOP' | 'PHONG_VAN' | 'TRUNG_TUYEN' | 'KHONG_PHU_HOP'
+  cvUrl: string | null;
+  job: {
     id: string;
-    email: string;
-    role: string;
-    name: string;
+    title: string;
+    slug: string;
+    location: string | null;
+    workModel: string | null;
+    salaryDisplay: string;
     status: string;
+    deadline: string | null;
+    company: {
+      name: string;
+      logo: string | null;
+      slug: string;
+    } | null;
   };
 }
+
+// =====================================================================
+// 6. RECRUITER / EMPLOYER DASHBOARD & APPLICATION TYPES
+// =====================================================================
 
 export interface RecentApplicant {
   applicationId: string;
@@ -324,7 +548,7 @@ export interface RecentApplicant {
   avatarUrl: string | null;
   status: string;
   appliedAt: string | Date;
-  jobTitle: string; // Tên job đã được BE map sẵn
+  jobTitle: string;
 }
 
 export interface DashboardJobItem {
@@ -385,9 +609,23 @@ export interface UpdateRecruiterPayload {
   logoUrl?: string;
 }
 
-export interface SkillResponse {
-  id: string;
-  name: string;
+export interface RecruiterJobMetricsResponse {
+  totalJobs: {
+    count: number;
+    changeThisMonth: number;
+  };
+  activeJobs: {
+    count: number;
+  };
+  pendingJobs: {
+    count: number;
+    avgReviewTimeText: string;
+  };
+  totalApplications: {
+    count: number;
+    percentChangeThisWeek: number;
+  };
+  averageResponseRate: number;
 }
 
 export interface ApplicationItem {
@@ -404,18 +642,18 @@ export interface ApplicationItem {
 }
 
 export interface ApplicationDetailResponse {
-  // --- THÔNG TIN ĐƠN ỨNG TUYỂN ---
+  // Thông tin đơn ứng tuyển
   applicationId: string;
   appliedAt: string | Date;
   status: string;
   coverLetter: string | null;
   cvUrl: string | null;
 
-  // --- THÔNG TIN CÔNG VIỆC ---
+  // Thông tin công việc
   jobId: string;
   jobTitle: string;
 
-  // --- THÔNG TIN ỨNG VIÊN ---
+  // Thông tin ứng viên
   candidateId: string;
   candidateName: string;
   avatarUrl: string | null;
@@ -428,7 +666,7 @@ export interface ApplicationDetailResponse {
     address: string | null;
   };
 
-  // --- DỮ LIỆU HỒ SƠ TRỰC TUYẾN (HYBRID CV) ---
+  // Dữ liệu hồ sơ trực tuyến (Hybrid CV)
   skills: {
     skillName: string;
     level: string | null;
@@ -453,29 +691,6 @@ export interface ApplicationDetailResponse {
   }[];
 }
 
-export interface NotificationItemResponse {
-  id: string;
-  title: string;
-  content: string;
-  status: "CHUA_DOC" | "DA_DOC";
-  createdAt: string | Date;
-}
-
-export interface NotificationListResponse {
-  data: NotificationItemResponse[];
-  total: number;
-  allCount: number;
-  unreadCount: number;
-  readCount: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
-
-export interface UnreadCountResponse {
-  count: number;
-}
-
 export interface ScheduleInterviewPayload {
   maDon: string;
   tieuDe: string;
@@ -483,6 +698,12 @@ export interface ScheduleInterviewPayload {
   moTa?: string;
   taoGoogleMeet: boolean;
 }
+
+// =====================================================================
+// 7. PACKAGE & CAMPAIGN TYPES
+// =====================================================================
+
+export type CampaignStatus = "DANG_CHAY" | "DA_KET_THUC" | "CHO_THANH_TOAN";
 
 export interface PackageResponse {
   maGoi: string;
@@ -503,50 +724,41 @@ export interface CampaignResponse {
   soLuotConLai: number;
   ngayMua: string;
   ngayKetThuc: string;
-  trangThai: "DANG_CHAY" | "DA_KET_THUC" | "CHO_THANH_TOAN";
+  trangThai: CampaignStatus;
 }
 
-export interface AppliedJobItem {
-  applicationId: string;
-  appliedDate: string;
-  applicationStatus: string; // 'CHO_DUYET' | 'DA_XEM' | 'PHU_HOP' | 'PHONG_VAN' | 'TRUNG_TUYEN' | 'KHONG_PHU_HOP'
-  cvUrl: string | null;
-  job: {
-    id: string;
-    title: string;
-    slug: string;
-    location: string | null;
-    workModel: string | null;
-    salaryDisplay: string;
-    status: string;
-    deadline: string | null;
-    company: {
-      name: string;
-      logo: string | null;
-      slug: string;
-    } | null;
-  };
+// =====================================================================
+// 8. NOTIFICATION TYPES
+// =====================================================================
+
+export type NotificationStatus = "CHUA_DOC" | "DA_DOC";
+
+export interface NotificationItemResponse {
+  id: string;
+  title: string;
+  content: string;
+  status: NotificationStatus;
+  createdAt: string | Date;
 }
 
-export interface RecruiterJobMetricsResponse {
-  totalJobs: {
-    count: number;
-    changeThisMonth: number;
-  };
-  activeJobs: {
-    count: number;
-  };
-  pendingJobs: {
-    count: number;
-    avgReviewTimeText: string;
-  };
-  totalApplications: {
-    count: number;
-    percentChangeThisWeek: number;
-  };
-  averageResponseRate: number;
+export interface NotificationListResponse {
+  data: NotificationItemResponse[];
+  total: number;
+  allCount: number;
+  unreadCount: number;
+  readCount: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
 
-// Employer / Company Profile Management
+export interface UnreadCountResponse {
+  count: number;
+}
+
+// =====================================================================
+// 9. SUB-MODULE EXPORTS
+// =====================================================================
+
 export * from "./company-profile.types";
 export * from "./employer-job.types";

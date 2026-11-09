@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { JobDetailResponse } from "@viecngon/types";
+import { JobDetailResponse, ApplyJobPayload } from "@viecngon/types";
 import toast from "react-hot-toast";
 
 // 1. Fetch Job Detail
@@ -77,14 +77,6 @@ export const useRelatedJobs = (slugOrId: string) => {
 };
 
 // 3. Mutation Apply Job
-export interface ApplyJobPayload {
-  maCongViec: string;
-  maCvFile?: string;
-  coverLetter?: string;
-  chiTiet?: string;
-  fileCvUrl?: string;
-}
-
 const applyForJobAPI = async (payload: ApplyJobPayload) => {
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/candidate/applications`,
