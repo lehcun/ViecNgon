@@ -35,3 +35,18 @@ export const companyKeys = {
   // (Rất hữu ích khi hiển thị trên trang chi tiết công ty hoặc dashboard nhà tuyển dụng)
   jobs: (companyId: string) => [...companyKeys.detail(companyId), "jobs"],
 };
+
+// --- QUẢN LÝ ADMIN DASHBOARD ---
+export const adminDashboardKeys = {
+  all: ["admin"] as const,
+  metrics: () => [...adminDashboardKeys.all, "metrics"] as const,
+  userGrowth: (period: string) =>
+    [...adminDashboardKeys.all, "charts", "user-growth", period] as const,
+  applicationStats: (period: string) =>
+    [...adminDashboardKeys.all, "charts", "application-stats", period] as const,
+  recentTransactions: () =>
+    [...adminDashboardKeys.all, "recent-transactions"] as const,
+  revenueBreakdown: () =>
+    [...adminDashboardKeys.all, "revenue-breakdown"] as const,
+};
+
