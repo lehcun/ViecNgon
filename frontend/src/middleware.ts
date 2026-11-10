@@ -10,7 +10,7 @@ interface DecodedToken {
  * Bản đồ chuyển hướng về Dashboard chính thức theo từng vai trò người dùng
  */
 const ROLE_DASHBOARD_MAP: Record<string, string> = {
-  ADMIN: "/admin",
+  ADMIN: "/admin/dashboard",
   NHATUYENDUNG: "/employer-dashboard",
   UNGVIEN: "/dashboard",
 };
@@ -125,6 +125,11 @@ export function middleware(request: NextRequest) {
   const decoded = token ? decodeToken(token) : null;
   const isTokenValid = Boolean(decoded && !decoded.isExpired);
   const userRole = isTokenValid && decoded ? decoded.role : null;
+
+  // 0. NẾU TRUY CẬP VÀO /admin GỐC VỚI ROLE ADMIN -> CHUYỂN HƯỚNG VÀO /admin/dashboard
+  if (normalizedPath === "/admin" && isTokenValid && userRole === "ADMIN") {
+    return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+  }
 
   // 1. NẾU LÀ TRANG AUTH CÔNG KHAI (Login, Register, Forgot Password...)
   const isAuthPage = authRoutes.some(
