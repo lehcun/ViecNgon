@@ -1,10 +1,27 @@
+"use client";
+
 import React from "react";
+import Link from "next/link";
 import { Zap, ShieldCheck, Download, Calendar } from "lucide-react";
+import toast from "react-hot-toast";
+import { useAdminMetrics } from "@/hooks/admin/useAdminDashboard";
+import MetricCardGrid from "@/components/admin/dashboard/MetricCardGrid";
+import UserGrowthChartCard from "@/components/admin/dashboard/UserGrowthChartCard";
+import ApplicationStatsCard from "@/components/admin/dashboard/ApplicationStatsCard";
+import RecentTransactionsTable from "@/components/admin/dashboard/RecentTransactionsTable";
+import RevenueBreakdownCard from "@/components/admin/dashboard/RevenueBreakdownCard";
 
 export default function AdminDashboardPage() {
+  const { data: metrics } = useAdminMetrics();
+  const pendingJobsCount = metrics?.pendingJobs.count ?? 0;
+
+  const handleExportReport = () => {
+    toast.success("Đang chuẩn bị báo cáo thống kê tháng...");
+  };
+
   return (
     <div className="space-y-6">
-      {/* 1. Header Banner & Quick Actions */}
+      {/* 1. Header Banner & Date Range */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
@@ -14,12 +31,13 @@ export default function AdminDashboardPage() {
             Welcome back, System Admin
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Here&apos;s what&apos;s happening across your recruitment platform today.
+            Here&apos;s what&apos;s happening across your recruitment platform
+            today.
           </p>
         </div>
 
-        {/* Date Range Picker */}
-        <div className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-slate-200/90 rounded-lg text-xs font-medium text-slate-700 shadow-2xs self-start md:self-auto">
+        {/* Date Range Badge */}
+        <div className="inline-flex items-center gap-2 px-3.5 py-2 bg-white border border-slate-200/90 rounded-lg text-xs font-medium text-slate-700 shadow-2xs self-start md:self-auto">
           <Calendar size={15} className="text-slate-400" />
           <span>Nov 1 – Nov 30, 2026</span>
         </div>
@@ -27,24 +45,25 @@ export default function AdminDashboardPage() {
 
       {/* 2. Quick Action Buttons */}
       <div className="flex flex-wrap items-center gap-3">
-        <button
-          type="button"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm shadow-blue-500/20 transition-all cursor-pointer"
+        <Link
+          href="/admin/jobs"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm shadow-blue-500/20 transition-all"
         >
           <Zap size={14} className="fill-white" />
-          <span>Approve Pending Jobs (8)</span>
-        </button>
+          <span>Approve Pending Jobs ({pendingJobsCount})</span>
+        </Link>
 
-        <button
-          type="button"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold rounded-lg shadow-2xs transition-all cursor-pointer"
+        <Link
+          href="/admin/users"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold rounded-lg shadow-2xs transition-all"
         >
           <ShieldCheck size={14} className="text-slate-500" />
-          <span>Verify Companies (5)</span>
-        </button>
+          <span>Verify Companies</span>
+        </Link>
 
         <button
           type="button"
+          onClick={handleExportReport}
           className="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold rounded-lg shadow-2xs transition-all cursor-pointer"
         >
           <Download size={14} className="text-slate-500" />
@@ -52,22 +71,28 @@ export default function AdminDashboardPage() {
         </button>
       </div>
 
-      {/* 3. Phase 1 Foundation Banner */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-8 shadow-xs text-center">
-        <div className="max-w-md mx-auto space-y-3">
-          <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-xl font-bold ring-8 ring-emerald-50/50">
-            ✓
-          </div>
-          <h2 className="text-lg font-bold text-slate-900">
-            Phase 1: Nền móng & Bảo mật RBAC đã hoàn tất
-          </h2>
-          <p className="text-xs text-slate-500 leading-relaxed">
-            Khung giao diện Quản trị viên (Sidebar, Header, Security Guard, Middleware) đã hoạt động sẵn sàng.
-            Chúng ta sẽ tiếp tục kết nối các API số liệu thống kê ở Phase 2!
-          </p>
+      {/* 3. Hàng 1: 4 Thẻ Chỉ Số Tổng Quan (MetricCardGrid) */}
+      <MetricCardGrid />
+
+      {/* 4. Hàng 2: Biểu đồ Tăng trưởng Người dùng (60%) & Thống kê Đơn ứng tuyển (40%) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        <div className="lg:col-span-7 flex flex-col h-full">
+          <UserGrowthChartCard />
+        </div>
+        <div className="lg:col-span-5 flex flex-col h-full">
+          <ApplicationStatsCard />
+        </div>
+      </div>
+
+      {/* 5. Hàng 3: Giao dịch gần đây (60%) & Cơ cấu Doanh thu Gói dịch vụ (40%) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        <div className="lg:col-span-7 flex flex-col h-full">
+          <RecentTransactionsTable />
+        </div>
+        <div className="lg:col-span-5 flex flex-col h-full">
+          <RevenueBreakdownCard />
         </div>
       </div>
     </div>
   );
 }
-
