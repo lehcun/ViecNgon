@@ -24,6 +24,7 @@ import { ApplicationDetailResponse } from "@viecngon/types";
 import { useUpdateApplicationStatus } from "@/hooks/recruiter/useUpdateApplicationStatus";
 import SendEmailModal from "@/components/employer/SendEmailModel";
 import ScheduleInterviewModal from "@/components/employer/ScheduleInterviewModal";
+import AiCandidateScreeningCard from "@/components/employer/AiCandidateScreeningCard";
 
 const formatDate = (dateString: string | Date | null | undefined) => {
   if (!dateString) return "Không xác định";
@@ -116,15 +117,14 @@ export default function ApplicationDetailPage() {
             <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
               {application.candidateName}
               <span
-                className={`text-xs px-2.5 py-1 rounded-full font-bold border ${
-                  currentStatus === "PHONG_VAN"
+                className={`text-xs px-2.5 py-1 rounded-full font-bold border ${currentStatus === "PHONG_VAN"
                     ? "bg-purple-100 text-purple-700 border-purple-200"
                     : currentStatus === "DUOC_NHAN"
                       ? "bg-emerald-100 text-emerald-700 border-emerald-200"
                       : currentStatus === "BI_LOAI"
                         ? "bg-rose-100 text-rose-700 border-rose-200"
                         : "bg-blue-100 text-blue-700 border-blue-200"
-                }`}
+                  }`}
               >
                 {currentStatus === "PHONG_VAN"
                   ? "Phỏng vấn"
@@ -384,6 +384,9 @@ export default function ApplicationDetailPage() {
         {/* CỘT PHẢI (1/3): THANH CÔNG CỤ (ACTION BAR) */}
         {/* ========================================== */}
         <div className="w-full lg:w-1/3 flex flex-col gap-5 sticky top-6">
+          {/* 0. AI CANDIDATE SCREENING */}
+          <AiCandidateScreeningCard applicationId={maDon[0]} />
+
           {/* 1. CHUYỂN TRẠNG THÁI */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 overflow-hidden">
             {/* Hiệu ứng loading mờ khi đang gọi API cập nhật */}
@@ -464,11 +467,10 @@ export default function ApplicationDetailPage() {
                     >
                       <Star
                         size={32}
-                        className={`${
-                          (hoverRating || rating) >= star
+                        className={`${(hoverRating || rating) >= star
                             ? "fill-amber-400 text-amber-400"
                             : "fill-white text-emerald-200"
-                        } transition-colors`}
+                          } transition-colors`}
                       />
                     </button>
                   ))}

@@ -3,3 +3,5 @@ node_modules/
 dist/
 .next/
 *.log
+.agents/skills/
+AGENTS.md

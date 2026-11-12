@@ -17,6 +17,14 @@ export const jobKeys = {
   // (Tính năng mở rộng) Việc làm đã lưu, đã ứng tuyển của ứng viên
   saved: () => [...jobKeys.all, "saved"],
   applied: () => [...jobKeys.all, "applied"],
+  matchPreview: (jobId: string) => [...jobKeys.all, "match-preview", jobId],
+};
+
+// --- QUẢN LÝ ĐƠN ỨNG TUYỂN (EMPLOYER) ---
+export const applicationKeys = {
+  all: ["applications"] as const,
+  aiAnalysis: (maDon: string) =>
+    [...applicationKeys.all, "ai-analysis", maDon] as const,
 };
 
 // --- QUẢN LÝ COMPANIES ---

@@ -19,6 +19,7 @@ import {
   GraduationCap,
   Award,
   FolderGit2,
+  Sparkles,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import PersonalInfoModal from "@/components/candidate/PersonalInfoModal";
@@ -28,6 +29,7 @@ import EducationModal from "@/components/candidate/modals/EducationModal";
 import CertificateModal from "@/components/candidate/modals/CertificateModal";
 import PortfolioModal from "@/components/candidate/modals/PortfolioModal";
 import ConfirmDeleteModal from "@/components/candidate/modals/ConfirmDeleteModal";
+import AiCvUploadModal from "@/components/candidate/modals/AiCvUploadModal";
 import { useCandidateProfile } from "@/hooks/candidate/useCandidateProfile";
 import { useManageCandidateItems } from "@/hooks/candidate/useManageCandidateItems";
 import { formatDateToDDMMYYYY } from "@/utils/date";
@@ -59,6 +61,7 @@ export default function CandidateProfilePage() {
   // State các Modal chỉnh sửa
   const [isEditInfoOpen, setIsEditInfoOpen] = useState(false);
   const [isAboutMeOpen, setIsAboutMeOpen] = useState(false);
+  const [isAiCvModalOpen, setIsAiCvModalOpen] = useState(false);
 
   // Modal cho Experiences
   const [experienceModal, setExperienceModal] = useState<{
@@ -232,6 +235,12 @@ export default function CandidateProfilePage() {
         title={deleteModal.title}
         message={deleteModal.message}
         isPending={isDeletingAny}
+      />
+
+      {/* 8. Modal Tải lên CV để AI tự động điền hồ sơ */}
+      <AiCvUploadModal
+        isOpen={isAiCvModalOpen}
+        onClose={() => setIsAiCvModalOpen(false)}
       />
 
       {/* ==================== CỘT TRÁI & GIỮA (NỘI DUNG CHÍNH) ==================== */}
@@ -729,6 +738,15 @@ export default function CandidateProfilePage() {
               <Bot size={24} />
             </div>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setIsAiCvModalOpen(true)}
+            className="inline-flex items-center justify-center gap-2 w-full px-6 py-3 mb-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium transition-all shadow-md shadow-emerald-600/20 text-sm"
+          >
+            <Sparkles size={18} />
+            Tải lên CV để AI tự điền hồ sơ
+          </button>
 
           <Link
             href="/cv-template"

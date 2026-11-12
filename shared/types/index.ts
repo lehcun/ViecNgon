@@ -763,4 +763,5 @@ export interface UnreadCountResponse {
 export * from "./company-profile.types";
 export * from "./employer-job.types";
 export * from "./admin-dashboard.types";
+export * from "./ai-cv.types";
 

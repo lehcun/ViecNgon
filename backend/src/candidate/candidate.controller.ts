@@ -18,6 +18,7 @@ import { CreateEducationDto, UpdateEducationDto } from './dto/education.dto';
 import { CreateCertificateDto, UpdateCertificateDto } from './dto/certificate.dto';
 import { CreatePortfolioDto, UpdatePortfolioDto } from './dto/portfolio.dto';
 import { CreateCvFileDto } from './dto/cv-file.dto';
+import { ApplyParsedCvDto } from './dto/apply-parsed-cv.dto';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 
@@ -183,6 +184,14 @@ export class CandidateController {
     @UploadedFile() file: any,
   ) {
     return await this.candidateService.uploadGeneratedCv(user.id, file);
+  }
+
+  @Post('cv/apply-parsed-data')
+  async applyParsedCvData(
+    @CurrentUser() user: jwtAuthGuard.AuthUser,
+    @Body() dto: ApplyParsedCvDto,
+  ) {
+    return await this.candidateService.applyParsedCvData(user.id, dto);
   }
 
   @Get('applied-jobs')

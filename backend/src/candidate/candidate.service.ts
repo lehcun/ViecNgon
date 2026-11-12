@@ -11,6 +11,7 @@ import { CreateEducationDto, UpdateEducationDto } from './dto/education.dto';
 import { CreateCertificateDto, UpdateCertificateDto } from './dto/certificate.dto';
 import { CreatePortfolioDto, UpdatePortfolioDto } from './dto/portfolio.dto';
 import { CreateCvFileDto } from './dto/cv-file.dto';
+import { ApplyParsedCvDto } from './dto/apply-parsed-cv.dto';
 import { CandidateProfileResponse } from '@viecngon/types';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { formatSalaryDisplay } from 'src/common/utils/format-salary';
@@ -587,6 +588,250 @@ export class CandidateService {
         'Không thể lưu CV vào hệ thống. Vui lòng thử lại.',
       );
     }
+  }
+
+  // =========================================================================
+  // 8.5 ÁP DỤNG DỮ LIỆU CV ĐÃ BÓC TÁCH BẰNG AI VÀO HỒ SƠ (TRANSACTION)
+  // =========================================================================
+  private parseSafeDate(
+    dateStr?: string | null,
+    fallback?: Date,
+  ): Date | null {
+    if (!dateStr || typeof dateStr !== 'string') {
+      return fallback ?? null;
+    }
+
+    const trimmed = dateStr.trim();
+    if (!trimmed) return fallback ?? null;
+
+    let normalized = trimmed;
+    // MM/YYYY -> YYYY-MM-01
+    const mmYyyyMatch = /^(\d{1,2})\/(\d{4})$/.exec(trimmed);
+    if (mmYyyyMatch) {
+      const month = mmYyyyMatch[1].padStart(2, '0');
+      normalized = `${mmYyyyMatch[2]}-${month}-01`;
+    } else if (/^\d{4}-\d{1,2}$/.test(trimmed)) {
+      // YYYY-MM -> YYYY-MM-01
+      const [y, m] = trimmed.split('-');
+      normalized = `${y}-${m.padStart(2, '0')}-01`;
+    } else if (/^\d{4}$/.test(trimmed)) {
+      // YYYY -> YYYY-01-01
+      normalized = `${trimmed}-01-01`;
+    }
+
+    const parsed = new Date(normalized);
+    if (isNaN(parsed.getTime())) {
+      return fallback ?? null;
+    }
+
+    const year = parsed.getFullYear();
+    if (year < 1950 || year > 2100) {
+      return fallback ?? null;
+    }
+
+    return parsed;
+  }
+
+  private truncateText(
+    value: string | null | undefined,
+    maxLength: number,
+  ): string | null {
+    if (!value) return null;
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    return trimmed.length > maxLength ? trimmed.slice(0, maxLength) : trimmed;
+  }
+
+  async applyParsedCvData(userId: string, dto: ApplyParsedCvDto) {
+    const candidate = await this.getCandidateByUserId(userId);
+    const now = new Date();
+
+    await this.prisma.$transaction(async (tx) => {
+      // 1. Cập nhật thông tin cơ bản trên TAIKHOAN (SĐT, Tên hiển thị)
+      const phone = this.truncateText(dto.phoneNumber, 20);
+      const fullName = this.truncateText(dto.fullName, 100);
+
+      if (phone || fullName) {
+        await tx.taiKhoan.update({
+          where: { maTaiKhoan: userId },
+          data: {
+            ...(phone ? { sdt: phone } : {}),
+            ...(fullName ? { tenNguoiDung: fullName } : {}),
+          },
+        });
+      }
+
+      // 2. Cập nhật bảng UNGVIEN
+      const parsedDob = this.parseSafeDate(dto.dateOfBirth);
+      const gender = this.truncateText(dto.gender, 10);
+      const profession = this.truncateText(dto.profession, 150);
+      const address = this.truncateText(dto.address, 255);
+      const aboutMe = dto.aboutMe ? sanitizeRichText(dto.aboutMe) : undefined;
+
+      await tx.ungVien.update({
+        where: { maUngVien: candidate.maUngVien },
+        data: {
+          ...(fullName ? { tenUngVien: fullName } : {}),
+          ...(parsedDob ? { ngaySinh: parsedDob } : {}),
+          ...(gender ? { gioiTinh: gender } : {}),
+          ...(dto.yearsOfExperience !== null &&
+          dto.yearsOfExperience !== undefined
+            ? { soNamKinhNghiem: dto.yearsOfExperience }
+            : {}),
+          ...(profession ? { chuyenMon: profession } : {}),
+          ...(address ? { diaChi: address } : {}),
+          ...(aboutMe !== undefined ? { gioiThieuBanThan: aboutMe } : {}),
+        },
+      });
+
+      // 3. Nếu người dùng chọn ghi đè, xóa các mục chi tiết cũ trước khi đồng bộ
+      if (dto.replaceExisting) {
+        await Promise.all([
+          tx.kinhNghiem.deleteMany({
+            where: { maUngVien: candidate.maUngVien },
+          }),
+          tx.hocVan.deleteMany({
+            where: { maUngVien: candidate.maUngVien },
+          }),
+          tx.chungChi.deleteMany({
+            where: { maUngVien: candidate.maUngVien },
+          }),
+          tx.ungVienKyNang.deleteMany({
+            where: { maUngVien: candidate.maUngVien },
+          }),
+        ]);
+      }
+
+      // 4. Tạo hàng loạt KINH_NGHIEM
+      const validExperiences = (dto.experiences ?? [])
+        .filter((exp) => exp.companyName?.trim() && exp.position?.trim())
+        .map((exp) => ({
+          maUngVien: candidate.maUngVien,
+          tenCongTy: this.truncateText(exp.companyName, 150) ?? 'Không rõ',
+          viTri: this.truncateText(exp.position, 100) ?? 'Nhân viên',
+          ngayBatDau: this.parseSafeDate(exp.startDate, now) ?? now,
+          ngayKetThuc: this.parseSafeDate(exp.endDate),
+          moTaChiTiet: exp.description
+            ? sanitizeRichText(exp.description)
+            : null,
+        }));
+
+      if (validExperiences.length > 0) {
+        await tx.kinhNghiem.createMany({ data: validExperiences });
+      }
+
+      // 5. Tạo hàng loạt HOC_VAN
+      const validEducations = (dto.educations ?? [])
+        .filter((edu) => edu.schoolName?.trim() && edu.major?.trim())
+        .map((edu) => ({
+          maUngVien: candidate.maUngVien,
+          tenTruong: this.truncateText(edu.schoolName, 150) ?? 'Không rõ',
+          nganhHoc: this.truncateText(edu.major, 100) ?? 'Chuyên ngành',
+          ngayBatDau: this.parseSafeDate(edu.startDate, now) ?? now,
+          ngayTotNghiep: this.parseSafeDate(edu.endDate),
+          gpa: this.truncateText(edu.gpa, 10),
+        }));
+
+      if (validEducations.length > 0) {
+        await tx.hocVan.createMany({ data: validEducations });
+      }
+
+      // 6. Tạo hàng loạt CHUNG_CHI
+      const validCertificates = (dto.certificates ?? [])
+        .filter((cert) => cert.name?.trim() && cert.organization?.trim())
+        .map((cert) => ({
+          maUngVien: candidate.maUngVien,
+          tenChungChi: this.truncateText(cert.name, 150) ?? 'Chứng chỉ',
+          toChucCap: this.truncateText(cert.organization, 150) ?? 'Tổ chức cấp',
+          ngayCap: this.parseSafeDate(cert.issueDate, now) ?? now,
+          ngayHetHan: this.parseSafeDate(cert.expirationDate),
+        }));
+
+      if (validCertificates.length > 0) {
+        await tx.chungChi.createMany({ data: validCertificates });
+      }
+
+      // 7. Đồng bộ KYNANG & UNGVIEN_KYNANG (loại bỏ trùng lặp)
+      const uniqueSkillsMap = new Map<
+        string,
+        { name: string; level: string | null }
+      >();
+      for (const item of dto.skills ?? []) {
+        const cleanName = this.truncateText(item.skillName, 100);
+        if (!cleanName) continue;
+        const key = cleanName.toLowerCase();
+        if (!uniqueSkillsMap.has(key)) {
+          uniqueSkillsMap.set(key, {
+            name: cleanName,
+            level: this.truncateText(item.level, 50),
+          });
+        }
+      }
+
+      if (uniqueSkillsMap.size > 0) {
+        const allSkills = await tx.kyNang.findMany();
+        const skillLookup = new Map<string, string>(
+          allSkills.map((s) => [s.tenKyNang.trim().toLowerCase(), s.maKyNang]),
+        );
+
+        for (const [key, skillItem] of uniqueSkillsMap.entries()) {
+          let maKyNang = skillLookup.get(key);
+          if (!maKyNang) {
+            const createdSkill = await tx.kyNang.create({
+              data: { tenKyNang: skillItem.name },
+            });
+            maKyNang = createdSkill.maKyNang;
+            skillLookup.set(key, maKyNang);
+          }
+
+          await tx.ungVienKyNang.upsert({
+            where: {
+              maUngVien_maKyNang: {
+                maUngVien: candidate.maUngVien,
+                maKyNang,
+              },
+            },
+            update: {
+              ...(skillItem.level ? { mucDo: skillItem.level } : {}),
+            },
+            create: {
+              maUngVien: candidate.maUngVien,
+              maKyNang,
+              mucDo: skillItem.level,
+            },
+          });
+        }
+      }
+
+      // 8. Lưu bản ghi FILE_CV & gán maFileCvMacDinh nếu có fileUrl
+      const safeFileUrl = this.truncateText(dto.fileUrl, 255);
+      const safeFileName = this.truncateText(dto.fileName, 255);
+      if (safeFileUrl && safeFileName) {
+        const createdFileCv = await tx.fileCv.create({
+          data: {
+            tenFile: safeFileName,
+            fileUrl: safeFileUrl,
+            maUngVien: candidate.maUngVien,
+          },
+        });
+
+        if (dto.setAsDefaultCv !== false) {
+          await tx.ungVien.update({
+            where: { maUngVien: candidate.maUngVien },
+            data: {
+              maFileCvMacDinh: createdFileCv.maFileCv,
+              loaiCvMacDinh: 'PDF',
+              cvUrl: safeFileUrl,
+            },
+          });
+        }
+      }
+    });
+
+    return {
+      message: 'Áp dụng dữ liệu CV vào hồ sơ thành công!',
+      profile: await this.getProfile(userId),
+    };
   }
 
   // =========================================================================

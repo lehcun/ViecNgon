@@ -17,13 +17,18 @@ import { JwtService } from '@nestjs/jwt';
 import { JobService } from './job.service';
 import { CreateJobDto } from './dto/create-job.dto';
 import { SearchJobsDto } from './dto/search-jobs.dto';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { JwtAuthGuard, type AuthUser } from 'src/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
+import { AiMatchService } from 'src/ai/ai-match.service';
 
 @Controller(['jobs', 'job'])
 export class JobController {
   constructor(
     private readonly jobService: JobService,
     private readonly jwtService: JwtService,
+    private readonly aiMatchService: AiMatchService,
   ) { }
 
   @Post()
@@ -76,6 +81,16 @@ export class JobController {
   ) {
     const userId = this.extractUserIdFromCookie(req);
     return this.jobService.getJobDetail(slug, userId);
+  }
+
+  @Post(':id/match-preview')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('UNGVIEN')
+  async previewMatch(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return await this.aiMatchService.previewJobMatchForCandidate(user.id, id);
   }
 
   /**
