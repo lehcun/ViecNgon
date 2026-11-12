@@ -9,6 +9,7 @@ import {
   Award,
   Clock,
   Send,
+  CheckCircle,
   Globe,
   Users,
 } from "lucide-react";
@@ -70,13 +71,23 @@ export default function JobDetailPreviewPane({ job }: JobDetailPreviewPaneProps)
 
       {/* 2. Nút Hành động */}
       <div className="flex items-center gap-3 py-4 border-b border-slate-100">
-        <Link
-          href={`/jobs/${job.slug}`}
-          className="flex-1 inline-flex items-center justify-center gap-2 py-3 px-5 bg-primary hover:bg-primary-hover text-white text-sm font-bold rounded-xl shadow-md shadow-primary/25 transition-all text-center cursor-pointer"
-        >
-          <Send size={16} />
-          <span>Ứng tuyển ngay</span>
-        </Link>
+        {job.isApplied ? (
+          <div className="flex-1 inline-flex items-center justify-center gap-2 py-3 px-5 bg-emerald-50 text-emerald-700 text-sm font-bold rounded-xl border border-emerald-200 text-center">
+            <CheckCircle size={16} className="shrink-0" />
+            <span>
+              Đã ứng tuyển{" "}
+              {job.applicationStatus ? `(${job.applicationStatus})` : ""}
+            </span>
+          </div>
+        ) : (
+          <Link
+            href={`/job-it/${job.slug}/job_applications`}
+            className="flex-1 inline-flex items-center justify-center gap-2 py-3 px-5 bg-primary hover:bg-primary-hover text-white text-sm font-bold rounded-xl shadow-md shadow-primary/25 transition-all text-center cursor-pointer"
+          >
+            <Send size={16} />
+            <span>Ứng tuyển ngay</span>
+          </Link>
+        )}
 
         <Link
           href={`/jobs/${job.slug}`}

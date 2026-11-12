@@ -4,16 +4,18 @@ import React, { useState } from "react";
 import {
   ChevronLeft,
   Eye,
-  UploadCloud,
   Info,
   Edit3,
   Loader2,
+  CheckCircle,
+  Link2,
 } from "lucide-react";
+import Link from "next/link";
 import { useAuthStore } from "@/store/authStore";
 import { useParams, useRouter } from "next/navigation";
-import { useJobDetail } from "@/hooks/job/useJobDetail";
-import { useApplyJob } from "@/hooks/job_application/useApplyJob";
+import { useApplyJob, useJobDetail } from "@/hooks/job/useJobDetail";
 import { useCandidateProfile } from "@/hooks/candidate/useCandidateProfile";
+import toast from "react-hot-toast";
 
 // Helper format ngày ngắn gọn
 const formatDateToLocal = (dateString: string | null | undefined | Date) => {
@@ -37,7 +39,7 @@ export default function ApplyJobPage() {
   const { job, isLoading: isJobLoading } = useJobDetail(slug);
   const { candidateProfile: profile, isLoading: isProfileLoading } =
     useCandidateProfile();
-  const { mutate, isPending } = useApplyJob();
+  const { mutate, isPending } = useApplyJob(slug);
 
   // Chỉ lưu lựa chọn chủ động của user (ban đầu là null vì chưa chọn gì)
   const [manualCvOption, setManualCvOption] = useState<
@@ -86,10 +88,11 @@ export default function ApplyJobPage() {
     e.preventDefault();
 
     // Xác định URL CV sẽ được gửi đi
-    const finalCvUrl = cvOption === "existing" ? existingCvUrl : cvUrl;
+    const finalCvUrl =
+      cvOption === "existing" ? existingCvUrl : cvUrl.trim();
 
     if (!finalCvUrl) {
-      alert("Vui lòng cung cấp CV để ứng tuyển!");
+      toast.error("Vui lòng cung cấp CV để ứng tuyển!");
       return;
     }
 
@@ -97,16 +100,15 @@ export default function ApplyJobPage() {
     mutate(
       {
         maCongViec: job.id,
-        chiTiet: coverLetter,
+        coverLetter: coverLetter.trim() || undefined,
+        chiTiet: coverLetter.trim() || undefined,
+        maCvFile:
+          cvOption === "existing" ? defaultCv?.id || undefined : undefined,
         fileCvUrl: finalCvUrl,
       },
       {
         onSuccess: () => {
-          alert("🎉 Chúc mừng! Bạn đã nộp CV thành công.");
-          router.push("/candidate/dashboard"); // Chuyển về Dashboard của ứng viên
-        },
-        onError: (error: any) => {
-          alert(`❌ Thất bại: ${error.message}`);
+          router.push("/dashboard"); // Chuyển về Dashboard của ứng viên
         },
       },
     );
@@ -159,7 +161,35 @@ export default function ApplyJobPage() {
             </span>
           </h1>
 
-          <form className="space-y-8" onSubmit={handleApply}>
+          {job.isApplied ? (
+            <div className="p-6 rounded-xl bg-emerald-50 border border-emerald-200 text-center space-y-4">
+              <CheckCircle size={40} className="mx-auto text-emerald-600" />
+              <div>
+                <h2 className="text-lg font-bold text-emerald-800">
+                  Bạn đã ứng tuyển công việc này
+                  {job.applicationStatus ? ` (${job.applicationStatus})` : ""}
+                </h2>
+                <p className="text-sm text-emerald-700 mt-1">
+                  Bạn có thể theo dõi trạng thái hồ sơ trong danh sách việc làm đã ứng tuyển.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                <Link
+                  href={`/job-it/${slug}`}
+                  className="px-5 py-2.5 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50 transition-colors"
+                >
+                  Xem lại tin tuyển dụng
+                </Link>
+                <Link
+                  href="/my-jobs/applied"
+                  className="px-5 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-bold transition-colors"
+                >
+                  Việc làm đã ứng tuyển
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <form className="space-y-8" onSubmit={handleApply}>
             {/* --- Phần 1: Chọn CV --- */}
             <div>
               <h2 className="text-base font-bold text-slate-800 mb-3 flex items-center gap-1">
@@ -241,31 +271,28 @@ export default function ApplyJobPage() {
                       className="w-4 h-4 text-primary focus:ring-primary border-slate-300"
                     />
                     <span className="font-semibold text-slate-800 text-sm">
-                      Tải lên CV khác
+                      Nhập liên kết CV khác (Google Drive / Notion / Portfolio)
                     </span>
                   </div>
 
                   {cvOption === "new" && (
                     <div className="ml-7 mt-3">
-                      <div className="flex items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            alert("Gắn component Upload của bạn vào đây nhé!")
-                          }
-                          className="flex items-center gap-2 border-2 border-primary text-primary hover:bg-primary-light px-4 py-1.5 rounded-lg text-sm font-bold transition-colors"
-                        >
-                          <UploadCloud size={16} /> Chọn file
-                        </button>
-                        <span className="text-sm text-slate-500 truncate">
-                          {cvUrl
-                            ? "Đã đính kèm file mới"
-                            : "Chưa có file nào được chọn"}
-                        </span>
+                      <div className="relative flex items-center">
+                        <Link2
+                          size={16}
+                          className="absolute left-3 text-slate-400 pointer-events-none"
+                        />
+                        <input
+                          type="url"
+                          placeholder="https://drive.google.com/... hoặc đường dẫn CV của bạn"
+                          value={cvUrl}
+                          onChange={(e) => setCvUrl(e.target.value)}
+                          required={cvOption === "new"}
+                          className="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-white"
+                        />
                       </div>
                       <p className="text-[11px] text-slate-400 mt-2">
-                        Hỗ trợ định dạng .pdf, dưới 3MB và không chứa mật khẩu
-                        bảo vệ.
+                        Vui lòng đảm bảo liên kết CV ở chế độ công khai để nhà tuyển dụng có thể xem.
                       </p>
                     </div>
                   )}
@@ -281,7 +308,7 @@ export default function ApplyJobPage() {
                 </h2>
                 <button
                   type="button"
-                  onClick={() => router.push("/candidate/profile")}
+                  onClick={() => router.push("/cv-profile")}
                   className="text-slate-400 hover:text-primary transition-colors flex items-center gap-1 text-sm font-medium"
                 >
                   <Edit3 size={16} /> Sửa
@@ -367,6 +394,7 @@ export default function ApplyJobPage() {
               </button>
             </div>
           </form>
+          )}
         </div>
       </main>
     </div>

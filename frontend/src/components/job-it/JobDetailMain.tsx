@@ -16,9 +16,6 @@ import {
   CheckCircle,
   Heart,
   Share2,
-  FileText,
-  X,
-  Loader2,
   Sparkles,
   ExternalLink,
   ChevronRight,
@@ -27,8 +24,7 @@ import {
 import { JobDetailResponse } from "@viecngon/types";
 import { getRelativeTime } from "@/components/NotificationDropdown";
 import { useAuthStore } from "@/store/authStore";
-import { useApplyJob, useRelatedJobs } from "@/hooks/job/useJobDetail";
-import { useCandidateProfile } from "@/hooks/candidate/useCandidateProfile";
+import { useRelatedJobs } from "@/hooks/job/useJobDetail";
 import toast from "react-hot-toast";
 
 interface JobDetailMainProps {
@@ -41,15 +37,9 @@ export default function JobDetailMain({
   isLoading = false,
 }: JobDetailMainProps) {
   const router = useRouter();
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
   const [isSaved, setIsSaved] = useState(false);
-  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
-  const [coverLetter, setCoverLetter] = useState("");
-  const [selectedCvOption, setSelectedCvOption] = useState<"profile" | "manual">("profile");
-  const [customCvUrl, setCustomCvUrl] = useState("");
 
-  const { candidateProfile } = useCandidateProfile();
-  const applyMutation = useApplyJob(job?.slug);
   const { relatedJobs, isLoading: isRelatedLoading } = useRelatedJobs(
     job?.slug || job?.id || "",
   );
@@ -106,13 +96,14 @@ export default function JobDetailMain({
   }
 
   // 3. HANDLERS
-  const handleOpenApplyModal = () => {
+  const handleApplyClick = () => {
+    const applyPath = `/job-it/${job.slug}/job_applications`;
     if (!isAuthenticated) {
       toast.error("Vui lòng đăng nhập để ứng tuyển công việc này!");
-      router.push(`/login?callbackUrl=/job-it/${job.slug}`);
+      router.push(`/login?callbackUrl=${encodeURIComponent(applyPath)}`);
       return;
     }
-    setIsApplyModalOpen(true);
+    router.push(applyPath);
   };
 
   const handleCopyLink = () => {
@@ -120,31 +111,6 @@ export default function JobDetailMain({
       navigator.clipboard.writeText(window.location.href);
       toast.success("Đã sao chép liên kết vào bộ nhớ tạm!");
     }
-  };
-
-  const handleSubmitApplication = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const payloadCvUrl =
-      selectedCvOption === "profile"
-        ? candidateProfile?.defaultCvFile?.fileUrl || candidateProfile?.cvUrl
-        : customCvUrl;
-
-    applyMutation.mutate(
-      {
-        maCongViec: job.id,
-        coverLetter: coverLetter.trim() || undefined,
-        chiTiet: coverLetter.trim() || undefined,
-        maCvFile: candidateProfile?.defaultCvFile?.id || undefined,
-        fileCvUrl: payloadCvUrl || undefined,
-      },
-      {
-        onSuccess: () => {
-          setIsApplyModalOpen(false);
-          setCoverLetter("");
-        },
-      },
-    );
   };
 
   // Helper render content (hỗ trợ cả HTML và văn bản thuần)
@@ -231,7 +197,7 @@ export default function JobDetailMain({
             ) : (
               <button
                 type="button"
-                onClick={handleOpenApplyModal}
+                onClick={handleApplyClick}
                 className="flex-1 inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold text-base shadow-md shadow-primary/25 transition-all active:scale-[0.98] cursor-pointer"
               >
                 <Send size={18} />
@@ -499,161 +465,6 @@ export default function JobDetailMain({
           )}
         </div>
       </div>
-
-      {/* ========================================================
-          MODAL ỨNG TUYỂN CÔNG VIỆC TRỰC TIẾP
-      ======================================================== */}
-      {isApplyModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
-            {/* Nút đóng */}
-            <button
-              onClick={() => setIsApplyModalOpen(false)}
-              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors"
-            >
-              <X size={20} />
-            </button>
-
-            {/* Tiêu đề modal */}
-            <div className="mb-6">
-              <h3 className="text-xl font-bold text-slate-900">
-                Ứng tuyển vị trí
-              </h3>
-              <p className="text-sm font-semibold text-primary mt-1 line-clamp-1">
-                {job.title}
-              </p>
-              <p className="text-xs text-slate-500 mt-0.5">
-                tại {job.company?.name}
-              </p>
-            </div>
-
-            <form onSubmit={handleSubmitApplication} className="space-y-5">
-              {/* Thông tin ứng viên */}
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 space-y-2 text-xs sm:text-sm">
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Họ và tên:</span>
-                  <span className="font-bold text-slate-800">
-                    {candidateProfile?.candidateName || user?.name || "Ứng viên"}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Email:</span>
-                  <span className="font-semibold text-slate-800">
-                    {user?.email || "Chưa cập nhật"}
-                  </span>
-                </div>
-              </div>
-
-              {/* Lựa chọn CV */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                  Chọn hồ sơ / CV để nộp:
-                </label>
-                <div className="space-y-2">
-                  <label
-                    onClick={() => setSelectedCvOption("profile")}
-                    className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${selectedCvOption === "profile"
-                      ? "border-primary bg-primary-light/40 ring-1 ring-primary/20"
-                      : "border-slate-200 hover:border-slate-300"
-                      }`}
-                  >
-                    <input
-                      type="radio"
-                      name="cvOption"
-                      checked={selectedCvOption === "profile"}
-                      onChange={() => setSelectedCvOption("profile")}
-                      className="mt-1 text-primary focus:ring-primary"
-                    />
-                    <div className="flex-1 min-w-0 text-xs sm:text-sm">
-                      <p className="font-bold text-slate-800">
-                        Hồ sơ trực tuyến ViecNgon
-                      </p>
-                      <p className="text-slate-500 text-xs mt-0.5 truncate">
-                        {candidateProfile?.defaultCvFile?.fileName ||
-                          candidateProfile?.cvUrl ||
-                          "Sử dụng thông tin hồ sơ và CV hiện có trong tài khoản"}
-                      </p>
-                    </div>
-                  </label>
-
-                  <label
-                    onClick={() => setSelectedCvOption("manual")}
-                    className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${selectedCvOption === "manual"
-                      ? "border-primary bg-primary-light/40 ring-1 ring-primary/20"
-                      : "border-slate-200 hover:border-slate-300"
-                      }`}
-                  >
-                    <input
-                      type="radio"
-                      name="cvOption"
-                      checked={selectedCvOption === "manual"}
-                      onChange={() => setSelectedCvOption("manual")}
-                      className="mt-1 text-primary focus:ring-primary"
-                    />
-                    <div className="flex-1 min-w-0 text-xs sm:text-sm">
-                      <p className="font-bold text-slate-800">
-                        Nhập liên kết CV ngoài (Google Drive / Notion / Portfolio)
-                      </p>
-                      {selectedCvOption === "manual" && (
-                        <input
-                          type="url"
-                          placeholder="https://..."
-                          value={customCvUrl}
-                          onChange={(e) => setCustomCvUrl(e.target.value)}
-                          className="mt-2 w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-primary"
-                          required={selectedCvOption === "manual"}
-                        />
-                      )}
-                    </div>
-                  </label>
-                </div>
-              </div>
-
-              {/* Thư giới thiệu / Cover letter */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Thư giới thiệu (Không bắt buộc):
-                </label>
-                <textarea
-                  rows={4}
-                  value={coverLetter}
-                  onChange={(e) => setCoverLetter(e.target.value)}
-                  placeholder="Gửi vài lời chia sẻ tới nhà tuyển dụng về lý do bạn phù hợp với vị trí này..."
-                  className="w-full px-3.5 py-2.5 text-xs sm:text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 resize-none"
-                />
-              </div>
-
-              {/* Nút xác nhận nộp */}
-              <div className="flex items-center gap-3 pt-3">
-                <button
-                  type="button"
-                  onClick={() => setIsApplyModalOpen(false)}
-                  className="flex-1 py-3 px-4 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-xs sm:text-sm transition-colors cursor-pointer"
-                >
-                  Hủy bỏ
-                </button>
-                <button
-                  type="submit"
-                  disabled={applyMutation.isPending}
-                  className="flex-1 py-3 px-4 rounded-xl bg-primary hover:bg-primary-hover disabled:bg-primary/60 text-white font-bold text-xs sm:text-sm shadow-md shadow-primary/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  {applyMutation.isPending ? (
-                    <>
-                      <Loader2 size={16} className="animate-spin" />
-                      <span>Đang nộp...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Send size={16} />
-                      <span>Xác nhận Ứng tuyển</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </>
   );
 }
