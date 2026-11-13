@@ -3,42 +3,39 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { FiEye, FiEyeOff } from "react-icons/fi";
+import toast from "react-hot-toast";
 import { useLogin } from "@/hooks/auth/useLogin";
 import { useLogout } from "@/hooks/auth/useLogout";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/Button";
 
 export default function EmployerLoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [roleError, setRoleError] = useState(""); // State chứa thông báo lỗi sai vai trò
+  const [roleError, setRoleError] = useState("");
 
   const router = useRouter();
   const { login, isPending, isError, error } = useLogin();
-  // Đăng xuất ngầm
   const { mutate: silentLogout } = useLogout({ redirectTo: false });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setRoleError(""); // Xóa lỗi cũ khi thử lại
+    setRoleError("");
 
     login(
       { email, password },
       {
         onSuccess: (data) => {
-          // Kiểm tra role của tài khoản đã đũng là nhatuyendung chưa
           if (data.user.role !== "NHATUYENDUNG") {
-            // 1. Nếu là Ứng viên đi lạc, hiện thông báo lỗi
             setRoleError(
               "Tài khoản này không có quyền truy cập cổng Nhà tuyển dụng!",
             );
-
-            // 2. LẬP TỨC XÓA COOKIE: Vì API login đã trót cấp cookie, ta phải gọi logout để hủy nó ngay
             silentLogout();
             return;
           }
 
-          // Đúng là HR -> Cho phép vào trang quản trị
+          toast.success("Đăng nhập Nhà tuyển dụng thành công!");
           router.push("/employer-dashboard");
         },
       },
@@ -46,129 +43,116 @@ export default function EmployerLoginForm() {
   };
 
   return (
-    <div className="w-full max-w-120 mx-auto px-6 py-12 flex flex-col justify-center min-h-screen">
-      {/* Header: Logo & Title */}
-      <div className="mb-10 text-center sm:text-left">
-        <div className="flex items-center justify-center sm:justify-start gap-3 mb-8">
+    <div className="w-full max-w-md mx-auto px-6 py-12 flex flex-col justify-center min-h-screen">
+      <div className="mb-8 text-center sm:text-left">
+        <Link
+          href="/"
+          className="inline-flex items-center justify-center sm:justify-start gap-3 mb-7"
+        >
           <div className="flex items-center gap-1">
-            <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-lg">
+            <div className="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center font-bold text-lg">
               V
             </div>
             <span className="text-2xl font-extrabold text-primary tracking-tight">
               iecNgon
             </span>
           </div>
-          <div className="h-4 w-px bg-slate-300"></div>
-          <span className="text-sm font-black tracking-widest text-slate-800 uppercase">
-            Customer Admin Site
+          <div className="h-4 w-px bg-border-default" />
+          <span className="text-xs font-bold tracking-widest text-text-secondary uppercase">
+            Employer Portal
           </span>
-        </div>
+        </Link>
 
-        <h1 className="text-2xl font-bold text-slate-900">
-          Đăng nhập ViecNgon Customer
+        <h1 className="text-2xl font-bold text-text-main">
+          Đăng nhập Nhà tuyển dụng
         </h1>
+        <p className="text-sm text-text-muted mt-1">
+          Quản lý tin tuyển dụng IT và sàng lọc ứng viên bằng AI.
+        </p>
       </div>
 
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
+          <label className="block text-sm font-semibold text-text-main mb-1.5">
+            Email doanh nghiệp
+          </label>
           <input
             type="email"
-            placeholder="Email"
+            placeholder="hr@company.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-3 border border-slate-300 rounded-md outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm placeholder:text-slate-400"
+            className="w-full h-11 px-4 border border-border-default rounded-lg outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary transition-all text-sm placeholder:text-text-subtle bg-surface-card"
             required
           />
         </div>
 
-        <div className="relative">
-          <input
-            type={showPassword ? "text" : "password"}
-            placeholder="Mật khẩu"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full pl-4 pr-12 py-3 border border-slate-300 rounded-md outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm placeholder:text-slate-400"
-            required
-          />
-
-          {/* Hiển thị lỗi từ API (Sai mật khẩu, email...) */}
-          {isError && (
-            <p className="text-red-500 text-sm font-medium">{error.message}</p>
-          )}
-
-          {/* Hiển thị lỗi Phân quyền (Sai role) */}
-          {roleError && (
-            <p className="text-red-500 text-sm font-medium">{roleError}</p>
-          )}
-
-          <button
-            type="button"
-            disabled={isPending}
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-          >
-            {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-          </button>
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="block text-sm font-semibold text-text-main">
+              Mật khẩu
+            </label>
+            <Link
+              href="/employer/forgot-password"
+              className="text-xs text-primary font-semibold hover:underline"
+            >
+              Quên mật khẩu?
+            </Link>
+          </div>
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Nhập mật khẩu"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full h-11 pl-4 pr-12 border border-border-default rounded-lg outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary transition-all text-sm placeholder:text-text-subtle bg-surface-card"
+              required
+            />
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-text-subtle hover:text-text-main transition-colors cursor-pointer"
+            >
+              {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+            </button>
+          </div>
         </div>
 
-        {/* Ghi nhớ & Quên mật khẩu */}
-        <div className="flex items-center justify-between text-sm">
-          <label className="flex items-center gap-2 cursor-pointer group">
+        {(isError || roleError) && (
+          <div className="p-3 rounded-lg bg-danger-soft border border-danger-border text-danger-text text-xs font-medium">
+            {roleError || error?.message || "Đăng nhập thất bại."}
+          </div>
+        )}
+
+        <div className="flex items-center justify-between text-sm pt-1">
+          <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
-              className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
+              className="w-4 h-4 rounded border-border-default text-primary focus:ring-primary"
             />
-            <span className="text-slate-600 group-hover:text-slate-900 transition-colors">
+            <span className="text-text-secondary text-sm">
               Ghi nhớ đăng nhập
             </span>
           </label>
-          <Link
-            href="/employer/forgot-password"
-            className="text-primary font-semibold hover:underline"
-          >
-            Quên mật khẩu?
-          </Link>
         </div>
 
-        {/* Policy Text */}
-        <p className="text-[13px] text-slate-500 leading-relaxed py-2">
-          Bằng việc đăng nhập, bạn đồng ý với các
-          <a href="#" className="text-primary hover:underline">
-            {" "}
-            Điều khoản dịch vụ{" "}
-          </a>
-          và{" "}
-          <a href="#" className="text-primary hover:underline">
-            Chính sách quyền riêng tư{" "}
-          </a>
-          của ViecNgon liên quan đến thông tin riêng tư của bạn.
-        </p>
-
-        {/* Nút Submit */}
-        <button
+        <Button
           type="submit"
-          disabled={isPending}
-          className={`w-full font-bold py-3.5 rounded-md shadow-md shadow-primary/20 transition-all active:scale-[0.98] ${
-            isPending
-              ? "bg-slate-300 text-slate-500 cursor-not-allowed"
-              : "bg-primary text-white hover:bg-primary-hover"
-          }`}
+          size="lg"
+          isLoading={isPending}
+          loadingText="Đang xác thực..."
+          className="w-full mt-2"
         >
-          {isPending ? "Đang xác thực..." : "Đăng nhập hệ thống"}
-        </button>
+          Đăng nhập hệ thống
+        </Button>
       </form>
 
-      {/* Footer Support Info */}
-      <div className="mt-12 pt-8 border-t border-slate-100 text-[13px] text-slate-600 space-y-2">
-        <p className="font-semibold text-slate-800 mb-3">
-          Bạn chưa có tài khoản khách hàng? Liên hệ chúng tôi:
+      <div className="mt-10 pt-6 border-t border-border-subtle text-xs text-text-muted space-y-1.5">
+        <p className="font-semibold text-text-secondary mb-2">
+          Hỗ trợ doanh nghiệp:
         </p>
-        <p className="flex items-center gap-2">
-          📞 Hồ Chí Minh: (+84) 123 456 789
-        </p>
-        <p className="flex items-center gap-2">📞 Đà nẵng: (+84) 983 333 333</p>
-        <p className="flex items-center gap-2">✉️ Email: love@viecngon.vn</p>
+        <p>Hotline TP.HCM / Hà Nội / Đà Nẵng: 1900 6868</p>
+        <p>Email hỗ trợ: love@viecngon.vn</p>
       </div>
     </div>
   );

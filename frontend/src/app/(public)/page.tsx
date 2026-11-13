@@ -4,7 +4,7 @@ import TopEmployers from "@/components/TopCompany";
 
 export default function Home() {
   return (
-      <div className="w-full flex-1 flex flex-col">
+      <div className="w-full min-w-0 flex-1 flex flex-col">
         <HeroSection />
         <QuickLinks />
         <TopEmployers />

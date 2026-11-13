@@ -12,6 +12,8 @@ import {
   TrendingDown,
 } from "lucide-react";
 import { RecruiterJobMetricsResponse } from "@viecngon/types";
+import { MetricCardSkeleton } from "@/components/ui/StateViews";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 
 interface JobMetricsCardsProps {
   metrics?: RecruiterJobMetricsResponse;
@@ -22,27 +24,17 @@ export default function JobMetricsCards({
   metrics,
   isLoading,
 }: JobMetricsCardsProps) {
-  // Trạng thái Loading: Hiển thị Skeleton
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            className="bg-white rounded-xl p-5 border border-slate-100 shadow-sm h-30 flex flex-col justify-between"
-          >
-            <div className="flex justify-between items-center">
-              <div className="h-4 w-24 bg-slate-200 animate-pulse rounded"></div>
-              <div className="h-10 w-10 bg-slate-100 animate-pulse rounded-lg"></div>
-            </div>
-            <div className="h-8 w-16 bg-slate-200 animate-pulse rounded mt-4"></div>
-          </div>
-        ))}
+        <MetricCardSkeleton />
+        <MetricCardSkeleton />
+        <MetricCardSkeleton />
+        <MetricCardSkeleton />
       </div>
     );
   }
 
-  // Bóc tách dữ liệu an toàn (Fallback data)
   const totalJobsCount = metrics?.totalJobs?.count || 0;
   const jobsChangeThisMonth = metrics?.totalJobs?.changeThisMonth || 0;
   const activeJobsCount = metrics?.activeJobs?.count || 0;
@@ -55,108 +47,102 @@ export default function JobMetricsCards({
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      {/* 1. Card Tổng số tin đăng (totalJobs) */}
-      <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between group hover:border-blue-300 transition-colors">
+      <div className="bg-surface-card rounded-xl p-5 shadow-xs border border-border-default flex flex-col justify-between">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-slate-500 font-semibold">
+          <span className="text-xs text-text-muted font-semibold uppercase tracking-wider">
             Tổng số tin đăng
           </span>
-          <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 transition-transform group-hover:scale-110">
-            <Briefcase size={20} />
+          <div className="w-9 h-9 rounded-lg bg-primary-light flex items-center justify-center text-primary">
+            <Briefcase size={18} />
           </div>
         </div>
         <div className="mt-4 flex items-baseline justify-between">
           <div className="flex items-baseline gap-1.5">
-            <span className="text-3xl font-extrabold text-slate-800 tracking-tight">
+            <span className="text-3xl font-bold text-text-main tracking-tight">
               {totalJobsCount}
             </span>
-            <span className="text-sm text-slate-500 font-medium">tin</span>
+            <span className="text-xs text-text-muted font-medium">tin</span>
           </div>
           {jobsChangeThisMonth > 0 && (
-            <div className="flex items-center gap-1 text-blue-600 text-xs font-bold bg-blue-50 px-2 py-1 rounded-md">
-              <ArrowUp size={14} />
+            <div className="flex items-center gap-1 text-primary text-xs font-semibold bg-primary-light px-2 py-1 rounded-md">
+              <ArrowUp size={13} />
               <span>+{jobsChangeThisMonth} tháng này</span>
             </div>
           )}
         </div>
       </div>
 
-      {/* 2. Card Đang hiển thị (activeJobs) */}
-      <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between group hover:border-emerald-300 transition-colors">
+      <div className="bg-surface-card rounded-xl p-5 shadow-xs border border-border-default flex flex-col justify-between">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-slate-500 font-semibold">
+          <span className="text-xs text-text-muted font-semibold uppercase tracking-wider">
             Đang hiển thị
           </span>
-          <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 transition-transform group-hover:scale-110">
-            <BadgeCheck size={20} />
+          <div className="w-9 h-9 rounded-lg bg-success-light flex items-center justify-center text-success-text">
+            <BadgeCheck size={18} />
           </div>
         </div>
         <div className="mt-4 flex items-baseline justify-between">
           <div className="flex items-baseline gap-1.5">
-            <span className="text-3xl font-extrabold text-slate-800 tracking-tight">
+            <span className="text-3xl font-bold text-text-main tracking-tight">
               {activeJobsCount}
             </span>
-            <span className="text-sm text-slate-500 font-medium">vị trí</span>
+            <span className="text-xs text-text-muted font-medium">vị trí</span>
           </div>
-          <div className="flex items-center gap-1.5 bg-emerald-50 px-2.5 py-1 rounded-full text-emerald-700 text-[11px] font-bold border border-emerald-100">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>Đang hoạt động</span>
-          </div>
+          <StatusBadge type="custom" tone="success" label="Đang hoạt động" />
         </div>
       </div>
 
-      {/* 3. Card Chờ kiểm duyệt (pendingJobs) */}
-      <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between group hover:border-orange-300 transition-colors">
+      <div className="bg-surface-card rounded-xl p-5 shadow-xs border border-border-default flex flex-col justify-between">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-slate-500 font-semibold">
+          <span className="text-xs text-text-muted font-semibold uppercase tracking-wider">
             Chờ kiểm duyệt
           </span>
-          <div className="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center text-orange-500 transition-transform group-hover:scale-110">
-            <Hourglass size={20} />
+          <div className="w-9 h-9 rounded-lg bg-warning-light flex items-center justify-center text-warning-text">
+            <Hourglass size={18} />
           </div>
         </div>
         <div className="mt-4 flex items-baseline justify-between">
           <div className="flex items-baseline gap-1.5">
-            <span className="text-3xl font-extrabold text-slate-800 tracking-tight">
+            <span className="text-3xl font-bold text-text-main tracking-tight">
               {pendingJobsCount}
             </span>
-            <span className="text-sm text-slate-500 font-medium">tin</span>
+            <span className="text-xs text-text-muted font-medium">tin</span>
           </div>
-          <div className="flex items-center gap-1 text-slate-500 text-xs font-semibold">
-            <Clock size={14} />
+          <div className="flex items-center gap-1 text-text-muted text-xs font-medium">
+            <Clock size={13} />
             <span>{avgReviewTime}</span>
           </div>
         </div>
       </div>
 
-      {/* 4. Card Tổng hồ sơ (totalApplications) */}
-      <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between group hover:border-purple-300 transition-colors">
+      <div className="bg-surface-card rounded-xl p-5 shadow-xs border border-border-default flex flex-col justify-between">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-slate-500 font-semibold">
+          <span className="text-xs text-text-muted font-semibold uppercase tracking-wider">
             Tổng hồ sơ ứng tuyển
           </span>
-          <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600 transition-transform group-hover:scale-110">
-            <Users size={20} />
+          <div className="w-9 h-9 rounded-lg bg-info-light flex items-center justify-center text-info-text">
+            <Users size={18} />
           </div>
         </div>
         <div className="mt-4 flex items-baseline justify-between">
           <div className="flex items-baseline gap-1.5">
-            <span className="text-3xl font-extrabold text-slate-800 tracking-tight">
+            <span className="text-3xl font-bold text-text-main tracking-tight">
               {totalAppsCount}
             </span>
-            <span className="text-sm text-slate-500 font-medium">CV</span>
+            <span className="text-xs text-text-muted font-medium">CV</span>
           </div>
           {appsPercentChange !== 0 && (
             <div
-              className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-md ${appsPercentChange > 0
-                  ? "text-emerald-600 bg-emerald-50"
-                  : "text-rose-600 bg-rose-50"
-                }`}
+              className={`flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-md ${
+                appsPercentChange > 0
+                  ? "text-success-text bg-success-light"
+                  : "text-danger-text bg-danger-soft"
+              }`}
             >
               {appsPercentChange > 0 ? (
-                <TrendingUp size={14} />
+                <TrendingUp size={13} />
               ) : (
-                <TrendingDown size={14} />
+                <TrendingDown size={13} />
               )}
               <span>
                 {appsPercentChange > 0 ? "+" : ""}

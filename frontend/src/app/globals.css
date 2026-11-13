@@ -5,14 +5,72 @@
 @plugin "@tailwindcss/typography";
 
 @theme {
+  /* === MÀU CHỦ ĐẠO (BRAND PRIMARY - COBALT BLUE) === */
   --color-primary: #2563eb;
-  /* Tự động tạo class: bg-primary, text-primary */
   --color-primary-hover: #1d4ed8;
-  /* Tự động tạo class: bg-primary-hover */
+  --color-primary-active: #1e40af;
   --color-primary-light: #eff6ff;
-  /* Tự động tạo class: bg-primary-light */
+  --color-primary-subtle: #dbeafe;
+  --color-primary-disabled: #93c5fd;
   --color-primary-dark: #0f172a;
-  /* Tự động tạo class: bg-primary-dark */
+
+  /* === MÀU TRẠNG THÁI (SEMANTIC) === */
+  /* Success: Đang tuyển, Phù hợp, Mức lương, AI Match >= 80%, Thanh toán thành công */
+  --color-success: #16a34a;
+  --color-success-hover: #15803d;
+  --color-success-light: #dcfce7;
+  --color-success-soft: #f0fdf4;
+  --color-success-border: #bbf7d0;
+  --color-success-text: #15803d;
+
+  /* Warning: Chờ duyệt, Phỏng vấn, Cần lưu ý, AI Match 50-79% */
+  --color-warning: #d97706;
+  --color-warning-hover: #b45309;
+  --color-warning-light: #fef3c7;
+  --color-warning-soft: #fffbeb;
+  --color-warning-border: #fde68a;
+  --color-warning-text: #b45309;
+
+  /* Danger: Lỗi validate, Từ chối, Hết hạn, Nút Xóa, AI Match < 50% */
+  --color-danger: #dc2626;
+  --color-danger-hover: #b91c1c;
+  --color-danger-light: #fee2e2;
+  --color-danger-soft: #fef2f2;
+  --color-danger-border: #fecaca;
+  --color-danger-text: #b91c1c;
+
+  /* Info: Đã xem hồ sơ, Thông báo hệ thống, Hướng dẫn */
+  --color-info: #0284c7;
+  --color-info-hover: #0369a1;
+  --color-info-light: #e0f2fe;
+  --color-info-soft: #f0f9ff;
+  --color-info-border: #bae6fd;
+  --color-info-text: #0369a1;
+
+  /* === MÀU NHẤN ĐẶC BIỆT (AI & VIP) === */
+  /* AI Feature: Nhập CV bằng AI, AI Candidate Screening */
+  --color-ai: #4f46e5;
+  --color-ai-light: #eef2ff;
+  --color-ai-border: #c7d2fe;
+
+  /* VIP / Hot Job / Gói Kim Cương */
+  --color-vip: #ea580c;
+  --color-vip-light: #ffedd5;
+  --color-vip-border: #fed7aa;
+
+  /* === MÀU NỀN, VIỀN & CHỮ TRUNG TÍNH (NEUTRAL SLATE) === */
+  --color-surface-page: #f8fafc;
+  --color-surface-card: #ffffff;
+  --color-surface-muted: #f1f5f9;
+  --color-surface-subtle: #e2e8f0;
+
+  --color-border-default: #e2e8f0;
+  --color-border-strong: #cbd5e1;
+
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #334155;
+  --color-text-muted: #64748b;
+  --color-text-placeholder: #94a3b8;
 }
 
 @layer base {
@@ -117,11 +175,11 @@
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  --chart-1: #2563eb;
+  --chart-2: #16a34a;
+  --chart-3: #d97706;
+  --chart-4: #0284c7;
+  --chart-5: #4f46e5;
   --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
@@ -152,11 +210,11 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  --chart-1: #2563eb;
+  --chart-2: #16a34a;
+  --chart-3: #d97706;
+  --chart-4: #0284c7;
+  --chart-5: #4f46e5;
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);

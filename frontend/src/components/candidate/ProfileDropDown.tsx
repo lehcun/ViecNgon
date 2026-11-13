@@ -90,7 +90,7 @@ export default function ProfileDropdown({
             <User size={18} className="text-slate-400" /> Hồ sơ ViecNgon
           </Link>
           <Link
-            href="/dashboard/my-jobs"
+            href="/my-jobs"
             className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-600 hover:text-primary hover:bg-primary-light/50 rounded-lg transition-colors"
           >
             <Briefcase size={18} className="text-slate-400" /> Việc làm của tôi
@@ -99,13 +99,13 @@ export default function ProfileDropdown({
           <div className="my-1 h-px bg-slate-100 mx-2"></div>
 
           <Link
-            href="/dashboard/invitations"
+            href="/invitations"
             className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-600 hover:text-primary hover:bg-primary-light/50 rounded-lg transition-colors"
           >
             <Mail size={18} className="text-slate-400" /> Lời mời công việc
           </Link>
           <Link
-            href="/dashboard/subscribe"
+            href="/subscribe"
             className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-600 hover:text-primary hover:bg-primary-light/50 rounded-lg transition-colors"
           >
             <Mail size={18} className="text-slate-400" /> Đăng ký nhận email
@@ -117,7 +117,7 @@ export default function ProfileDropdown({
             <Bell size={18} className="text-slate-400" /> Thông báo
           </Link>
           <Link
-            href="/dashboard/settings"
+            href="/settings"
             className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-600 hover:text-primary hover:bg-primary-light/50 rounded-lg transition-colors"
           >
             <Settings size={18} className="text-slate-400" /> Cài đặt

@@ -1,163 +1,119 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
-import { AlertCircle, RefreshCw, ArrowRight, ReceiptText } from "lucide-react";
+import { Receipt } from "lucide-react";
 import { useAdminRecentTransactions } from "@/hooks/admin/useAdminDashboard";
-
-function formatShortDate(dateVal: string | Date): string {
-  const d = new Date(dateVal);
-  if (isNaN(d.getTime())) return "Recent";
-  return d.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+import { CompanyLogo } from "@/components/ui/CompanyLogo";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import {
+  EmptyState,
+  ErrorState,
+  TableRowSkeleton,
+} from "@/components/ui/StateViews";
+import { formatDateTimeVN } from "@/lib/formatters";
 
 export default function RecentTransactionsTable() {
-  const { data, isLoading, isError, refetch } = useAdminRecentTransactions();
-
-  // 1. Skeleton Loading State
-  if (isLoading && !data) {
-    return (
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-2xs animate-pulse space-y-4">
-        <div className="flex justify-between">
-          <div className="h-5 w-52 bg-slate-200 rounded" />
-          <div className="h-4 w-32 bg-slate-100 rounded" />
-        </div>
-        <div className="h-3.5 w-64 bg-slate-100 rounded" />
-        <div className="space-y-3 pt-2">
-          {Array.from({ length: 4 }).map((_, idx) => (
-            <div key={idx} className="h-12 w-full bg-slate-100 rounded-xl" />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // 2. Error State
-  if (isError) {
-    return (
-      <div className="bg-white rounded-2xl border border-rose-200 p-6 shadow-2xs flex flex-col items-center justify-center min-h-72 text-center gap-3">
-        <AlertCircle size={26} className="text-rose-500" />
-        <p className="text-sm font-semibold text-slate-800">
-          Không thể tải lịch sử giao dịch gần đây
-        </p>
-        <button
-          type="button"
-          onClick={() => refetch()}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold transition-colors cursor-pointer"
-        >
-          <RefreshCw size={14} />
-          <span>Thử lại</span>
-        </button>
-      </div>
-    );
-  }
-
-  const transactions = data || [];
+  const {
+    data: transactions = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useAdminRecentTransactions();
 
   return (
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-2xs flex flex-col justify-between h-full">
-          <div className="flex-1 flex flex-col">
-            {/* Header */}
-            <div className="flex items-start justify-between gap-2 mb-5">
-              <div>
-                <h2 className="text-base font-bold text-slate-900">
-                  Recent Payment Transactions
-                </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Latest service package payments across the platform.
-                </p>
-              </div>
-              <Link
-                href="/admin/packages"
-                className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 shrink-0"
-              >
-                <span>View all transactions</span>
-                <ArrowRight size={13} />
-              </Link>
-            </div>
+    <div className="bg-surface-card rounded-xl border border-border-default p-6 shadow-xs h-full flex flex-col justify-between gap-4">
+      <div>
+        <h2 className="text-base font-bold text-text-primary">
+          Giao dịch gần đây
+        </h2>
+        <p className="text-xs text-text-muted mt-0.5">
+          Lịch sử thanh toán gói tuyển dụng & nâng cấp dịch vụ
+        </p>
+      </div>
 
-            {/* Empty State */}
-            {transactions.length === 0 ? (
-              <div className="py-12 text-center border border-dashed border-slate-200 rounded-xl">
-                <ReceiptText size={28} className="mx-auto text-slate-300 mb-2" />
-                <p className="text-xs font-medium text-slate-500">
-                  Chưa có giao dịch mua gói dịch vụ nào.
-                </p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                      <th className="pb-3 pr-4">Transaction</th>
-                      <th className="pb-3 px-4">Company</th>
-                      <th className="pb-3 px-4">Package</th>
-                      <th className="pb-3 px-4">Amount</th>
-                      <th className="pb-3 pl-4 text-right">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-xs">
-                    {transactions.map((tx) => (
-                      <tr
-                        key={tx.id}
-                        className="hover:bg-slate-50/70 transition-colors"
-                      >
-                        <td className="py-3.5 pr-4">
-                          <div className="font-bold text-slate-800">
-                            {tx.transactionCode}
-                          </div>
-                          <div className="text-[11px] text-slate-400 mt-0.5">
-                            {formatShortDate(tx.paidAt)}
-                          </div>
-                        </td>
-                        <td className="py-3.5 px-4 font-semibold text-slate-700">
+      <div className="flex-1 overflow-x-auto">
+        {isError ? (
+          <ErrorState
+            title="Không thể tải giao dịch gần đây"
+            message="Vui lòng thử lại sau."
+            onRetry={() => refetch()}
+          />
+        ) : !isLoading && transactions.length === 0 ? (
+          <EmptyState
+            icon={<Receipt size={24} />}
+            title="Chưa có giao dịch nào"
+            description="Lịch sử thanh toán từ nhà tuyển dụng sẽ hiển thị tại đây."
+          />
+        ) : (
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-border-default text-[11px] font-semibold uppercase tracking-wider text-text-muted">
+                <th className="py-3 pr-3">Mã giao dịch</th>
+                <th className="py-3 px-3">Công ty</th>
+                <th className="py-3 px-3">Gói dịch vụ</th>
+                <th className="py-3 px-3 text-right">Số tiền</th>
+                <th className="py-3 pl-3 text-right">Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border-default text-sm">
+              {isLoading ? (
+                <>
+                  <TableRowSkeleton cols={5} />
+                  <TableRowSkeleton cols={5} />
+                  <TableRowSkeleton cols={5} />
+                  <TableRowSkeleton cols={5} />
+                </>
+              ) : (
+                transactions.map((tx) => (
+                  <tr
+                    key={tx.id}
+                    className="hover:bg-surface-muted/70 transition-colors"
+                  >
+                    <td className="py-3.5 pr-3 whitespace-nowrap">
+                      <span className="font-mono text-xs font-semibold text-text-primary">
+                        {tx.transactionCode}
+                      </span>
+                      <div className="text-[11px] text-text-muted mt-0.5 tabular-nums">
+                        {formatDateTimeVN(tx.paidAt)}
+                      </div>
+                    </td>
+
+                    <td className="py-3.5 px-3">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <CompanyLogo
+                          src={tx.companyLogo}
+                          name={tx.companyName}
+                          size="sm"
+                        />
+                        <span className="font-medium text-text-primary truncate max-w-44">
                           {tx.companyName}
-                        </td>
-                        <td className="py-3.5 px-4 text-slate-500">
-                          {tx.packageName}
-                        </td>
-                        <td className="py-3.5 px-4 font-bold text-slate-900">
-                          {tx.formattedAmount}
-                        </td>
-                        <td className="py-3.5 pl-4 text-right">
-                          {tx.status === "PAID" && (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-semibold text-[11px]">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                              Paid
-                            </span>
-                          )}
-                          {tx.status === "PENDING" && (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 font-semibold text-[11px]">
-                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                              Pending
-                            </span>
-                          )}
-                          {tx.status === "FAILED" && (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 font-semibold text-[11px]">
-                              <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                              Failed
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+                        </span>
+                      </div>
+                    </td>
 
-          {/* Footer */}
-            <div className="mt-auto pt-3.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-              <span>Showing the latest {transactions.length} transactions</span>
-              <span>Currency: VNĐ</span>
-            </div>
-          </div>
-          );
+                    <td className="py-3.5 px-3 whitespace-nowrap text-xs font-medium text-text-secondary">
+                      {tx.packageName}
+                    </td>
+
+                    <td className="py-3.5 px-3 whitespace-nowrap text-right font-semibold text-text-primary tabular-nums">
+                      {tx.formattedAmount}
+                    </td>
+
+                    <td className="py-3.5 pl-3 whitespace-nowrap text-right">
+                      <StatusBadge status={tx.status} type="payment" />
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <div className="pt-3 border-t border-border-default flex items-center justify-between text-xs text-text-muted">
+        <span>Hiển thị {transactions.length} giao dịch gần nhất</span>
+        <span>Đơn vị: VNĐ</span>
+      </div>
+    </div>
+  );
 }
-

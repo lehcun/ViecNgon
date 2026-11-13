@@ -1,84 +1,107 @@
 import Link from "next/link";
-import { CheckCircle2, ChevronRight, Home, MapPin } from "lucide-react";
+import { Briefcase, ChevronRight, Home, MapPin } from "lucide-react";
 import { CompanyDetailResponse } from "@viecngon/types";
-import { getRelativeTime } from "@/utils/formatTime";
+import { formatRelativeTimeVN } from "@/lib/formatters";
+import { EmptyState, JobCardSkeleton } from "@/components/ui/StateViews";
 
-const CompanyJobLists = ({
+export default function CompanyJobLists({
   totalJobs,
   jobs,
 }: {
   totalJobs?: number;
   jobs?: CompanyDetailResponse["activeJobs"];
-}) => {
-  //Sẽ css cho 2 cái này trong tương lai
-  if (totalJobs === undefined || jobs === undefined) return <h2>Loading...</h2>;
-  else if (totalJobs === 0)
-    return <h2>Hiện công ty này không có công việc nào</h2>;
+}) {
+  if (totalJobs === undefined || jobs === undefined) {
+    return (
+      <div className="space-y-4">
+        <JobCardSkeleton />
+        <JobCardSkeleton />
+      </div>
+    );
+  }
+
+  if (totalJobs === 0 || jobs.length === 0) {
+    return (
+      <EmptyState
+        icon={<Briefcase size={22} />}
+        title="Chưa có vị trí đang tuyển"
+        description="Hiện tại doanh nghiệp này chưa có tin tuyển dụng mở."
+        actionLabel="Xem việc làm khác"
+        actionHref="/jobs"
+      />
+    );
+  }
+
   return (
-    <div>
-      <div className="sticky top-24">
-        <h2 className="text-xl font-bold text-slate-800 mb-4">
-          {totalJobs} việc làm đang tuyển dụng
+    <div className="sticky top-20 space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-text-primary">
+          <span className="tabular-nums">{totalJobs}</span> việc làm đang tuyển
         </h2>
+      </div>
 
-        <div className="space-y-4">
-          {/* Card Việc Làm 1 */}
-          {jobs.map((job) => (
-            <Link
-              key={job.id}
-              href={`/job-it/${job?.slug}`}
-              className="block bg-white border border-slate-200 rounded-xl p-5 hover:border-primary hover:shadow-lg transition-all group relative overflow-hidden"
-            >
-              <div className="absolute top-0 right-0 bg-primary text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg">
-                NEW FOR YOU
-              </div>
-              <p className="text-xs text-slate-500 mb-2">
-                {getRelativeTime(job.postedAt)}
-              </p>
-              <h3 className="text-base font-bold text-slate-800 group-hover:text-primary transition-colors line-clamp-2">
-                {job.title}
-              </h3>
+      <div className="space-y-4">
+        {jobs.map((job) => (
+          <Link
+            key={job.id}
+            href={`/jobs/${job.slug}`}
+            className="block bg-surface-card border border-border-default rounded-xl p-5 hover:border-primary/50 hover:shadow-md transition-all group"
+          >
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <span className="text-xs text-text-muted">
+                Đăng {formatRelativeTimeVN(job.postedAt)}
+              </span>
+              <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-primary-light text-primary border border-primary-subtle">
+                Đang tuyển
+              </span>
+            </div>
 
-              <div className="mt-3 flex items-center gap-2 text-sm text-slate-600 bg-slate-50 p-2 rounded border border-slate-100">
-                <CheckCircle2 size={16} className="text-emerald-500" />
-                <span className="font-semibold">{job.salaryDisplay}</span>
-              </div>
+            <h3 className="text-base font-semibold text-text-primary group-hover:text-primary transition-colors line-clamp-2">
+              {job.title}
+            </h3>
 
-              <div className="mt-4 space-y-2 text-sm text-slate-600">
-                <span className="flex items-center gap-2">
-                  <Home size={16} className="text-slate-400" />
-                  {job.workModel}
+            <p className="mt-2 text-sm font-bold text-success-text tabular-nums">
+              {job.salaryDisplay || "Thỏa thuận"}
+            </p>
 
-                  <MapPin size={16} className="text-slate-400" />
-                  {job.location}
+            <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-text-secondary">
+              {job.workModel && (
+                <span className="inline-flex items-center gap-1">
+                  <Home size={13} className="text-text-placeholder" />
+                  <span>{job.workModel}</span>
                 </span>
-              </div>
+              )}
+              {job.location && (
+                <span className="inline-flex items-center gap-1">
+                  <MapPin size={13} className="text-text-placeholder" />
+                  <span>{job.location}</span>
+                </span>
+              )}
+            </div>
 
-              <div className="mt-4 flex flex-wrap gap-2">
-                {job.skills.map((skill) => (
+            {job.skills && job.skills.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {job.skills.slice(0, 4).map((skill) => (
                   <span
                     key={skill}
-                    className="text-[11px] font-medium bg-primary-light text-primary border border-primary/20 px-2 py-1 rounded"
+                    className="text-xs font-medium bg-surface-muted text-text-secondary border border-border-default px-2 py-0.5 rounded-md"
                   >
                     {skill}
                   </span>
                 ))}
               </div>
-
-              <div
-                className="mt-4 text-sm text-slate-600 prose prose-sm prose-slate max-w-none prose-li:marker:text-emerald-500"
-                dangerouslySetInnerHTML={{ __html: job.benefits || "" }}
-              />
-            </Link>
-          ))}
-        </div>
-
-        <button className="w-full mt-4 py-3 text-primary font-bold hover:bg-primary-light rounded-lg transition flex items-center justify-center gap-1">
-          Xem tất cả việc làm <ChevronRight size={18} />
-        </button>
+            )}
+          </Link>
+        ))}
       </div>
+
+      <Link
+        href="/jobs"
+        className="w-full h-10 text-sm text-primary font-semibold hover:bg-primary-light rounded-lg transition-colors flex items-center justify-center gap-1 border border-primary-subtle"
+      >
+        <span>Xem tất cả việc làm</span>
+        <ChevronRight size={16} />
+      </Link>
     </div>
   );
-};
-
-export default CompanyJobLists;
+}

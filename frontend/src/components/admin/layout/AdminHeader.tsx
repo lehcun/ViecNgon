@@ -5,65 +5,43 @@ import { Search, Bell } from "lucide-react";
 import AdminUserDropdown from "./AdminUserDropdown";
 
 export default function AdminHeader() {
-  const [searchValue, setSearchValue] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200/80 px-6 flex items-center justify-between sticky top-0 z-30 shrink-0">
-      {/* 1. Thanh tìm kiếm toàn hệ thống */}
-      <div className="flex-1 max-w-md">
-        <div className="relative flex items-center">
-          <Search
-            size={18}
-            className="absolute left-3.5 text-slate-400 pointer-events-none"
-          />
-          <input
-            type="text"
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-            placeholder="Search users, jobs, companies..."
-            className="w-full pl-10 pr-16 py-2 bg-slate-50 hover:bg-slate-100/80 focus:bg-white text-sm text-slate-800 placeholder:text-slate-400 border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-          />
-          <div className="absolute right-3 flex items-center gap-1 pointer-events-none">
-            <kbd className="text-[10px] font-medium text-slate-400 bg-white border border-slate-200 px-1.5 py-0.5 rounded shadow-2xs">
-              Ctrl + K
-            </kbd>
-          </div>
-        </div>
+    <header className="h-16 bg-surface-card border-b border-border-default px-4 sm:px-6 flex items-center justify-between gap-4 shrink-0">
+      {/* Thanh tìm kiếm */}
+      <div className="flex-1 max-w-md relative">
+        <Search
+          size={16}
+          className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
+        />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Tìm kiếm người dùng, tin đăng, công ty..."
+          aria-label="Tìm kiếm trong hệ thống quản trị"
+          className="w-full h-10 pl-10 pr-4 rounded-lg bg-surface-page border border-border-default text-sm text-text-primary placeholder:text-text-muted outline-none focus:bg-surface-card focus:border-primary focus:ring-2 focus:ring-primary/15 transition-all"
+        />
       </div>
 
-      {/* 2. Cụm trạng thái hệ thống, Thông báo & Tài khoản Admin */}
-      <div className="flex items-center gap-6">
-        {/* Status Indicators */}
-        <div className="hidden lg:flex items-center gap-4 text-xs text-slate-500">
-          <div className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-            <span>Updated 2 mins ago</span>
-          </div>
-
-          <div className="flex items-center gap-1.5 text-emerald-600 font-medium">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>All systems operational</span>
-          </div>
+      {/* Nhóm trạng thái & Tài khoản Admin */}
+      <div className="flex items-center gap-3">
+        <div className="hidden md:inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-success-light border border-success-border text-xs font-semibold text-success-text">
+          <span className="w-2 h-2 rounded-full bg-success" />
+          <span>Hệ thống hoạt động ổn định</span>
         </div>
 
-        <div className="h-4 w-px bg-slate-200 hidden lg:block" />
-
-        {/* Notifications Icon with Badge */}
         <button
           type="button"
-          aria-label="Thông báo"
-          className="relative p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors focus:outline-hidden"
+          aria-label="Thông báo quản trị"
+          className="w-10 h-10 rounded-lg border border-border-default bg-surface-card hover:bg-surface-muted text-text-secondary flex items-center justify-center transition-colors"
         >
-          <Bell size={20} />
-          <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">
-            4
-          </span>
+          <Bell size={18} />
         </button>
 
-        {/* Admin Avatar & Dropdown */}
         <AdminUserDropdown />
       </div>
     </header>
   );
 }
-

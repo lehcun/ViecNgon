@@ -1,6 +1,8 @@
 "use client";
+
 import React from "react";
-import { Check, Video, FileCheck, LineChart } from "lucide-react";
+import { Check, Video, FileCheck, LineChart, XCircle } from "lucide-react";
+import { formatDateVN } from "@/lib/formatters";
 
 interface TrackerProps {
   status: string;
@@ -11,18 +13,19 @@ export default function ApplicationTracker({
   status,
   appliedDate,
 }: TrackerProps) {
-  // Xác định vị trí current index dựa trên status
+  const isRejected = status === "TU_CHOI" || status === "KHONG_PHU_HOP";
+
   let currentIndex = 0;
   if (status === "DA_XEM" || status === "PHU_HOP") currentIndex = 1;
   if (status === "PHONG_VAN") currentIndex = 2;
-  if (status === "TRUNG_TUYEN" || status === "KHONG_PHU_HOP") currentIndex = 3;
+  if (status === "TRUNG_TUYEN" || isRejected) currentIndex = 3;
 
   const steps = [
     {
       id: "CHO_DUYET",
       label: "Đã gửi đơn",
       icon: Check,
-      date: new Date(appliedDate).toLocaleDateString("vi-VN"),
+      date: formatDateVN(appliedDate),
     },
     {
       id: "DA_XEM",
@@ -38,42 +41,47 @@ export default function ApplicationTracker({
     },
     {
       id: "RESULT",
-      label: "Kết quả",
-      icon: FileCheck,
-      date: currentIndex >= 3 ? "Hoàn tất" : "Chờ đánh giá",
+      label: isRejected ? "Chưa phù hợp" : "Kết quả",
+      icon: isRejected ? XCircle : FileCheck,
+      date:
+        status === "TRUNG_TUYEN"
+          ? "Trúng tuyển"
+          : isRejected
+            ? "Đã đóng"
+            : "Chờ đánh giá",
     },
   ];
 
-  // Tính toán % cho thanh progress bar background
   const progressPercentage = (currentIndex / (steps.length - 1)) * 100;
 
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100 max-w-2xl mx-auto">
-      <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
-        <div className="flex items-center gap-1.5">
-          <LineChart size={20} className="text-primary" />
-          <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+    <div className="bg-surface-card rounded-xl p-5 sm:p-6 shadow-xs border border-border-default max-w-2xl mx-auto">
+      <div className="flex items-center justify-between pb-3 mb-4 border-b border-border-subtle">
+        <div className="flex items-center gap-2">
+          <LineChart size={18} className="text-primary" />
+          <span className="text-xs font-bold text-text-main uppercase tracking-wider">
             Quy trình xử lý hồ sơ
           </span>
         </div>
       </div>
 
       <div className="relative pt-2 pb-1">
-        {/* Thanh Progress chìm */}
-        <div className="absolute top-5 left-[12.5%] right-[12.5%] h-1 bg-slate-100 z-0">
+        <div className="absolute top-5 left-[12.5%] right-[12.5%] h-1 bg-surface-subtle z-0">
           <div
-            className="h-full bg-linear-to-r from-emerald-500 to-primary rounded-full transition-all duration-500"
+            className={`h-full rounded-full transition-all duration-500 ${
+              isRejected ? "bg-danger" : "bg-linear-to-r from-success to-primary"
+            }`}
             style={{ width: `${progressPercentage}%` }}
           />
         </div>
 
-        {/* Các Bước */}
         <div className="grid grid-cols-4 relative z-10">
           {steps.map((step, index) => {
             const Icon = step.icon;
             const isCompleted = index < currentIndex;
             const isCurrent = index === currentIndex;
             const isPending = index > currentIndex;
+            const isLastRejected = index === 3 && isCurrent && isRejected;
 
             return (
               <div
@@ -83,33 +91,41 @@ export default function ApplicationTracker({
                 <div className="relative">
                   <div
                     className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
-                      isCompleted
-                        ? "bg-emerald-500 text-white shadow-md"
-                        : isCurrent
-                          ? "bg-primary text-white shadow-lg ring-4 ring-primary/20"
-                          : "bg-slate-100 text-slate-400 border border-slate-200"
+                      isLastRejected
+                        ? "bg-danger text-white shadow-sm ring-4 ring-danger/15"
+                        : isCompleted
+                          ? "bg-success text-white shadow-sm"
+                          : isCurrent
+                            ? "bg-primary text-white shadow-sm ring-4 ring-primary/15"
+                            : "bg-surface-subtle text-text-subtle border border-border-default"
                     }`}
                   >
-                    <Icon
-                      size={18}
-                      className={isCurrent ? "animate-pulse" : ""}
-                    />
+                    <Icon size={17} />
                   </div>
                 </div>
 
                 <div className="mt-2 flex flex-col items-center">
                   <div
-                    className={`text-xs font-bold flex items-center gap-1 ${isCurrent ? "text-primary" : "text-slate-800"}`}
+                    className={`text-xs font-semibold flex items-center gap-1 ${
+                      isLastRejected
+                        ? "text-danger-text"
+                        : isCurrent
+                          ? "text-primary"
+                          : "text-text-main"
+                    }`}
                   >
-                    {index + 1}. {step.label}
-                    {isCurrent && (
-                      <span className="bg-primary/10 text-primary text-[9px] px-1.5 py-0.5 rounded-full uppercase tracking-wider hidden sm:block">
-                        Active
-                      </span>
-                    )}
+                    <span>
+                      {index + 1}. {step.label}
+                    </span>
                   </div>
                   <div
-                    className={`text-[11px] font-semibold mt-0.5 ${isCurrent ? "text-primary" : "text-slate-500"}`}
+                    className={`text-[11px] font-medium mt-0.5 ${
+                      isLastRejected
+                        ? "text-danger-text"
+                        : isCurrent
+                          ? "text-primary"
+                          : "text-text-muted"
+                    }`}
                   >
                     {step.date}
                   </div>

@@ -9,11 +9,13 @@ import {
   Award,
   Clock,
   Send,
-  CheckCircle,
+  CheckCircle2,
   Globe,
   Users,
 } from "lucide-react";
 import { JobDetailResponse } from "@viecngon/types";
+import { CompanyLogo } from "@/components/ui/CompanyLogo";
+import { EmptyState } from "@/components/ui/StateViews";
 
 interface JobDetailPreviewPaneProps {
   job: JobDetailResponse | null;
@@ -22,58 +24,47 @@ interface JobDetailPreviewPaneProps {
 export default function JobDetailPreviewPane({ job }: JobDetailPreviewPaneProps) {
   if (!job) {
     return (
-      <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-400 shadow-xs">
-        <Briefcase size={40} className="mx-auto mb-3 opacity-40 text-slate-400" />
-        <p className="text-sm font-semibold text-slate-600">
-          Chọn một công việc để xem nhanh thông tin chi tiết
-        </p>
-      </div>
+      <EmptyState
+        icon={<Briefcase size={24} />}
+        title="Chọn một việc làm để xem nhanh"
+        description="Nhấp vào bất kỳ thẻ việc làm nào ở cột bên trái để xem mô tả, yêu cầu và phúc lợi chi tiết."
+      />
     );
   }
 
   const company = job.company;
-  const companyLogo =
-    company?.logo ||
-    "https://images.unsplash.com/photo-1549923746-c502d488b3ea?q=80&w=200&auto=format&fit=crop";
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-7 shadow-xs max-h-[calc(100vh-6.5rem)] overflow-y-auto">
-      {/* 1. Header: Logo, Tên, Công ty */}
-      <div className="flex items-start gap-4 pb-5 border-b border-slate-100">
-        <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-xl border border-slate-100 p-2 shrink-0 bg-white flex items-center justify-center shadow-xs overflow-hidden">
-          <img
-            src={companyLogo}
-            alt={company?.name || "Company Logo"}
-            className="w-full h-full object-contain"
-            onError={(e) => {
-              (e.currentTarget as HTMLImageElement).src =
-                "https://placehold.co/100x100?text=Logo";
-            }}
-          />
-        </div>
+    <div className="bg-surface-card rounded-xl border border-border-default p-6 shadow-xs max-h-[calc(100vh-6.5rem)] overflow-y-auto">
+      {/* 1. Header */}
+      <div className="flex items-start gap-4 pb-5 border-b border-border-default">
+        <CompanyLogo src={company?.logo} name={company?.name} size="lg" />
 
         <div className="flex-1 min-w-0">
           <Link
             href={`/jobs/${job.slug}`}
-            className="text-lg sm:text-xl font-bold text-slate-900 leading-snug hover:text-primary transition-colors block"
+            className="text-lg sm:text-xl font-bold text-text-primary leading-snug hover:text-primary transition-colors block"
           >
             {job.title}
           </Link>
-          <p className="text-sm font-medium text-slate-600 mt-1 line-clamp-1">
+          <Link
+            href={company?.slug ? `/company/${company.slug}` : "#"}
+            className="text-sm font-medium text-text-muted hover:text-primary mt-1 inline-block truncate"
+          >
             {company?.name}
-          </p>
+          </Link>
 
-          <div className="mt-2 text-base sm:text-lg font-black text-emerald-600">
-            {job.salaryDisplay}
+          <div className="mt-2 text-base font-bold text-success-text tabular-nums">
+            {job.salaryDisplay || "Thỏa thuận"}
           </div>
         </div>
       </div>
 
-      {/* 2. Nút Hành động */}
-      <div className="flex items-center gap-3 py-4 border-b border-slate-100">
+      {/* 2. Hành động chính */}
+      <div className="flex items-center gap-3 py-4 border-b border-border-default">
         {job.isApplied ? (
-          <div className="flex-1 inline-flex items-center justify-center gap-2 py-3 px-5 bg-emerald-50 text-emerald-700 text-sm font-bold rounded-xl border border-emerald-200 text-center">
-            <CheckCircle size={16} className="shrink-0" />
+          <div className="flex-1 h-10 inline-flex items-center justify-center gap-2 px-4 bg-success-light text-success-text text-sm font-semibold rounded-lg border border-success-border">
+            <CheckCircle2 size={16} className="shrink-0" />
             <span>
               Đã ứng tuyển{" "}
               {job.applicationStatus ? `(${job.applicationStatus})` : ""}
@@ -82,7 +73,7 @@ export default function JobDetailPreviewPane({ job }: JobDetailPreviewPaneProps)
         ) : (
           <Link
             href={`/job-it/${job.slug}/job_applications`}
-            className="flex-1 inline-flex items-center justify-center gap-2 py-3 px-5 bg-primary hover:bg-primary-hover text-white text-sm font-bold rounded-xl shadow-md shadow-primary/25 transition-all text-center cursor-pointer"
+            className="flex-1 h-10 inline-flex items-center justify-center gap-2 px-4 bg-primary hover:bg-primary-hover text-white text-sm font-semibold rounded-lg transition-colors"
           >
             <Send size={16} />
             <span>Ứng tuyển ngay</span>
@@ -92,46 +83,46 @@ export default function JobDetailPreviewPane({ job }: JobDetailPreviewPaneProps)
         <Link
           href={`/jobs/${job.slug}`}
           target="_blank"
-          className="p-3 border border-slate-200 hover:border-primary hover:text-primary rounded-xl text-slate-600 transition-colors cursor-pointer"
+          className="h-10 w-10 inline-flex items-center justify-center border border-border-default hover:border-primary hover:text-primary rounded-lg text-text-secondary transition-colors"
           title="Mở trong tab mới"
         >
-          <ExternalLink size={18} />
+          <ExternalLink size={17} />
         </Link>
       </div>
 
-      {/* 3. Lưới thông số quan trọng (Được mở rộng hiển thị 4 cột) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 py-4 border-b border-slate-100 text-xs">
-        <div className="flex items-center gap-2 text-slate-600">
-          <MapPin size={16} className="text-slate-400 shrink-0" />
+      {/* 3. Thông số nhanh */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 py-4 border-b border-border-default text-xs">
+        <div className="flex items-center gap-2 text-text-secondary">
+          <MapPin size={15} className="text-text-placeholder shrink-0" />
           <span className="truncate">{job.location || "Toàn quốc"}</span>
         </div>
-        <div className="flex items-center gap-2 text-slate-600">
-          <Briefcase size={16} className="text-slate-400 shrink-0" />
+        <div className="flex items-center gap-2 text-text-secondary">
+          <Briefcase size={15} className="text-text-placeholder shrink-0" />
           <span className="truncate">{job.workModel || "Linh hoạt"}</span>
         </div>
-        <div className="flex items-center gap-2 text-slate-600">
-          <Award size={16} className="text-slate-400 shrink-0" />
+        <div className="flex items-center gap-2 text-text-secondary">
+          <Award size={15} className="text-text-placeholder shrink-0" />
           <span className="truncate">{job.level || "Tất cả cấp bậc"}</span>
         </div>
-        <div className="flex items-center gap-2 text-slate-600">
-          <Clock size={16} className="text-slate-400 shrink-0" />
+        <div className="flex items-center gap-2 text-text-secondary">
+          <Clock size={15} className="text-text-placeholder shrink-0" />
           <span className="truncate">
             {job.experience ? `${job.experience} năm KN` : "Không yêu cầu KN"}
           </span>
         </div>
       </div>
 
-      {/* 4. Kỹ năng yêu cầu */}
+      {/* 4. Kỹ năng chuyên môn */}
       {job.skills && job.skills.length > 0 && (
-        <div className="py-4 border-b border-slate-100">
-          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
+        <div className="py-4 border-b border-border-default">
+          <h3 className="text-xs font-semibold text-text-primary uppercase tracking-wider mb-2.5">
             Kỹ năng chuyên môn
           </h3>
           <div className="flex flex-wrap gap-1.5">
             {job.skills.map((s) => (
               <span
                 key={s}
-                className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-primary-light text-primary border border-primary/20"
+                className="px-2.5 py-1 text-xs font-medium rounded-md bg-primary-light text-primary border border-primary-subtle"
               >
                 {s}
               </span>
@@ -141,65 +132,66 @@ export default function JobDetailPreviewPane({ job }: JobDetailPreviewPaneProps)
       )}
 
       {/* 5. Mô tả công việc */}
-      <div className="py-4 border-b border-slate-100">
-        <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
+      <div className="py-4 border-b border-border-default">
+        <h3 className="text-xs font-semibold text-text-primary uppercase tracking-wider mb-2">
           Mô tả công việc
         </h3>
         {job.description ? (
           <div
-            className="text-xs sm:text-sm text-slate-700 prose prose-slate max-w-none leading-relaxed"
+            className="text-sm text-text-secondary prose prose-sm prose-slate max-w-none leading-relaxed"
             dangerouslySetInnerHTML={{ __html: job.description }}
           />
         ) : (
-          <p className="text-xs text-slate-400 italic">Chưa có mô tả chi tiết.</p>
+          <p className="text-sm text-text-muted italic">Chưa có mô tả chi tiết.</p>
         )}
       </div>
 
-      {/* 6. Yêu cầu công việc */}
+      {/* 6. Yêu cầu ứng viên */}
       {job.requirements && (
-        <div className="py-4 border-b border-slate-100">
-          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
+        <div className="py-4 border-b border-border-default">
+          <h3 className="text-xs font-semibold text-text-primary uppercase tracking-wider mb-2">
             Yêu cầu ứng viên
           </h3>
           <div
-            className="text-xs sm:text-sm text-slate-700 prose prose-slate max-w-none leading-relaxed"
+            className="text-sm text-text-secondary prose prose-sm prose-slate max-w-none leading-relaxed"
             dangerouslySetInnerHTML={{ __html: job.requirements }}
           />
         </div>
       )}
 
-      {/* 7. Quyền lợi / Phúc lợi */}
+      {/* 7. Quyền lợi & Phúc lợi */}
       {job.benefits && (
-        <div className="py-4 border-b border-slate-100">
-          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
-            Quyền lợi & Phúc lợi
+        <div className="py-4 border-b border-border-default">
+          <h3 className="text-xs font-semibold text-text-primary uppercase tracking-wider mb-2">
+            Quyền lợi &amp; Phúc lợi
           </h3>
           <div
-            className="text-xs sm:text-sm text-slate-700 prose prose-slate max-w-none leading-relaxed"
+            className="text-sm text-text-secondary prose prose-sm prose-slate max-w-none leading-relaxed"
             dangerouslySetInnerHTML={{ __html: job.benefits }}
           />
         </div>
       )}
 
-      {/* 8. Thông tin công ty */}
+      {/* 8. Về công ty */}
       {company && (
         <div className="pt-4">
-          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
+          <h3 className="text-xs font-semibold text-text-primary uppercase tracking-wider mb-2">
             Về công ty
           </h3>
-          <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed mb-3">
-            {company.industry || company.companyModel || "Công ty công nghệ"}
+          <p className="text-sm text-text-secondary leading-relaxed mb-3">
+            {company.industry || company.companyModel || "Doanh nghiệp công nghệ"}
           </p>
 
-          <div className="space-y-1.5 text-xs text-slate-500">
+          <div className="space-y-1.5 text-xs text-text-muted">
             {company.size && (
               <p className="flex items-center gap-2">
-                <Users size={14} className="text-slate-400" /> Quy mô: {company.size}
+                <Users size={14} className="text-text-placeholder" />
+                <span>Quy mô: {company.size}</span>
               </p>
             )}
             {company.website && (
               <p className="flex items-center gap-2">
-                <Globe size={14} className="text-slate-400" />
+                <Globe size={14} className="text-text-placeholder" />
                 <a
                   href={
                     company.website.startsWith("http")

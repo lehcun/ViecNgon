@@ -15,7 +15,13 @@ import {
   BadgeCheck,
 } from "lucide-react";
 import { useJobMetrics } from "@/hooks/recruiter/useJobMetrics";
-import Image from "next/image";
+import { formatRelativeTimeVN } from "@/lib/formatters";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import {
+  EmptyState,
+  ErrorState,
+  MetricCardSkeleton,
+} from "@/components/ui/StateViews";
 
 const EmployerMainContent = () => {
   const { recruiterProfile: recruiter, isLoading: isLoadingProfile } =
@@ -25,139 +31,144 @@ const EmployerMainContent = () => {
     data: metrics,
     isLoading: isLoadingMetrics,
     isError,
+    refetch,
   } = useJobMetrics();
 
-  // ================= RENDER TRẠNG THÁI =================
   if (isError) {
     return (
-      <div className="p-6 text-center text-rose-500 font-medium bg-white rounded-xl shadow-sm border border-slate-100">
-        Lỗi tải dữ liệu bảng điều khiển. Vui lòng tải lại trang.
-      </div>
+      <ErrorState
+        message="Không thể tải dữ liệu bảng điều khiển tuyển dụng. Vui lòng thử lại."
+        onRetry={() => void refetch()}
+      />
     );
   }
 
   if (isLoadingProfile || isLoadingMetrics) {
     return (
-      <div className="flex flex-col gap-6 animate-pulse">
-        <div className="h-16 bg-slate-100 rounded-xl"></div>
+      <div className="flex flex-col gap-6">
+        <div className="h-28 bg-surface-card border border-border-default rounded-2xl animate-pulse" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-32 bg-slate-100 rounded-xl"></div>
-          ))}
+          <MetricCardSkeleton />
+          <MetricCardSkeleton />
+          <MetricCardSkeleton />
+          <MetricCardSkeleton />
         </div>
-        <div className="h-96 bg-slate-100 rounded-xl"></div>
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          <div className="xl:col-span-2 h-80 bg-surface-card border border-border-default rounded-xl animate-pulse" />
+          <div className="h-80 bg-surface-card border border-border-default rounded-xl animate-pulse" />
+        </div>
       </div>
     );
   }
 
-  // Tên công ty lấy từ DB, fallback nếu chưa có
-  const companyName = recruiter?.company?.name || "VNG Corporation";
+  const companyName = recruiter?.company?.name || "Quý doanh nghiệp";
+  const totalJobs =
+    metrics?.totalJobs?.count ?? recruiter?.statistics?.totalJobs ?? 0;
+  const jobsThisMonth =
+    (metrics as RecruiterJobMetricsResponse | undefined)?.totalJobs
+      ?.changeThisMonth ?? 0;
+  const activeJobs = metrics?.activeJobs?.count ?? 0;
+  const pendingJobs = metrics?.pendingJobs?.count ?? 0;
+  const totalApplications =
+    metrics?.totalApplications?.count ??
+    recruiter?.statistics?.totalApplications ??
+    0;
+  const appsPercent = metrics?.totalApplications?.percentChangeThisWeek ?? 0;
 
   return (
     <div className="flex flex-col gap-6">
-      {/* =====================================================================
-          1. BANNER CHÀO MỪNG (Dark Theme)
-      ====================================================================== */}
-      <div className="bg-[#0b132b] rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-lg shadow-blue-900/10">
+      <div className="bg-primary-dark rounded-2xl p-6 md:p-7 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm">
         <div>
-          <h1 className="text-2xl font-bold text-white mb-2">
-            Xin chào, {companyName}! 👋
+          <h1 className="text-xl sm:text-2xl font-bold text-white mb-1.5">
+            Xin chào, {companyName}
           </h1>
           <p className="text-sm text-slate-300">
-            Chào mừng bạn quay trở lại hệ thống quản trị tuyển dụng của
-            ViecNgon. Hôm nay bạn đang có{" "}
+            Hệ thống quản trị tuyển dụng ViecNgon. Hiện doanh nghiệp đang quản
+            lý{" "}
             <span className="font-bold text-white">
-              {recruiter?.statistics?.totalJobs || 8} tin tuyển dụng
+              {totalJobs} tin tuyển dụng
             </span>{" "}
-            tiếp cận hiệu quả cao.
+            và{" "}
+            <span className="font-bold text-white">
+              {totalApplications} hồ sơ ứng tuyển
+            </span>
+            .
           </p>
         </div>
         <Link
           href="/post-job"
-          className="shrink-0 inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-md shadow-blue-600/20"
+          className="shrink-0 inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors"
         >
           <Plus size={18} /> Tạo tin tuyển dụng mới
         </Link>
       </div>
 
-      {/* =====================================================================
-          2. KHỐI THỐNG KÊ NHANH (Grid 4 cột)
-      ====================================================================== */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1 */}
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between group hover:border-primary/30 transition-colors">
+        <div className="bg-surface-card rounded-xl p-5 shadow-xs border border-border-default flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-slate-500 font-semibold">
+            <span className="text-xs text-text-muted font-semibold uppercase tracking-wider">
               Tổng số tin đăng
             </span>
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-              <Briefcase size={20} />
+            <div className="w-9 h-9 rounded-lg bg-primary-light flex items-center justify-center text-primary">
+              <Briefcase size={18} />
             </div>
           </div>
           <div className="mt-4 flex items-baseline justify-between">
             <div className="flex items-baseline gap-1.5">
-              <span className="text-3xl font-extrabold text-slate-800 tracking-tight">
-                {metrics?.totalJobs?.count ||
-                  recruiter?.statistics?.totalJobs ||
-                  0}
+              <span className="text-3xl font-bold text-text-main tracking-tight">
+                {totalJobs}
               </span>
-              <span className="text-sm text-slate-500 font-medium">tin</span>
+              <span className="text-xs text-text-muted font-medium">tin</span>
             </div>
-            <div className="flex items-center gap-1 text-emerald-600 text-xs font-bold">
-              <TrendingUp size={14} />
-              <span>
-                +
-                {(metrics as RecruiterJobMetricsResponse)?.totalJobs
-                  ?.changeThisMonth || 1}{" "}
-                tháng này
-              </span>
-            </div>
+            {jobsThisMonth > 0 && (
+              <div className="flex items-center gap-1 text-success-text text-xs font-semibold">
+                <TrendingUp size={13} />
+                <span>+{jobsThisMonth} tháng này</span>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Card 2 */}
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between group hover:border-emerald-200 transition-colors">
+        <div className="bg-surface-card rounded-xl p-5 shadow-xs border border-border-default flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-slate-500 font-semibold">
+            <span className="text-xs text-text-muted font-semibold uppercase tracking-wider">
               Đang hiển thị
             </span>
-            <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
-              <BadgeCheck size={20} />
+            <div className="w-9 h-9 rounded-lg bg-success-light flex items-center justify-center text-success-text">
+              <BadgeCheck size={18} />
             </div>
           </div>
           <div className="mt-4 flex items-baseline justify-between">
             <div className="flex items-baseline gap-1.5">
-              <span className="text-3xl font-extrabold text-slate-800 tracking-tight">
-                {metrics?.activeJobs?.count || 0}
+              <span className="text-3xl font-bold text-text-main tracking-tight">
+                {activeJobs}
               </span>
-              <span className="text-sm text-slate-500 font-medium">vị trí</span>
+              <span className="text-xs text-text-muted font-medium">
+                vị trí
+              </span>
             </div>
-            <div className="flex items-center gap-1.5 bg-emerald-50 px-2.5 py-1 rounded-full text-emerald-700 text-[11px] font-bold border border-emerald-100">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>Đang hoạt động</span>
-            </div>
+            <StatusBadge type="custom" tone="success" label="Hoạt động" />
           </div>
         </div>
 
-        {/* Card 3 */}
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between group hover:border-orange-200 transition-colors">
+        <div className="bg-surface-card rounded-xl p-5 shadow-xs border border-border-default flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-slate-500 font-semibold">
+            <span className="text-xs text-text-muted font-semibold uppercase tracking-wider">
               Chờ kiểm duyệt
             </span>
-            <div className="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center text-orange-500">
-              <Hourglass size={20} />
+            <div className="w-9 h-9 rounded-lg bg-warning-light flex items-center justify-center text-warning-text">
+              <Hourglass size={18} />
             </div>
           </div>
           <div className="mt-4 flex items-baseline justify-between">
             <div className="flex items-baseline gap-1.5">
-              <span className="text-3xl font-extrabold text-slate-800 tracking-tight">
-                {metrics?.pendingJobs?.count || 0}
+              <span className="text-3xl font-bold text-text-main tracking-tight">
+                {pendingJobs}
               </span>
-              <span className="text-sm text-slate-500 font-medium">tin</span>
+              <span className="text-xs text-text-muted font-medium">tin</span>
             </div>
-            <div className="flex items-center gap-1 text-slate-500 text-xs font-semibold">
-              <Clock size={14} />
+            <div className="flex items-center gap-1 text-text-muted text-xs font-medium">
+              <Clock size={13} />
               <span>
                 {metrics?.pendingJobs?.avgReviewTimeText || "~2h xét duyệt"}
               </span>
@@ -165,185 +176,155 @@ const EmployerMainContent = () => {
           </div>
         </div>
 
-        {/* Card 4 */}
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between group hover:border-blue-200 transition-colors">
+        <div className="bg-surface-card rounded-xl p-5 shadow-xs border border-border-default flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-slate-500 font-semibold">
+            <span className="text-xs text-text-muted font-semibold uppercase tracking-wider">
               Tổng hồ sơ ứng tuyển
             </span>
-            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
-              <Users size={20} />
+            <div className="w-9 h-9 rounded-lg bg-info-light flex items-center justify-center text-info-text">
+              <Users size={18} />
             </div>
           </div>
           <div className="mt-4 flex items-baseline justify-between">
             <div className="flex items-baseline gap-1.5">
-              <span className="text-3xl font-extrabold text-slate-800 tracking-tight">
-                {metrics?.totalApplications?.count ||
-                  recruiter?.statistics?.totalApplications ||
-                  0}
+              <span className="text-3xl font-bold text-text-main tracking-tight">
+                {totalApplications}
               </span>
-              <span className="text-sm text-slate-500 font-medium">CV</span>
+              <span className="text-xs text-text-muted font-medium">CV</span>
             </div>
-            <div className="flex items-center gap-1 text-emerald-600 text-xs font-bold">
-              <ArrowUp size={14} />
-              <span>
-                +{metrics?.totalApplications?.percentChangeThisWeek || 12}% tuần
-                này
-              </span>
-            </div>
+            {appsPercent > 0 && (
+              <div className="flex items-center gap-1 text-success-text text-xs font-semibold">
+                <ArrowUp size={13} />
+                <span>+{appsPercent}% tuần này</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* =====================================================================
-          3. DANH SÁCH CHI TIẾT (Grid 2/3 và 1/3)
-      ====================================================================== */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* CỘT TRÁI: TIN TUYỂN DỤNG GẦN ĐÂY */}
-        <div className="xl:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
-          <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-white">
-            <h2 className="text-base font-bold text-slate-800">
+        <div className="xl:col-span-2 bg-surface-card rounded-xl border border-border-default shadow-xs overflow-hidden flex flex-col">
+          <div className="p-5 border-b border-border-subtle flex items-center justify-between">
+            <h2 className="text-base font-bold text-text-main">
               Tin tuyển dụng gần đây
             </h2>
             <Link
               href="/employer-jobs"
-              className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
+              className="text-sm font-semibold text-primary hover:underline"
             >
-              Xem tất cả tin tuyển dụng
+              Xem tất cả
             </Link>
           </div>
 
-          <div className="divide-y divide-slate-50 flex-1">
-            {recruiter?.jobs?.list?.length === 0 ? (
-              <p className="text-sm text-slate-500 text-center py-8">
-                Chưa có tin tuyển dụng nào.
-              </p>
+          <div className="divide-y divide-border-subtle flex-1">
+            {!recruiter?.jobs?.list || recruiter.jobs.list.length === 0 ? (
+              <div className="p-6">
+                <EmptyState
+                  icon={<Briefcase size={22} />}
+                  title="Chưa có tin tuyển dụng nào"
+                  description="Tạo tin tuyển dụng đầu tiên để tiếp cận hàng nghìn ứng viên IT."
+                  actionLabel="Đăng tin ngay"
+                  actionHref="/post-job"
+                />
+              </div>
             ) : (
-              recruiter?.jobs?.list
-                ?.slice(0, 4)
-                .map((job: DashboardJobItem) => {
-                  const isActive =
-                    job.status === "Đang nhận hồ sơ" || job.status === "Active";
+              recruiter.jobs.list.slice(0, 4).map((job: DashboardJobItem) => {
+                const isActive =
+                  job.status === "Đang nhận hồ sơ" ||
+                  job.status === "Active" ||
+                  job.status === "DA_DUYET";
 
-                  return (
-                    <div
-                      key={job.id}
-                      className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/50 transition-colors"
-                    >
-                      {/* Job Info */}
-                      <div className="flex-1">
-                        <h3 className="font-bold text-slate-800 text-sm mb-1">
-                          {job.title}
-                        </h3>
-                        <p className="text-xs text-slate-400">
-                          Đăng ngày:{" "}
-                          {/* {formatDateToDDMMYYYY(job.ngayDang || job.createdAt)} */}
-                        </p>
-                      </div>
-
-                      {/* Applicants Count */}
-                      <div className="w-32 text-left sm:text-center">
-                        <span className="text-sm font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-md">
-                          {job.applicationsCount || 0} ứng viên
-                        </span>
-                      </div>
-
-                      {/* Status Badge */}
-                      <div className="w-32 text-left sm:text-right">
-                        <span
-                          className={`inline-block px-3 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider ${isActive
-                              ? "bg-emerald-100 text-emerald-700"
-                              : "bg-slate-100 text-slate-500"
-                            }`}
-                        >
-                          {isActive ? "Đang nhận hồ sơ" : "Hết hạn / Đã đóng"}
-                        </span>
-                      </div>
+                return (
+                  <div
+                    key={job.id}
+                    className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-surface-subtle/50 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <Link
+                        href="/employer-jobs"
+                        className="font-bold text-text-main hover:text-primary text-sm truncate block"
+                      >
+                        {job.title}
+                      </Link>
+                      <p className="text-xs text-text-muted mt-0.5">
+                        Trạng thái: {job.status}
+                      </p>
                     </div>
-                  );
-                })
+
+                    <div className="sm:w-32 sm:text-center">
+                      <span className="text-xs font-semibold text-primary bg-primary-light px-3 py-1 rounded-full">
+                        {job.applicationsCount || 0} ứng viên
+                      </span>
+                    </div>
+
+                    <div className="sm:w-32 sm:text-right">
+                      <StatusBadge
+                        type="job"
+                        status={isActive ? "ACTIVE" : "HET_HAN"}
+                      />
+                    </div>
+                  </div>
+                );
+              })
             )}
           </div>
         </div>
 
-        {/* CỘT PHẢI: ỨNG VIÊN MỚI NHẤT */}
-        <div className="xl:col-span-1 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
-          <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-white">
-            <h2 className="text-base font-bold text-slate-800">
+        <div className="xl:col-span-1 bg-surface-card rounded-xl border border-border-default shadow-xs overflow-hidden flex flex-col">
+          <div className="p-5 border-b border-border-subtle flex items-center justify-between">
+            <h2 className="text-base font-bold text-text-main">
               Ứng viên mới nhất
             </h2>
             <Link
-              href="/employer/applications"
-              className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
+              href="/applications"
+              className="text-sm font-semibold text-primary hover:underline"
             >
-              Xem tất cả ứng viên
+              Xem tất cả
             </Link>
           </div>
 
-          <div className="divide-y divide-slate-50 flex-1">
-            {recruiter?.recentApplicants?.length === 0 ? (
-              <p className="text-sm text-slate-500 text-center py-8">
-                Chưa có ứng viên mới.
-              </p>
+          <div className="divide-y divide-border-subtle flex-1">
+            {!recruiter?.recentApplicants ||
+            recruiter.recentApplicants.length === 0 ? (
+              <div className="p-6">
+                <EmptyState
+                  icon={<Users size={22} />}
+                  title="Chưa có ứng viên mới"
+                  description="Hồ sơ ứng viên nộp vào các tin tuyển dụng sẽ hiển thị tại đây."
+                />
+              </div>
             ) : (
-              recruiter?.recentApplicants
-                ?.slice(0, 4)
-                .map((applicant, index) => {
-                  // Tạo một % match giả định cho đẹp giống UI (Do backend chưa trả về field này)
-                  const mockMatchScores = ["95%", "88%", "91%", "76%"];
-                  const matchScore =
-                    mockMatchScores[index % mockMatchScores.length];
-
-                  return (
-                    <div
-                      key={applicant.applicationId}
-                      className="p-5 flex items-start gap-3 hover:bg-slate-50/50 transition-colors"
-                    >
-                      {/* Avatar */}
-                      {applicant.avatarUrl ? (
-                        <Image
-                          src={applicant.avatarUrl}
-                          alt={applicant.candidateName}
-                          width={40}
-                          height={40}
-                          className="w-10 h-10 rounded-full object-cover shrink-0 border border-slate-100"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0 uppercase">
-                          {applicant.candidateName.charAt(0)}
-                        </div>
-                      )}
-
-                      {/* Candidate Info */}
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-bold text-slate-800 text-sm truncate">
-                          {applicant.candidateName}
-                        </h4>
-                        <p className="text-xs text-slate-500 truncate mt-0.5">
-                          Ứng tuyển:{" "}
-                          <span className="font-medium">
-                            {applicant.jobTitle}
-                          </span>
-                        </p>
-                        <p className="text-[10px] text-slate-400 mt-1">
-                          Nộp hôm nay •{" "}
-                          {new Date(applicant.appliedAt).toLocaleTimeString(
-                            "vi-VN",
-                            { hour: "2-digit", minute: "2-digit" },
-                          )}{" "}
-                          AM
-                        </p>
-                      </div>
-
-                      {/* Match Badge */}
-                      <div className="shrink-0">
-                        <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-1 rounded-md">
-                          {matchScore} Match
-                        </span>
-                      </div>
+              recruiter.recentApplicants.slice(0, 4).map((applicant) => (
+                <Link
+                  key={applicant.applicationId}
+                  href={`/applications/${applicant.applicationId}`}
+                  className="p-4 flex items-start gap-3 hover:bg-surface-subtle/60 transition-colors"
+                >
+                  {applicant.avatarUrl ? (
+                    <img
+                      src={applicant.avatarUrl}
+                      alt={applicant.candidateName}
+                      className="w-10 h-10 rounded-full object-cover shrink-0 border border-border-default"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-primary-light text-primary flex items-center justify-center font-bold text-sm shrink-0 uppercase">
+                      {applicant.candidateName.charAt(0)}
                     </div>
-                  );
-                })
+                  )}
+
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-bold text-text-main text-sm truncate">
+                      {applicant.candidateName}
+                    </h4>
+                    <p className="text-xs text-text-secondary truncate mt-0.5">
+                      {applicant.jobTitle}
+                    </p>
+                    <p className="text-[11px] text-text-muted mt-1">
+                      {formatRelativeTimeVN(applicant.appliedAt)}
+                    </p>
+                  </div>
+                </Link>
+              ))
             )}
           </div>
         </div>

@@ -8,18 +8,17 @@ export default function EmployerLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-      {/* Navbar full width, cố định trên cùng */}
+    <div className="min-h-screen bg-surface-page flex flex-col font-sans">
       <EmployerNavbar />
 
       <div className="flex flex-1 w-full">
-        {/* Sidebar sát lề trái, cố định khi cuộn */}
-        <aside className="w-65 bg-white border-r border-slate-200 hidden lg:block sticky top-16 h-[calc(100vh-64px)] overflow-y-auto z-10">
+        <aside className="w-64 bg-surface-card border-r border-border-default hidden lg:block sticky top-16 h-[calc(100vh-64px)] overflow-y-auto z-10">
           <EmployerSidebar />
         </aside>
 
-        {/* Khu vực chứa nội dung các trang (Dashboard, Form, Setting...) */}
-        <main className="flex-1 w-full overflow-x-hidden">{children}</main>
+        <main className="flex-1 w-full overflow-x-hidden min-w-0">
+          {children}
+        </main>
       </div>
     </div>
   );

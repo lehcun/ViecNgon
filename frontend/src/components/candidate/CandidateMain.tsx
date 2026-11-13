@@ -1,4 +1,5 @@
 "use client";
+
 import React from "react";
 import Link from "next/link";
 import {
@@ -6,43 +7,68 @@ import {
   Mail,
   ChevronRight,
   Send,
-  Heart,
-  MailOpen,
-  Loader2,
+  Sparkles,
+  Layers,
 } from "lucide-react";
+import { CandidateProfileResponse } from "@viecngon/types";
 import { useAuthStore } from "@/store/authStore";
 import { useCandidateProfile } from "@/hooks/candidate/useCandidateProfile";
+import { useAppliedJobs } from "@/hooks/candidate/useAppliedJobs";
 import CandidateCVCard from "./CandidateCVCard";
+import {
+  ErrorState,
+  MetricCardSkeleton,
+  ProfileHeaderSkeleton,
+} from "@/components/ui/StateViews";
+
+export function calculateProfileCompletion(
+  profile?: CandidateProfileResponse | null,
+): number {
+  if (!profile) return 0;
+  const checks = [
+    Boolean(profile.candidateName || profile.account?.userName),
+    Boolean(profile.profession),
+    Boolean(profile.account?.phoneNumber),
+    Boolean(profile.dateOfBirth),
+    Boolean(profile.address),
+    Boolean(profile.aboutMe && profile.aboutMe.trim().length > 10),
+    Boolean(profile.experiences && profile.experiences.length > 0),
+    Boolean(profile.educations && profile.educations.length > 0),
+    Boolean(profile.skills && profile.skills.length > 0),
+    Boolean(profile.defaultCvFileId || profile.cvUrl),
+  ];
+  const passed = checks.filter(Boolean).length;
+  return Math.round((passed / checks.length) * 100);
+}
 
 const CandidateMain = () => {
-  const profileCompletion = 69; // Giả lập dữ liệu % hoàn thành hồ sơ
-  const arcLength = 220; // Chu vi của nửa vòng tròn SVG
-
   const { candidateProfile, isLoading, isError } = useCandidateProfile();
+  const { appliedJobs } = useAppliedJobs();
   const { user } = useAuthStore();
+
+  const profileCompletion = calculateProfileCompletion(candidateProfile);
+  const arcLength = 220;
 
   if (isLoading) {
     return (
-      <div className="w-full flex flex-col gap-6 animate-pulse">
-        <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 flex items-center gap-6">
-          <div className="w-24 h-24 bg-slate-200 rounded-full shrink-0"></div>
-          <div className="flex-1 space-y-3">
-            <div className="h-6 bg-slate-200 rounded w-1/3"></div>
-            <div className="h-4 bg-slate-200 rounded w-1/2"></div>
-            <div className="h-4 bg-slate-200 rounded w-1/4"></div>
-          </div>
+      <div className="w-full flex flex-col gap-6">
+        <ProfileHeaderSkeleton />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <MetricCardSkeleton />
+          <MetricCardSkeleton />
+          <MetricCardSkeleton />
         </div>
-        <div className="h-44 bg-white rounded-xl border border-slate-200 p-6"></div>
-        <div className="h-44 bg-white rounded-xl border border-slate-200 p-6"></div>
+        <div className="h-44 bg-surface-card rounded-xl border border-border-default p-6 animate-pulse" />
       </div>
     );
   }
 
   if (isError) {
     return (
-      <div className="p-8 text-center bg-white rounded-xl border border-red-200 shadow-sm text-red-600 font-medium">
-        Không thể tải thông tin hồ sơ ứng viên. Vui lòng thử đăng nhập lại.
-      </div>
+      <ErrorState
+        message="Không thể tải thông tin hồ sơ ứng viên. Vui lòng thử đăng nhập lại."
+        onRetry={() => window.location.reload()}
+      />
     );
   }
 
@@ -56,70 +82,69 @@ const CandidateMain = () => {
   const displayEmail =
     candidateProfile?.account?.email || user?.email || "Chưa cập nhật email";
 
+  const appliedCount = appliedJobs.length;
+  const skillsCount = candidateProfile?.skills?.length ?? 0;
+  const experiencesCount = candidateProfile?.experiences?.length ?? 0;
+
   return (
     <div className="w-full flex flex-col gap-6">
-      {/* 1. Header Info Card */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row items-center sm:items-start gap-6">
+      <div className="bg-surface-card rounded-xl border border-border-default p-6 sm:p-7 shadow-xs flex flex-col sm:flex-row items-center sm:items-start gap-6">
         <div className="shrink-0">
           {candidateProfile?.avatarUrl ? (
             <img
               src={candidateProfile.avatarUrl}
               alt={displayName}
-              className="w-24 h-24 rounded-full object-cover shadow-md"
+              className="w-20 h-20 rounded-full object-cover border border-border-default shadow-xs"
             />
           ) : (
-            <div className="w-24 h-24 bg-primary text-white text-3xl font-bold flex items-center justify-center rounded-full shadow-md">
+            <div className="w-20 h-20 bg-primary text-white text-2xl font-bold flex items-center justify-center rounded-full shadow-xs">
               {displayName.charAt(0).toUpperCase()}
             </div>
           )}
         </div>
-        <div className="flex-1 text-center sm:text-left">
-          <h1 className="text-2xl font-bold text-slate-800 mb-2">
+        <div className="flex-1 text-center sm:text-left min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-text-main mb-2 truncate">
             {displayName}
           </h1>
-          <div className="space-y-2 text-slate-600 text-sm">
+          <div className="space-y-1.5 text-text-secondary text-sm">
             <p className="flex items-center justify-center sm:justify-start gap-2">
-              <Briefcase size={16} className="text-slate-400 shrink-0" />
-              <span>{displayProfession}</span>
+              <Briefcase size={16} className="text-text-subtle shrink-0" />
+              <span className="truncate">{displayProfession}</span>
             </p>
             <p className="flex items-center justify-center sm:justify-start gap-2">
-              <Mail size={16} className="text-slate-400 shrink-0" />
-              <span>{displayEmail}</span>
+              <Mail size={16} className="text-text-subtle shrink-0" />
+              <span className="truncate">{displayEmail}</span>
             </p>
           </div>
           <Link
             href="/cv-profile"
-            className="inline-flex items-center gap-1 text-primary font-semibold mt-4 hover:underline"
+            className="inline-flex items-center gap-1 text-sm text-primary font-semibold mt-4 hover:underline"
           >
             Cập nhật hồ sơ <ChevronRight size={16} />
           </Link>
         </div>
       </div>
 
-      {/* 2. Hồ sơ đính kèm Card */}
       <CandidateCVCard />
 
-      {/* 3. Hồ sơ ViecNgon Card (Biểu đồ nửa vầng trăng) */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm flex flex-col md:flex-row items-center gap-8">
-        {/* SVG Biểu đồ nửa vầng trăng */}
+      <div className="bg-surface-card rounded-xl border border-border-default p-6 sm:p-7 shadow-xs flex flex-col md:flex-row items-center gap-6 md:gap-8">
         <div className="shrink-0 relative w-40 h-24 overflow-hidden">
-          <svg viewBox="0 0 200 100" className="w-full h-auto drop-shadow-sm">
-            {/* Nền xám */}
+          <svg viewBox="0 0 200 100" className="w-full h-auto">
             <path
               d="M 20 90 A 70 70 0 0 1 180 90"
               fill="none"
-              stroke="#f1f5f9"
+              stroke="currentColor"
+              className="text-surface-subtle"
               strokeWidth="18"
               strokeLinecap="round"
             />
-            {/* Phần trăm hoàn thành (Màu Primary) */}
             <path
               d="M 20 90 A 70 70 0 0 1 180 90"
               fill="none"
               stroke="currentColor"
               strokeWidth="18"
               strokeLinecap="round"
-              className="text-primary transition-all duration-1000 ease-out"
+              className="text-primary transition-all duration-700 ease-out"
               strokeDasharray={arcLength}
               strokeDashoffset={
                 arcLength - arcLength * (profileCompletion / 100)
@@ -127,103 +152,91 @@ const CandidateMain = () => {
             />
           </svg>
           <div className="absolute bottom-2 left-0 right-0 flex flex-col items-center">
-            <span className="text-3xl font-black text-slate-800 leading-none">
+            <span className="text-2xl font-bold text-text-main leading-none">
               {profileCompletion}%
             </span>
-            <span className="text-[11px] text-slate-500 font-medium mt-1">
+            <span className="text-[11px] text-text-muted font-medium mt-1">
               hoàn thành
             </span>
           </div>
         </div>
 
         <div className="flex-1 text-center md:text-left">
-          <h2 className="text-lg font-bold text-slate-800 mb-2">
+          <h2 className="text-lg font-bold text-text-main mb-1.5">
             Hồ sơ ViecNgon
           </h2>
-          <p className="text-slate-600 text-sm mb-4 max-w-md">
-            Nâng cấp hồ sơ của bạn lên{" "}
-            <span className="font-bold text-primary">70%</span> để bắt đầu tạo
-            mẫu CV IT chuyên nghiệp.
+          <p className="text-text-secondary text-sm mb-3 max-w-md">
+            Hoàn thiện ít nhất{" "}
+            <span className="font-bold text-primary">70%</span> thông tin hồ sơ
+            để tăng độ chính xác khi AI chấm điểm tương thích công việc.
           </p>
           <Link
             href="/cv-profile"
-            className="inline-flex items-center gap-1 text-primary font-semibold hover:underline"
+            className="inline-flex items-center gap-1 text-sm text-primary font-semibold hover:underline"
           >
             Nâng cấp hồ sơ <ChevronRight size={16} />
           </Link>
         </div>
 
-        {/* Khám phá mẫu CV */}
-        <div className="hidden lg:flex items-center gap-4">
-          {/* Template 1 Mockup */}
-          <div className="w-20 h-28 bg-slate-50 border border-slate-200 rounded p-2 shadow-sm flex flex-col gap-1 opacity-60">
-            <div className="w-full h-2 bg-slate-200 rounded"></div>
-            <div className="w-3/4 h-2 bg-slate-200 rounded"></div>
-            <div className="w-full h-1 bg-slate-100 rounded mt-2"></div>
-            <div className="w-full h-1 bg-slate-100 rounded"></div>
-          </div>
-          {/* Khám phá */}
+        <div className="hidden lg:flex items-center gap-3">
           <Link
-            href="/portfolio"
-            className="w-24 h-32 border border-slate-200 rounded flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-primary-light/30 transition-colors cursor-pointer group shadow-sm bg-white"
+            href="/cv-template"
+            className="w-28 h-32 border border-border-default rounded-xl flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-primary-light/40 transition-colors group bg-surface-subtle/50 p-3 text-center"
           >
-            <div className="w-8 h-8 rounded-full border-2 border-primary text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+            <div className="w-9 h-9 rounded-full border-2 border-primary text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
               <ChevronRight size={16} className="ml-0.5" />
             </div>
-            <span className="text-[11px] text-primary font-semibold text-center leading-tight">
-              Khám phá
-              <br />
-              mẫu CV
+            <span className="text-xs text-primary font-semibold leading-tight">
+              Xem &amp; tải mẫu CV
             </span>
           </Link>
         </div>
       </div>
 
-      {/* 4. HOẠT ĐỘNG CỦA BẠN */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm">
-        <h2 className="text-xl font-bold text-slate-800 mb-6">
+      <div className="bg-surface-card rounded-xl border border-border-default p-6 sm:p-7 shadow-xs">
+        <h2 className="text-lg font-bold text-text-main mb-5">
           Hoạt động của bạn
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {/* Card 1: Ứng tuyển */}
           <Link
-            href={"/my-jobs/applied"}
-            className="bg-primary-light rounded-xl p-5 relative overflow-hidden h-32 flex flex-col justify-between group cursor-pointer hover:shadow-md transition-shadow"
+            href="/my-jobs/applied"
+            className="bg-primary-light border border-primary/15 rounded-xl p-5 relative overflow-hidden h-30 flex flex-col justify-between group hover:shadow-sm transition-shadow"
           >
-            <span className="text-sm font-semibold text-slate-700 relative z-10 group-hover:text-blue-700 transition-colors">
+            <span className="text-sm font-semibold text-text-main relative z-10 group-hover:text-primary transition-colors">
               Việc làm đã ứng tuyển
             </span>
-            <span className="text-4xl font-black text-blue-600 relative z-10">
-              0
+            <span className="text-3xl font-bold text-primary relative z-10">
+              {appliedCount}
             </span>
-            <Send className="absolute -bottom-2 -right-2 w-16 h-16 text-blue-200/60 -rotate-12 group-hover:scale-110 transition-transform" />
+            <Send className="absolute -bottom-2 -right-2 w-14 h-14 text-primary/15 -rotate-12 group-hover:scale-110 transition-transform" />
           </Link>
 
-          {/* Card 2: Đã lưu */}
-          <div className="bg-[#fff1f2] rounded-xl p-5 relative overflow-hidden h-32 flex flex-col justify-between group cursor-pointer hover:shadow-md transition-shadow">
-            <span className="text-sm font-semibold text-slate-700 relative z-10 group-hover:text-rose-700 transition-colors">
-              Việc làm đã lưu
+          <Link
+            href="/cv-profile"
+            className="bg-ai-light border border-ai-border rounded-xl p-5 relative overflow-hidden h-30 flex flex-col justify-between group hover:shadow-sm transition-shadow"
+          >
+            <span className="text-sm font-semibold text-text-main relative z-10 group-hover:text-ai transition-colors">
+              Kỹ năng chuyên môn
             </span>
-            <span className="text-4xl font-black text-rose-600 relative z-10">
-              0
+            <span className="text-3xl font-bold text-ai relative z-10">
+              {skillsCount}
             </span>
-            <Heart
-              fill="currentColor"
-              className="absolute -bottom-3 -right-2 w-20 h-20 text-rose-200/60 -rotate-12 group-hover:scale-110 transition-transform"
-            />
-          </div>
+            <Sparkles className="absolute -bottom-2 -right-2 w-14 h-14 text-ai/15 -rotate-12 group-hover:scale-110 transition-transform" />
+          </Link>
 
-          {/* Card 3: Lời mời */}
-          <div className="bg-[#ecfdf5] rounded-xl p-5 relative overflow-hidden h-32 flex flex-col justify-between group cursor-pointer hover:shadow-md transition-shadow">
-            <span className="text-sm font-semibold text-slate-700 relative z-10 group-hover:text-emerald-700 transition-colors">
-              Lời mời công việc
+          <Link
+            href="/cv-profile"
+            className="bg-success-light border border-success-border rounded-xl p-5 relative overflow-hidden h-30 flex flex-col justify-between group hover:shadow-sm transition-shadow"
+          >
+            <span className="text-sm font-semibold text-text-main relative z-10 group-hover:text-success-text transition-colors">
+              Mốc kinh nghiệm
             </span>
-            <span className="text-4xl font-black text-emerald-600 relative z-10">
-              0
+            <span className="text-3xl font-bold text-success-text relative z-10">
+              {experiencesCount}
             </span>
-            <MailOpen className="absolute -bottom-2 -right-2 w-16 h-16 text-emerald-200/60 -rotate-12 group-hover:scale-110 transition-transform" />
-          </div>
+            <Layers className="absolute -bottom-2 -right-2 w-14 h-14 text-success/15 -rotate-12 group-hover:scale-110 transition-transform" />
+          </Link>
         </div>
       </div>
     </div>

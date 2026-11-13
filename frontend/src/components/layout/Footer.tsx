@@ -1,168 +1,127 @@
 import Link from "next/link";
-import { Phone, Mail, Send } from "lucide-react";
-import { FaYoutube, FaFacebook } from "react-icons/fa";
+import { Phone, Mail, MapPin } from "lucide-react";
 import LogoViecNgon from "@/components/LogoViecNgon";
 
 export default function Footer() {
   return (
-    <footer className="relative bg-[#0a0a0a] text-slate-300 border-t border-slate-800 overflow-hidden mt-auto">
-      {/* Hiệu ứng ánh sáng và đường cong lượn sóng góc phải */}
-      <div className="absolute right-0 top-0 bottom-0 w-full md:w-1/2 pointer-events-none overflow-hidden">
-        <div className="absolute right-[-10%] top-[-20%] w-200 h-200 rounded-full border border-primary/10 opacity-30"></div>
-        <div className="absolute right-[-5%] top-[10%] w-150 h-150 rounded-full border border-primary/20 opacity-20"></div>
-        <div className="absolute right-[5%] top-[30%] w-100 h-100 rounded-full border border-primary/30 opacity-10"></div>
-        {/* Lớp phủ Gradient mờ */}
-        <div className="absolute inset-0 bg-linear-to-l from-primary-dark/40 to-transparent mix-blend-screen"></div>
-      </div>
-
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8">
-          {/* Cột 1: Logo & Social (Chiếm 2 cột trên Desktop để logo rộng rãi) */}
-          <div className="lg:col-span-2">
-            <div className="inline-block mb-4">
-              <LogoViecNgon logoTextColor="text-white" />
-            </div>
-            <p className="text-xs font-bold text-slate-400 mb-8 tracking-[0.2em] uppercase">
-              Tiếp lợi thế - Nối thành công
+    <footer className="bg-primary-dark text-slate-300 border-t border-slate-800 mt-auto">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+          {/* Cột 1: Thương hiệu */}
+          <div className="space-y-4">
+            <LogoViecNgon logoTextColor="text-white" />
+            <p className="text-sm text-slate-400 leading-relaxed">
+              Nền tảng tuyển dụng IT thông minh kết nối kỹ sư công nghệ với các doanh nghiệp hàng đầu tại Việt Nam.
             </p>
-            <div className="flex gap-4">
-              <a
-                href="#"
-                aria-label="Facebook"
-                className="group w-10 h-10 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center hover:bg-primary hover:border-primary transition-all shadow-sm"
-              >
-                <FaFacebook className="text-[#1877F2] group-hover:text-white transition-colors" size={20} />
-              </a>
-              <a
-                href="#"
-                aria-label="Youtube"
-                className="group w-10 h-10 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center hover:bg-primary hover:border-primary transition-all shadow-sm"
-              >
-                <FaYoutube className="text-[#FF0000] group-hover:text-white transition-colors" size={20} />
-              </a>
-            </div>
           </div>
 
-          {/* Cột 2: Về ViecNgon */}
+          {/* Cột 2: Dành cho Ứng viên */}
           <div>
-            <h3 className="text-white font-bold mb-6 text-base">Về ViecNgon</h3>
-            <ul className="space-y-4 text-sm text-slate-400">
+            <h3 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">
+              Dành cho Ứng viên
+            </h3>
+            <ul className="space-y-3 text-sm text-slate-400">
               <li>
-                <Link href="/" className="hover:text-primary transition-colors">
-                  Trang Chủ
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-primary transition-colors">
-                  Về ViecNgon.vn
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-primary transition-colors">
-                  Dịch vụ gợi ý ứng viên
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-primary transition-colors">
-                  Liên Hệ
+                <Link href="/jobs" className="hover:text-white transition-colors">
+                  Tìm việc làm IT
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/jobs"
-                  className="hover:text-primary transition-colors"
+                  href="/#top-companies"
+                  className="hover:text-white transition-colors"
                 >
-                  Việc Làm IT
+                  Công ty công nghệ hàng đầu
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-primary transition-colors">
-                  Câu hỏi thường gặp
+                <Link
+                  href="/portfolio"
+                  className="hover:text-white transition-colors"
+                >
+                  Mẫu CV &amp; Portfolio IT
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/cv-profile"
+                  className="hover:text-white transition-colors"
+                >
+                  Quản lý hồ sơ CV
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Cột 3: Điều khoản chung */}
+          {/* Cột 3: Dành cho Nhà tuyển dụng */}
           <div>
-            <h3 className="text-white font-bold mb-6 text-base">
-              Điều khoản chung
+            <h3 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">
+              Dành cho Nhà tuyển dụng
             </h3>
-            <ul className="space-y-4 text-sm text-slate-400">
+            <ul className="space-y-3 text-sm text-slate-400">
               <li>
-                <Link href="#" className="hover:text-primary transition-colors">
-                  Chính sách quyền riêng tư
+                <Link
+                  href="/employer/login"
+                  className="hover:text-white transition-colors"
+                >
+                  Đăng nhập Nhà tuyển dụng
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-primary transition-colors">
-                  Quy chế hoạt động
+                <Link
+                  href="/post-job"
+                  className="hover:text-white transition-colors"
+                >
+                  Đăng tin tuyển dụng IT
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-primary transition-colors">
-                  Giải quyết khiếu nại
+                <Link
+                  href="/pricing"
+                  className="hover:text-white transition-colors"
+                >
+                  Bảng giá gói dịch vụ
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-primary transition-colors">
-                  Thoả thuận sử dụng
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-primary transition-colors">
-                  Thông cáo báo chí
+                <Link
+                  href="/applications"
+                  className="hover:text-white transition-colors"
+                >
+                  Sàng lọc ứng viên bằng AI
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Cột 4: Liên hệ */}
+          {/* Cột 4: Liên hệ & Hỗ trợ */}
           <div>
-            <h3 className="text-white font-bold mb-6 text-base">
-              Liên hệ để đăng tin tuyển dụng tại:
+            <h3 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">
+              Liên hệ &amp; Hỗ trợ
             </h3>
-            <ul className="space-y-4 text-sm text-slate-400">
-              <li className="flex items-center gap-3">
-                <Phone size={16} className="text-slate-500" />
-                <span>Đà Nẵng: (+84) 236 388 8888</span>
+            <ul className="space-y-3 text-sm text-slate-400">
+              <li className="flex items-start gap-2.5">
+                <MapPin size={16} className="text-primary-disabled shrink-0 mt-0.5" />
+                <span>Hà Nội · Đà Nẵng · TP. Hồ Chí Minh</span>
               </li>
-              <li className="flex items-center gap-3">
-                <Phone size={16} className="text-slate-500" />
-                <span>Hồ Chí Minh: (+84) 977 460 519</span>
+              <li className="flex items-center gap-2.5">
+                <Phone size={16} className="text-primary-disabled shrink-0" />
+                <span>Hotline: 1900 1234</span>
               </li>
-              <li className="flex items-center gap-3">
-                <Phone size={16} className="text-slate-500" />
-                <span>Hà Nội: (+84) 983 131 351</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <Mail size={16} className="text-slate-500" />
-                <span>Email: love@viecngon.vn</span>
-              </li>
-              <li className="flex items-center gap-3 mt-6">
-                <Send size={16} className="text-slate-500" />
-                <Link
-                  href="/contact"
-                  className="text-white hover:text-primary transition-colors"
-                >
-                  Gửi thông tin liên hệ
-                </Link>
+              <li className="flex items-center gap-2.5">
+                <Mail size={16} className="text-primary-disabled shrink-0" />
+                <span>support@viecngon.vn</span>
               </li>
             </ul>
           </div>
         </div>
       </div>
 
-      {/* Dòng Copyright dưới cùng */}
+      {/* Dòng bản quyền */}
       <div className="border-t border-slate-800">
-        <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
-          <p>
-            Copyright © 2026 ViecNgon JSC <span className="mx-2">|</span> MST:
-            0123456789
-          </p>
-          <p>
-            Thiết kế & Phát triển bởi Nhóm 5 (Đạt, Huy, Ngọc Ý, Quang Ý, Cường)
-          </p>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-slate-500">
+          <p>© 2026 ViecNgon. Bảo lưu mọi quyền.</p>
+          <p>Nền tảng Tuyển dụng IT thông minh tại Việt Nam</p>
         </div>
       </div>
     </footer>

@@ -2,95 +2,129 @@
 
 import React from "react";
 import Link from "next/link";
-import { Zap, ShieldCheck, Download, Calendar } from "lucide-react";
-import toast from "react-hot-toast";
-import { useAdminMetrics } from "@/hooks/admin/useAdminDashboard";
+import { CheckCircle, Building2, Download } from "lucide-react";
+import { toast } from "react-hot-toast";
 import MetricCardGrid from "@/components/admin/dashboard/MetricCardGrid";
 import UserGrowthChartCard from "@/components/admin/dashboard/UserGrowthChartCard";
 import ApplicationStatsCard from "@/components/admin/dashboard/ApplicationStatsCard";
 import RecentTransactionsTable from "@/components/admin/dashboard/RecentTransactionsTable";
 import RevenueBreakdownCard from "@/components/admin/dashboard/RevenueBreakdownCard";
+import { useAdminMetrics } from "@/hooks/admin/useAdminDashboard";
+import { Button } from "@/components/ui/Button";
 
 export default function AdminDashboardPage() {
   const { data: metrics } = useAdminMetrics();
-  const pendingJobsCount = metrics?.pendingJobs.count ?? 0;
 
   const handleExportReport = () => {
-    toast.success("Đang chuẩn bị báo cáo thống kê tháng...");
+    if (!metrics) {
+      toast.error("Chưa có dữ liệu báo cáo để xuất.");
+      return;
+    }
+
+    const rows = [
+      ["Chỉ số", "Giá trị", "Ghi chú"],
+      [
+        "Tổng người dùng",
+        String(metrics.totalUsers.count),
+        `Tăng trưởng ${metrics.totalUsers.growthPercent}%`,
+      ],
+      [
+        "Tin chờ kiểm duyệt",
+        String(metrics.pendingJobs.count),
+        metrics.pendingJobs.requiresImmediateReview
+          ? "Cần duyệt ngay"
+          : "Ổn định",
+      ],
+      [
+        "Tổng hồ sơ ứng tuyển",
+        String(metrics.totalApplications.count),
+        `Tăng trưởng ${metrics.totalApplications.growthPercent}%`,
+      ],
+      [
+        "Doanh thu nền tảng",
+        metrics.platformRevenue.formattedAmount,
+        `Tăng trưởng ${metrics.platformRevenue.growthPercent}%`,
+      ],
+    ];
+
+    const csvContent =
+      "\uFEFF" + rows.map((row) => row.map((v) => `"${v}"`).join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `viecngon-bao-cao-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success("Đã xuất báo cáo tổng quan (CSV)!");
   };
 
   return (
-    <div className="space-y-6">
-      {/* 1. Header Banner & Date Range */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-6 pb-8">
+      {/* Header Welcome Bar */}
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-surface-card p-6 rounded-xl border border-border-default shadow-xs">
         <div>
-          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-            Overview
-          </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
-            Welcome back, System Admin
+          <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">
+            Bảng điều khiển quản trị
+          </p>
+          <h1 className="text-2xl font-bold text-text-primary">
+            Xin chào, Quản trị viên hệ thống
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Here&apos;s what&apos;s happening across your recruitment platform
-            today.
+          <p className="text-sm text-text-muted mt-1">
+            Theo dõi số liệu tăng trưởng người dùng, kiểm duyệt tin tuyển dụng
+            và doanh thu nền tảng theo thời gian thực.
           </p>
         </div>
 
-        {/* Date Range Badge */}
-        <div className="inline-flex items-center gap-2 px-3.5 py-2 bg-white border border-slate-200/90 rounded-lg text-xs font-medium text-slate-700 shadow-2xs self-start md:self-auto">
-          <Calendar size={15} className="text-slate-400" />
-          <span>Nov 1 – Nov 30, 2026</span>
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          <Link
+            href="/admin/jobs"
+            className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-semibold shadow-xs transition-colors"
+          >
+            <CheckCircle size={16} />
+            <span>
+              Duyệt tin chờ duyệt
+              {metrics?.pendingJobs?.count !== undefined
+                ? ` (${metrics.pendingJobs.count})`
+                : ""}
+            </span>
+          </Link>
+
+          <Link
+            href="/admin/users"
+            className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-surface-card hover:bg-surface-muted border border-border-default text-text-primary text-sm font-semibold transition-colors"
+          >
+            <Building2 size={16} className="text-primary" />
+            <span>Quản lý doanh nghiệp</span>
+          </Link>
+
+          <Button variant="secondary" size="md" onClick={handleExportReport}>
+            <Download size={16} />
+            Xuất báo cáo tháng
+          </Button>
         </div>
       </div>
 
-      {/* 2. Quick Action Buttons */}
-      <div className="flex flex-wrap items-center gap-3">
-        <Link
-          href="/admin/jobs"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm shadow-blue-500/20 transition-all"
-        >
-          <Zap size={14} className="fill-white" />
-          <span>Approve Pending Jobs ({pendingJobsCount})</span>
-        </Link>
-
-        <Link
-          href="/admin/users"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold rounded-lg shadow-2xs transition-all"
-        >
-          <ShieldCheck size={14} className="text-slate-500" />
-          <span>Verify Companies</span>
-        </Link>
-
-        <button
-          type="button"
-          onClick={handleExportReport}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold rounded-lg shadow-2xs transition-all cursor-pointer"
-        >
-          <Download size={14} className="text-slate-500" />
-          <span>Export Monthly Report</span>
-        </button>
-      </div>
-
-      {/* 3. Hàng 1: 4 Thẻ Chỉ Số Tổng Quan (MetricCardGrid) */}
+      {/* Hàng 1: 4 Thẻ chỉ số tổng quan */}
       <MetricCardGrid />
 
-      {/* 4. Hàng 2: Biểu đồ Tăng trưởng Người dùng (60%) & Thống kê Đơn ứng tuyển (40%) */}
+      {/* Hàng 2: Biểu đồ tăng trưởng & Thống kê ứng tuyển */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-        <div className="lg:col-span-7 flex flex-col h-full">
+        <div className="lg:col-span-7">
           <UserGrowthChartCard />
         </div>
-        <div className="lg:col-span-5 flex flex-col h-full">
+        <div className="lg:col-span-5">
           <ApplicationStatsCard />
         </div>
       </div>
 
-      {/* 5. Hàng 3: Giao dịch gần đây (60%) & Cơ cấu Doanh thu Gói dịch vụ (40%) */}
+      {/* Hàng 3: Cơ cấu doanh thu & Giao dịch gần đây */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-        <div className="lg:col-span-7 flex flex-col h-full">
-          <RecentTransactionsTable />
-        </div>
-        <div className="lg:col-span-5 flex flex-col h-full">
+        <div className="lg:col-span-5">
           <RevenueBreakdownCard />
+        </div>
+        <div className="lg:col-span-7">
+          <RecentTransactionsTable />
         </div>
       </div>
     </div>

@@ -7,6 +7,7 @@ import { FiAlertCircle, FiEye, FiEyeOff } from "react-icons/fi";
 import toast from "react-hot-toast";
 import { useLogin } from "@/hooks/auth/useLogin";
 import GoogleButton from "@/components/auth/GoogleButton";
+import { Button } from "@/components/ui/Button";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
@@ -25,23 +26,17 @@ export default function LoginForm() {
     login(
       { email, password },
       {
-        onSuccess: (data: any) => {
+        onSuccess: (data) => {
           toast.success("Đăng nhập thành công!");
-          // Điều hướng linh hoạt theo vai trò của tài khoản
           if (data?.user?.role === "NHATUYENDUNG") {
             router.push("/employer-dashboard");
           } else {
             router.push("/dashboard");
           }
         },
-
-        // ===================================================================
-        // XỬ LÝ CÁC NHÁNH LỖI (onError)
-        // ===================================================================
-        onError: (err: any) => {
+        onError: (err) => {
           const rawMessage = err?.message || "Đăng nhập thất bại!";
 
-          // TRƯỜNG HỢP 1: Tài khoản đăng ký qua Google
           if (
             rawMessage.includes("này đã được dùng để đăng ký bằng google") ||
             rawMessage.includes("liên kết với Google")
@@ -50,14 +45,10 @@ export default function LoginForm() {
             setErrorMessage(
               "Tài khoản này đã được tạo bằng Google. Vui lòng bấm vào nút 'Đăng nhập với Google' ở phía trên!",
             );
-            toast.error(
-              "Tài khoản Google! Vui lòng chọn đăng nhập bằng Google.",
-              { duration: 5000, icon: "⚠️" },
-            );
+            toast.error("Tài khoản Google! Vui lòng chọn đăng nhập bằng Google.");
             return;
           }
 
-          // TRƯỜNG HỢP 2: Email chưa tồn tại trong hệ thống
           if (
             rawMessage.includes("Email chưa tồn tại") ||
             rawMessage.includes("chưa đăng ký")
@@ -65,13 +56,10 @@ export default function LoginForm() {
             setErrorMessage(
               "Email này chưa được đăng ký tài khoản trên ViecNgon.",
             );
-            toast.error("Email chưa tồn tại. Vui lòng đăng ký tài khoản!", {
-              duration: 4000,
-            });
+            toast.error("Email chưa tồn tại. Vui lòng đăng ký tài khoản!");
             return;
           }
 
-          // TRƯỜNG HỢP 3: Sai mật khẩu hoặc lỗi khác
           setErrorMessage(rawMessage);
           toast.error(rawMessage);
         },
@@ -81,29 +69,19 @@ export default function LoginForm() {
 
   return (
     <div className="w-full max-w-md mx-auto flex flex-col font-sans">
-      {/* --- HEADER --- */}
-      <h1 className="text-2xl md:text-3xl font-extrabold text-primary-dark mb-3 tracking-tight">
+      <h1 className="text-2xl md:text-3xl font-extrabold text-text-main mb-3 tracking-tight">
         Chào mừng đến với <span className="text-primary">ViecNgon</span>
       </h1>
-      <p className="text-sm text-slate-500 mb-8 leading-relaxed">
-        Bằng việc đăng nhập, bạn đồng ý với{" "}
-        <Link href="/terms" className="text-primary hover:underline">
-          Điều khoản sử dụng
-        </Link>{" "}
-        và{" "}
-        <Link href="/privacy" className="text-primary hover:underline">
-          Chính sách bảo mật
-        </Link>{" "}
-        của ViecNgon.
+      <p className="text-sm text-text-muted mb-7 leading-relaxed">
+        Đăng nhập để khám phá hàng nghìn việc làm IT chất lượng và trải nghiệm
+        AI Match Score.
       </p>
 
-      {/* --- HỘP GỢI Ý ĐẶC BIỆT KHI PHÁT HIỆN TÀI KHOẢN GOOGLE --- */}
       {isGoogleAccount && (
-        <div className="mb-5 p-4 bg-blue-50 border border-primary/30 rounded-xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300 shadow-sm">
-          <span className="text-2xl select-none">💡</span>
-          <div className="text-xs text-slate-800 leading-relaxed">
+        <div className="mb-5 p-4 bg-primary-light border border-primary/25 rounded-xl flex items-start gap-3 shadow-xs">
+          <div className="text-xs text-text-main leading-relaxed">
             <p className="font-bold text-primary text-sm mb-1">
-              Phát hiện tài khoản Google!
+              Phát hiện tài khoản Google
             </p>
             Email <strong>{email}</strong> được đăng ký thông qua Google OAuth.
             Vui lòng nhấn nút <strong>&quot;Đăng nhập với Google&quot;</strong>{" "}
@@ -112,33 +90,29 @@ export default function LoginForm() {
         </div>
       )}
 
-      {/* --- NÚT ĐĂNG NHẬP GOOGLE --- */}
       <div
-        className={`transition-all duration-300 rounded-xl ${
-          isGoogleAccount
-            ? "ring-4 ring-primary/30 scale-[1.02] shadow-lg shadow-primary/20"
-            : ""
+        className={`transition-all duration-200 rounded-xl ${
+          isGoogleAccount ? "ring-4 ring-primary/20" : ""
         }`}
       >
         <GoogleButton mode="login" />
       </div>
 
-      {/* --- DÒNG KẺ HOẶC --- */}
       <div className="flex items-center gap-4 mb-6">
-        <div className="h-px bg-slate-200 flex-1"></div>
-        <span className="text-sm text-slate-500 font-medium px-2">hoặc</span>
-        <div className="h-px bg-slate-200 flex-1"></div>
+        <div className="h-px bg-border-default flex-1" />
+        <span className="text-xs text-text-muted font-medium px-2 uppercase">
+          hoặc
+        </span>
+        <div className="h-px bg-border-default flex-1" />
       </div>
 
-      {/* --- FORM ĐĂNG NHẬP TRUYỀN THỐNG --- */}
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-        {/* Input Email */}
         <div>
           <label
             htmlFor="email"
-            className="block text-sm font-bold text-primary-dark mb-1.5"
+            className="block text-sm font-semibold text-text-main mb-1.5"
           >
-            Email <span className="text-rose-500">*</span>
+            Email <span className="text-danger">*</span>
           </label>
           <input
             id="email"
@@ -150,27 +124,26 @@ export default function LoginForm() {
               setIsGoogleAccount(false);
             }}
             placeholder="Nhập địa chỉ email"
-            className={`w-full border rounded-lg px-4 py-3 text-sm outline-none transition-all placeholder:text-slate-400 ${
+            className={`w-full h-11 border rounded-lg px-4 text-sm outline-none transition-all placeholder:text-text-subtle bg-surface-card ${
               errorMessage && !isGoogleAccount
-                ? "border-rose-400 focus:ring-2 focus:ring-rose-200 bg-rose-50/20"
-                : "border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary hover:border-slate-300"
+                ? "border-danger focus:ring-2 focus:ring-danger/20 bg-danger-soft/20"
+                : "border-border-default focus:ring-2 focus:ring-primary/15 focus:border-primary"
             }`}
             required
           />
         </div>
 
-        {/* Input Mật khẩu */}
         <div>
           <div className="flex justify-between items-center mb-1.5">
             <label
               htmlFor="password"
-              className="block text-sm font-bold text-primary-dark"
+              className="block text-sm font-semibold text-text-main"
             >
-              Mật khẩu <span className="text-rose-500">*</span>
+              Mật khẩu <span className="text-danger">*</span>
             </label>
             <Link
               href="/forgot-password"
-              className="text-sm text-primary hover:underline"
+              className="text-sm font-medium text-primary hover:underline"
             >
               Quên mật khẩu?
             </Link>
@@ -185,62 +158,52 @@ export default function LoginForm() {
                 setErrorMessage("");
               }}
               placeholder="Nhập mật khẩu"
-              className="w-full border border-slate-200 rounded-lg px-4 py-3 pr-12 text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-400 hover:border-slate-300"
+              className="w-full h-11 border border-border-default rounded-lg px-4 pr-12 text-sm outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary transition-all placeholder:text-text-subtle bg-surface-card"
               required
             />
-            {/* Nút ẩn/hiện mật khẩu */}
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-text-subtle hover:text-text-main focus:outline-none transition-colors cursor-pointer"
             >
               {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
             </button>
           </div>
         </div>
 
-        {/* KHỐI HIỂN THỊ LỖI NỘI BỘ (Inline Error Banner) */}
         {errorMessage && (
-          <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg flex items-start gap-2.5 text-rose-600 text-xs animate-in fade-in duration-200">
-            <FiAlertCircle
-              size={16}
-              className="shrink-0 mt-0.5 text-rose-500"
-            />
+          <div className="p-3 bg-danger-soft border border-danger-border rounded-lg flex items-start gap-2.5 text-danger-text text-xs">
+            <FiAlertCircle size={16} className="shrink-0 mt-0.5" />
             <div>
               <span>{errorMessage}</span>
-              {/* Nếu là lỗi email chưa tồn tại, hiện thêm link Đăng ký nhanh */}
               {errorMessage.includes("chưa được đăng ký") && (
                 <Link
                   href="/register"
                   className="block mt-1 font-bold text-primary hover:underline"
                 >
-                  👉 Bấm vào đây để đăng ký tài khoản ngay
+                  Bấm vào đây để đăng ký tài khoản ngay
                 </Link>
               )}
             </div>
           </div>
         )}
 
-        {/* Nút Submit */}
-        <button
+        <Button
           type="submit"
-          disabled={isPending}
-          className={`w-full mt-2 font-bold py-3.5 rounded-lg transition-all ${
-            isPending
-              ? "bg-slate-400 cursor-not-allowed text-white"
-              : "bg-primary hover:bg-primary-hover text-white active:scale-95 shadow-md shadow-primary/20"
-          }`}
+          size="lg"
+          isLoading={isPending}
+          loadingText="Đang kiểm tra..."
+          className="w-full mt-1"
         >
-          {isPending ? "Đang kiểm tra..." : "Đăng nhập bằng email"}
-        </button>
+          Đăng nhập bằng email
+        </Button>
       </form>
 
-      {/* --- FOOTER CHUYỂN TRANG ĐĂNG KÝ --- */}
-      <p className="text-center text-sm text-slate-600 mt-8">
+      <p className="text-center text-sm text-text-secondary mt-7">
         Chưa có tài khoản?{" "}
         <Link
           href="/register"
-          className="text-primary font-bold hover:underline"
+          className="text-primary font-semibold hover:underline"
         >
           Đăng ký ngay
         </Link>

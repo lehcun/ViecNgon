@@ -16,6 +16,7 @@ import toast from "react-hot-toast";
 import { ParsedCvData } from "@viecngon/types";
 import { useParseCv } from "@/hooks/candidate/useParseCv";
 import { useApplyParsedCv } from "@/hooks/candidate/useApplyParsedCv";
+import { Button } from "@/components/ui/Button";
 
 interface AiCvUploadModalProps {
   isOpen: boolean;
@@ -119,34 +120,36 @@ export default function AiCvUploadModal({
     resetAndClose();
   };
 
+  const inputClass =
+    "w-full h-10 px-3 text-sm border border-border-default rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 bg-surface-card";
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+    <div className="fixed inset-0 z-100 flex items-center justify-center bg-primary-dark/60 backdrop-blur-xs p-4">
+      <div className="bg-surface-card rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden border border-border-default">
+        <div className="px-6 py-4 border-b border-border-subtle flex items-center justify-between bg-surface-subtle/60">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-ai-light border border-ai-border text-ai flex items-center justify-center">
               <Sparkles size={18} />
             </div>
             <div>
-              <h3 className="font-bold text-slate-800 text-base">
+              <h3 className="font-bold text-text-main text-base">
                 Tải lên CV để AI tự động điền hồ sơ
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-text-muted">
                 Hỗ trợ file PDF (tối đa 5MB), bóc tách thông minh bằng Gemini AI
               </p>
             </div>
           </div>
           <button
+            type="button"
             onClick={resetAndClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            className="p-1.5 rounded-lg text-text-subtle hover:text-text-main hover:bg-surface-subtle transition-colors cursor-pointer"
             aria-label="Đóng"
           >
             <X size={20} />
           </button>
         </div>
 
-        {/* Body */}
         <div className="p-6 overflow-y-auto flex-1">
           {step === "UPLOAD" && (
             <div
@@ -159,8 +162,8 @@ export default function AiCvUploadModal({
               onClick={() => fileInputRef.current?.click()}
               className={`border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all ${
                 isDragging
-                  ? "border-primary bg-primary/5"
-                  : "border-slate-300 hover:border-primary/60 hover:bg-slate-50"
+                  ? "border-ai bg-ai-light/60"
+                  : "border-border-default hover:border-ai/60 hover:bg-surface-subtle/60"
               }`}
             >
               <input
@@ -173,13 +176,13 @@ export default function AiCvUploadModal({
                   if (file) void handleFileProcess(file);
                 }}
               />
-              <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+              <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-ai-light border border-ai-border text-ai flex items-center justify-center">
                 <UploadCloud size={28} />
               </div>
-              <p className="font-semibold text-slate-800 mb-1">
+              <p className="font-semibold text-text-main mb-1">
                 Kéo thả file CV PDF vào đây hoặc bấm để chọn file
               </p>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-text-muted">
                 Khuyên dùng CV PDF xuất từ Word, Canva, TopCV (không phải file
                 ảnh scan)
               </p>
@@ -189,11 +192,11 @@ export default function AiCvUploadModal({
           {step === "PROCESSING" && (
             <div className="py-10 max-w-md mx-auto space-y-6">
               <div className="flex flex-col items-center text-center">
-                <Loader2 size={40} className="animate-spin text-primary mb-3" />
-                <p className="font-bold text-slate-800">
+                <Loader2 size={38} className="animate-spin text-ai mb-3" />
+                <p className="font-bold text-text-main">
                   Đang xử lý CV của bạn...
                 </p>
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs text-text-muted mt-1">
                   Quá trình này thường mất khoảng 5–10 giây
                 </p>
               </div>
@@ -211,10 +214,10 @@ export default function AiCvUploadModal({
                       key={item.id}
                       className={`flex items-center gap-3 p-3 rounded-xl border text-sm ${
                         done
-                          ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                          ? "bg-success-light border-success-border text-success-text"
                           : active
-                            ? "bg-primary/5 border-primary/30 text-primary font-medium"
-                            : "bg-slate-50 border-slate-200 text-slate-400"
+                            ? "bg-ai-light border-ai-border text-ai font-medium"
+                            : "bg-surface-subtle border-border-default text-text-subtle"
                       }`}
                     >
                       {done ? (
@@ -234,7 +237,7 @@ export default function AiCvUploadModal({
 
           {step === "PREVIEW" && formData && (
             <div className="space-y-6">
-              <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs">
+              <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-warning-light border border-warning-border text-warning-text text-xs">
                 <AlertCircle size={16} className="shrink-0 mt-0.5" />
                 <span>
                   Vui lòng kiểm tra và chỉnh sửa lại thông tin AI vừa bóc tách
@@ -242,10 +245,9 @@ export default function AiCvUploadModal({
                 </span>
               </div>
 
-              {/* Thông tin cơ bản */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">
+                  <label className="block text-xs font-semibold text-text-secondary mb-1">
                     Họ và tên
                   </label>
                   <input
@@ -254,11 +256,11 @@ export default function AiCvUploadModal({
                     onChange={(e) =>
                       setFormData({ ...formData, fullName: e.target.value })
                     }
-                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-primary"
+                    className={inputClass}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">
+                  <label className="block text-xs font-semibold text-text-secondary mb-1">
                     Chức danh / Chuyên môn
                   </label>
                   <input
@@ -267,11 +269,11 @@ export default function AiCvUploadModal({
                     onChange={(e) =>
                       setFormData({ ...formData, profession: e.target.value })
                     }
-                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-primary"
+                    className={inputClass}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">
+                  <label className="block text-xs font-semibold text-text-secondary mb-1">
                     Số điện thoại
                   </label>
                   <input
@@ -280,11 +282,11 @@ export default function AiCvUploadModal({
                     onChange={(e) =>
                       setFormData({ ...formData, phoneNumber: e.target.value })
                     }
-                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-primary"
+                    className={inputClass}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">
+                  <label className="block text-xs font-semibold text-text-secondary mb-1">
                     Số năm kinh nghiệm
                   </label>
                   <input
@@ -297,11 +299,11 @@ export default function AiCvUploadModal({
                         yearsOfExperience: Number(e.target.value) || 0,
                       })
                     }
-                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-primary"
+                    className={inputClass}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">
+                  <label className="block text-xs font-semibold text-text-secondary mb-1">
                     Ngày sinh (YYYY-MM-DD)
                   </label>
                   <input
@@ -314,11 +316,11 @@ export default function AiCvUploadModal({
                       })
                     }
                     placeholder="1999-05-20"
-                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-primary"
+                    className={inputClass}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">
+                  <label className="block text-xs font-semibold text-text-secondary mb-1">
                     Địa chỉ
                   </label>
                   <input
@@ -327,14 +329,13 @@ export default function AiCvUploadModal({
                     onChange={(e) =>
                       setFormData({ ...formData, address: e.target.value })
                     }
-                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-primary"
+                    className={inputClass}
                   />
                 </div>
               </div>
 
-              {/* Giới thiệu bản thân */}
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">
+                <label className="block text-xs font-semibold text-text-secondary mb-1">
                   Giới thiệu bản thân
                 </label>
                 <textarea
@@ -343,20 +344,19 @@ export default function AiCvUploadModal({
                   onChange={(e) =>
                     setFormData({ ...formData, aboutMe: e.target.value })
                   }
-                  className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-primary"
+                  className="w-full px-3 py-2 text-sm border border-border-default rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
                 />
               </div>
 
-              {/* Kỹ năng */}
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-2">
+                <label className="block text-xs font-semibold text-text-secondary mb-2">
                   Kỹ năng ({formData.skills.length})
                 </label>
                 <div className="flex flex-wrap gap-2 mb-2.5">
                   {formData.skills.map((skill, idx) => (
                     <span
                       key={`${skill.skillName}-${idx}`}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-light text-primary text-xs font-medium"
                     >
                       {skill.skillName}
                       <button
@@ -367,7 +367,7 @@ export default function AiCvUploadModal({
                             skills: formData.skills.filter((_, i) => i !== idx),
                           })
                         }
-                        className="hover:text-rose-600"
+                        className="hover:text-danger-text cursor-pointer"
                       >
                         <X size={13} />
                       </button>
@@ -386,31 +386,32 @@ export default function AiCvUploadModal({
                       }
                     }}
                     placeholder="Thêm kỹ năng (VD: Docker, Next.js...)"
-                    className="flex-1 px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-primary"
+                    className="flex-1 h-9 px-3 text-sm border border-border-default rounded-lg focus:outline-none focus:border-primary"
                   />
-                  <button
+                  <Button
                     type="button"
+                    variant="secondary"
+                    size="sm"
                     onClick={handleAddSkill}
-                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1"
                   >
-                    <Plus size={14} /> Thêm
-                  </button>
+                    <Plus size={14} />
+                    Thêm
+                  </Button>
                 </div>
               </div>
 
-              {/* Kinh nghiệm làm việc */}
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-2">
+                <label className="block text-xs font-semibold text-text-secondary mb-2">
                   Kinh nghiệm làm việc ({formData.experiences.length})
                 </label>
                 <div className="space-y-3">
                   {formData.experiences.map((exp, idx) => (
                     <div
                       key={idx}
-                      className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2.5"
+                      className="p-3.5 rounded-xl border border-border-default bg-surface-subtle/50 space-y-2.5"
                     >
                       <div className="flex justify-between items-center">
-                        <span className="text-xs font-bold text-slate-500">
+                        <span className="text-xs font-bold text-text-muted">
                           Kinh nghiệm #{idx + 1}
                         </span>
                         <button
@@ -423,7 +424,7 @@ export default function AiCvUploadModal({
                               ),
                             })
                           }
-                          className="text-rose-500 hover:text-rose-700 text-xs flex items-center gap-1"
+                          className="text-danger-text hover:underline text-xs flex items-center gap-1 cursor-pointer"
                         >
                           <Trash2 size={13} /> Xóa
                         </button>
@@ -441,7 +442,7 @@ export default function AiCvUploadModal({
                             setFormData({ ...formData, experiences: updated });
                           }}
                           placeholder="Tên công ty"
-                          className="px-2.5 py-1.5 text-sm border border-slate-300 rounded-lg bg-white"
+                          className="h-9 px-2.5 text-sm border border-border-default rounded-lg bg-surface-card"
                         />
                         <input
                           type="text"
@@ -452,7 +453,7 @@ export default function AiCvUploadModal({
                             setFormData({ ...formData, experiences: updated });
                           }}
                           placeholder="Vị trí"
-                          className="px-2.5 py-1.5 text-sm border border-slate-300 rounded-lg bg-white"
+                          className="h-9 px-2.5 text-sm border border-border-default rounded-lg bg-surface-card"
                         />
                         <input
                           type="text"
@@ -466,7 +467,7 @@ export default function AiCvUploadModal({
                             setFormData({ ...formData, experiences: updated });
                           }}
                           placeholder="Bắt đầu (YYYY-MM-DD)"
-                          className="px-2.5 py-1.5 text-sm border border-slate-300 rounded-lg bg-white"
+                          className="h-9 px-2.5 text-sm border border-border-default rounded-lg bg-surface-card"
                         />
                         <input
                           type="text"
@@ -480,7 +481,7 @@ export default function AiCvUploadModal({
                             setFormData({ ...formData, experiences: updated });
                           }}
                           placeholder="Kết thúc (để trống nếu Hiện tại)"
-                          className="px-2.5 py-1.5 text-sm border border-slate-300 rounded-lg bg-white"
+                          className="h-9 px-2.5 text-sm border border-border-default rounded-lg bg-surface-card"
                         />
                       </div>
                     </div>
@@ -488,19 +489,18 @@ export default function AiCvUploadModal({
                 </div>
               </div>
 
-              {/* Học vấn */}
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-2">
+                <label className="block text-xs font-semibold text-text-secondary mb-2">
                   Học vấn ({formData.educations.length})
                 </label>
                 <div className="space-y-3">
                   {formData.educations.map((edu, idx) => (
                     <div
                       key={idx}
-                      className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2.5"
+                      className="p-3.5 rounded-xl border border-border-default bg-surface-subtle/50 space-y-2.5"
                     >
                       <div className="flex justify-between items-center">
-                        <span className="text-xs font-bold text-slate-500">
+                        <span className="text-xs font-bold text-text-muted">
                           Học vấn #{idx + 1}
                         </span>
                         <button
@@ -513,7 +513,7 @@ export default function AiCvUploadModal({
                               ),
                             })
                           }
-                          className="text-rose-500 hover:text-rose-700 text-xs flex items-center gap-1"
+                          className="text-danger-text hover:underline text-xs flex items-center gap-1 cursor-pointer"
                         >
                           <Trash2 size={13} /> Xóa
                         </button>
@@ -531,7 +531,7 @@ export default function AiCvUploadModal({
                             setFormData({ ...formData, educations: updated });
                           }}
                           placeholder="Tên trường"
-                          className="px-2.5 py-1.5 text-sm border border-slate-300 rounded-lg bg-white"
+                          className="h-9 px-2.5 text-sm border border-border-default rounded-lg bg-surface-card"
                         />
                         <input
                           type="text"
@@ -542,7 +542,7 @@ export default function AiCvUploadModal({
                             setFormData({ ...formData, educations: updated });
                           }}
                           placeholder="Chuyên ngành"
-                          className="px-2.5 py-1.5 text-sm border border-slate-300 rounded-lg bg-white"
+                          className="h-9 px-2.5 text-sm border border-border-default rounded-lg bg-surface-card"
                         />
                       </div>
                     </div>
@@ -550,26 +550,25 @@ export default function AiCvUploadModal({
                 </div>
               </div>
 
-              {/* Tùy chọn lưu */}
-              <div className="pt-3 border-t border-slate-100 space-y-2">
-                <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+              <div className="pt-3 border-t border-border-subtle space-y-2">
+                <label className="flex items-center gap-2 text-sm text-text-secondary cursor-pointer">
                   <input
                     type="checkbox"
                     checked={replaceExisting}
                     onChange={(e) => setReplaceExisting(e.target.checked)}
-                    className="rounded border-slate-300 text-primary focus:ring-primary"
+                    className="rounded border-border-default text-primary focus:ring-primary"
                   />
                   <span>
                     Ghi đè danh sách kinh nghiệm, học vấn, kỹ năng cũ bằng dữ
                     liệu mới
                   </span>
                 </label>
-                <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                <label className="flex items-center gap-2 text-sm text-text-secondary cursor-pointer">
                   <input
                     type="checkbox"
                     checked={setAsDefaultCv}
                     onChange={(e) => setSetAsDefaultCv(e.target.checked)}
-                    className="rounded border-slate-300 text-primary focus:ring-primary"
+                    className="rounded border-border-default text-primary focus:ring-primary"
                   />
                   <span>Đặt file CV PDF vừa tải lên làm CV mặc định</span>
                 </label>
@@ -578,30 +577,27 @@ export default function AiCvUploadModal({
           )}
         </div>
 
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/70 flex items-center justify-end gap-3">
-          <button
+        <div className="px-6 py-4 border-t border-border-subtle bg-surface-subtle/60 flex items-center justify-end gap-3">
+          <Button
             type="button"
+            variant="ghost"
             onClick={resetAndClose}
             disabled={isSaving}
-            className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200/60 rounded-xl transition-colors"
           >
             Hủy
-          </button>
+          </Button>
           {step === "PREVIEW" && (
-            <button
+            <Button
               type="button"
               onClick={handleSaveProfile}
-              disabled={isSaving}
-              className="px-5 py-2 text-sm font-semibold bg-primary hover:bg-primary-hover text-white rounded-xl shadow-sm flex items-center gap-2 disabled:opacity-60"
+              isLoading={isSaving}
+              loadingText="Đang lưu..."
             >
-              {isSaving && <Loader2 size={16} className="animate-spin" />}
               Lưu vào Hồ sơ
-            </button>
+            </Button>
           )}
         </div>
       </div>
     </div>
   );
 }
-

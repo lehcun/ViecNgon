@@ -1,7 +1,8 @@
 "use client";
 
 import React from "react";
-import { AlertTriangle, Loader2, X } from "lucide-react";
+import { AlertTriangle, X } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 
 interface ConfirmDeleteModalProps {
   isOpen: boolean;
@@ -23,49 +24,51 @@ export default function ConfirmDeleteModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm transition-opacity">
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-primary-dark/50 backdrop-blur-xs">
       <div
-        className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-6 animate-in fade-in zoom-in duration-200"
+        className="bg-surface-card rounded-2xl w-full max-w-md shadow-xl border border-border-default p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
-            <AlertTriangle size={24} />
+          <div className="w-11 h-11 rounded-full bg-danger-soft text-danger-text border border-danger-border flex items-center justify-center shrink-0">
+            <AlertTriangle size={22} />
           </div>
-          <div className="flex-1">
-            <h3 className="text-lg font-bold text-slate-800 mb-1">{title}</h3>
-            <p className="text-sm text-slate-600">{message}</p>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-lg font-bold text-text-main mb-1">{title}</h3>
+            <p className="text-sm text-text-secondary leading-relaxed">
+              {message}
+            </p>
           </div>
           <button
+            type="button"
             onClick={onClose}
             disabled={isPending}
-            className="text-slate-400 hover:text-slate-600 p-1 rounded-full transition-colors"
+            className="text-text-subtle hover:text-text-main p-1 rounded-full transition-colors cursor-pointer"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
         <div className="mt-6 flex justify-end gap-3">
-          <button
+          <Button
             type="button"
+            variant="secondary"
             onClick={onClose}
             disabled={isPending}
-            className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
           >
             Huỷ
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="danger"
             onClick={onConfirm}
-            disabled={isPending}
-            className="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow-sm transition-all active:scale-95 disabled:bg-rose-400 disabled:cursor-not-allowed"
+            isLoading={isPending}
+            loadingText="Đang xoá..."
           >
-            {isPending && <Loader2 size={16} className="animate-spin" />}
-            {isPending ? "Đang xoá..." : "Xác nhận xoá"}
-          </button>
+            Xác nhận xoá
+          </Button>
         </div>
       </div>
     </div>
   );
 }
-

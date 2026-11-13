@@ -11,202 +11,154 @@ import {
   Tooltip,
   Cell,
 } from "recharts";
-import { AlertCircle, RefreshCw, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useAdminApplicationStats } from "@/hooks/admin/useAdminDashboard";
+import { ErrorState } from "@/components/ui/StateViews";
 
 export default function ApplicationStatsCard() {
-  const { data, isLoading, isError, refetch } =
-    useAdminApplicationStats("monthly");
-
-  // 1. Skeleton Loading State
-  if (isLoading && !data) {
-    return (
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-2xs animate-pulse flex flex-col justify-between h-112">
-        <div className="space-y-3">
-          <div className="flex justify-between">
-            <div className="h-5 w-48 bg-slate-200 rounded" />
-            <div className="h-6 w-12 bg-slate-100 rounded-md" />
-          </div>
-          <div className="h-3.5 w-64 bg-slate-100 rounded" />
-        </div>
-        <div className="space-y-3 my-4">
-          {Array.from({ length: 5 }).map((_, idx) => (
-            <div key={idx} className="h-9 w-full bg-slate-100 rounded-lg" />
-          ))}
-        </div>
-        <div className="flex justify-between">
-          <div className="h-3.5 w-32 bg-slate-100 rounded" />
-          <div className="h-3.5 w-20 bg-slate-100 rounded" />
-        </div>
-      </div>
-    );
-  }
-
-  // 2. Error State
-  if (isError || !data) {
-    return (
-      <div className="bg-white rounded-2xl border border-rose-200 p-6 shadow-2xs flex flex-col items-center justify-center h-112 text-center gap-3">
-        <AlertCircle size={28} className="text-rose-500" />
-        <div>
-          <h3 className="text-sm font-bold text-slate-800">
-            Không thể tải thống kê đơn ứng tuyển
-          </h3>
-          <p className="text-xs text-slate-500 mt-1">
-            Vui lòng thử lại sau ít phút.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => refetch()}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold transition-colors cursor-pointer"
-        >
-          <RefreshCw size={14} />
-          <span>Thử lại</span>
-        </button>
-      </div>
-    );
-  }
+  const {
+    data: stats,
+    isLoading,
+    isError,
+    refetch,
+  } = useAdminApplicationStats("monthly");
 
   return (
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-2xs flex flex-col justify-between h-full">
-            {/* 1. Header & Content */}
-            <div className="flex-1 flex flex-col justify-between">
-              <div>
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h2 className="text-base font-bold text-slate-900">
-                      Application Funnel & Analytics
-                    </h2>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      Candidate application status breakdown & conversion rates.
-                    </p>
-                  </div>
-                  <span className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-600 text-xs font-bold shrink-0">
-                    {data.totalApplications.toLocaleString("en-US")}
+    <div className="bg-surface-card rounded-xl border border-border-default p-6 shadow-xs h-full flex flex-col justify-between gap-5">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-base font-bold text-text-primary">
+            Thống kê & Phễu ứng tuyển
+          </h2>
+          <p className="text-xs text-text-muted mt-0.5">
+            Phân bổ trạng thái hồ sơ trong tháng
+          </p>
+        </div>
+
+        <Link
+          href="/admin/jobs"
+          className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline shrink-0"
+        >
+          <span>Xem tất cả</span>
+          <ArrowRight size={13} />
+        </Link>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-4 animate-pulse">
+          <div className="grid grid-cols-3 gap-2">
+            <div className="h-14 rounded-lg bg-surface-muted" />
+            <div className="h-14 rounded-lg bg-surface-muted" />
+            <div className="h-14 rounded-lg bg-surface-muted" />
+          </div>
+          <div className="h-44 rounded-xl bg-surface-muted" />
+        </div>
+      ) : isError || !stats ? (
+        <ErrorState
+          title="Không thể tải thống kê ứng tuyển"
+          message="Đã xảy ra lỗi khi tải dữ liệu phễu tuyển dụng."
+          onRetry={() => refetch()}
+        />
+      ) : (
+        <>
+          {/* 3 Tỷ lệ chuyển đổi nhanh */}
+          <div className="grid grid-cols-3 gap-2.5">
+            <div className="p-3 rounded-lg bg-surface-muted border border-border-default">
+              <p className="text-[11px] font-medium text-text-muted">
+                Tỷ lệ phản hồi
+              </p>
+              <p className="text-base font-bold text-text-primary mt-0.5 tabular-nums">
+                {stats.averageResponseRate}%
+              </p>
+            </div>
+            <div className="p-3 rounded-lg bg-surface-muted border border-border-default">
+              <p className="text-[11px] font-medium text-text-muted">
+                Tỷ lệ phỏng vấn
+              </p>
+              <p className="text-base font-bold text-primary mt-0.5 tabular-nums">
+                {stats.interviewRate}%
+              </p>
+            </div>
+            <div className="p-3 rounded-lg bg-surface-muted border border-border-default">
+              <p className="text-[11px] font-medium text-text-muted">
+                Tỷ lệ trúng tuyển
+              </p>
+              <p className="text-base font-bold text-success mt-0.5 tabular-nums">
+                {stats.hiredRate}%
+              </p>
+            </div>
+          </div>
+
+          {/* Mini BarChart */}
+          <div className="h-36 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={stats.breakdown}
+                margin={{ top: 4, right: 4, left: -24, bottom: 0 }}
+              >
+                <XAxis
+                  dataKey="label"
+                  tick={{ fill: "#64748B", fontSize: 11 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fill: "#64748B", fontSize: 11 }}
+                  axisLine={false}
+                  tickLine={false}
+                  allowDecimals={false}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#0F172A",
+                    borderColor: "#1E293B",
+                    borderRadius: "8px",
+                    color: "#FFFFFF",
+                    fontSize: "12px",
+                  }}
+                />
+                <Bar dataKey="count" name="Số hồ sơ" radius={[6, 6, 0, 0]}>
+                  {stats.breakdown.map((entry, idx) => (
+                    <Cell
+                      key={entry.status || idx}
+                      fill={entry.color || "#2563EB"}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Danh sách phân bổ */}
+          <div className="space-y-2.5 pt-2 border-t border-border-default">
+            {stats.breakdown.map((item) => (
+              <div key={item.status} className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium text-text-secondary flex items-center gap-2">
+                    <span
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{ backgroundColor: item.color || "#2563EB" }}
+                    />
+                    {item.label}
+                  </span>
+                  <span className="font-semibold text-text-primary tabular-nums">
+                    {item.count.toLocaleString("vi-VN")} ({item.percentage}%)
                   </span>
                 </div>
-
-                {/* 2. KPI Summary Pills */}
-                <div className="grid grid-cols-3 gap-2.5 mt-4">
-                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                    <div className="text-[11px] text-slate-400 font-medium">
-                      Response Rate
-                    </div>
-                    <div className="text-base font-extrabold text-slate-900 mt-0.5">
-                      {data.averageResponseRate}%
-                    </div>
-                  </div>
-
-                  <div className="p-2.5 rounded-xl bg-amber-50/60 border border-amber-100/80">
-                    <div className="text-[11px] text-amber-700/80 font-medium">
-                      Interview Rate
-                    </div>
-                    <div className="text-base font-extrabold text-amber-600 mt-0.5">
-                      {data.interviewRate}%
-                    </div>
-                  </div>
-
-                  <div className="p-2.5 rounded-xl bg-emerald-50/60 border border-emerald-100/80">
-                    <div className="text-[11px] text-emerald-700/80 font-medium">
-                      Hired Rate
-                    </div>
-                    <div className="text-base font-extrabold text-emerald-600 mt-0.5">
-                      {data.hiredRate}%
-                    </div>
-                  </div>
-                </div>
-
-                {/* 3. Recharts BarChart + Funnel Progress */}
-                <div className="h-32 w-full mt-4">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={data.breakdown}
-                      margin={{ top: 6, right: 4, left: -24, bottom: 0 }}
-                      barSize={26}
-                    >
-                      <XAxis
-                        dataKey="label"
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fontSize: 10, fill: "#64748B" }}
-                      />
-                      <YAxis
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fontSize: 10, fill: "#94A3B8" }}
-                      />
-                      <Tooltip
-                        cursor={{ fill: "#F8FAFC" }}
-                        contentStyle={{
-                          backgroundColor: "#0F172A",
-                          borderRadius: "10px",
-                          border: "1px solid #1E293B",
-                          color: "#F8FAFC",
-                          fontSize: "12px",
-                        }}
-                        formatter={(value: any) => [`${value} đơn`, "Số lượng"]}
-                      />
-                      <Bar dataKey="count" radius={[6, 6, 0, 0]}>
-                        {data.breakdown.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-
-                {/* 4. Detailed Status Breakdown List */}
-                <div className="mt-3 space-y-2.5">
-                  {data.breakdown.map((item) => (
-                    <div key={item.status} className="space-y-1">
-                      <div className="flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className="w-2 h-2 rounded-full shrink-0"
-                            style={{ backgroundColor: item.color }}
-                          />
-                          <span className="font-semibold text-slate-700">
-                            {item.label}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-slate-500">
-                            {item.count.toLocaleString("en-US")} đơn
-                          </span>
-                          <span className="font-bold text-slate-800 w-11 text-right">
-                            {item.percentage}%
-                          </span>
-                        </div>
-                      </div>
-                      <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-500"
-                          style={{
-                            width: `${Math.max(item.percentage, item.count > 0 ? 4 : 0)}%`,
-                            backgroundColor: item.color,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  ))}
+                <div className="h-1.5 w-full bg-surface-subtle rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${Math.min(100, Math.max(0, item.percentage))}%`,
+                      backgroundColor: item.color || "#2563EB",
+                    }}
+                  />
                 </div>
               </div>
-            </div>
-
-            {/* 5. Footer */}
-              <div className="mt-auto pt-3.5 border-t border-slate-100 flex items-center justify-between text-xs">
-                <span className="text-slate-400">
-                  Showing {data.totalApplications.toLocaleString("en-US")} total applications
-                </span>
-                <Link
-                  href="/admin/jobs"
-                  className="inline-flex items-center gap-1 font-semibold text-blue-600 hover:text-blue-700 transition-colors"
-                >
-                  <span>View all</span>
-                  <ArrowRight size={13} />
-                </Link>
-              </div>
-            </div>
-            );
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
-

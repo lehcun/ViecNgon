@@ -12,8 +12,8 @@ import {
   ShieldCheck,
   ExternalLink,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
+import { CompanyLogo } from "@/components/ui/CompanyLogo";
 
 interface CompanyInfoAsideProps {
   company?: JobDetailResponse["company"];
@@ -50,38 +50,26 @@ export default function CompanyInfoAside({
     return null;
   }
 
-  const logoUrl =
-    company.logo ||
-    "https://images.unsplash.com/photo-1549923746-c502d488b3ea?q=80&w=200&auto=format&fit=crop";
-
   return (
     <div className="sticky top-24 flex flex-col gap-6">
-      <div className="bg-white rounded-2xl shadow-xs border border-slate-200 p-6">
+      <div className="bg-surface-card rounded-xl shadow-xs border border-border-default p-6">
         {/* Header: Logo & Name */}
         <div className="flex items-start gap-4 mb-5">
           <Link
             href={`/company/${company.slug}`}
-            className="w-16 h-16 sm:w-20 sm:h-20 border border-slate-100 rounded-xl p-2 bg-white shadow-xs shrink-0 flex items-center justify-center overflow-hidden hover:opacity-90 transition-opacity"
+            className="shrink-0 hover:opacity-90 transition-opacity"
           >
-            <img
-              src={logoUrl}
-              alt={company.name || "Company Logo"}
-              className="w-full h-full object-contain"
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src =
-                  "https://placehold.co/100x100?text=Logo";
-              }}
-            />
+            <CompanyLogo src={company.logo} name={company.name} size="lg" />
           </Link>
           <div className="min-w-0 flex-1">
             <Link
               href={`/company/${company.slug}`}
-              className="text-base sm:text-lg font-bold text-slate-800 line-clamp-2 hover:text-primary transition-colors block"
+              className="text-base sm:text-lg font-semibold text-text-primary line-clamp-2 hover:text-primary transition-colors block"
             >
               {company.name}
             </Link>
-            <div className="inline-flex items-center gap-1 mt-1 text-xs text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md">
-              <ShieldCheck size={14} />
+            <div className="inline-flex items-center gap-1 mt-1.5 text-xs text-success-text font-semibold bg-success-light border border-success-border px-2 py-0.5 rounded-full">
+              <ShieldCheck size={13} />
               <span>Đã xác thực</span>
             </div>
           </div>

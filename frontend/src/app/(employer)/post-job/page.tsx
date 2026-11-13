@@ -267,7 +267,7 @@ export default function PostJobPage() {
                   <p className="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
                     <Info size={12} /> Doanh nghiệp chưa tạo chi nhánh. Bạn có thể bổ sung trong mục{" "}
                     <Link
-                      href="/employer/company-profile"
+                      href="/company-profile"
                       className="text-primary underline font-medium hover:text-primary-hover"
                     >
                       Hồ sơ công ty

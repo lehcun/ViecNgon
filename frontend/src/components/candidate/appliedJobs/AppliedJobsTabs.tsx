@@ -1,4 +1,5 @@
 "use client";
+
 import React from "react";
 
 interface TabsProps {
@@ -25,19 +26,20 @@ export default function AppliedJobsTabs({
         return (
           <button
             key={tab.id}
+            type="button"
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 pb-3.5 px-0.5 border-b-2 font-semibold text-sm transition-colors whitespace-nowrap focus:outline-none ${
+            className={`flex items-center gap-2 pb-3.5 px-0.5 border-b-2 text-sm transition-colors whitespace-nowrap focus:outline-none cursor-pointer ${
               isActive
-                ? "border-primary text-primary"
-                : "border-transparent text-slate-600 hover:text-slate-900 font-medium"
+                ? "border-primary text-primary font-semibold"
+                : "border-transparent text-text-secondary hover:text-text-main font-medium"
             }`}
           >
             <span>{tab.label}</span>
             <span
-              className={`inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-semibold rounded-full ${
+              className={`inline-flex items-center justify-center px-2 py-0.5 text-xs font-semibold rounded-full ${
                 isActive
-                  ? "text-white bg-primary h-5 min-w-5"
-                  : "text-slate-600 bg-slate-100"
+                  ? "text-white bg-primary min-w-5"
+                  : "text-text-secondary bg-surface-subtle"
               }`}
             >
               {tab.count}

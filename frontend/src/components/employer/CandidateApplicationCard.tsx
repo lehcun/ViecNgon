@@ -1,55 +1,29 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
-import { Clock, Mail, FileText, ExternalLink, Loader2 } from "lucide-react";
-import { useUpdateApplicationStatus } from "@/hooks/recruiter/useUpdateApplicationStatus";
+import Link from "next/link";
+import {
+  FileText,
+  Mail,
+  Briefcase,
+  Calendar,
+  ChevronRight,
+  Sparkles,
+  Loader2,
+} from "lucide-react";
 import { ApplicationItem } from "@viecngon/types";
-import { useRouter } from "next/navigation";
+import { useUpdateApplicationStatus } from "@/hooks/recruiter/useUpdateApplicationStatus";
+import { CompanyLogo } from "@/components/ui/CompanyLogo";
+import { StatusBadge, getAiScoreTone } from "@/components/ui/StatusBadge";
+import { formatDateVN } from "@/lib/formatters";
 
-// Hàm helper tô màu nhãn trạng thái chuẩn UI/UX
-const getStatusBadge = (status: string) => {
-  switch (status) {
-    case "CHO_DUYET":
-      return (
-        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
-          Chờ duyệt
-        </span>
-      );
-    case "DANG_XEM_XET":
-      return (
-        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-          Đang xem xét
-        </span>
-      );
-    case "PHONG_VAN":
-      return (
-        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
-          Phỏng vấn
-        </span>
-      );
-    case "DUOC_NHAN":
-      return (
-        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
-          Được nhận
-        </span>
-      );
-    case "BI_LOAI":
-      return (
-        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-rose-100 text-rose-700">
-          Bị loại
-        </span>
-      );
-    default:
-      return null;
-  }
-};
-
-export default function CandidateCard({
-  application,
-}: {
+interface CandidateApplicationCardProps {
   application: ApplicationItem;
-}) {
+}
+
+export default function CandidateApplicationCard({
+  application,
+}: CandidateApplicationCardProps) {
   const { mutate: updateStatus, isPending } = useUpdateApplicationStatus();
 
   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -57,109 +31,100 @@ export default function CandidateCard({
     updateStatus({ maDon: application.applicationId, status: newStatus });
   };
 
-  const router = useRouter();
-
-  const handleCardClick = () => {
-    router.push(`/applications/${application.applicationId}`);
-  };
-
   return (
-    <div
-      onClick={handleCardClick}
-      className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:border-primary/50 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4"
-    >
-      {/* Cột trái: Thông tin ứng viên */}
-      <div className="flex items-start gap-4 flex-1">
-        {/* Avatar */}
-        {application.avatarUrl ? (
-          <Image
-            src={application.avatarUrl}
-            alt={application.candidateName}
-            width={56}
-            height={56}
-            className="rounded-full object-cover shrink-0 border border-slate-100"
-          />
-        ) : (
-          <div className="w-14 h-14 rounded-full bg-primary-light text-primary flex items-center justify-center font-bold text-xl shrink-0 uppercase">
-            {application.candidateName.charAt(0)}
-          </div>
-        )}
+    <div className="bg-surface-card border border-border-default rounded-xl p-5 shadow-xs hover:shadow-md hover:border-border-strong transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Thông tin ứng viên */}
+      <div className="flex items-start gap-4 min-w-0">
+        <CompanyLogo
+          src={application.avatarUrl}
+          name={application.candidateName}
+          size="md"
+          shape="circle"
+        />
 
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <h3 className="text-lg font-bold text-slate-800">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center flex-wrap gap-2">
+            <Link
+              href={`/applications/${application.applicationId}`}
+              className="text-base font-bold text-text-primary hover:text-primary transition-colors truncate"
+            >
               {application.candidateName}
-            </h3>
-            {getStatusBadge(application.status)}
+            </Link>
+            <StatusBadge status={application.status} type="application" />
+            {typeof application.aiMatchScore === "number" && (
+              <StatusBadge
+                type="custom"
+                tone={getAiScoreTone(application.aiMatchScore)}
+                label={`AI ${application.aiMatchScore}%`}
+                icon={<Sparkles size={12} />}
+              />
+            )}
           </div>
 
-          <button className="flex items-center gap-2 text-sm text-slate-600 mb-2 z-10">
-            <Mail size={14} className="text-slate-400" />
-            <span>{application.contactEmail}</span>
-          </button>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-1.5 text-sm text-text-secondary">
+            <span className="inline-flex items-center gap-1.5 font-medium text-text-primary">
+              <Briefcase size={14} className="text-primary shrink-0" />
+              <span className="truncate">{application.jobTitle}</span>
+            </span>
 
-          <button className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-slate-500">
-            <span className="font-medium text-slate-700 flex items-center gap-1">
-              Ứng tuyển:{" "}
-              <span className="text-primary">{application.jobTitle}</span>
+            {application.contactEmail && (
+              <span className="inline-flex items-center gap-1.5 text-text-muted">
+                <Mail size={14} className="shrink-0" />
+                <span className="truncate">{application.contactEmail}</span>
+              </span>
+            )}
+
+            <span className="inline-flex items-center gap-1.5 text-text-muted">
+              <Calendar size={14} className="shrink-0" />
+              <span>Nộp ngày {formatDateVN(application.appliedAt)}</span>
             </span>
-            <span className="hidden sm:block text-slate-300">|</span>
-            <span className="flex items-center gap-1">
-              <Clock size={14} />
-              {new Date(application.appliedAt).toLocaleDateString("vi-VN", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </span>
-          </button>
+          </div>
         </div>
       </div>
 
-      {/* Cột phải: Hành động (Xem CV & Đổi trạng thái) */}
-      <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 border-slate-100">
-        {/* Nút Xem CV */}
-        {application.cvUrl ? (
+      {/* Thao tác */}
+      <div className="flex flex-wrap items-center gap-2.5 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-border-default">
+        {application.cvUrl && (
           <a
             href={application.cvUrl}
             target="_blank"
             rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="w-full sm:w-auto px-4 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 text-sm font-semibold rounded-lg border border-slate-200 transition-colors flex items-center justify-center gap-2"
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-text-primary bg-surface-muted hover:bg-surface-subtle border border-border-default rounded-lg transition-colors"
           >
-            <FileText size={16} className="text-blue-500" /> Xem CV{" "}
-            <ExternalLink size={14} />
+            <FileText size={14} className="text-primary" />
+            Xem CV PDF
           </a>
-        ) : (
-          <span className="text-sm text-slate-400 italic">Không có CV</span>
         )}
 
-        {/* Dropdown Đổi Trạng thái */}
-        <div
-          className="relative w-full sm:w-auto"
-          onClick={(e) => e.stopPropagation()}
-        >
+        <div className="relative">
           <select
             value={application.status}
             onChange={handleStatusChange}
             disabled={isPending}
-            className="w-full sm:w-40 px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 outline-none focus:border-primary disabled:opacity-50 appearance-none cursor-pointer"
+            aria-label={`Cập nhật trạng thái hồ sơ của ${application.candidateName}`}
+            className="h-9 px-3 pr-7 text-xs font-semibold text-text-primary bg-surface-card border border-border-default rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 transition-colors disabled:opacity-60 cursor-pointer"
           >
             <option value="CHO_DUYET">Chờ duyệt</option>
             <option value="DANG_XEM_XET">Đang xem xét</option>
-            <option value="PHONG_VAN">Phỏng vấn</option>
+            <option value="PHONG_VAN">Mời phỏng vấn</option>
             <option value="DUOC_NHAN">Được nhận</option>
-            <option value="BI_LOAI">Bị loại</option>
+            <option value="BI_LOAI">Chưa phù hợp</option>
           </select>
           {isPending && (
             <Loader2
-              size={16}
-              className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-primary pointer-events-none"
+              size={14}
+              className="animate-spin text-primary absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none"
             />
           )}
         </div>
+
+        <Link
+          href={`/applications/${application.applicationId}`}
+          className="inline-flex items-center gap-1 h-9 px-3.5 text-xs font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg transition-colors"
+        >
+          <span>Chi tiết</span>
+          <ChevronRight size={14} />
+        </Link>
       </div>
     </div>
   );

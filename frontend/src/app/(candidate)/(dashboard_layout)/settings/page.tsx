@@ -2,22 +2,15 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import {
-  Info,
-  ExternalLink,
-  ChevronDown,
-  ChevronRight,
-  Eye,
-  EyeOff,
-} from "lucide-react";
+import { Info, ChevronRight, Eye, EyeOff } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { useChangePassword } from "@/hooks/auth/useChangePassword";
+import { Button } from "@/components/ui/Button";
 
 export default function SettingsTab() {
   const { user } = useAuthStore();
   const [isCvVisible, setIsCvVisible] = useState(true);
 
-  // Hook và State cho Form Đổi mật khẩu
   const { mutate: changePassword, isPending } = useChangePassword();
 
   const [showPassword, setShowPassword] = useState({
@@ -32,12 +25,10 @@ export default function SettingsTab() {
   });
   const [passwordError, setPasswordError] = useState("");
 
-  // Kiểm tra xem user đăng nhập bằng Google hay Local
-  // Lưu ý: Backend cần trả về trường 'provider' hoặc 'googleId' trong API /auth/me
   const isGoogleAccount =
-    (user as any)?.provider === "GOOGLE" || (user as any)?.googleId;
+    Boolean((user as { provider?: string; googleId?: string } | null)?.provider === "GOOGLE") ||
+    Boolean((user as { googleId?: string } | null)?.googleId);
 
-  // Xử lý Submit đổi mật khẩu
   const handlePasswordChange = (e: React.FormEvent) => {
     e.preventDefault();
     setPasswordError("");
@@ -70,75 +61,75 @@ export default function SettingsTab() {
   };
 
   return (
-    <div className="flex flex-col gap-6 max-w-4xl mx-auto w-full">
-      {/* 1. THÔNG TIN TÀI KHOẢN */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm">
-        <h2 className="text-lg font-bold text-primary-dark mb-6">
+    <div className="flex flex-col gap-6 w-full">
+      <div className="bg-surface-card rounded-xl border border-border-default p-6 sm:p-7 shadow-xs">
+        <h2 className="text-lg font-bold text-text-main mb-5">
           Thông tin tài khoản
         </h2>
 
-        <div className="flex flex-col gap-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4">
-            <div className="text-sm font-bold text-slate-700">Email:</div>
+        <div className="flex flex-col gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4 border-b border-border-subtle pb-4">
+            <div className="text-sm font-semibold text-text-secondary">
+              Email:
+            </div>
             <div className="md:col-span-2">
-              <p className="text-sm font-medium text-slate-800 mb-1">
-                {user?.email || "email@example.com"}
+              <p className="text-sm font-medium text-text-main mb-1">
+                {user?.email || "Chưa cập nhật"}
               </p>
-              <p className="text-[13px] text-slate-500 flex items-start gap-1.5">
-                <Info size={16} className="text-primary shrink-0 mt-0.5" />
+              <p className="text-xs text-text-muted flex items-start gap-1.5">
+                <Info size={15} className="text-primary shrink-0 mt-0.5" />
                 Bạn không thể thay đổi email tài khoản.
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4">
-            <div className="text-sm font-bold text-slate-700">Họ và tên:</div>
+            <div className="text-sm font-semibold text-text-secondary">
+              Họ và tên:
+            </div>
             <div className="md:col-span-2">
-              <p className="text-sm font-medium text-slate-800 mb-1">
-                {user?.name || "Tên người dùng"}
+              <p className="text-sm font-medium text-text-main mb-1">
+                {user?.name || "Chưa cập nhật"}
               </p>
-              <p className="text-[13px] text-slate-500 flex items-start gap-1.5 mb-2">
-                <Info size={16} className="text-primary shrink-0 mt-0.5" />
-                Tên tài khoản của bạn được đồng bộ với thông tin hồ sơ.
+              <p className="text-xs text-text-muted flex items-start gap-1.5 mb-2">
+                <Info size={15} className="text-primary shrink-0 mt-0.5" />
+                Tên tài khoản được đồng bộ với thông tin hồ sơ của bạn.
               </p>
               <Link
-                href="/dashboard/profile"
-                className="text-sm font-bold text-primary hover:text-primary-hover transition-colors flex items-center gap-1 w-fit"
+                href="/cv-profile"
+                className="text-sm font-semibold text-primary hover:underline inline-flex items-center gap-1 w-fit"
               >
-                Cập nhật thông tin hồ sơ <ChevronRight size={16} />
+                Cập nhật thông tin hồ sơ <ChevronRight size={15} />
               </Link>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 2. MẬT KHẨU (TỰ ĐỘNG PHÂN LUỒNG) */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm">
-        <h2 className="text-lg font-bold text-primary-dark mb-4">Mật khẩu</h2>
+      <div className="bg-surface-card rounded-xl border border-border-default p-6 sm:p-7 shadow-xs">
+        <h2 className="text-lg font-bold text-text-main mb-4">Mật khẩu</h2>
 
         {isGoogleAccount ? (
-          // UI dành cho Tài khoản Google
-          <div className="bg-primary-light p-4 rounded-lg border border-primary/20">
-            <p className="text-sm text-primary-dark flex items-start gap-2">
-              <Info size={18} className="text-primary shrink-0 mt-0.5" />
+          <div className="bg-primary-light p-4 rounded-xl border border-primary/20">
+            <p className="text-sm text-text-main flex items-start gap-2">
+              <Info size={17} className="text-primary shrink-0 mt-0.5" />
               <span>
                 Bạn đã đăng nhập bằng <strong>Google</strong>, vì vậy tài khoản
-                của bạn không có mật khẩu. Hãy tiếp tục sử dụng nút Đăng nhập
-                bằng Google ở các lần sau.
+                không dùng mật khẩu riêng. Hãy tiếp tục chọn Đăng nhập bằng
+                Google ở các lần sau.
               </span>
             </p>
           </div>
         ) : (
-          // UI Form đổi mật khẩu dành cho Tài khoản thường
           <form onSubmit={handlePasswordChange} className="max-w-md space-y-4">
             {passwordError && (
-              <p className="text-rose-600 text-sm font-medium bg-rose-50 p-3 rounded-lg border border-rose-100">
+              <p className="text-danger-text text-sm font-medium bg-danger-soft p-3 rounded-lg border border-danger-border">
                 {passwordError}
               </p>
             )}
 
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+              <label className="block text-sm font-medium text-text-secondary mb-1.5">
                 Mật khẩu hiện tại
               </label>
               <div className="relative">
@@ -151,7 +142,7 @@ export default function SettingsTab() {
                       oldPassword: e.target.value,
                     })
                   }
-                  className="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all pr-10"
+                  className="w-full h-10 border border-border-default rounded-lg px-3.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary"
                   required
                 />
                 <button
@@ -159,15 +150,15 @@ export default function SettingsTab() {
                   onClick={() =>
                     setShowPassword({ ...showPassword, old: !showPassword.old })
                   }
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-subtle hover:text-primary transition-colors"
                 >
-                  {showPassword.old ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPassword.old ? <EyeOff size={17} /> : <Eye size={17} />}
                 </button>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+              <label className="block text-sm font-medium text-text-secondary mb-1.5">
                 Mật khẩu mới
               </label>
               <div className="relative">
@@ -180,7 +171,7 @@ export default function SettingsTab() {
                       newPassword: e.target.value,
                     })
                   }
-                  className="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all pr-10"
+                  className="w-full h-10 border border-border-default rounded-lg px-3.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary"
                   required
                 />
                 <button
@@ -188,15 +179,15 @@ export default function SettingsTab() {
                   onClick={() =>
                     setShowPassword({ ...showPassword, new: !showPassword.new })
                   }
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-subtle hover:text-primary transition-colors"
                 >
-                  {showPassword.new ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPassword.new ? <EyeOff size={17} /> : <Eye size={17} />}
                 </button>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+              <label className="block text-sm font-medium text-text-secondary mb-1.5">
                 Xác nhận mật khẩu mới
               </label>
               <div className="relative">
@@ -209,7 +200,7 @@ export default function SettingsTab() {
                       confirmPassword: e.target.value,
                     })
                   }
-                  className="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all pr-10"
+                  className="w-full h-10 border border-border-default rounded-lg px-3.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary"
                   required
                 />
                 <button
@@ -220,113 +211,61 @@ export default function SettingsTab() {
                       confirm: !showPassword.confirm,
                     })
                   }
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-subtle hover:text-primary transition-colors"
                 >
                   {showPassword.confirm ? (
-                    <EyeOff size={18} />
+                    <EyeOff size={17} />
                   ) : (
-                    <Eye size={18} />
+                    <Eye size={17} />
                   )}
                 </button>
               </div>
             </div>
 
-            <button
+            <Button
               type="submit"
-              disabled={isPending}
-              className={`font-bold py-2.5 px-6 rounded-lg transition-all text-sm mt-4 w-fit flex items-center justify-center min-w-[140px] ${
-                isPending
-                  ? "bg-slate-300 text-slate-500 cursor-not-allowed"
-                  : "bg-primary hover:bg-primary-hover text-white shadow-sm"
-              }`}
+              isLoading={isPending}
+              loadingText="Đang xử lý..."
+              className="mt-2"
             >
-              {isPending ? "Đang xử lý..." : "Đổi mật khẩu"}
-            </button>
+              Đổi mật khẩu
+            </Button>
           </form>
         )}
       </div>
 
-      {/* 3. HIỂN THỊ CV CỦA BẠN */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-bold text-primary-dark">
-            Hiển thị CV của bạn
-          </h2>
-          <Link
-            href="/help/cv-visibility"
-            className="text-sm font-bold text-primary hover:text-primary-hover flex items-center gap-1 transition-colors"
-          >
-            Tìm hiểu thêm <ExternalLink size={14} />
-          </Link>
-        </div>
+      <div className="bg-surface-card rounded-xl border border-border-default p-6 sm:p-7 shadow-xs">
+        <h2 className="text-lg font-bold text-text-main mb-4">
+          Hiển thị CV của bạn
+        </h2>
 
-        <div className="flex flex-col md:flex-row items-start justify-between gap-6 pb-6 border-b border-slate-100 mb-6">
-          <p className="text-sm text-slate-700 max-w-xl leading-relaxed">
-            Cho phép các nhà tuyển dụng tìm thấy CV ẩn danh của bạn và gửi lời
-            mời làm việc qua email, SMS và Hộp thư ViecNgon.
+        <div className="flex flex-col md:flex-row items-start justify-between gap-6">
+          <p className="text-sm text-text-secondary max-w-xl leading-relaxed">
+            Cho phép các nhà tuyển dụng tìm thấy CV của bạn trên ViecNgon và
+            liên hệ trao đổi cơ hội việc làm phù hợp.
           </p>
 
           <button
             type="button"
             onClick={() => setIsCvVisible(!isCvVisible)}
-            className="flex items-center gap-3 shrink-0 focus:outline-none"
+            className="flex items-center gap-3 shrink-0 focus:outline-none cursor-pointer"
           >
             <div
-              className={`w-12 h-6 rounded-full transition-colors relative flex items-center ${isCvVisible ? "bg-primary" : "bg-slate-200"}`}
+              className={`w-12 h-6 rounded-full transition-colors relative flex items-center ${
+                isCvVisible ? "bg-primary" : "bg-surface-subtle border border-border-default"
+              }`}
             >
               <div
-                className={`absolute w-4 h-4 rounded-full bg-white transition-all duration-300 shadow-sm ${isCvVisible ? "left-[26px]" : "left-1"}`}
-              ></div>
+                className={`absolute w-4 h-4 rounded-full bg-white shadow-xs transition-all duration-300 ${
+                  isCvVisible ? "left-[26px]" : "left-1"
+                }`}
+              />
             </div>
-            <span className="text-sm font-bold text-slate-700 min-w-[30px] text-left">
+            <span className="text-sm font-semibold text-text-main min-w-8 text-left">
               {isCvVisible ? "Bật" : "Tắt"}
             </span>
           </button>
         </div>
-
-        <div>
-          <p className="text-sm font-semibold text-slate-800 mb-1">
-            Không nhận lời mời từ:
-          </p>
-          <p className="text-[13px] text-slate-500 mb-3">
-            Tối đa 5 nhà tuyển dụng
-          </p>
-
-          <div className="relative max-w-lg mb-2">
-            <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
-              <ChevronDown size={18} className="text-slate-400" />
-            </div>
-            <input
-              type="text"
-              placeholder="Tìm kiếm công ty..."
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all pr-10"
-            />
-          </div>
-          <p className="text-[13px] text-slate-400 italic">
-            Chưa có công ty nào được chọn
-          </p>
-        </div>
-      </div>
-
-      {/* 4. XÓA TÀI KHOẢN */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm">
-        <h2 className="text-lg font-bold text-rose-600 mb-4">Xóa tài khoản</h2>
-        <p className="text-sm text-slate-700 leading-relaxed mb-6">
-          Việc xóa tài khoản là một hành động vĩnh viễn và không thể hoàn tác.
-          Nếu bạn đang xóa tài khoản vì nhận quá nhiều thông báo qua email, bạn
-          có thể{" "}
-          <Link
-            href="/settings/notifications"
-            className="text-primary font-bold hover:underline"
-          >
-            hủy đăng ký nhận email tại đây
-          </Link>
-          .
-        </p>
-
-        <button className="px-6 py-2.5 bg-rose-50 border border-rose-200 text-rose-600 font-bold rounded-lg text-sm hover:bg-rose-100 hover:border-rose-300 transition-colors">
-          Xóa tài khoản của bạn
-        </button>
       </div>
     </div>
   );

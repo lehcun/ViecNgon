@@ -6,9 +6,10 @@ import {
   FileText,
   User,
   Briefcase,
-  Mail,
   Bell,
   Settings,
+  LayoutDashboard,
+  FileBadge2,
   ToggleRight,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
@@ -19,102 +20,86 @@ export default function CandidateSidebar() {
   const { user } = useAuthStore();
   const { unreadCount } = useNotifications();
 
-  const isActive = (path: string) => pathname === path;
+  const isActive = (path: string) =>
+    pathname === path || pathname.startsWith(`${path}/`);
 
   const baseLinkClass =
-    "flex items-center gap-3 px-4 py-3 font-medium rounded-lg transition-colors";
-  const activeLinkClass = "bg-primary-light text-primary font-bold";
+    "flex items-center gap-3 px-3.5 py-2.5 text-sm font-medium rounded-lg transition-colors";
+  const activeLinkClass = "bg-primary-light text-primary font-semibold";
   const inactiveLinkClass =
-    "text-slate-600 hover:bg-slate-50 hover:text-primary";
+    "text-text-secondary hover:bg-surface-subtle hover:text-primary";
+
+  const navItems = [
+    { href: "/dashboard", label: "Tổng quan", icon: LayoutDashboard },
+    { href: "/cv-profile", label: "Hồ sơ ViecNgon", icon: User },
+    { href: "/cv/personalCV", label: "Hồ sơ đính kèm", icon: FileText },
+    { href: "/cv-template", label: "Mẫu CV IT", icon: FileBadge2 },
+    { href: "/my-jobs/applied", label: "Việc làm của tôi", icon: Briefcase },
+  ];
 
   return (
-    <aside className="w-full lg:w-1/4 flex flex-col gap-6 lg:sticky lg:top-24 self-start">
-      {/* Card: Status */}
-      <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-        <p className="text-slate-500 text-sm mb-1 flex items-center gap-2">
-          👋 Xin chào
-        </p>
-        <h2 className="text-xl font-bold text-slate-800 mb-6">{user?.name}</h2>
+    <aside className="w-full lg:w-1/4 flex flex-col gap-5 lg:sticky lg:top-24 self-start">
+      <div className="bg-surface-card rounded-xl border border-border-default p-5 shadow-xs">
+        <p className="text-text-muted text-xs font-medium mb-1">Xin chào,</p>
+        <h2 className="text-lg font-bold text-text-main mb-4 truncate">
+          {user?.name || "Ứng viên"}
+        </h2>
 
-        <div className="flex items-center justify-between bg-slate-50 p-3 rounded-lg border border-slate-100">
-          <span className="text-sm font-medium text-slate-700">
-            Cho phép tìm CV
+        <div className="flex items-center justify-between bg-surface-subtle p-3 rounded-lg border border-border-subtle">
+          <span className="text-xs font-medium text-text-secondary">
+            Cho phép NTD tìm CV
           </span>
-          <div className="flex items-center gap-2 cursor-pointer">
-            <span className="text-xs font-bold text-primary">Bật</span>
-            <ToggleRight size={28} className="text-primary" />
-          </div>
+          <Link
+            href="/settings"
+            className="flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+          >
+            <span>Đang bật</span>
+            <ToggleRight size={22} className="text-primary" />
+          </Link>
         </div>
       </div>
 
-      {/* Card: Menu Navigation */}
-      <div className="bg-white rounded-xl border border-slate-200 p-3 shadow-sm">
+      <div className="bg-surface-card rounded-xl border border-border-default p-2.5 shadow-xs">
         <nav className="flex flex-col gap-1">
-          <Link
-            href="/dashboard"
-            className={`${baseLinkClass} ${isActive("/dashboard") ? activeLinkClass : inactiveLinkClass}`}
-          >
-            <Briefcase size={20} /> Tổng quan
-          </Link>
-          <Link
-            href="/cv/personalCV"
-            className={`${baseLinkClass} ${isActive("/dashboard/cv") ? activeLinkClass : inactiveLinkClass}`}
-          >
-            <FileText size={20} /> Hồ sơ đính kèm
-          </Link>
-          <Link
-            href="/cv-profile"
-            className={`${baseLinkClass} ${isActive("/dashboard/profile") ? activeLinkClass : inactiveLinkClass}`}
-          >
-            <User size={20} /> Hồ sơ ViecNgon
-          </Link>
-          <Link
-            href="/my-jobs/applied"
-            className={`${baseLinkClass} ${isActive("/my-jobs") ? activeLinkClass : inactiveLinkClass}`}
-          >
-            <Briefcase size={20} /> Việc làm của tôi
-          </Link>
-          <Link
-            href="/invitations"
-            className={`${baseLinkClass} ${isActive("/invitations") ? activeLinkClass : inactiveLinkClass} justify-between`}
-          >
-            <div className="flex items-center gap-3">
-              <Mail size={20} /> Lời mời công việc
-            </div>
-            <span className="bg-primary text-white text-xs font-bold px-2 py-0.5 rounded-full">
-              0
-            </span>
-          </Link>
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`${baseLinkClass} ${isActive(item.href) ? activeLinkClass : inactiveLinkClass}`}
+              >
+                <Icon size={18} />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
 
-          <div className="h-px bg-slate-100 my-2 mx-4"></div>
+          <div className="h-px bg-border-subtle my-2 mx-2" />
 
-          <Link
-            href="/subscribe"
-            className={`${baseLinkClass} ${isActive("/subscribe") ? activeLinkClass : inactiveLinkClass}`}
-          >
-            <Mail size={20} /> Đăng ký nhận email
-          </Link>
           <Link
             href="/notifications"
-            className={`justify-between ${baseLinkClass} ${isActive("/notifications") || isActive("/candidate/notifications")
-                ? activeLinkClass
-                : inactiveLinkClass
-              }`}
+            className={`justify-between ${baseLinkClass} ${
+              isActive("/notifications") ? activeLinkClass : inactiveLinkClass
+            }`}
           >
             <div className="flex items-center gap-3">
-              <Bell size={20} /> Thông báo
+              <Bell size={18} />
+              <span>Thông báo</span>
             </div>
             {unreadCount > 0 && (
-              <span className="w-5 h-5 flex items-center justify-center bg-rose-500 text-white text-xs font-bold rounded-full shadow-sm">
+              <span className="min-w-5 h-5 px-1.5 flex items-center justify-center bg-danger text-white text-[11px] font-bold rounded-full">
                 {unreadCount > 99 ? "99+" : unreadCount}
               </span>
             )}
           </Link>
+
           <Link
             href="/settings"
             className={`${baseLinkClass} ${isActive("/settings") ? activeLinkClass : inactiveLinkClass}`}
           >
-            <Settings size={20} /> Cài đặt
+            <Settings size={18} />
+            <span>Cài đặt tài khoản</span>
           </Link>
         </nav>
       </div>

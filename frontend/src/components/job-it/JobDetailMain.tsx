@@ -22,7 +22,9 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { JobDetailResponse } from "@viecngon/types";
-import { getRelativeTime } from "@/components/NotificationDropdown";
+import { formatDateVN, formatRelativeTimeVN } from "@/lib/formatters";
+import { CompanyLogo } from "@/components/ui/CompanyLogo";
+import { DetailPaneSkeleton, ErrorState } from "@/components/ui/StateViews";
 import { useAuthStore } from "@/store/authStore";
 import { useRelatedJobs } from "@/hooks/job/useJobDetail";
 import toast from "react-hot-toast";
@@ -46,51 +48,26 @@ export default function JobDetailMain({
 
   // 1. SKELETON LOADING STATE
   if (isLoading) {
-    return (
-      <div className="flex flex-col gap-6 animate-pulse">
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 space-y-5 shadow-xs">
-          <div className="h-8 bg-slate-200 rounded-lg w-3/4" />
-          <div className="h-5 bg-slate-200 rounded w-1/3" />
-          <div className="h-10 bg-slate-200 rounded-xl w-48" />
-          <div className="flex gap-4 pt-4">
-            <div className="h-12 bg-slate-200 rounded-xl flex-1" />
-            <div className="h-12 w-12 bg-slate-200 rounded-xl" />
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-slate-100">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-12 bg-slate-100 rounded-lg" />
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 space-y-4 shadow-xs">
-          <div className="h-6 bg-slate-200 rounded w-1/4" />
-          <div className="h-4 bg-slate-100 rounded w-full" />
-          <div className="h-4 bg-slate-100 rounded w-5/6" />
-          <div className="h-4 bg-slate-100 rounded w-4/6" />
-        </div>
-      </div>
-    );
+    return <DetailPaneSkeleton />;
   }
 
   // 2. ERROR / NOT FOUND STATE
   if (!job) {
     return (
-      <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-xs">
-        <AlertCircle size={48} className="mx-auto text-amber-500 mb-3" />
-        <h2 className="text-xl font-bold text-slate-800 mb-2">
-          Không tìm thấy công việc
-        </h2>
-        <p className="text-sm text-slate-500 mb-6 max-w-md mx-auto">
-          Công việc này có thể đã hết hạn nhận hồ sơ hoặc đã được nhà tuyển dụng gỡ xuống.
-        </p>
-        <Link
-          href="/job-it"
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover text-white text-sm font-bold rounded-xl shadow-md shadow-primary/25 transition-all"
-        >
-          <span>Khám phá việc làm khác</span>
-          <ChevronRight size={16} />
-        </Link>
+      <div className="space-y-4">
+        <ErrorState
+          title="Không tìm thấy công việc"
+          message="Công việc này có thể đã hết hạn nhận hồ sơ hoặc đã được nhà tuyển dụng gỡ xuống."
+        />
+        <div className="text-center">
+          <Link
+            href="/jobs"
+            className="inline-flex items-center gap-2 h-10 px-5 bg-primary hover:bg-primary-hover text-white text-sm font-semibold rounded-lg transition-colors"
+          >
+            <span>Khám phá việc làm khác</span>
+            <ChevronRight size={16} />
+          </Link>
+        </div>
       </div>
     );
   }
@@ -142,14 +119,7 @@ export default function JobDetailMain({
 
   // Format hạn nộp hồ sơ
   const formatDeadline = (dateString?: Date | string | null) => {
-    if (!dateString) return "Tuyển liên tục";
-    try {
-      const d = new Date(dateString);
-      if (isNaN(d.getTime())) return "Tuyển liên tục";
-      return `${`0${d.getDate()}`.slice(-2)}/${`0${d.getMonth() + 1}`.slice(-2)}/${d.getFullYear()}`;
-    } catch {
-      return "Tuyển liên tục";
-    }
+    return formatDateVN(dateString, "Tuyển liên tục");
   };
 
   return (
@@ -158,30 +128,26 @@ export default function JobDetailMain({
         {/* ========================================================
             CARD 1: HEADER CÔNG VIỆC + NÚT ỨNG TUYỂN
         ======================================================== */}
-        <div className="bg-white rounded-2xl shadow-xs border border-slate-200 p-6 md:p-8">
+        <div className="bg-surface-card rounded-xl shadow-xs border border-border-default p-6 md:p-8">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 leading-tight">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-text-primary leading-tight">
                 {job.title}
               </h1>
-              <p className="text-sm sm:text-base font-semibold text-slate-600 mt-1.5 line-clamp-1">
+              <p className="text-sm sm:text-base font-medium text-text-muted mt-1.5 line-clamp-1">
                 {job.company?.name}
               </p>
             </div>
-            {job.company?.logo && (
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl border border-slate-100 bg-white p-2 shrink-0 flex items-center justify-center shadow-xs overflow-hidden">
-                <img
-                  src={job.company.logo}
-                  alt={job.company.name}
-                  className="w-full h-full object-contain"
-                />
-              </div>
-            )}
+            <CompanyLogo
+              src={job.company?.logo}
+              name={job.company?.name}
+              size="lg"
+            />
           </div>
 
           {/* Mức lương nổi bật */}
-          <div className="mt-4 inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-50 text-emerald-700 rounded-xl font-black text-base sm:text-lg">
-            <DollarSign size={20} className="-ml-1 shrink-0 text-emerald-600" />
+          <div className="mt-4 inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-success-light text-success-text border border-success-border rounded-lg font-bold text-base sm:text-lg tabular-nums">
+            <DollarSign size={19} className="-ml-0.5 shrink-0" />
             <span>{job.salaryDisplay}</span>
           </div>
 
@@ -386,11 +352,11 @@ export default function JobDetailMain({
               {[1, 2].map((i) => (
                 <div
                   key={i}
-                  className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3"
+                  className="bg-surface-card rounded-xl border border-border-default p-5 space-y-3"
                 >
-                  <div className="h-5 bg-slate-200 rounded w-3/4" />
-                  <div className="h-4 bg-slate-100 rounded w-1/2" />
-                  <div className="h-4 bg-slate-100 rounded w-1/3" />
+                  <div className="h-5 bg-surface-subtle rounded w-3/4" />
+                  <div className="h-4 bg-surface-muted rounded w-1/2" />
+                  <div className="h-4 bg-surface-muted rounded w-1/3" />
                 </div>
               ))}
             </div>
@@ -399,49 +365,40 @@ export default function JobDetailMain({
               {relatedJobs.slice(0, 4).map((item) => (
                 <Link
                   key={item.id}
-                  href={`/job-it/${item.slug}`}
-                  className="group bg-white rounded-2xl border border-slate-200 p-5 hover:border-primary/60 hover:shadow-md transition-all flex flex-col justify-between"
+                  href={`/jobs/${item.slug}`}
+                  className="group bg-surface-card rounded-xl border border-border-default p-5 hover:border-primary/50 hover:shadow-md transition-all flex flex-col justify-between"
                 >
                   <div>
                     <div className="flex items-start gap-3">
-                      <div className="w-12 h-12 rounded-xl border border-slate-100 bg-white p-1.5 shrink-0 flex items-center justify-center overflow-hidden">
-                        <img
-                          src={
-                            item.company?.logo ||
-                            "https://placehold.co/100x100?text=Logo"
-                          }
-                          alt={item.company?.name || "Logo"}
-                          className="w-full h-full object-contain"
-                          onError={(e) => {
-                            (e.currentTarget as HTMLImageElement).src =
-                              "https://placehold.co/100x100?text=Logo";
-                          }}
-                        />
-                      </div>
+                      <CompanyLogo
+                        src={item.company?.logo}
+                        name={item.company?.name}
+                        size="md"
+                      />
                       <div className="min-w-0 flex-1">
-                        <h3 className="font-bold text-sm sm:text-base text-slate-900 group-hover:text-primary transition-colors line-clamp-1">
+                        <h3 className="font-semibold text-sm sm:text-base text-text-primary group-hover:text-primary transition-colors line-clamp-1">
                           {item.title}
                         </h3>
-                        <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">
+                        <p className="text-xs text-text-muted mt-0.5 line-clamp-1">
                           {item.company?.name}
                         </p>
                       </div>
                     </div>
 
-                    <div className="mt-3 text-xs font-black text-emerald-600">
-                      {item.salaryDisplay}
+                    <div className="mt-3 text-xs font-bold text-success-text tabular-nums">
+                      {item.salaryDisplay || "Thỏa thuận"}
                     </div>
 
                     <div className="flex flex-wrap gap-1.5 mt-3">
                       {item.location && (
-                        <span className="text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                        <span className="text-[11px] font-medium text-text-secondary bg-surface-muted px-2 py-0.5 rounded">
                           {item.location}
                         </span>
                       )}
                       {item.skills?.slice(0, 3).map((sk) => (
                         <span
                           key={sk}
-                          className="text-[11px] font-medium text-slate-600 bg-slate-50 border border-slate-200/70 px-2 py-0.5 rounded"
+                          className="text-[11px] font-medium text-text-secondary bg-surface-page border border-border-default px-2 py-0.5 rounded"
                         >
                           {sk}
                         </span>
@@ -449,9 +406,9 @@ export default function JobDetailMain({
                     </div>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] text-slate-400 flex items-center justify-between">
-                    <span>Đăng {getRelativeTime(item.postedAt)}</span>
-                    <span className="text-primary font-bold group-hover:underline">
+                  <div className="mt-4 pt-3 border-t border-border-default text-xs text-text-muted flex items-center justify-between">
+                    <span>Đăng {formatRelativeTimeVN(item.postedAt)}</span>
+                    <span className="text-primary font-semibold group-hover:underline">
                       Chi tiết &rsaquo;
                     </span>
                   </div>
@@ -459,7 +416,7 @@ export default function JobDetailMain({
               ))}
             </div>
           ) : (
-            <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-400 text-sm">
+            <div className="bg-surface-card rounded-xl border border-border-default p-8 text-center text-text-muted text-sm">
               Hiện chưa có việc làm tương tự nào khác.
             </div>
           )}

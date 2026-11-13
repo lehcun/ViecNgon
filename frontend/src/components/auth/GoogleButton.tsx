@@ -59,13 +59,13 @@ export default function GoogleButton({
       type="button"
       disabled={disabled || isPending}
       onClick={() => handleGoogleAuth()}
-      className="w-full flex items-center justify-center gap-3 py-3 border border-slate-300 rounded-lg text-slate-700 font-bold hover:bg-slate-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed mb-6"
+      className="w-full h-11 flex items-center justify-center gap-3 border border-border-default rounded-lg text-text-main text-sm font-semibold hover:bg-surface-subtle transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-6 cursor-pointer"
     >
       <Image
         src="https://www.svgrepo.com/show/475656/google-color.svg"
         alt="Google"
-        width={20}
-        height={20}
+        width={19}
+        height={19}
       />
       <span>
         {isPending

@@ -3,197 +3,244 @@
 import React from "react";
 import {
   Sparkles,
+  RefreshCw,
   CheckCircle2,
   AlertTriangle,
-  RefreshCw,
+  Clock,
+  BrainCircuit,
 } from "lucide-react";
 import {
   useApplicationAiAnalysis,
   useRescanApplicationAi,
 } from "@/hooks/employer/useApplicationAiAnalysis";
+import { Button } from "@/components/ui/Button";
+import { getAiScoreTone, StatusBadge } from "@/components/ui/StatusBadge";
+import { ErrorState } from "@/components/ui/StateViews";
+import { formatDateTimeVN } from "@/lib/formatters";
 
 interface AiCandidateScreeningCardProps {
   applicationId: string;
 }
 
-const formatAnalyzedAt = (value: string | Date | null | undefined) => {
-  if (!value) return null;
-  const d = new Date(value);
-  if (isNaN(d.getTime())) return null;
-  const hh = String(d.getHours()).padStart(2, "0");
-  const mm = String(d.getMinutes()).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  const mo = String(d.getMonth() + 1).padStart(2, "0");
-  return `${hh}:${mm} ${dd}/${mo}/${d.getFullYear()}`;
+const SCORE_TONE_BAR: Record<string, string> = {
+  success: "bg-success",
+  warning: "bg-warning",
+  danger: "bg-danger",
 };
-
-function AiScreeningSkeleton() {
-  return (
-    <div className="space-y-4 animate-pulse">
-      <div className="flex items-center gap-4">
-        <div className="w-16 h-16 rounded-full bg-slate-200 shrink-0" />
-        <div className="flex-1 space-y-2">
-          <div className="h-3.5 bg-slate-200 rounded w-full" />
-          <div className="h-3.5 bg-slate-200 rounded w-5/6" />
-          <div className="h-3.5 bg-slate-200 rounded w-2/3" />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
-        {Array.from({ length: 4 }).map((_, idx) => (
-          <div key={idx} className="h-12 bg-slate-100 rounded-lg p-2 space-y-2">
-            <div className="h-2.5 bg-slate-200 rounded w-3/4" />
-            <div className="h-1.5 bg-slate-200 rounded w-full" />
-          </div>
-        ))}
-      </div>
-
-      <div className="space-y-2">
-        <div className="h-3.5 bg-slate-200 rounded w-1/3" />
-        <div className="h-3 bg-slate-200 rounded w-full" />
-        <div className="h-3 bg-slate-200 rounded w-5/6" />
-        <div className="h-3 bg-slate-200 rounded w-4/6" />
-      </div>
-
-      <div className="space-y-2">
-        <div className="h-3.5 bg-slate-200 rounded w-2/5" />
-        <div className="h-3 bg-slate-200 rounded w-full" />
-        <div className="h-3 bg-slate-200 rounded w-3/4" />
-      </div>
-    </div>
-  );
-}
 
 export default function AiCandidateScreeningCard({
   applicationId,
 }: AiCandidateScreeningCardProps) {
-  const { data, isLoading, isError, error } = useApplicationAiAnalysis(
+  const { data, isLoading, isError, error, refetch } = useApplicationAiAnalysis(
     applicationId,
-    !!applicationId,
+    Boolean(applicationId),
   );
   const { mutate: rescan, isPending: isRescanning } =
     useRescanApplicationAi(applicationId);
 
-  const isBusy = isLoading || isRescanning;
-  const score = data?.matchScore ?? 0;
-  const analyzedAtText = formatAnalyzedAt(data?.analyzedAt);
+  if (isLoading) {
+    return (
+      <div className="bg-surface-card border border-ai-border rounded-xl p-6 shadow-xs animate-pulse space-y-5">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-ai-light" />
+            <div className="space-y-2">
+              <div className="h-4 w-48 bg-surface-subtle rounded" />
+              <div className="h-3 w-36 bg-surface-muted rounded" />
+            </div>
+          </div>
+          <div className="h-9 w-28 bg-surface-subtle rounded-lg" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="h-24 bg-ai-light/50 rounded-xl" />
+          <div className="md:col-span-3 h-24 bg-surface-muted rounded-xl" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="h-28 bg-surface-muted rounded-xl" />
+          <div className="h-28 bg-surface-muted rounded-xl" />
+        </div>
+      </div>
+    );
+  }
 
-  const ringColor =
-    score >= 75
-      ? "text-emerald-600 border-emerald-200 bg-emerald-50"
-      : score >= 50
-        ? "text-amber-600 border-amber-200 bg-amber-50"
-        : "text-rose-600 border-rose-200 bg-rose-50";
+  if (isError) {
+    return (
+      <div className="bg-surface-card border border-border-default rounded-xl p-6 shadow-xs">
+        <ErrorState
+          title="Không thể phân tích hồ sơ bằng AI"
+          message={
+            error?.message ||
+            "Hệ thống AI tạm thời gián đoạn. Vui lòng thử lại sau."
+          }
+          onRetry={() => refetch()}
+        />
+      </div>
+    );
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  const scoreTone = getAiScoreTone(data.matchScore);
+  const breakdownItems = data.breakdown
+    ? [
+        { label: "Kỹ năng chuyên môn", value: data.breakdown.skillsScore },
+        { label: "Kinh nghiệm thực tế", value: data.breakdown.experienceScore },
+        { label: "Học vấn & Chứng chỉ", value: data.breakdown.educationScore },
+        { label: "Mức độ phù hợp lĩnh vực", value: data.breakdown.domainScore },
+      ]
+    : [];
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-      <div className="flex items-center justify-between gap-2 mb-4">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-            <Sparkles size={16} />
+    <div className="bg-surface-card border border-ai-border rounded-xl p-6 shadow-xs space-y-5">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border-default">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-ai-light border border-ai-border flex items-center justify-center text-ai shrink-0">
+            <BrainCircuit size={20} />
           </div>
-          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
-            AI Candidate Screening
-          </h3>
-        </div>
-        <button
-          type="button"
-          onClick={() => rescan()}
-          disabled={isBusy}
-          title="Quét lại điểm phù hợp bằng AI"
-          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-primary bg-slate-50 hover:bg-primary/5 border border-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-        >
-          <RefreshCw size={13} className={isRescanning ? "animate-spin" : ""} />
-          <span>{isRescanning ? "Đang quét..." : "Quét lại"}</span>
-        </button>
-      </div>
-
-      {isBusy && <AiScreeningSkeleton />}
-
-      {isError && !isBusy && (
-        <div className="p-3 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-xs">
-          {error?.message || "Không thể phân tích hồ sơ lúc này."}
-        </div>
-      )}
-
-      {data && !isBusy && (
-        <div className="space-y-4">
-          {/* Điểm tổng quan */}
-          <div className="flex items-center gap-4">
-            <div
-              className={`w-16 h-16 rounded-full border-4 flex flex-col items-center justify-center shrink-0 ${ringColor}`}
-            >
-              <span className="text-lg font-extrabold leading-none">
-                {score}%
-              </span>
-              <span className="text-[10px] font-semibold uppercase mt-0.5">
-                Match
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-base font-bold text-text-primary">
+                Sàng lọc & Đánh giá hồ sơ AI
+              </h2>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-ai-light text-ai border border-ai-border">
+                <Sparkles size={11} /> AI Matching
               </span>
             </div>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              {data.summary}
-            </p>
+            {data.analyzedAt && (
+              <p className="text-xs text-text-muted mt-0.5 inline-flex items-center gap-1">
+                <Clock size={12} />
+                Phân tích lúc {formatDateTimeVN(data.analyzedAt)}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => rescan()}
+          isLoading={isRescanning}
+          loadingText="Đang quét lại..."
+        >
+          <RefreshCw size={14} />
+          Quét lại AI
+        </Button>
+      </div>
+
+      {/* Score & Breakdown */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+        <div className="lg:col-span-4 bg-ai-light/50 border border-ai-border rounded-xl p-5 flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wide text-ai">
+              Độ phù hợp tổng quan
+            </span>
+            <StatusBadge
+              type="custom"
+              tone={scoreTone}
+              label={
+                data.matchScore >= 80
+                  ? "Rất phù hợp"
+                  : data.matchScore >= 50
+                    ? "Tiềm năng"
+                    : "Cần cân nhắc"
+              }
+            />
           </div>
 
-          {analyzedAtText && (
-            <p className="text-[11px] text-slate-400">
-              Đã lưu kết quả phân tích • {analyzedAtText}
+          <div className="my-3 flex items-baseline gap-1.5">
+            <span className="text-4xl font-bold text-text-primary tabular-nums">
+              {data.matchScore}%
+            </span>
+            <span className="text-xs text-text-muted">/ 100%</span>
+          </div>
+
+          <div className="w-full h-2 bg-surface-card rounded-full overflow-hidden border border-ai-border/50">
+            <div
+              className={`h-full rounded-full transition-all ${SCORE_TONE_BAR[scoreTone] || "bg-ai"}`}
+              style={{
+                width: `${Math.min(100, Math.max(0, data.matchScore))}%`,
+              }}
+            />
+          </div>
+        </div>
+
+        <div className="lg:col-span-8 bg-surface-muted border border-border-default rounded-xl p-5 flex flex-col justify-between gap-4">
+          {data.summary && (
+            <p className="text-sm text-text-secondary leading-relaxed">
+              {data.summary}
             </p>
           )}
 
-          {/* Breakdown 4 tiêu chí */}
-          {data.breakdown && (
-            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-[11px]">
-              {[
-                { label: "Kỹ năng (40%)", val: data.breakdown.skillsScore },
-                {
-                  label: "Kinh nghiệm (30%)",
-                  val: data.breakdown.experienceScore,
-                },
-                { label: "Học vấn (15%)", val: data.breakdown.educationScore },
-                { label: "Chuyên môn (15%)", val: data.breakdown.domainScore },
-              ].map((item) => (
-                <div key={item.label} className="bg-slate-50 p-2 rounded-lg">
-                  <div className="flex justify-between font-medium text-slate-600 mb-1">
-                    <span>{item.label}</span>
-                    <span className="font-bold text-slate-800">{item.val}%</span>
+          {breakdownItems.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-border-default">
+              {breakdownItems.map((item) => (
+                <div key={item.label} className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-medium text-text-secondary">
+                      {item.label}
+                    </span>
+                    <span className="font-bold text-text-primary tabular-nums">
+                      {item.value}%
+                    </span>
                   </div>
-                  <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                  <div className="h-1.5 w-full bg-surface-subtle rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-primary rounded-full"
-                      style={{ width: `${item.val}%` }}
+                      className="h-full bg-ai rounded-full"
+                      style={{
+                        width: `${Math.min(100, Math.max(0, item.value))}%`,
+                      }}
                     />
                   </div>
                 </div>
               ))}
             </div>
           )}
-
-          {/* Ưu điểm */}
-          <div>
-            <h4 className="text-xs font-bold text-emerald-700 mb-1.5 flex items-center gap-1">
-              <CheckCircle2 size={14} /> Ưu điểm nổi bật
-            </h4>
-            <ul className="space-y-1 text-xs text-slate-600 list-disc list-inside">
-              {data.strengths.map((s, idx) => (
-                <li key={idx}>{s}</li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Điểm còn thiếu */}
-          <div>
-            <h4 className="text-xs font-bold text-amber-700 mb-1.5 flex items-center gap-1">
-              <AlertTriangle size={14} /> Điểm còn thiếu / Cần lưu ý
-            </h4>
-            <ul className="space-y-1 text-xs text-slate-600 list-disc list-inside">
-              {data.weaknesses.map((w, idx) => (
-                <li key={idx}>{w}</li>
-              ))}
-            </ul>
-          </div>
         </div>
-      )}
+      </div>
+
+      {/* Strengths & Weaknesses */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-success-light/60 border border-success-border rounded-xl p-4">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-success-text mb-2.5 flex items-center gap-1.5">
+            <CheckCircle2 size={14} /> Điểm mạnh nổi bật
+          </h3>
+          {data.strengths && data.strengths.length > 0 ? (
+            <ul className="space-y-1.5 text-sm text-text-primary">
+              {data.strengths.map((item, idx) => (
+                <li key={idx} className="flex items-start gap-2">
+                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-success shrink-0" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-xs text-text-muted">Chưa ghi nhận điểm mạnh.</p>
+          )}
+        </div>
+
+        <div className="bg-warning-light/60 border border-warning-border rounded-xl p-4">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-warning-text mb-2.5 flex items-center gap-1.5">
+            <AlertTriangle size={14} /> Điểm cần lưu ý / Thiếu hụt
+          </h3>
+          {data.weaknesses && data.weaknesses.length > 0 ? (
+            <ul className="space-y-1.5 text-sm text-text-primary">
+              {data.weaknesses.map((item, idx) => (
+                <li key={idx} className="flex items-start gap-2">
+                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-warning shrink-0" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-xs text-text-muted">
+              Hồ sơ đáp ứng khá đầy đủ yêu cầu công việc.
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

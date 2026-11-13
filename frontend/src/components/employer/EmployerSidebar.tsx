@@ -10,76 +10,62 @@ import {
   Users,
   Building2,
   CreditCard,
-  Settings,
+  Megaphone,
 } from "lucide-react";
+
+const menuItems = [
+  { name: "Tổng quan", href: "/employer-dashboard", icon: LayoutDashboard },
+  { name: "Đăng tin tuyển dụng", href: "/post-job", icon: PlusCircle },
+  { name: "Quản lý đăng tin", href: "/employer-jobs", icon: Briefcase },
+  { name: "Quản lý ứng viên", href: "/applications", icon: Users },
+  { name: "Hồ sơ công ty", href: "/company-profile", icon: Building2 },
+  { name: "Chiến dịch quảng cáo", href: "/campaigns", icon: Megaphone },
+  { name: "Gói dịch vụ & Bảng giá", href: "/pricing", icon: CreditCard },
+];
 
 export default function EmployerSidebar() {
   const pathname = usePathname();
-  const isActive = (path: string) =>
-    pathname === path || (path !== "/employer-dashboard" && pathname.startsWith(`${path}/`));
-
-  // Cấu hình các menu item theo đúng thứ tự trong ảnh
-  const menuItems = [
-    { name: "Tổng quan", path: "/employer-dashboard", icon: LayoutDashboard },
-    { name: "Đăng tin tuyển dụng", path: "/post-job", icon: PlusCircle },
-    { name: "Quản lý đăng tin", path: "/employer-jobs", icon: Briefcase },
-    { name: "Quản lý ứng viên", path: "/applications", icon: Users },
-    {
-      name: "Hồ sơ công ty",
-      path: "/employer-company-profile",
-      icon: Building2,
-    },
-    {
-      name: "Gói dịch vụ & Hóa đơn",
-      path: "/campaigns",
-      icon: CreditCard,
-    },
-    { name: "Cài đặt tài khoản", path: "/employer/settings", icon: Settings },
-  ];
 
   return (
-    <div className="flex flex-col bg-white h-full justify-between pb-6">
-      {/* --- MENU NAVIGATION --- */}
-      <div className="py-6 px-4">
-        <nav className="flex flex-col gap-2">
-          {menuItems.map((item) => {
-            const active = isActive(item.path);
-            const Icon = item.icon;
-
-            return (
-              <Link
-                key={item.path}
-                href={item.path}
-                className={`relative flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-lg transition-all duration-200 ${active
-                    ? "bg-blue-50 text-blue-600"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-blue-600"
-                  }`}
-              >
-                {/* Thanh vạch dọc màu xanh ở sát lề bên trái khi Active */}
-                {active && (
-                  <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-1.5 h-8 bg-blue-600 rounded-r-md"></div>
-                )}
-
-                <Icon
-                  size={20}
-                  strokeWidth={active ? 2.5 : 2}
-                  className={active ? "text-blue-600" : "text-slate-400"}
-                />
-                {item.name}
-              </Link>
-            );
-          })}
-        </nav>
+    <div className="py-5 px-3 flex flex-col h-full justify-between">
+      <div className="space-y-1">
+        {menuItems.map((item) => {
+          const isActive =
+            pathname === item.href || pathname.startsWith(`${item.href}/`);
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-colors ${
+                isActive
+                  ? "bg-primary-light text-primary font-semibold"
+                  : "text-text-secondary hover:bg-surface-subtle hover:text-text-main font-medium"
+              }`}
+            >
+              <Icon
+                size={18}
+                className={isActive ? "text-primary" : "text-text-subtle"}
+              />
+              <span>{item.name}</span>
+            </Link>
+          );
+        })}
       </div>
 
-      {/* --- BOX HỖ TRỢ (DƯỚI CÙNG) --- */}
-      <div className="p-4 mx-4 bg-slate-50 rounded-xl border border-slate-100">
-        <h4 className="text-sm font-bold text-slate-800 mb-2">Cần hỗ trợ?</h4>
-        <p className="text-xs text-slate-500 mb-3 leading-relaxed">
-          Liên hệ nhân viên chăm sóc tài khoản của bạn để được hỗ trợ đăng tin
-          tốt nhất.
+      <div className="mt-8 mx-1 p-4 bg-primary-light/70 rounded-xl border border-primary/15">
+        <p className="text-xs font-bold text-primary mb-1">
+          Hỗ trợ doanh nghiệp
         </p>
-        <p className="text-sm font-bold text-blue-600">Hotline: 1900 1234</p>
+        <p className="text-xs text-text-secondary mb-2.5 leading-relaxed">
+          Cần tư vấn đăng tin hoặc đẩy tin VIP?
+        </p>
+        <a
+          href="mailto:love@viecngon.vn"
+          className="text-xs font-semibold text-primary hover:underline block"
+        >
+          love@viecngon.vn
+        </a>
       </div>
     </div>
   );

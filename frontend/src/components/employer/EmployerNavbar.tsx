@@ -10,32 +10,34 @@ import EmployerDashboardDropdown from "./EmployerDashboardDropdown";
 export default function EmployerNavbar() {
   const pathname = usePathname();
 
-  // Danh sách menu trên Navbar giống hệt ảnh thiết kế
   const navLinks = [
     { name: "Bảng tin", path: "/employer-dashboard" },
-    { name: "Tìm ứng viên", path: "/employer/candidates" },
-    { name: "Sản phẩm & Dịch vụ", path: "/employer/pricing" },
-    { name: "Trợ giúp", path: "/employer/help" },
+    { name: "Quản lý tin", path: "/employer-jobs" },
+    { name: "Ứng viên", path: "/applications" },
+    { name: "Gói dịch vụ", path: "/pricing" },
   ];
 
   return (
-    <header className="bg-[#0b132b] border-b border-slate-800 sticky top-0 z-50 w-full shadow-md">
+    <header className="bg-primary-dark border-b border-slate-800 sticky top-0 z-50 w-full shadow-sm">
       <div className="w-full px-6 h-16 flex items-center justify-between">
-        {/* Cột trái: Logo & Navigation */}
-        <div className="flex items-center gap-12">
-          {/* Logo ViecNgon */}
-          <LogoViecNgon logoTextColor="text-white" href="/employer-dashboard" />
+        <div className="flex items-center gap-10">
+          <LogoViecNgon
+            logoTextColor="text-white"
+            href="/employer-dashboard"
+          />
 
-          {/* Navigation Links (Giống hình) */}
-          <nav className="hidden lg:flex items-center gap-8">
+          <nav className="hidden lg:flex items-center gap-7">
             {navLinks.map((link) => {
-              const isActive = pathname === link.path;
+              const isActive =
+                pathname === link.path || pathname.startsWith(`${link.path}/`);
               return (
                 <Link
-                  key={link.name}
+                  key={link.path}
                   href={link.path}
                   className={`text-sm font-medium transition-colors ${
-                    isActive ? "text-white" : "text-slate-400 hover:text-white"
+                    isActive
+                      ? "text-white font-semibold"
+                      : "text-slate-300 hover:text-white"
                   }`}
                 >
                   {link.name}
@@ -45,16 +47,13 @@ export default function EmployerNavbar() {
           </nav>
         </div>
 
-        {/* Cột phải: Actions & Avatar */}
-        <div className="flex items-center gap-5">
-          {/* Notification Dropdown */}
+        <div className="flex items-center gap-4">
           <div className="text-slate-300 hover:text-white transition-colors">
             <EmployerNotificationDropdown />
           </div>
 
-          <div className="h-6 w-px bg-slate-700 hidden md:block mx-1"></div>
+          <div className="h-6 w-px bg-slate-700 hidden md:block" />
 
-          {/* Component Dropdown Avatar */}
           <EmployerDashboardDropdown />
         </div>
       </div>

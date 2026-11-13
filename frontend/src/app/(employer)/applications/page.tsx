@@ -1,143 +1,156 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { Loader2, Search, Filter, ChevronLeft } from "lucide-react";
-import { useEmployerApplication } from "@/hooks/recruiter/useEmployerCandidates";
-import CandidateCard from "@/components/employer/CandidateApplicationCard";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
+import { Search, Users, Filter, ChevronLeft } from "lucide-react";
+import { useEmployerApplication } from "@/hooks/recruiter/useEmployerCandidates";
+import CandidateApplicationCard from "@/components/employer/CandidateApplicationCard";
+import { EmptyState, ErrorState } from "@/components/ui/StateViews";
 
-export default function ApplicationListPage() {
-  const { applications, isLoading, isError } = useEmployerApplication();
+export default function EmployerApplicationsPage() {
+  const { applications, isLoading, isError, error } = useEmployerApplication();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
 
-  // State phục vụ Bộ lọc
-  const [searchKeyword, setSearchKeyword] = useState("");
-  const [filterStatus, setFilterStatus] = useState("ALL");
-
-  // Logic Lọc dữ liệu trên Frontend (Không cần gọi lại API)
-  const filteredCandidates = useMemo(() => {
-    if (!applications) return [];
+  const filteredApplications = useMemo(() => {
+    const keyword = searchQuery.trim().toLowerCase();
 
     return applications.filter((app) => {
-      // Lọc theo trạng thái
-      const matchStatus = filterStatus === "ALL" || app.status === filterStatus;
-
-      // Lọc theo từ khóa (Tên ứng viên hoặc Tên công việc)
-      const keyword = searchKeyword.toLowerCase();
       const matchKeyword =
+        !keyword ||
         app.candidateName.toLowerCase().includes(keyword) ||
-        app.jobTitle.toLowerCase().includes(keyword);
+        app.jobTitle.toLowerCase().includes(keyword) ||
+        (app.contactEmail && app.contactEmail.toLowerCase().includes(keyword));
 
-      return matchStatus && matchKeyword;
+      const matchStatus =
+        statusFilter === "ALL" || app.status === statusFilter;
+
+      return matchKeyword && matchStatus;
     });
-  }, [applications, searchKeyword, filterStatus]);
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex flex-col items-center gap-2 text-primary">
-          <Loader2 className="animate-spin" size={40} />
-          <p className="font-medium text-slate-600">
-            Đang tải danh sách hồ sơ...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <div className="text-center py-20">
-        <p className="text-rose-500 font-bold text-lg">
-          Đã xảy ra lỗi khi tải dữ liệu!
-        </p>
-        <p className="text-slate-500">
-          Vui lòng tải lại trang hoặc kiểm tra kết nối mạng.
-        </p>
-      </div>
-    );
-  }
+  }, [applications, searchQuery, statusFilter]);
 
   return (
-    <div className="max-w-7xl mx-auto p-4 md:p-6 lg:py-8">
-      {/* Header & Thống kê nhanh */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+    <div className="max-w-7xl mx-auto space-y-6 pb-10">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <Link
             href="/employer-dashboard"
-            className="text-sm text-slate-500 hover:text-primary flex items-center gap-1 mb-2 transition-colors"
+            className="inline-flex items-center gap-1 text-sm text-text-muted hover:text-primary mb-2 transition-colors"
           >
-            <ChevronLeft size={16} /> Quay lại Dashboard
+            <ChevronLeft size={16} /> Quay lại Tổng quan
           </Link>
-          <h1 className="text-2xl font-bold text-slate-800">
-            Quản lý Hồ sơ Ứng viên
+          <h1 className="text-2xl font-bold text-text-primary flex items-center gap-2.5">
+            <span>Hồ sơ ứng viên đã nộp</span>
+            {!isLoading && !isError && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary-light text-primary border border-primary/20">
+                {applications.length}
+              </span>
+            )}
           </h1>
-          <p className="text-slate-500 text-sm mt-1">
-            Bạn có tổng cộng{" "}
-            <span className="font-bold text-primary">
-              {applications.length}
-            </span>{" "}
-            hồ sơ ứng tuyển.
+          <p className="text-sm text-text-muted mt-1">
+            Sàng lọc, đánh giá độ phù hợp AI và lên lịch phỏng vấn cho từng ứng
+            viên.
           </p>
         </div>
       </div>
 
-      {/* Thanh Công cụ Bộ lọc */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-4 mb-6">
-        {/* Tìm kiếm */}
+      {/* Bộ lọc & Tìm kiếm */}
+      <div className="bg-surface-card border border-border-default rounded-xl p-4 shadow-xs flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-            size={18}
+            size={16}
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
           />
           <input
             type="text"
-            placeholder="Tìm theo tên ứng viên hoặc tên công việc..."
-            value={searchKeyword}
-            onChange={(e) => setSearchKeyword(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Tìm theo tên ứng viên, email hoặc vị trí tuyển dụng..."
+            className="w-full h-10 pl-10 pr-4 text-sm text-text-primary bg-surface-page border border-border-default rounded-lg outline-none focus:bg-surface-card focus:border-primary focus:ring-2 focus:ring-primary/15 transition-all"
           />
         </div>
 
-        {/* Lọc Trạng thái */}
-        <div className="relative sm:w-64 shrink-0">
+        <div className="relative sm:w-56">
           <Filter
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-            size={18}
+            size={16}
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
           />
           <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm appearance-none cursor-pointer font-medium text-slate-700"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            aria-label="Lọc theo trạng thái hồ sơ"
+            className="w-full h-10 pl-10 pr-4 text-sm font-medium text-text-primary bg-surface-page border border-border-default rounded-lg outline-none focus:bg-surface-card focus:border-primary focus:ring-2 focus:ring-primary/15 transition-all cursor-pointer"
           >
             <option value="ALL">Tất cả trạng thái</option>
             <option value="CHO_DUYET">Chờ duyệt</option>
             <option value="DANG_XEM_XET">Đang xem xét</option>
             <option value="PHONG_VAN">Phỏng vấn</option>
             <option value="DUOC_NHAN">Được nhận</option>
-            <option value="BI_LOAI">Bị loại</option>
+            <option value="BI_LOAI">Chưa phù hợp</option>
           </select>
         </div>
       </div>
 
-      {/* Danh sách Ứng viên */}
-      {filteredCandidates.length === 0 ? (
-        <div className="bg-white rounded-xl border border-slate-200 py-16 text-center">
-          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
-            <Search className="text-slate-400" size={24} />
-          </div>
-          <p className="text-slate-600 font-medium text-lg mb-1">
-            Không tìm thấy hồ sơ nào
-          </p>
-          <p className="text-slate-400 text-sm">
-            Thử thay đổi từ khóa hoặc bộ lọc trạng thái xem sao.
-          </p>
+      {/* Danh sách ứng viên */}
+      {isLoading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, idx) => (
+            <div
+              key={idx}
+              className="bg-surface-card border border-border-default rounded-xl p-5 animate-pulse flex flex-col md:flex-row md:items-center justify-between gap-4"
+            >
+              <div className="flex items-center gap-4 flex-1">
+                <div className="w-12 h-12 rounded-full bg-surface-subtle shrink-0" />
+                <div className="space-y-2 flex-1">
+                  <div className="h-4 bg-surface-subtle rounded w-1/3" />
+                  <div className="h-3.5 bg-surface-muted rounded w-1/2" />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <div className="h-9 w-24 bg-surface-muted rounded-lg" />
+                <div className="h-9 w-28 bg-surface-subtle rounded-lg" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : isError ? (
+        <div className="bg-surface-card border border-border-default rounded-xl p-6">
+          <ErrorState
+            title="Không thể tải danh sách ứng viên"
+            message={
+              error instanceof Error
+                ? error.message
+                : "Vui lòng kiểm tra kết nối và thử lại."
+            }
+          />
+        </div>
+      ) : filteredApplications.length === 0 ? (
+        <div className="bg-surface-card border border-border-default rounded-xl p-6">
+          <EmptyState
+            icon={<Users size={28} />}
+            title={
+              applications.length === 0
+                ? "Chưa có hồ sơ ứng tuyển nào"
+                : "Không tìm thấy ứng viên phù hợp bộ lọc"
+            }
+            description={
+              applications.length === 0
+                ? "Khi ứng viên nộp CV vào các tin tuyển dụng của công ty, danh sách hồ sơ sẽ hiển thị tại đây."
+                : "Hãy thử thay đổi từ khóa tìm kiếm hoặc trạng thái lọc."
+            }
+            actionLabel={
+              applications.length === 0 ? "Đăng tin tuyển dụng" : undefined
+            }
+            actionHref={applications.length === 0 ? "/post-job" : undefined}
+          />
         </div>
       ) : (
-        <div className="flex flex-col gap-4">
-          {filteredCandidates.map((application) => (
-            <CandidateCard
-              key={application.applicationId}
-              application={application}
+        <div className="space-y-3">
+          {filteredApplications.map((app) => (
+            <CandidateApplicationCard
+              key={app.applicationId}
+              application={app}
             />
           ))}
         </div>
