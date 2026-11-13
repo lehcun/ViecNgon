@@ -78,5 +78,7 @@ export interface AiMatchResult {
   weaknesses: string[];
   summary: string;
   breakdown?: AiMatchBreakdown;
+  analyzedAt?: string | Date | null;
+  cached?: boolean;
 }
 

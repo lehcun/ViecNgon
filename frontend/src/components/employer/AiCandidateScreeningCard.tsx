@@ -5,22 +5,79 @@ import {
   Sparkles,
   CheckCircle2,
   AlertTriangle,
-  Loader2,
   RefreshCw,
 } from "lucide-react";
-import { useApplicationAiAnalysis } from "@/hooks/employer/useApplicationAiAnalysis";
+import {
+  useApplicationAiAnalysis,
+  useRescanApplicationAi,
+} from "@/hooks/employer/useApplicationAiAnalysis";
 
 interface AiCandidateScreeningCardProps {
   applicationId: string;
 }
 
+const formatAnalyzedAt = (value: string | Date | null | undefined) => {
+  if (!value) return null;
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return null;
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mo = String(d.getMonth() + 1).padStart(2, "0");
+  return `${hh}:${mm} ${dd}/${mo}/${d.getFullYear()}`;
+};
+
+function AiScreeningSkeleton() {
+  return (
+    <div className="space-y-4 animate-pulse">
+      <div className="flex items-center gap-4">
+        <div className="w-16 h-16 rounded-full bg-slate-200 shrink-0" />
+        <div className="flex-1 space-y-2">
+          <div className="h-3.5 bg-slate-200 rounded w-full" />
+          <div className="h-3.5 bg-slate-200 rounded w-5/6" />
+          <div className="h-3.5 bg-slate-200 rounded w-2/3" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+        {Array.from({ length: 4 }).map((_, idx) => (
+          <div key={idx} className="h-12 bg-slate-100 rounded-lg p-2 space-y-2">
+            <div className="h-2.5 bg-slate-200 rounded w-3/4" />
+            <div className="h-1.5 bg-slate-200 rounded w-full" />
+          </div>
+        ))}
+      </div>
+
+      <div className="space-y-2">
+        <div className="h-3.5 bg-slate-200 rounded w-1/3" />
+        <div className="h-3 bg-slate-200 rounded w-full" />
+        <div className="h-3 bg-slate-200 rounded w-5/6" />
+        <div className="h-3 bg-slate-200 rounded w-4/6" />
+      </div>
+
+      <div className="space-y-2">
+        <div className="h-3.5 bg-slate-200 rounded w-2/5" />
+        <div className="h-3 bg-slate-200 rounded w-full" />
+        <div className="h-3 bg-slate-200 rounded w-3/4" />
+      </div>
+    </div>
+  );
+}
+
 export default function AiCandidateScreeningCard({
   applicationId,
 }: AiCandidateScreeningCardProps) {
-  const { data, isLoading, isError, error, refetch, isFetching } =
-    useApplicationAiAnalysis(applicationId, !!applicationId);
+  const { data, isLoading, isError, error } = useApplicationAiAnalysis(
+    applicationId,
+    !!applicationId,
+  );
+  const { mutate: rescan, isPending: isRescanning } =
+    useRescanApplicationAi(applicationId);
 
+  const isBusy = isLoading || isRescanning;
   const score = data?.matchScore ?? 0;
+  const analyzedAtText = formatAnalyzedAt(data?.analyzedAt);
+
   const ringColor =
     score >= 75
       ? "text-emerald-600 border-emerald-200 bg-emerald-50"
@@ -30,9 +87,9 @@ export default function AiCandidateScreeningCard({
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between gap-2 mb-4">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
             <Sparkles size={16} />
           </div>
           <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
@@ -41,29 +98,25 @@ export default function AiCandidateScreeningCard({
         </div>
         <button
           type="button"
-          onClick={() => void refetch()}
-          disabled={isFetching}
-          title="Phân tích lại"
-          className="p-1.5 rounded-lg text-slate-400 hover:text-primary hover:bg-slate-50 transition-colors disabled:opacity-50"
+          onClick={() => rescan()}
+          disabled={isBusy}
+          title="Quét lại điểm phù hợp bằng AI"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-primary bg-slate-50 hover:bg-primary/5 border border-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
         >
-          <RefreshCw size={15} className={isFetching ? "animate-spin" : ""} />
+          <RefreshCw size={13} className={isRescanning ? "animate-spin" : ""} />
+          <span>{isRescanning ? "Đang quét..." : "Quét lại"}</span>
         </button>
       </div>
 
-      {isLoading && (
-        <div className="py-6 flex flex-col items-center justify-center text-slate-500 text-xs gap-2">
-          <Loader2 size={24} className="animate-spin text-primary" />
-          <span>AI đang đánh giá mức độ phù hợp của ứng viên...</span>
-        </div>
-      )}
+      {isBusy && <AiScreeningSkeleton />}
 
-      {isError && (
+      {isError && !isBusy && (
         <div className="p-3 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-xs">
           {error?.message || "Không thể phân tích hồ sơ lúc này."}
         </div>
       )}
 
-      {data && !isLoading && (
+      {data && !isBusy && (
         <div className="space-y-4">
           {/* Điểm tổng quan */}
           <div className="flex items-center gap-4">
@@ -81,6 +134,12 @@ export default function AiCandidateScreeningCard({
               {data.summary}
             </p>
           </div>
+
+          {analyzedAtText && (
+            <p className="text-[11px] text-slate-400">
+              Đã lưu kết quả phân tích • {analyzedAtText}
+            </p>
+          )}
 
           {/* Breakdown 4 tiêu chí */}
           {data.breakdown && (
@@ -138,4 +197,3 @@ export default function AiCandidateScreeningCard({
     </div>
   );
 }
-

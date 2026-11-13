@@ -1,6 +1,7 @@
 import {
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { Schema, Type } from '@google/genai';
@@ -56,6 +57,13 @@ const MATCH_RESPONSE_SCHEMA: Schema = {
 
 @Injectable()
 export class AiMatchService {
+  private readonly logger = new Logger(AiMatchService.name);
+  private readonly previewCache = new Map<
+    string,
+    { data: AiMatchResult; expiresAt: number }
+  >();
+  private readonly previewCacheTtlMs = 15 * 60 * 1000;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly geminiService: GeminiService,
@@ -95,7 +103,29 @@ export class AiMatchService {
       throw new NotFoundException('Không tìm thấy công việc.');
     }
 
-    return this.evaluateMatch(candidate, job);
+    const cacheKey = `${candidate.maUngVien}_${job.maCongViec}`;
+    const cachedEntry = this.previewCache.get(cacheKey);
+    if (cachedEntry && Date.now() < cachedEntry.expiresAt) {
+      return {
+        ...cachedEntry.data,
+        cached: true,
+      };
+    }
+
+    const result = await this.evaluateMatch(candidate, job);
+    const analyzedAt = new Date().toISOString();
+    const resultWithMeta: AiMatchResult = {
+      ...result,
+      analyzedAt,
+      cached: false,
+    };
+
+    this.previewCache.set(cacheKey, {
+      data: resultWithMeta,
+      expiresAt: Date.now() + this.previewCacheTtlMs,
+    });
+
+    return resultWithMeta;
   }
 
   /**
@@ -104,6 +134,7 @@ export class AiMatchService {
   async analyzeApplicationForEmployer(
     userId: string,
     applicationId: string,
+    forceRefresh = false,
   ): Promise<AiMatchResult> {
     const [employer, application] = await Promise.all([
       this.prisma.nhaTuyenDung.findUnique({
@@ -144,7 +175,88 @@ export class AiMatchService {
       );
     }
 
-    return this.evaluateMatch(application.ungVien, application.congViec);
+    if (!forceRefresh && application.aiAnalysisJson) {
+      try {
+        const parsed = JSON.parse(application.aiAnalysisJson) as AiMatchResult;
+        return {
+          ...parsed,
+          matchScore: application.aiMatchScore ?? parsed.matchScore,
+          analyzedAt: application.aiAnalyzedAt,
+          cached: true,
+        };
+      } catch {
+        this.logger.warn(
+          `aiAnalysisJson của đơn ${applicationId} bị lỗi định dạng, tiến hành chấm lại...`,
+        );
+      }
+    }
+
+    const result = await this.evaluateMatch(
+      application.ungVien,
+      application.congViec,
+    );
+    const now = new Date();
+
+    await this.prisma.donXinViec.update({
+      where: { maDon: applicationId },
+      data: {
+        aiMatchScore: result.matchScore,
+        aiAnalysisJson: JSON.stringify(result),
+        aiAnalyzedAt: now,
+      },
+    });
+
+    return {
+      ...result,
+      analyzedAt: now.toISOString(),
+      cached: false,
+    };
+  }
+
+  /**
+   * Chạy ngầm chấm điểm AI ngay sau khi ứng viên nộp đơn, lưu sẵn vào DB cho HR.
+   */
+  async triggerBackgroundAnalysis(applicationId: string): Promise<void> {
+    try {
+      const application = await this.prisma.donXinViec.findUnique({
+        where: { maDon: applicationId },
+        include: {
+          ungVien: {
+            include: {
+              kyNangs: { include: { kyNang: true } },
+              kinhNghiems: { orderBy: { ngayBatDau: 'desc' } },
+              hocVans: { orderBy: { ngayBatDau: 'desc' } },
+              chungChis: { orderBy: { ngayCap: 'desc' } },
+            },
+          },
+          congViec: {
+            include: {
+              congViecKyNangs: { include: { kyNang: true } },
+            },
+          },
+        },
+      });
+
+      if (!application) return;
+
+      const result = await this.evaluateMatch(
+        application.ungVien,
+        application.congViec,
+      );
+
+      await this.prisma.donXinViec.update({
+        where: { maDon: applicationId },
+        data: {
+          aiMatchScore: result.matchScore,
+          aiAnalysisJson: JSON.stringify(result),
+          aiAnalyzedAt: new Date(),
+        },
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Chấm điểm AI ngầm thất bại cho đơn ${applicationId}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
   }
 
   private async evaluateMatch(
@@ -183,16 +295,19 @@ export class AiMatchService {
     const candidateSummary = {
       chuyenMon: candidate.chuyenMon,
       soNamKinhNghiem: candidate.soNamKinhNghiem ?? 0,
-      gioiThieu: this.stripHtml(candidate.gioiThieuBanThan),
+      gioiThieu:
+        this.stripHtml(candidate.gioiThieuBanThan)?.slice(0, 600) ?? null,
       kyNang: candidate.kyNangs.map((k) =>
         k.mucDo ? `${k.kyNang.tenKyNang} (${k.mucDo})` : k.kyNang.tenKyNang,
       ),
-      kinhNghiem: candidate.kinhNghiems.map((e) => ({
+      kinhNghiem: candidate.kinhNghiems.slice(0, 5).map((e) => ({
         congTy: e.tenCongTy,
         viTri: e.viTri,
         tu: e.ngayBatDau.toISOString().slice(0, 7),
-        den: e.ngayKetThuc ? e.ngayKetThuc.toISOString().slice(0, 7) : 'Hiện tại',
-        moTa: this.stripHtml(e.moTaChiTiet)?.slice(0, 500) ?? null,
+        den: e.ngayKetThuc
+          ? e.ngayKetThuc.toISOString().slice(0, 7)
+          : 'Hiện tại',
+        moTa: this.stripHtml(e.moTaChiTiet)?.slice(0, 300) ?? null,
       })),
       hocVan: candidate.hocVans.map((h) => ({
         truong: h.tenTruong,
@@ -209,8 +324,9 @@ export class AiMatchService {
       capBac: job.capBac,
       yeuCauKinhNghiemNam: job.yeuCauKinhNghiem,
       kyNangYeuCau: job.congViecKyNangs.map((k) => k.kyNang.tenKyNang),
-      moTa: this.stripHtml(job.moTa)?.slice(0, 3000) ?? null,
-      yeuCauCongViec: this.stripHtml(job.yeuCauCongViec)?.slice(0, 3000) ?? null,
+      moTa: this.stripHtml(job.moTa)?.slice(0, 1500) ?? null,
+      yeuCauCongViec:
+        this.stripHtml(job.yeuCauCongViec)?.slice(0, 1500) ?? null,
     };
 
     const prompt = `Hãy đánh giá mức độ phù hợp giữa HỒ SƠ ỨNG VIÊN và CÔNG VIỆC dưới đây:
@@ -259,4 +375,3 @@ ${JSON.stringify(jobSummary, null, 2)}`;
     return cleaned || null;
   }
 }
-

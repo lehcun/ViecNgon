@@ -2,12 +2,13 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
+  OnModuleInit,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { GoogleGenAI, Schema } from '@google/genai';
 
 @Injectable()
-export class GeminiService {
+export class GeminiService implements OnModuleInit {
   private readonly logger = new Logger(GeminiService.name);
   private readonly client: GoogleGenAI | null;
   private readonly defaultModel =
@@ -32,6 +33,10 @@ export class GeminiService {
     }
   }
 
+  onModuleInit() {
+    void this.getAvailableFallbackModels();
+  }
+
   /**
    * Gọi Google Gemini với Structured Outputs (JSON Schema),
    * tích hợp retry cho lỗi 429/503 và timeout bảo vệ.
@@ -42,6 +47,7 @@ export class GeminiService {
     responseSchema: Schema;
     model?: string;
     timeoutMs?: number;
+    disableThinking?: boolean;
   }): Promise<T> {
     if (!this.client) {
       throw new ServiceUnavailableException(
@@ -55,6 +61,7 @@ export class GeminiService {
       responseSchema,
       model = this.activeModel || this.defaultModel,
       timeoutMs = 20000,
+      disableThinking = true,
     } = options;
 
     const dynamicFallbacks = await this.getAvailableFallbackModels();
@@ -68,19 +75,14 @@ export class GeminiService {
     for (const currentModel of candidateModels) {
       for (let attempt = 1; attempt <= maxAttemptsPerModel; attempt++) {
         try {
-          const response = await this.withTimeout(
-            this.client.models.generateContent({
-              model: currentModel,
-              contents: prompt,
-              config: {
-                systemInstruction,
-                responseMimeType: 'application/json',
-                responseSchema,
-                temperature: 0.1,
-              },
-            }),
+          const response = await this.callGenerateContent({
+            model: currentModel,
+            prompt,
+            systemInstruction,
+            responseSchema,
             timeoutMs,
-          );
+            disableThinking,
+          });
 
           const rawText = response.text;
           if (!rawText) {
@@ -214,6 +216,73 @@ export class GeminiService {
       message.includes('resource_exhausted') ||
       message.includes('503') ||
       message.includes('timeout')
+    );
+  }
+
+  private async callGenerateContent(params: {
+    model: string;
+    prompt: string;
+    systemInstruction: string;
+    responseSchema: Schema;
+    timeoutMs: number;
+    disableThinking: boolean;
+  }) {
+    const {
+      model,
+      prompt,
+      systemInstruction,
+      responseSchema,
+      timeoutMs,
+      disableThinking,
+    } = params;
+
+    const baseConfig = {
+      systemInstruction,
+      responseMimeType: 'application/json',
+      responseSchema,
+      temperature: 0.1,
+    };
+
+    try {
+      return await this.withTimeout(
+        this.client!.models.generateContent({
+          model,
+          contents: prompt,
+          config: disableThinking
+            ? {
+                ...baseConfig,
+                thinkingConfig: { thinkingBudget: 0 },
+              }
+            : baseConfig,
+        }),
+        timeoutMs,
+      );
+    } catch (error) {
+      if (disableThinking && this.isThinkingConfigUnsupportedError(error)) {
+        this.logger.warn(
+          `Model ${model} không hỗ trợ thinkingConfig, thử gọi lại không kèm thinkingConfig...`,
+        );
+        return await this.withTimeout(
+          this.client!.models.generateContent({
+            model,
+            contents: prompt,
+            config: baseConfig,
+          }),
+          timeoutMs,
+        );
+      }
+      throw error;
+    }
+  }
+
+  private isThinkingConfigUnsupportedError(error: unknown): boolean {
+    if (!error || typeof error !== 'object') return false;
+    const err = error as { status?: number; code?: number; message?: string };
+    const status = err.status ?? err.code;
+    const msg = (err.message ?? '').toLowerCase();
+    return (
+      status === 400 &&
+      (msg.includes('thinkingconfig') || msg.includes('thinkingbudget'))
     );
   }
 

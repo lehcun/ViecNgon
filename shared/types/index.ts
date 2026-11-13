@@ -161,7 +161,11 @@ export interface JobResponse {
   totalPages: number;
 }
 
-export type SearchJobsSortBy = "NEWEST" | "SALARY_DESC" | "MOST_VIEWED" | string;
+export type SearchJobsSortBy =
+  | "NEWEST"
+  | "SALARY_DESC"
+  | "MOST_VIEWED"
+  | string;
 
 export interface SearchJobsQuery {
   keyword?: string;
@@ -639,6 +643,7 @@ export interface ApplicationItem {
   appliedAt: string | Date;
   status: string;
   cvUrl: string | null;
+  aiMatchScore?: number | null;
 }
 
 export interface ApplicationDetailResponse {
@@ -764,4 +769,3 @@ export * from "./company-profile.types";
 export * from "./employer-job.types";
 export * from "./admin-dashboard.types";
 export * from "./ai-cv.types";
-

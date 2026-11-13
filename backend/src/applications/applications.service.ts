@@ -9,6 +9,7 @@ import { ApplicationDetailResponse } from '@viecngon/types';
 import { MailerService } from '@nestjs-modules/mailer';
 import { GoogleCalendarService } from 'src/calender/google-calendar.service';
 import { ScheduleInterviewDto } from './dto/schedule-interview.dto';
+import { AiMatchService } from 'src/ai/ai-match.service';
 
 @Injectable()
 export class ApplicationsService {
@@ -16,7 +17,8 @@ export class ApplicationsService {
     private readonly prisma: PrismaService,
     private readonly mailerService: MailerService,
     private readonly googleCalendarService: GoogleCalendarService,
-  ) { }
+    private readonly aiMatchService: AiMatchService,
+  ) {}
 
   async createApplication(dto: CreateDonXinViecDto, userId: string) {
     const { maCongViec, chiTiet, coverLetter, maCvFile, fileCvUrl } = dto;
@@ -41,7 +43,9 @@ export class ApplicationsService {
     }
 
     if (job.ngayHetHan && new Date(job.ngayHetHan) < new Date()) {
-      throw new BadRequestException('Công việc này đã hết hạn nhận hồ sơ ứng tuyển.');
+      throw new BadRequestException(
+        'Công việc này đã hết hạn nhận hồ sơ ứng tuyển.',
+      );
     }
 
     // 3. Kiểm tra xem Ứng viên này đã từng nộp đơn cho công việc này chưa
@@ -81,6 +85,9 @@ export class ApplicationsService {
         trangThai: 'Chờ xử lý',
       },
     });
+
+    // Chạy ngầm chấm điểm AI ngay khi nộp đơn để HR có sẵn kết quả
+    void this.aiMatchService.triggerBackgroundAnalysis(newApplication.maDon);
 
     return {
       message: 'Nộp đơn xin việc thành công!',
@@ -151,6 +158,7 @@ export class ApplicationsService {
       appliedAt: app.ngayNop,
       status: app.trangThai, // Các trạng thái: CHUA_XEM, PHU_HOP...
       cvUrl: app.fileCvUrl || app.ungVien.cvUrl, // Ưu tiên CV tải lên riêng, nếu không có thì lấy CV gốc
+      aiMatchScore: app.aiMatchScore ?? null,
     }));
   }
 

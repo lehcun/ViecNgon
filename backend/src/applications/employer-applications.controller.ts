@@ -1,4 +1,4 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard, type AuthUser } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
@@ -15,8 +15,12 @@ export class EmployerApplicationsController {
   async getAiAnalysis(
     @Param('id') id: string,
     @CurrentUser() user: AuthUser,
+    @Query('refresh') refresh?: string,
   ) {
-    return await this.aiMatchService.analyzeApplicationForEmployer(user.id, id);
+    return await this.aiMatchService.analyzeApplicationForEmployer(
+      user.id,
+      id,
+      refresh === 'true',
+    );
   }
 }
-
