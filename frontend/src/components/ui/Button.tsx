@@ -46,7 +46,7 @@ export function Button({
       type={type}
       disabled={disabled || isLoading}
       className={cn(
-        "inline-flex items-center justify-center font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed shrink-0",
+        "inline-flex flex-row items-center justify-center whitespace-nowrap font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed shrink-0 [&>svg]:shrink-0",
         VARIANT_CLASSES[variant],
         SIZE_CLASSES[size],
         className,
@@ -54,7 +54,7 @@ export function Button({
       {...props}
     >
       {isLoading && <Loader2 size={16} className="animate-spin shrink-0" />}
-      <span>{isLoading && loadingText ? loadingText : children}</span>
+      {isLoading && loadingText ? <span>{loadingText}</span> : children}
     </button>
   );
 }
