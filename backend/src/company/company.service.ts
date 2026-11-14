@@ -123,7 +123,9 @@ export class CompanyService {
    * để hiển thị tại Banner "Nhà Tuyển Dụng Nổi Bật" đầu trang /jobs
    */
   async getFeaturedBannerEmployers(): Promise<FeaturedEmployerBannerItem[]> {
-    const now = new Date();
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
     const companies = await this.prisma.congTy.findMany({
       where: {
         nhaTuyenDungs: {
@@ -131,7 +133,7 @@ export class CompanyService {
             muaQuangCaos: {
               some: {
                 trangThai: { in: ['Đang chạy', 'DANG_CHAY'] },
-                ngayKetThuc: { gte: now },
+                ngayKetThuc: { gte: startOfToday },
                 goiQuangCao: {
                   capDoUuTien: { gte: 4 },
                 },
@@ -140,6 +142,7 @@ export class CompanyService {
           },
         },
       },
+      orderBy: { maCongTy: 'asc' },
       select: {
         maCongTy: true,
         tenCongTy: true,
@@ -148,6 +151,11 @@ export class CompanyService {
         thanhPho: true,
         chuyenMon: true,
         linhVuc: true,
+        bannerCoverUrl: true,
+        bannerCity: true,
+        bannerTagline: true,
+        bannerBadgeText: true,
+        bannerJobIdsJson: true,
         nhaTuyenDungs: {
           select: {
             _count: {
@@ -164,7 +172,7 @@ export class CompanyService {
                 trangThai: { in: ['Đang tuyển', 'DA_DUYET'] },
               },
               orderBy: [{ doUuTien: 'desc' }, { ngayDang: 'desc' }],
-              take: 3,
+              take: 20,
               select: {
                 maCongViec: true,
                 tenCongViec: true,
@@ -174,29 +182,64 @@ export class CompanyService {
           },
         },
       },
-      take: 4,
     });
 
     return companies.map((company) => {
-      const featuredJobs = company.nhaTuyenDungs
-        .flatMap((hr) => hr.congViecs || [])
-        .map((job) => ({
-          id: job.maCongViec,
-          title: job.tenCongViec,
-          slug: job.slug,
-        }))
-        .slice(0, 3);
+      const uniqueJobsMap = new Map<
+        string,
+        { id: string; title: string; slug: string }
+      >();
+
+      for (const hr of company.nhaTuyenDungs) {
+        for (const job of hr.congViecs || []) {
+          if (!uniqueJobsMap.has(job.maCongViec)) {
+            uniqueJobsMap.set(job.maCongViec, {
+              id: job.maCongViec,
+              title: job.tenCongViec,
+              slug: job.slug,
+            });
+          }
+        }
+      }
+
+      const allActiveJobs = Array.from(uniqueJobsMap.values());
+      let featuredJobs = allActiveJobs.slice(0, 3);
+
+      // Nếu nhà tuyển dụng gói Kim Cương đã cấu hình danh sách job (0..5 job)
+      if (
+        company.bannerJobIdsJson !== null &&
+        company.bannerJobIdsJson !== undefined
+      ) {
+        try {
+          const parsedIds: unknown = JSON.parse(company.bannerJobIdsJson);
+          if (Array.isArray(parsedIds)) {
+            featuredJobs = parsedIds
+              .filter((id): id is string => typeof id === 'string')
+              .map((id) => uniqueJobsMap.get(id))
+              .filter(
+                (item): item is { id: string; title: string; slug: string } =>
+                  Boolean(item),
+              )
+              .slice(0, 5);
+          }
+        } catch {
+          featuredJobs = allActiveJobs.slice(0, 3);
+        }
+      }
 
       return {
         companyId: company.maCongTy,
         companyName: company.tenCongTy,
         slug: company.slug,
         logo: company.logoUrl,
-        city: company.thanhPho,
+        city: company.bannerCity?.trim() || company.thanhPho,
         tagline:
+          this.stripHtml(company.bannerTagline) ||
           this.stripHtml(company.linhVuc) ||
           this.stripHtml(company.chuyenMon) ||
           'Doanh nghiệp công nghệ nổi bật đang mở tuyển kỹ sư IT',
+        bannerCoverUrl: company.bannerCoverUrl || null,
+        bannerBadgeText: company.bannerBadgeText?.trim() || 'TOP HIRING',
         activeJobsCount: company.nhaTuyenDungs.reduce(
           (sum, hr) => sum + (hr._count?.congViecs ?? 0),
           0,

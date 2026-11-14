@@ -1,5 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { v2 as cloudinary } from 'cloudinary';
+
+export interface UploadedBinaryFile {
+  buffer: Buffer;
+  mimetype: string;
+  size?: number;
+  originalname?: string;
+}
 
 @Injectable()
 export class CloudinaryService {
@@ -32,6 +39,50 @@ export class CloudinaryService {
     } catch (error) {
       console.error('Lỗi khi upload lên Cloudinary:', error);
       throw new Error('Upload file lên Cloud thất bại!');
+    }
+  }
+
+  /**
+   * Upload ảnh lên thư mục tùy chọn trên Cloudinary (Banner Spotlight, Logo...)
+   */
+  async uploadImage(
+    file: UploadedBinaryFile,
+    folder = 'viecngon_banners',
+  ): Promise<string> {
+    const allowedMimeTypes = new Set([
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+      'image/gif',
+    ]);
+
+    if (!file || !file.buffer) {
+      throw new BadRequestException('Không tìm thấy tệp hình ảnh hợp lệ');
+    }
+
+    if (!allowedMimeTypes.has(file.mimetype)) {
+      throw new BadRequestException(
+        'Chỉ hỗ trợ ảnh định dạng JPG, PNG, WEBP hoặc GIF',
+      );
+    }
+
+    if ((file.size ?? file.buffer.length) > 5 * 1024 * 1024) {
+      throw new BadRequestException('Dung lượng ảnh tối đa là 5MB');
+    }
+
+    try {
+      const b64 = Buffer.from(file.buffer).toString('base64');
+      const dataURI = `data:${file.mimetype};base64,${b64}`;
+
+      const result = await cloudinary.uploader.upload(dataURI, {
+        folder,
+        resource_type: 'image',
+      });
+
+      return result.secure_url;
+    } catch (error) {
+      console.error('Lỗi khi upload ảnh lên Cloudinary:', error);
+      throw new Error('Upload ảnh lên Cloud thất bại!');
     }
   }
 }

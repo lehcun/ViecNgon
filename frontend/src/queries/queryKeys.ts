@@ -65,3 +65,8 @@ export const packageKeys = {
   myCampaigns: () => ["my-campaigns"] as const,
 };
 
+export const recruiterKeys = {
+  all: ["recruiter"] as const,
+  spotlightBanner: () => [...recruiterKeys.all, "spotlight-banner"] as const,
+};
+

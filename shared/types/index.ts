@@ -751,12 +751,47 @@ export interface FeaturedEmployerBannerItem {
   logo: string | null;
   city?: string | null;
   tagline: string;
+  bannerCoverUrl?: string | null;
+  bannerBadgeText?: string | null;
   activeJobsCount: number;
   featuredJobs?: FeaturedEmployerBannerJob[];
 }
 
+export interface SpotlightBannerJobOption {
+  id: string;
+  title: string;
+  slug: string;
+  city?: string | null;
+}
+
+export interface SpotlightBannerConfigResponse {
+  hasDiamondAccess: boolean;
+  companyId: string;
+  companyName: string;
+  slug: string;
+  logo: string | null;
+  defaultCity: string | null;
+  defaultTagline: string;
+  bannerCoverUrl: string | null;
+  bannerCity: string;
+  bannerTagline: string;
+  bannerBadgeText: string;
+  selectedJobIds: string[];
+  availableJobs: SpotlightBannerJobOption[];
+  activeJobsCount: number;
+}
+
+export interface UpdateSpotlightBannerPayload {
+  bannerCoverUrl?: string | null;
+  bannerCity?: string | null;
+  bannerTagline?: string | null;
+  bannerBadgeText?: string | null;
+  selectedJobIds?: string[];
+}
+
 export interface CampaignResponse {
   id: string;
+  maMua?: string;
   tieuDe: string;
   tenGoi: string;
   giaTaiThoiDiemMua: number;
@@ -764,6 +799,8 @@ export interface CampaignResponse {
   ngayMua: string;
   ngayKetThuc: string;
   trangThai: CampaignStatus;
+  priorityLevel?: number;
+  badgeType?: string | null;
 }
 
 // =====================================================================

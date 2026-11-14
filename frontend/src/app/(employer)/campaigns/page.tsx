@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import {
   ShoppingCart,
@@ -10,10 +10,12 @@ import {
   PlusCircle,
   CreditCard,
   RefreshCcw,
+  SlidersHorizontal,
 } from "lucide-react";
 import { useCampaigns } from "@/hooks/recruiter/useCampaigns";
 import { CampaignStatus } from "@viecngon/types";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import SpotlightBannerModal from "@/components/employer/SpotlightBannerModal";
 import {
   EmptyState,
   ErrorState,
@@ -60,6 +62,7 @@ function normalizeCampaignStatus(
 
 export default function CampaignsPage() {
   const { campaigns, isLoading, isError, refetch } = useCampaigns();
+  const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
 
   const normalizedCampaigns = campaigns.map((c) => ({
     ...c,
@@ -283,43 +286,58 @@ export default function CampaignsPage() {
                         </td>
 
                         <td className="px-6 py-4 whitespace-nowrap text-right">
-                          {c.normalizedStatus === "DANG_CHAY" &&
-                            remaining > 0 && (
-                              <Link
-                                href="/post-job"
-                                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-primary-light hover:bg-primary/15 text-primary font-semibold rounded-lg text-xs transition-colors border border-primary/20"
-                              >
-                                <PlusCircle size={15} /> Đăng tin
-                              </Link>
-                            )}
+                          <div className="inline-flex items-center justify-end gap-2">
+                            {c.normalizedStatus === "DANG_CHAY" &&
+                              ((c.priorityLevel ?? 0) >= 4 ||
+                                c.tenGoi.toLowerCase().includes("kim cương") ||
+                                c.badgeType === "DIAMOND") && (
+                                <button
+                                  type="button"
+                                  onClick={() => setIsBannerModalOpen(true)}
+                                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-warning-bg hover:bg-warning-light text-warning-text font-semibold rounded-lg text-xs transition-colors border border-warning-border"
+                                >
+                                  <SlidersHorizontal size={14} /> Tùy chỉnh Banner
+                                </button>
+                              )}
 
-                          {c.normalizedStatus === "DANG_CHAY" &&
-                            remaining === 0 && (
+                            {c.normalizedStatus === "DANG_CHAY" &&
+                              remaining > 0 && (
+                                <Link
+                                  href="/post-job"
+                                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-primary-light hover:bg-primary/15 text-primary font-semibold rounded-lg text-xs transition-colors border border-primary/20"
+                                >
+                                  <PlusCircle size={15} /> Đăng tin
+                                </Link>
+                              )}
+
+                            {c.normalizedStatus === "DANG_CHAY" &&
+                              remaining === 0 && (
+                                <Link
+                                  href="/pricing"
+                                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-surface-card hover:bg-surface-muted text-text-primary font-semibold rounded-lg text-xs transition-colors border border-border-default"
+                                >
+                                  <ShoppingCart size={14} /> Mua thêm
+                                </Link>
+                              )}
+
+                            {c.normalizedStatus === "DA_KET_THUC" && (
                               <Link
                                 href="/pricing"
                                 className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-surface-card hover:bg-surface-muted text-text-primary font-semibold rounded-lg text-xs transition-colors border border-border-default"
                               >
-                                <ShoppingCart size={14} /> Mua thêm
+                                <RefreshCcw size={14} /> Gia hạn
                               </Link>
                             )}
 
-                          {c.normalizedStatus === "DA_KET_THUC" && (
-                            <Link
-                              href="/pricing"
-                              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-surface-card hover:bg-surface-muted text-text-primary font-semibold rounded-lg text-xs transition-colors border border-border-default"
-                            >
-                              <RefreshCcw size={14} /> Gia hạn
-                            </Link>
-                          )}
-
-                          {c.normalizedStatus === "CHO_THANH_TOAN" && (
-                            <Link
-                              href="/pricing"
-                              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-warning text-white font-semibold rounded-lg text-xs transition-colors hover:opacity-90"
-                            >
-                              <CreditCard size={14} /> Thanh toán
-                            </Link>
-                          )}
+                            {c.normalizedStatus === "CHO_THANH_TOAN" && (
+                              <Link
+                                href="/pricing"
+                                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-warning text-white font-semibold rounded-lg text-xs transition-colors hover:opacity-90"
+                              >
+                                <CreditCard size={14} /> Thanh toán
+                              </Link>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
@@ -330,6 +348,11 @@ export default function CampaignsPage() {
           </div>
         )}
       </div>
+
+      <SpotlightBannerModal
+        isOpen={isBannerModalOpen}
+        onClose={() => setIsBannerModalOpen(false)}
+      />
     </div>
   );
 }

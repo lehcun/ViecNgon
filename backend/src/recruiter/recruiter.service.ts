@@ -1,11 +1,27 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateRecruiterDto } from './dto/update-recruiter.dto';
-import { RecruiterJobMetricsResponse } from '@viecngon/types';
+import { UpdateSpotlightBannerDto } from './dto/update-spotlight-banner.dto';
+import {
+  RecruiterJobMetricsResponse,
+  SpotlightBannerConfigResponse,
+} from '@viecngon/types';
+import {
+  CloudinaryService,
+  type UploadedBinaryFile,
+} from 'src/cloudinary/cloudinary.service';
 
 @Injectable()
 export class RecruiterService {
-  constructor(private prisma: PrismaService) { }
+  constructor(
+    private prisma: PrismaService,
+    private cloudinaryService: CloudinaryService,
+  ) {}
 
   // 1. Lấy hồ sơ nhà tuyển dụng (Gộp cả thông tin công ty)
   async getProfile(userId: string) {
@@ -301,5 +317,229 @@ export class RecruiterService {
       },
       averageResponseRate: 94.2, // Tỷ lệ phản hồi trung bình (%)
     };
+  }
+
+  private stripHtmlText(value?: string | null): string {
+    if (!value) return '';
+    return value
+      .replace(/<\/(li|p|div|br|h[1-6])>/gi, ' ')
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&amp;/gi, '&')
+      .replace(/&lt;/gi, '<')
+      .replace(/&gt;/gi, '>')
+      .replace(/&quot;/gi, '"')
+      .replace(/&#39;/gi, "'")
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  private async getRecruiterCompanyAndDiamondAccess(userId: string) {
+    const recruiter = await this.prisma.nhaTuyenDung.findUnique({
+      where: { maTaiKhoan: userId },
+      include: { congTy: true },
+    });
+
+    if (!recruiter) {
+      throw new NotFoundException('Không tìm thấy thông tin nhà tuyển dụng.');
+    }
+
+    if (!recruiter.maCongTy || !recruiter.congTy) {
+      throw new BadRequestException(
+        'Tài khoản chưa liên kết thông tin công ty.',
+      );
+    }
+
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const activeDiamond = await this.prisma.muaQuangCao.findFirst({
+      where: {
+        nhaTuyenDung: { maCongTy: recruiter.maCongTy },
+        trangThai: { in: ['Đang chạy', 'DANG_CHAY'] },
+        ngayKetThuc: { gte: startOfToday },
+        goiQuangCao: {
+          capDoUuTien: { gte: 4 },
+        },
+      },
+      select: { maMua: true },
+    });
+
+    return {
+      recruiter,
+      company: recruiter.congTy,
+      hasDiamondAccess: Boolean(activeDiamond),
+    };
+  }
+
+  async getSpotlightBannerConfig(
+    userId: string,
+  ): Promise<SpotlightBannerConfigResponse> {
+    const { company, hasDiamondAccess } =
+      await this.getRecruiterCompanyAndDiamondAccess(userId);
+
+    const activeJobs = await this.prisma.congViec.findMany({
+      where: {
+        nhaTuyenDung: { maCongTy: company.maCongTy },
+        trangThai: { in: ['Đang tuyển', 'DA_DUYET'] },
+      },
+      orderBy: [{ doUuTien: 'desc' }, { ngayDang: 'desc' }],
+      select: {
+        maCongViec: true,
+        tenCongViec: true,
+        slug: true,
+        thanhPho: true,
+      },
+    });
+
+    const availableJobs = activeJobs.map((job) => ({
+      id: job.maCongViec,
+      title: job.tenCongViec,
+      slug: job.slug,
+      city: job.thanhPho,
+    }));
+
+    const availableIdSet = new Set(availableJobs.map((j) => j.id));
+    let selectedJobIds = availableJobs.slice(0, 3).map((j) => j.id);
+
+    if (
+      company.bannerJobIdsJson !== null &&
+      company.bannerJobIdsJson !== undefined
+    ) {
+      try {
+        const parsed: unknown = JSON.parse(company.bannerJobIdsJson);
+        if (Array.isArray(parsed)) {
+          selectedJobIds = parsed
+            .filter(
+              (id): id is string =>
+                typeof id === 'string' && availableIdSet.has(id),
+            )
+            .slice(0, 5);
+        }
+      } catch {
+        selectedJobIds = availableJobs.slice(0, 3).map((j) => j.id);
+      }
+    }
+
+    const defaultTagline =
+      this.stripHtmlText(company.linhVuc) ||
+      this.stripHtmlText(company.chuyenMon) ||
+      'Doanh nghiệp công nghệ nổi bật đang mở tuyển kỹ sư IT';
+
+    return {
+      hasDiamondAccess,
+      companyId: company.maCongTy,
+      companyName: company.tenCongTy,
+      slug: company.slug,
+      logo: company.logoUrl,
+      defaultCity: company.thanhPho,
+      defaultTagline,
+      bannerCoverUrl: company.bannerCoverUrl || null,
+      bannerCity: company.bannerCity || company.thanhPho || '',
+      bannerTagline: company.bannerTagline || defaultTagline,
+      bannerBadgeText: company.bannerBadgeText || 'TOP HIRING',
+      selectedJobIds,
+      availableJobs,
+      activeJobsCount: availableJobs.length,
+    };
+  }
+
+  async updateSpotlightBanner(
+    userId: string,
+    dto: UpdateSpotlightBannerDto,
+  ): Promise<SpotlightBannerConfigResponse> {
+    const { company, hasDiamondAccess } =
+      await this.getRecruiterCompanyAndDiamondAccess(userId);
+
+    if (!hasDiamondAccess) {
+      throw new ForbiddenException(
+        'Chỉ doanh nghiệp đang sử dụng Gói Kim Cương mới được tùy chỉnh Banner Nhà Tuyển Dụng Nổi Bật.',
+      );
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      const updateData: {
+        bannerCoverUrl?: string | null;
+        bannerCity?: string | null;
+        bannerTagline?: string | null;
+        bannerBadgeText?: string | null;
+        bannerJobIdsJson?: string | null;
+      } = {};
+
+      if (dto.bannerCoverUrl !== undefined) {
+        const cleanUrl = dto.bannerCoverUrl?.trim() || null;
+        updateData.bannerCoverUrl = cleanUrl ? cleanUrl.slice(0, 255) : null;
+      }
+
+      if (dto.bannerCity !== undefined) {
+        const cleanCity = dto.bannerCity?.trim() || null;
+        updateData.bannerCity = cleanCity ? cleanCity.slice(0, 100) : null;
+      }
+
+      if (dto.bannerTagline !== undefined) {
+        const cleanTagline = this.stripHtmlText(dto.bannerTagline);
+        updateData.bannerTagline = cleanTagline
+          ? cleanTagline.slice(0, 200)
+          : null;
+      }
+
+      if (dto.bannerBadgeText !== undefined) {
+        const cleanBadge = this.stripHtmlText(dto.bannerBadgeText);
+        updateData.bannerBadgeText = cleanBadge
+          ? cleanBadge.slice(0, 40)
+          : null;
+      }
+
+      if (dto.selectedJobIds !== undefined) {
+        const dedupedIds = Array.from(
+          new Set(
+            dto.selectedJobIds
+              .map((id) => (typeof id === 'string' ? id.trim() : ''))
+              .filter(Boolean),
+          ),
+        ).slice(0, 5);
+
+        if (dedupedIds.length === 0) {
+          updateData.bannerJobIdsJson = JSON.stringify([]);
+        } else {
+          const ownedJobs = await tx.congViec.findMany({
+            where: {
+              maCongViec: { in: dedupedIds },
+              nhaTuyenDung: { maCongTy: company.maCongTy },
+              trangThai: { in: ['Đang tuyển', 'DA_DUYET'] },
+            },
+            select: { maCongViec: true },
+          });
+
+          const ownedSet = new Set(ownedJobs.map((j) => j.maCongViec));
+          const orderedValidIds = dedupedIds.filter((id) => ownedSet.has(id));
+          updateData.bannerJobIdsJson = JSON.stringify(orderedValidIds);
+        }
+      }
+
+      await tx.congTy.update({
+        where: { maCongTy: company.maCongTy },
+        data: updateData,
+      });
+    });
+
+    return this.getSpotlightBannerConfig(userId);
+  }
+
+  async uploadSpotlightBannerCover(userId: string, file: UploadedBinaryFile) {
+    const { hasDiamondAccess } =
+      await this.getRecruiterCompanyAndDiamondAccess(userId);
+
+    if (!hasDiamondAccess) {
+      throw new ForbiddenException(
+        'Chỉ doanh nghiệp đang sử dụng Gói Kim Cương mới được tải ảnh Banner.',
+      );
+    }
+
+    const url = await this.cloudinaryService.uploadImage(
+      file,
+      'viecngon_banners',
+    );
+    return { url };
   }
 }

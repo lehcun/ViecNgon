@@ -167,6 +167,13 @@ model CongTy {
   chinhSachOT     String? @db.NVarChar(150) // Thêm lương OT
   giaiThuong      String? @db.NVarChar(255) // Công ty IT tốt nhất VN...
 
+  // Cấu hình tùy chỉnh Banner Nhà Tuyển Dụng Nổi Bật (Gói Kim Cương)
+  bannerCoverUrl   String? @db.VarChar(255)
+  bannerCity       String? @db.NVarChar(100)
+  bannerTagline    String? @db.NVarChar(200)
+  bannerBadgeText  String? @db.NVarChar(40)
+  bannerJobIdsJson String? @db.NVarChar(Max)
+
   // Quan hệ
   nhaTuyenDungs NhaTuyenDung[]
   baiViets      BaiViet[] // Nối với tab Bài viết
