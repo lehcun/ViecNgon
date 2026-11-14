@@ -5,3 +5,7 @@ dist/
 *.log
 .agents/skills/
 AGENTS.md
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/

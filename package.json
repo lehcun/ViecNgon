@@ -12,7 +12,9 @@
   "scripts": {
     "dev:backend": "npm run start:dev --workspace=backend",
     "dev:frontend": "npm run dev --workspace=frontend --turbopack",
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\""
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "test:e2e": "npm run test:e2e --workspace=frontend",
+    "test:e2e:ui": "npm run test:e2e:ui --workspace=frontend"
   },
   "keywords": [],
   "author": "",
