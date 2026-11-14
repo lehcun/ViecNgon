@@ -34,6 +34,7 @@ export const companyKeys = {
   // Danh sách công ty (Top IT companies...)
   lists: () => [...companyKeys.all, "list"],
   list: (filters: JobFilterParams) => [...companyKeys.lists(), { filters }],
+  featuredBanners: () => [...companyKeys.all, "featured-banners"] as const,
 
   // Chi tiết hồ sơ công ty
   details: () => [...companyKeys.all, "detail"],
@@ -56,5 +57,11 @@ export const adminDashboardKeys = {
     [...adminDashboardKeys.all, "recent-transactions"] as const,
   revenueBreakdown: () =>
     [...adminDashboardKeys.all, "revenue-breakdown"] as const,
+};
+
+// --- QUẢN LÝ GÓI DỊCH VỤ TUYỂN DỤNG ---
+export const packageKeys = {
+  all: ["packages"] as const,
+  myCampaigns: () => ["my-campaigns"] as const,
 };
 

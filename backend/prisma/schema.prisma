@@ -241,11 +241,14 @@ model CongViec {
   hinhThucLamViec String? @db.NVarChar(50) // BỔ SUNG: Remote, Tại văn phòng, Hybrid
 
   // --- KHỐI THỜI GIAN & THỐNG KÊ ---
-  ngayDang    DateTime
-  ngayHetHan  DateTime?
-  ngayCapNhat DateTime  @default(now()) @updatedAt // BỔ SUNG: Thời gian HR cập nhật tin lần cuối
-  luotXem     Int       @default(0) // BỔ SUNG: Đếm số lượt ứng viên click vào tin
-  trangThai   String    @db.VarChar(20)
+  ngayDang        DateTime
+  ngayHetHan      DateTime?
+  ngayCapNhat     DateTime  @default(now()) @updatedAt // BỔ SUNG: Thời gian HR cập nhật tin lần cuối
+  lastRefreshedAt DateTime? // BỔ SUNG: Mốc đẩy tin định kỳ (Auto Refresh gói VIP/Kim Cương)
+  luotXem         Int       @default(0) // BỔ SUNG: Đếm số lượt ứng viên click vào tin
+  trangThai       String    @db.VarChar(20)
+  doUuTien        Int       @default(0) // 4: Kim Cương, 3: VIP, 2: Tiêu Chuẩn, 1: Cơ Bản, 0: Thường
+  nhanQuangCao    String?   @db.VarChar(30) // DIAMOND | SUPER_HOT | HOT | BASIC | HEADHUNT
 
   // --- KHÓA NGOẠI & QUAN HỆ ---
   maNTD        String       @db.VarChar(50)
@@ -364,6 +367,10 @@ model GoiQuangCao {
   gia             Decimal  @db.Decimal(18, 0)
   thoiGianHieuLuc Int?
   soLuotDangTin   Int?
+  capDoUuTien     Int      @default(1) // 1: Cơ Bản, 2: Tiêu Chuẩn, 3: VIP Đẩy Tin, 4: Kim Cương
+  loaiHuyHieu     String?  @db.VarChar(30) // BASIC | HOT | SUPER_HOT | DIAMOND
+  moTaNgan        String?  @db.NVarChar(255)
+  quyenLoiJson    String?  @db.NVarChar(Max)
   ngayTao         DateTime
 
   // Quan hệ

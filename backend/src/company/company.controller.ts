@@ -14,6 +14,11 @@ export class CompanyController {
     return await this.companyService.getCompaniesWithJobCount();
   }
 
+  @Get('featured-banners')
+  async getFeaturedBanners() {
+    return await this.companyService.getFeaturedBannerEmployers();
+  }
+
   @Get(':slug')
   async getCompanyDetail(@Param('slug') slug: string) {
     if (!slug) {

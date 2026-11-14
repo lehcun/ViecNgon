@@ -22,6 +22,10 @@ import {
   JobWithRelations,
 } from '@viecngon/types';
 import { formatSalaryDisplay } from 'src/common/utils/format-salary';
+import {
+  extractJobHighlights,
+  normalizePromotionBadge,
+} from 'src/common/utils/package-tiers.util';
 
 @Injectable()
 export class JobService {
@@ -82,22 +86,70 @@ export class JobService {
       }
     }
 
-    // 4. Lưu vào Database
-    return this.prisma.congViec.create({
-      data: {
-        ...jobData,
-        slug: uniqueSlug,
-        moTa: cleanMoTa,
-        yeuCauCongViec: cleanYeuCau,
-        phucLoi: cleanPhucLoi,
-        maChiNhanh: validatedChiNhanhId,
-        maNTD: nhaTuyenDung.maNTD,
-        congViecKyNangs: {
-          create: kyNangs.map((id) => ({
-            maKyNang: id,
-          })),
+    // 4. Lưu vào Database (kết hợp kiểm tra gói quảng cáo đang chạy để gắn cấp ưu tiên & trừ 1 lượt)
+    const now = new Date();
+    return this.prisma.$transaction(async (tx) => {
+      const activeCampaign = await tx.muaQuangCao.findFirst({
+        where: {
+          nhaTuyenDung: { maCongTy: nhaTuyenDung.maCongTy },
+          trangThai: { in: ['Đang chạy', 'DANG_CHAY'] },
+          ngayKetThuc: { gte: now },
+          soLuotConLai: { gt: 0 },
         },
-      },
+        include: { goiQuangCao: true },
+        orderBy: [
+          { goiQuangCao: { capDoUuTien: 'desc' } },
+          { ngayMua: 'asc' },
+        ],
+      });
+
+      let priorityLevel = 0;
+      let promotionBadge: string | null = null;
+      let computedDeadline = jobData.ngayHetHan;
+
+      if (activeCampaign) {
+        priorityLevel = activeCampaign.goiQuangCao.capDoUuTien ?? 1;
+        promotionBadge =
+          activeCampaign.goiQuangCao.loaiHuyHieu ||
+          normalizePromotionBadge(
+            activeCampaign.goiQuangCao.loaiQuangCao,
+            priorityLevel,
+          );
+
+        if (!computedDeadline && activeCampaign.goiQuangCao.thoiGianHieuLuc) {
+          const autoExpire = new Date(now);
+          autoExpire.setDate(
+            autoExpire.getDate() + activeCampaign.goiQuangCao.thoiGianHieuLuc,
+          );
+          computedDeadline = autoExpire.toISOString();
+        }
+
+        await tx.muaQuangCao.update({
+          where: { maMua: activeCampaign.maMua },
+          data: { soLuotConLai: { decrement: 1 } },
+        });
+      }
+
+      return tx.congViec.create({
+        data: {
+          ...jobData,
+          ngayHetHan: computedDeadline,
+          lastRefreshedAt: now,
+          doUuTien: priorityLevel,
+          nhanQuangCao: promotionBadge ? promotionBadge.slice(0, 30) : null,
+          slug: uniqueSlug,
+          moTa: cleanMoTa,
+          yeuCauCongViec: cleanYeuCau,
+          phucLoi: cleanPhucLoi,
+          maChiNhanh: validatedChiNhanhId,
+          maNTD: nhaTuyenDung.maNTD,
+          congViecKyNangs: {
+            create: kyNangs.map((id) => ({
+              maKyNang: id,
+            })),
+          },
+        },
+      });
     });
   }
 
@@ -375,14 +427,24 @@ export class JobService {
       AND: andConditions,
     };
 
-    // Sắp xếp
-    let orderBy: Prisma.CongViecOrderByWithRelationInput = {
-      ngayDang: 'desc',
-    };
+    // Sắp xếp: luôn ưu tiên cấp độ gói cao nhất (Kim Cương -> VIP -> Tiêu Chuẩn -> Cơ Bản -> Thường)
+    let orderBy: Prisma.CongViecOrderByWithRelationInput[] = [
+      { doUuTien: 'desc' },
+      { lastRefreshedAt: 'desc' },
+      { ngayDang: 'desc' },
+    ];
     if (sortBy === JobSortBy.SALARY_DESC) {
-      orderBy = { mucLuongToiDa: 'desc' };
+      orderBy = [
+        { doUuTien: 'desc' },
+        { mucLuongToiDa: 'desc' },
+        { ngayDang: 'desc' },
+      ];
     } else if (sortBy === JobSortBy.MOST_VIEWED) {
-      orderBy = { luotXem: 'desc' };
+      orderBy = [
+        { doUuTien: 'desc' },
+        { luotXem: 'desc' },
+        { ngayDang: 'desc' },
+      ];
     }
 
     // Bước 2: Query database
@@ -608,6 +670,10 @@ export class JobService {
         : null,
       isApplied: applicationInfo?.isApplied ?? false,
       applicationStatus: applicationInfo?.status ?? null,
+      priorityLevel: job.doUuTien ?? 0,
+      promotionBadge: normalizePromotionBadge(job.nhanQuangCao, job.doUuTien),
+      highlights:
+        (job.doUuTien ?? 0) >= 3 ? extractJobHighlights(job.phucLoi, 3) : [],
       company: {
         id: company.maCongTy,
         name: company.tenCongTy,

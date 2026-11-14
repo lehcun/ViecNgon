@@ -180,7 +180,8 @@ async function main(): Promise<void> {
         'https://res.cloudinary.com/dbvlsf9bi/image/upload/v1776325179/vng_st3yi1.jpg',
       website: 'https://vng.com.vn',
       thanhPho: 'TP.HCM',
-      diaChi: 'VNG Campus, Z06 Đường số 13, Khu chế xuất Tân Thuận, Quận 7, TP.HCM',
+      diaChi:
+        'VNG Campus, Z06 Đường số 13, Khu chế xuất Tân Thuận, Quận 7, TP.HCM',
       moHinhCongTy: 'Product',
       linhVuc: 'Hệ sinh thái Internet, FinTech & Cloud',
       quyMo: '1000-5000 nhân viên',
@@ -224,7 +225,8 @@ async function main(): Promise<void> {
         'https://cdn.haitrieu.com/wp-content/uploads/2022/10/Logo-MoMo-Square.png',
       website: 'https://momo.vn',
       thanhPho: 'TP.HCM',
-      diaChi: 'Tòa nhà Phú Mỹ Hưng, Số 8 Hoàng Văn Thái, Tân Phú, Quận 7, TP.HCM',
+      diaChi:
+        'Tòa nhà Phú Mỹ Hưng, Số 8 Hoàng Văn Thái, Tân Phú, Quận 7, TP.HCM',
       moHinhCongTy: 'Product',
       linhVuc: 'FinTech / Siêu ứng dụng Tài chính',
       quyMo: '1000-5000 nhân viên',
@@ -274,7 +276,8 @@ async function main(): Promise<void> {
       quyMo: '1000-5000 nhân viên',
       quocGia: 'Singapore',
       thoiGianLamViec: 'Thứ 2 - Thứ 6 (09:00 - 18:00)',
-      chinhSachOT: 'Thanh toán lương OT theo quy định hoặc nghỉ bù chiến dịch Mega Sale',
+      chinhSachOT:
+        'Thanh toán lương OT theo quy định hoặc nghỉ bù chiến dịch Mega Sale',
       giaiThuong: 'Nền tảng Thương mại điện tử được yêu thích nhất Việt Nam',
       moTa: '<p><strong>Shopee Vietnam</strong> thuộc tập đoàn Sea, là nền tảng thương mại điện tử hàng đầu Đông Nam Á với lưu lượng truy cập bùng nổ vào các ngày Mega Campaign.</p>',
       aboutMe:
@@ -319,7 +322,8 @@ async function main(): Promise<void> {
       quocGia: 'Úc (Australia)',
       thoiGianLamViec: 'Thứ 2 - Thứ 6 (Hybrid chuẩn quốc tế)',
       chinhSachOT: 'Văn hóa tôn trọng Work-Life Balance, hầu như không OT',
-      giaiThuong: 'Top 5 Công ty IT tốt nhất Việt Nam (ITviec Best IT Companies)',
+      giaiThuong:
+        'Top 5 Công ty IT tốt nhất Việt Nam (ITviec Best IT Companies)',
       moTa: '<p><strong>NAB Innovation Centre Vietnam</strong> là trung tâm công nghệ chiến lược trực thuộc Ngân hàng Quốc gia Úc (NAB), xây dựng nền tảng Digital Banking hiện đại phục vụ hàng triệu khách hàng tại Úc.</p>',
       aboutMe:
         '<p>Chúng tôi áp dụng 100% quy trình Agile/Scrum, Engineering Excellence và kiến trúc Cloud-Native trên AWS với môi trường giao tiếp tiếng Anh chuyên nghiệp.</p>',
@@ -362,7 +366,8 @@ async function main(): Promise<void> {
       quyMo: '1000-5000 nhân viên',
       quocGia: 'Việt Nam',
       thoiGianLamViec: 'Thứ 2 - Thứ 6 (08:00 - 17:30)',
-      chinhSachOT: 'Theo quy định tập đoàn và phụ cấp triển khai dự án trọng điểm',
+      chinhSachOT:
+        'Theo quy định tập đoàn và phụ cấp triển khai dự án trọng điểm',
       giaiThuong: 'Doanh nghiệp Chuyển đổi số xuất sắc Quốc gia',
       moTa: '<p><strong>Viettel Solutions</strong> là đơn vị tiên phong kiến tạo Chính phủ số, Thành phố thông minh, Y tế số và nền tảng Viettel Cloud Make-in-Vietnam.</p>',
       aboutMe:
@@ -560,6 +565,8 @@ async function main(): Promise<void> {
     ngayDang: Date;
     luotXem: number;
     trangThai: string;
+    doUuTien?: number;
+    nhanQuangCao?: string | null;
     maNTD: string;
     maChiNhanh: string | null;
     skills: string[];
@@ -570,6 +577,7 @@ async function main(): Promise<void> {
     return prisma.congViec.create({
       data: {
         ...jobFields,
+        lastRefreshedAt: jobFields.ngayDang,
         ngayHetHan: nextMonth,
         congViecKyNangs: {
           create: skills.map((skillName) => ({
@@ -599,6 +607,8 @@ async function main(): Promise<void> {
     ngayDang: daysAgo(1),
     luotXem: 842,
     trangThai: 'Đang tuyển',
+    doUuTien: 2,
+    nhanQuangCao: 'HOT',
     maNTD: hrMomoCuong.maNTD,
     maChiNhanh: ctyMomo.chiNhanhs[0].maChiNhanh,
     skills: ['ReactJS', 'Next.js', 'TypeScript', 'Tailwind CSS', 'Git'],
@@ -669,6 +679,8 @@ async function main(): Promise<void> {
     ngayDang: daysAgo(2),
     luotXem: 530,
     trangThai: 'Đang tuyển',
+    doUuTien: 4,
+    nhanQuangCao: 'DIAMOND',
     maNTD: hrFPT.maNTD,
     maChiNhanh: ctyFPT.chiNhanhs[0].maChiNhanh,
     skills: ['Java', 'Spring Boot', 'PostgreSQL', 'Docker', 'AWS'],
@@ -692,6 +704,8 @@ async function main(): Promise<void> {
     ngayDang: daysAgo(3),
     luotXem: 412,
     trangThai: 'Đang tuyển',
+    doUuTien: 4,
+    nhanQuangCao: 'DIAMOND',
     maNTD: hrFPT.maNTD,
     maChiNhanh: ctyFPT.chiNhanhs[1].maChiNhanh,
     skills: ['Manual Testing', 'Automation Test', 'Agile/Scrum', 'Git'],
@@ -739,6 +753,8 @@ async function main(): Promise<void> {
     ngayDang: daysAgo(1),
     luotXem: 688,
     trangThai: 'Đang tuyển',
+    doUuTien: 3,
+    nhanQuangCao: 'SUPER_HOT',
     maNTD: hrVNG.maNTD,
     maChiNhanh: ctyVNG.chiNhanhs[0].maChiNhanh,
     skills: ['Golang', 'Redis', 'PostgreSQL', 'Docker', 'Kubernetes'],
@@ -762,6 +778,8 @@ async function main(): Promise<void> {
     ngayDang: daysAgo(6),
     luotXem: 294,
     trangThai: 'Đang tuyển',
+    doUuTien: 3,
+    nhanQuangCao: 'SUPER_HOT',
     maNTD: hrVNG.maNTD,
     maChiNhanh: ctyVNG.chiNhanhs[0].maChiNhanh,
     skills: ['Node.js', 'NestJS', 'TypeScript', 'MySQL', 'Docker'],
@@ -809,6 +827,8 @@ async function main(): Promise<void> {
     ngayDang: daysAgo(3),
     luotXem: 445,
     trangThai: 'Đang tuyển',
+    doUuTien: 1,
+    nhanQuangCao: 'BASIC',
     maNTD: hrShopee.maNTD,
     maChiNhanh: ctyShopee.chiNhanhs[0].maChiNhanh,
     skills: ['Vue.js', 'TypeScript', 'CI/CD', 'Git'],
@@ -1003,7 +1023,8 @@ async function main(): Promise<void> {
       chuyenMon: 'Frontend Developer (ReactJS / Next.js)',
       diaChi: 'Quận Bình Thạnh, TP.HCM',
       trangThaiPortfolio: 'Public',
-      cvUrl: 'https://res.cloudinary.com/demo/raw/upload/v1/cv/nguyen-minh-quan-fe.pdf',
+      cvUrl:
+        'https://res.cloudinary.com/demo/raw/upload/v1/cv/nguyen-minh-quan-fe.pdf',
       loaiCvMacDinh: 'ONLINE',
       gioiThieuBanThan:
         '<p>Kỹ sư Frontend với <strong>3 năm kinh nghiệm</strong> xây dựng Web Application hiệu năng cao bằng ReactJS, Next.js và TypeScript. Thế mạnh về tối ưu Core Web Vitals, thiết kế UI với Tailwind CSS và tích hợp TanStack React Query.</p>',
@@ -1098,7 +1119,8 @@ async function main(): Promise<void> {
       chuyenMon: 'Senior Backend Developer (Java / Spring Boot)',
       diaChi: 'Quận Cầu Giấy, Hà Nội',
       trangThaiPortfolio: 'Public',
-      cvUrl: 'https://res.cloudinary.com/demo/raw/upload/v1/cv/pham-hoang-nam-java.pdf',
+      cvUrl:
+        'https://res.cloudinary.com/demo/raw/upload/v1/cv/pham-hoang-nam-java.pdf',
       loaiCvMacDinh: 'ONLINE',
       gioiThieuBanThan:
         '<p>Kỹ sư Backend chuyên sâu hệ sinh thái <strong>Java & Spring Boot</strong> với 4 năm kinh nghiệm xây dựng kiến trúc Microservices trong lĩnh vực FinTech và Ngân hàng số.</p>',
@@ -1166,7 +1188,8 @@ async function main(): Promise<void> {
           {
             tieuDe: 'Microservices Core Ledger Engine (Spring Cloud)',
             moTa: 'Kiến trúc Microservices mô phỏng sổ cái giao dịch tài chính sử dụng Spring Boot, Kafka, PostgreSQL và Docker.',
-            projectUrl: 'https://github.com/hoangnam-java/core-ledger-microservices',
+            projectUrl:
+              'https://github.com/hoangnam-java/core-ledger-microservices',
           },
         ],
       },
@@ -1194,7 +1217,8 @@ async function main(): Promise<void> {
       chuyenMon: 'Fullstack Engineer (NestJS / ReactJS)',
       diaChi: 'Quận 3, TP.HCM',
       trangThaiPortfolio: 'Public',
-      cvUrl: 'https://res.cloudinary.com/demo/raw/upload/v1/cv/tran-thao-vy-fullstack.pdf',
+      cvUrl:
+        'https://res.cloudinary.com/demo/raw/upload/v1/cv/tran-thao-vy-fullstack.pdf',
       loaiCvMacDinh: 'ONLINE',
       gioiThieuBanThan:
         '<p>Fullstack Developer với <strong>2 năm kinh nghiệm</strong> làm chủ toàn bộ vòng đời sản phẩm từ NestJS/PostgreSQL phía Backend đến ReactJS/Next.js phía Frontend.</p>',
@@ -1290,7 +1314,8 @@ async function main(): Promise<void> {
       chuyenMon: 'Fresher / Intern QA Tester (Manual & Automation)',
       diaChi: 'Quận Hải Châu, Đà Nẵng',
       trangThaiPortfolio: 'Public',
-      cvUrl: 'https://res.cloudinary.com/demo/raw/upload/v1/cv/le-quoc-bao-tester.pdf',
+      cvUrl:
+        'https://res.cloudinary.com/demo/raw/upload/v1/cv/le-quoc-bao-tester.pdf',
       loaiCvMacDinh: 'ONLINE',
       gioiThieuBanThan:
         '<p>Sinh viên tốt nghiệp loại Giỏi ngành Kỹ thuật Phần mềm với nền tảng vững về kiểm thử phần mềm Manual, API Testing (Postman) và đang mở rộng sang Automation Test với Playwright/TypeScript.</p>',
@@ -1358,7 +1383,8 @@ async function main(): Promise<void> {
           {
             tieuDe: 'Playwright E2E Automation Suite cho Website Tuyển dụng',
             moTa: 'Bộ script kiểm thử tự động các luồng Đăng nhập, Tìm kiếm việc làm và Nộp đơn CV.',
-            projectUrl: 'https://github.com/quocbao-qa/playwright-jobportal-tests',
+            projectUrl:
+              'https://github.com/quocbao-qa/playwright-jobportal-tests',
           },
         ],
       },
@@ -1385,7 +1411,8 @@ async function main(): Promise<void> {
       chuyenMon: 'Senior DevOps & Cloud Engineer (AWS / Kubernetes)',
       diaChi: 'Quận Đống Đa, Hà Nội',
       trangThaiPortfolio: 'Public',
-      cvUrl: 'https://res.cloudinary.com/demo/raw/upload/v1/cv/dang-tuan-kiet-devops.pdf',
+      cvUrl:
+        'https://res.cloudinary.com/demo/raw/upload/v1/cv/dang-tuan-kiet-devops.pdf',
       loaiCvMacDinh: 'ONLINE',
       gioiThieuBanThan:
         '<p>Kỹ sư DevOps / SRE với <strong>5 năm kinh nghiệm</strong> vận hành hạ tầng Cloud-Native trên AWS & GCP, tự động hóa CI/CD và tối ưu độ ổn định cho các hệ thống FinTech.</p>',
@@ -1453,7 +1480,8 @@ async function main(): Promise<void> {
           {
             tieuDe: 'Terraform AWS EKS Production Blueprint',
             moTa: 'Mẫu Infrastructure as Code triển khai cụm EKS Multi-AZ, VPC chuẩn bảo mật và ArgoCD tự động.',
-            projectUrl: 'https://github.com/tuankiet-sre/aws-eks-terraform-blueprint',
+            projectUrl:
+              'https://github.com/tuankiet-sre/aws-eks-terraform-blueprint',
           },
         ],
       },
@@ -1642,7 +1670,8 @@ async function main(): Promise<void> {
           'Có chứng chỉ Oracle Java SE 17 và AWS Developer.',
         ],
         weaknesses: ['Không có điểm yếu đáng kể so với yêu cầu JD.'],
-        summary: 'Ứng viên phù hợp gần như tuyệt đối với vị trí Senior Java Banking.',
+        summary:
+          'Ứng viên phù hợp gần như tuyệt đối với vị trí Senior Java Banking.',
         breakdown: {
           skillsScore: 96,
           experienceScore: 95,
@@ -1764,64 +1793,110 @@ async function main(): Promise<void> {
   // =====================================================================
   // G. GÓI DỊCH VỤ QUẢNG CÁO (GOIQUANGCAO, MUAQUANGCAO & THANHTOAN)
   // =====================================================================
-  console.log('💳 Đang tạo Gói quảng cáo & Giao dịch thanh toán...');
+  console.log('💳 Đang tạo Gói quảng cáo 4 cấp & Giao dịch thanh toán...');
 
-  await prisma.goiQuangCao.create({
+  const pkgBasic = await prisma.goiQuangCao.create({
     data: {
       tieuDe: 'Gói Cơ Bản',
-      loaiQuangCao: 'Standard',
-      gia: 0,
-      thoiGianHieuLuc: 30,
-      soLuotDangTin: 3,
+      loaiQuangCao: 'BASIC',
+      gia: 500000,
+      thoiGianHieuLuc: 14,
+      soLuotDangTin: 1,
+      capDoUuTien: 1,
+      loaiHuyHieu: 'BASIC',
+      moTaNgan: 'Phù hợp nhu cầu tuyển dụng nhanh cho 1 vị trí IT cụ thể.',
+      quyenLoiJson: JSON.stringify([
+        '1 tin tuyển dụng hiển thị trên sàn',
+        'Thời gian hiển thị tin 14 ngày',
+        'Tiếp cận danh sách ứng viên nộp hồ sơ chuẩn ATS',
+        'Bộ lọc sàng lọc ứng viên cơ bản (kỹ năng, địa điểm)',
+        'Nhận thông báo Email ngay khi có ứng viên nộp đơn',
+      ]),
       ngayTao: daysAgo(60),
     },
   });
 
-  const pkgQuick = await prisma.goiQuangCao.create({
+  const pkgStandard = await prisma.goiQuangCao.create({
     data: {
-      tieuDe: 'Gói Đăng Tin Nhanh',
-      loaiQuangCao: 'Basic',
-      gia: 1500000,
+      tieuDe: 'Gói Tiêu Chuẩn',
+      loaiQuangCao: 'HOT',
+      gia: 1800000,
       thoiGianHieuLuc: 30,
-      soLuotDangTin: 8,
+      soLuotDangTin: 3,
+      capDoUuTien: 2,
+      loaiHuyHieu: 'HOT',
+      moTaNgan: 'Tối ưu chi phí tuyển dụng đa vị trí với huy hiệu nổi bật.',
+      quyenLoiJson: JSON.stringify([
+        '3 tin tuyển dụng hiển thị trên sàn',
+        'Thời gian hiển thị tin 30 ngày',
+        'Huy hiệu "HOT JOB" nổi bật trên trang tìm kiếm việc làm',
+        'Ưu tiên hiển thị trên các tin tuyển dụng thông thường',
+        'Đặt lịch phỏng vấn Google Meet trực tiếp trên nền tảng',
+      ]),
       ngayTao: daysAgo(60),
     },
   });
 
   const pkgVip = await prisma.goiQuangCao.create({
     data: {
-      tieuDe: 'Gói VIP Đẩy Tin Trang Chủ',
-      loaiQuangCao: 'Premium',
-      gia: 3900000,
+      tieuDe: 'Gói VIP Đẩy Tin',
+      loaiQuangCao: 'SUPER_HOT',
+      gia: 3500000,
       thoiGianHieuLuc: 45,
-      soLuotDangTin: 20,
+      soLuotDangTin: 5,
+      capDoUuTien: 3,
+      loaiHuyHieu: 'SUPER_HOT',
+      moTaNgan: 'Thu hút ứng viên chất lượng cao nhờ AI Match & Auto Refresh.',
+      quyenLoiJson: JSON.stringify([
+        '5 tin tuyển dụng hiển thị trên sàn',
+        'Thời gian hiển thị tin 45 ngày',
+        'Huy hiệu "SUPER HOT" cùng nền thẻ việc làm nổi bật',
+        'Tự động làm mới (Auto Refresh) lên đầu trang mỗi thứ Hai',
+        'Xếp hạng CV bằng AI Match Score Ranking cho mọi hồ sơ',
+      ]),
       ngayTao: daysAgo(60),
     },
   });
 
   const pkgDiamond = await prisma.goiQuangCao.create({
     data: {
-      tieuDe: 'Gói Kim Cương Tuyển Dụng',
-      loaiQuangCao: 'VIP',
-      gia: 8500000,
-      thoiGianHieuLuc: 90,
-      soLuotDangTin: 50,
+      tieuDe: 'Gói Kim Cương / Doanh nghiệp',
+      loaiQuangCao: 'DIAMOND',
+      gia: 8000000,
+      thoiGianHieuLuc: 60,
+      soLuotDangTin: 10,
+      capDoUuTien: 4,
+      loaiHuyHieu: 'DIAMOND',
+      moTaNgan: 'Giải pháp thương hiệu tuyển dụng toàn diện cấp doanh nghiệp.',
+      quyenLoiJson: JSON.stringify([
+        '10 tin tuyển dụng hiển thị trên sàn',
+        'Thời gian hiển thị tin 60 ngày',
+        'Banner "Nhà Tuyển Dụng Nổi Bật" ở đầu trang Tìm việc (/jobs)',
+        'Hiển thị Logo tại mục "Nhà tuyển dụng hàng đầu" Trang chủ',
+        'Không giới hạn tài khoản HR phụ trong cùng doanh nghiệp',
+      ]),
       ngayTao: daysAgo(60),
     },
   });
 
+  const endIn14Days = new Date(now);
+  endIn14Days.setDate(endIn14Days.getDate() + 14);
+
   const endIn30Days = new Date(now);
   endIn30Days.setDate(endIn30Days.getDate() + 30);
+
+  const endIn45Days = new Date(now);
+  endIn45Days.setDate(endIn45Days.getDate() + 45);
 
   const endIn60Days = new Date(now);
   endIn60Days.setDate(endIn60Days.getDate() + 60);
 
-  // Giao dịch 1: FPT Software mua Gói Kim Cương Tuyển Dụng
+  // Giao dịch 1: FPT Software mua Gói Kim Cương / Doanh nghiệp
   const buyFPT = await prisma.muaQuangCao.create({
     data: {
       tieuDe: 'Chiến dịch Tuyển dụng Quý II - FPT Software',
       giaTaiThoiDiemMua: pkgDiamond.gia,
-      soLuotConLai: 44,
+      soLuotConLai: 7,
       ngayBatDau: daysAgo(15),
       ngayKetThuc: endIn60Days,
       ngayMua: daysAgo(15),
@@ -1837,20 +1912,20 @@ async function main(): Promise<void> {
       soTienThanhToan: pkgDiamond.gia,
       phuongThucTT: 'VNPay QR Doanh nghiệp',
       trangThaiTT: 'Thành công',
-      ghiChu: 'Thanh toán Gói Kim Cương Tuyển Dụng - FPT Software',
+      ghiChu: 'Thanh toán Gói Kim Cương / Doanh nghiệp - FPT Software',
       maGiaoDichDoiTac: 'VNPAY_FPT_20260401',
       maMua: buyFPT.maMua,
     },
   });
 
-  // Giao dịch 2: VNG Corporation mua Gói VIP Đẩy Tin Trang Chủ
+  // Giao dịch 2: VNG Corporation mua Gói VIP Đẩy Tin
   const buyVNG = await prisma.muaQuangCao.create({
     data: {
       tieuDe: 'Chiến dịch Đẩy Tin ZaloPay - VNG Corporation',
       giaTaiThoiDiemMua: pkgVip.gia,
-      soLuotConLai: 16,
+      soLuotConLai: 2,
       ngayBatDau: daysAgo(10),
-      ngayKetThuc: endIn30Days,
+      ngayKetThuc: endIn45Days,
       ngayMua: daysAgo(10),
       trangThai: 'Đang chạy',
       maNTD: hrVNG.maNTD,
@@ -1864,36 +1939,63 @@ async function main(): Promise<void> {
       soTienThanhToan: pkgVip.gia,
       phuongThucTT: 'Chuyển khoản VietQR',
       trangThaiTT: 'Thành công',
-      ghiChu: 'Thanh toán Gói VIP Đẩy Tin Trang Chủ - VNG Corporation',
+      ghiChu: 'Thanh toán Gói VIP Đẩy Tin - VNG Corporation',
       maGiaoDichDoiTac: 'VNPAY_VNG_20260405',
       maMua: buyVNG.maMua,
     },
   });
 
-  // Giao dịch 3: MoMo (HR Lê Hùng Cường) mua Gói Đăng Tin Nhanh
+  // Giao dịch 3: MoMo (HR Lê Hùng Cường) mua Gói Tiêu Chuẩn
   const buyMomo = await prisma.muaQuangCao.create({
     data: {
       tieuDe: 'Chiến dịch MoMo Tech Hiring 2026',
-      giaTaiThoiDiemMua: pkgQuick.gia,
-      soLuotConLai: 5,
+      giaTaiThoiDiemMua: pkgStandard.gia,
+      soLuotConLai: 2,
       ngayBatDau: daysAgo(5),
       ngayKetThuc: endIn30Days,
       ngayMua: daysAgo(5),
       trangThai: 'Đang chạy',
       maNTD: hrMomoCuong.maNTD,
-      maGoi: pkgQuick.maGoi,
+      maGoi: pkgStandard.maGoi,
     },
   });
 
   await prisma.thanhToan.create({
     data: {
       ngayThanhToan: daysAgo(5),
-      soTienThanhToan: pkgQuick.gia,
+      soTienThanhToan: pkgStandard.gia,
       phuongThucTT: 'MoMo Business',
       trangThaiTT: 'Thành công',
-      ghiChu: 'Thanh toán Gói Đăng Tin Nhanh - MoMo',
+      ghiChu: 'Thanh toán Gói Tiêu Chuẩn - MoMo',
       maGiaoDichDoiTac: 'MOMO_BIZ_20260410',
       maMua: buyMomo.maMua,
+    },
+  });
+
+  // Giao dịch 4: Shopee Vietnam mua Gói Cơ Bản
+  const buyShopee = await prisma.muaQuangCao.create({
+    data: {
+      tieuDe: 'Chiến dịch Tuyển Frontend Shopee',
+      giaTaiThoiDiemMua: pkgBasic.gia,
+      soLuotConLai: 0,
+      ngayBatDau: daysAgo(3),
+      ngayKetThuc: endIn14Days,
+      ngayMua: daysAgo(3),
+      trangThai: 'Đang chạy',
+      maNTD: hrShopee.maNTD,
+      maGoi: pkgBasic.maGoi,
+    },
+  });
+
+  await prisma.thanhToan.create({
+    data: {
+      ngayThanhToan: daysAgo(3),
+      soTienThanhToan: pkgBasic.gia,
+      phuongThucTT: 'VNPay QR',
+      trangThaiTT: 'Thành công',
+      ghiChu: 'Thanh toán Gói Cơ Bản - Shopee Vietnam',
+      maGiaoDichDoiTac: 'VNPAY_SHOPEE_20260412',
+      maMua: buyShopee.maMua,
     },
   });
 

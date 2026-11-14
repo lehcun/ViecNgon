@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { CampaignResponse } from "@viecngon/types";
+import { packageKeys } from "@/queries/queryKeys";
 
 export const useCampaigns = () => {
   const query = useQuery<CampaignResponse[]>({
-    queryKey: ["my-campaigns"],
+    queryKey: packageKeys.myCampaigns(),
     queryFn: async () => {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/campaigns/my-campaigns`,
@@ -23,5 +24,6 @@ export const useCampaigns = () => {
     campaigns: query.data || [],
     isLoading: query.isLoading,
     isError: query.isError,
+    refetch: query.refetch,
   };
 };

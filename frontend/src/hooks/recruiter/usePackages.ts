@@ -1,34 +1,40 @@
 import { useQuery } from "@tanstack/react-query";
 import { PackageResponse } from "@viecngon/types";
+import { packageKeys } from "@/queries/queryKeys";
 
 export const usePackages = () => {
   const query = useQuery<PackageResponse[]>({
-    queryKey: ["packages"],
+    queryKey: packageKeys.all,
     queryFn: async () => {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/campaigns/packages`,
+        {
+          credentials: "include",
+        },
       );
       if (!res.ok) throw new Error("Lỗi khi tải danh sách gói dịch vụ");
       const data = (await res.json()) as PackageResponse[];
 
-      // Xử lý dữ liệu thô từ Database thành dữ liệu đẹp cho UI
-      return data.map((pkg: PackageResponse, index: number) => ({
+      return data.map((pkg, index) => ({
         maGoi: pkg.maGoi,
         tieuDe: pkg.tieuDe,
         loaiQuangCao: pkg.loaiQuangCao,
-        gia: Number(pkg.gia), // Ép kiểu Decimal từ Prisma về Number
+        gia: Number(pkg.gia),
         thoiGianHieuLuc: pkg.thoiGianHieuLuc,
         soLuotDangTin: pkg.soLuotDangTin,
-        // Gán gói ở giữa (index 1) làm gói Phổ biến nhất
-        isPopular: index === 1,
-        // Tự động sinh ra mảng text đặc quyền để UI in ra các dấu tick xanh
-        features: [
-          `${pkg.soLuotDangTin} lượt đăng tin tuyển dụng`,
-          `Tin hiển thị trong ${pkg.thoiGianHieuLuc} ngày`,
-          `Phân loại: ${pkg.loaiQuangCao || "Tiêu chuẩn"}`,
-          "Quản lý hồ sơ ứng viên trực tuyến",
-          "Hỗ trợ kỹ thuật 24/7",
-        ],
+        priorityLevel: pkg.priorityLevel ?? index + 1,
+        badgeType: pkg.badgeType,
+        badgeText: pkg.badgeText,
+        description: pkg.description,
+        inheritedFrom: pkg.inheritedFrom,
+        isPopular: pkg.isPopular ?? index === 1,
+        features:
+          pkg.features && pkg.features.length > 0
+            ? pkg.features
+            : [
+                `${pkg.soLuotDangTin} lượt đăng tin tuyển dụng`,
+                `Tin hiển thị trong ${pkg.thoiGianHieuLuc} ngày`,
+              ],
       }));
     },
     staleTime: 10 * 60 * 1000,
@@ -38,5 +44,6 @@ export const usePackages = () => {
     packages: query.data || [],
     isLoading: query.isLoading,
     isError: query.isError,
+    refetch: query.refetch,
   };
 };

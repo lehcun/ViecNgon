@@ -7,6 +7,7 @@ import JobFilterPanel from "@/components/job/JobFilterPanel";
 import JobCard from "@/components/job/JobCard";
 import JobDetailPreviewPane from "@/components/job/JobDetailPreviewPane";
 import JobPagination from "@/components/job/JobPagination";
+import FeaturedEmployerBanner from "@/components/job/FeaturedEmployerBanner";
 import { useJobSearch } from "@/hooks/job/useJobSearch";
 import { JobDetailResponse } from "@viecngon/types";
 import {
@@ -60,6 +61,9 @@ function JobsPageContent() {
           onClearAll={clearAllFilters}
         />
 
+        {/* Banner Nhà tuyển dụng nổi bật (Gói Kim Cương) */}
+        <FeaturedEmployerBanner />
+
         {isLoading ? (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
             <div className="lg:col-span-5 space-y-4">
@@ -85,7 +89,7 @@ function JobsPageContent() {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start mt-6">
-            <div className="lg:col-span-5 space-y-4">
+            <div className="lg:col-span-5 space-y-4 lg:pr-2 overflow-visible">
               {jobs.map((job) => (
                 <JobCard
                   key={job.id}

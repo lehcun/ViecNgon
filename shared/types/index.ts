@@ -213,6 +213,13 @@ export interface JobCompanySummary {
   website: string | null;
 }
 
+export type JobPromotionBadge =
+  | "BASIC"
+  | "HOT"
+  | "SUPER_HOT"
+  | "DIAMOND"
+  | "HEADHUNT";
+
 export interface JobDetailResponse {
   id: string;
   title: string;
@@ -237,6 +244,9 @@ export interface JobDetailResponse {
   branch?: JobBranchSummary | null;
   isApplied?: boolean;
   applicationStatus?: string | null;
+  priorityLevel?: number;
+  promotionBadge?: JobPromotionBadge | null;
+  highlights?: string[];
   company: JobCompanySummary;
 }
 
@@ -349,6 +359,8 @@ export interface JobWithRelations<TDecimal = any> {
   ngayCapNhat: Date;
   luotXem: number;
   trangThai: string;
+  doUuTien?: number | null;
+  nhanQuangCao?: string | null;
   maNTD: string;
   maChiNhanh: string | null;
   nhaTuyenDung: NhaTuyenDungData;
@@ -719,6 +731,20 @@ export interface PackageResponse {
   soLuotDangTin: number;
   features: string[];
   isPopular?: boolean;
+  priorityLevel?: number;
+  badgeType?: JobPromotionBadge;
+  badgeText?: string | null;
+  description?: string;
+  inheritedFrom?: string | null;
+}
+
+export interface FeaturedEmployerBannerItem {
+  companyId: string;
+  companyName: string;
+  slug: string;
+  logo: string | null;
+  tagline: string;
+  activeJobsCount: number;
 }
 
 export interface CampaignResponse {
