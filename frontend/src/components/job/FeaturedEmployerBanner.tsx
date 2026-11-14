@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, ChevronRight, Crown, MapPin } from "lucide-react";
 import { FeaturedEmployerBannerItem } from "@viecngon/types";
@@ -12,8 +13,24 @@ import { cn } from "@/lib/utils";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 const LAST_SPOTLIGHT_STORAGE_KEY = "viecngon_spotlight_last_company_id";
 
-// Bộ nhớ trên mỗi lần tải trang (reset mỗi khi F5 / reload trình duyệt)
-let currentLoadSpotlightId: string | null = null;
+const emptySubscribe = () => () => {};
+
+function readInitialLastCompanyId(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const loadKey = `viecngon_spotlight_prev_${window.performance.timeOrigin}`;
+    const cachedForLoad = window.sessionStorage.getItem(loadKey);
+    if (cachedForLoad !== null) {
+      return cachedForLoad || null;
+    }
+    const fromLocal =
+      window.localStorage.getItem(LAST_SPOTLIGHT_STORAGE_KEY) || "";
+    window.sessionStorage.setItem(loadKey, fromLocal);
+    return fromLocal || null;
+  } catch {
+    return null;
+  }
+}
 
 function toPlainText(value?: string | null): string {
   if (!value) return "";
@@ -35,7 +52,12 @@ function toPlainText(value?: string | null): string {
  * Tự động xoay vòng công ty mỗi lần F5 khi có >= 2 công ty đăng ký gói Kim Cương.
  */
 export default function FeaturedEmployerBanner() {
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [manualCompanyId, setManualCompanyId] = useState<string | null>(null);
+  const initialPrevCompanyId = useSyncExternalStore(
+    emptySubscribe,
+    readInitialLastCompanyId,
+    () => null,
+  );
 
   const { data: companies = [], isLoading } = useQuery<
     FeaturedEmployerBannerItem[]
@@ -51,45 +73,37 @@ export default function FeaturedEmployerBanner() {
     staleTime: 1000 * 60 * 5,
   });
 
-  // Xoay vòng sang một công ty gói Kim Cương khác mỗi lần ứng viên F5 tải lại trang
+  // Tính chỉ số công ty hiển thị thuần túy từ dữ liệu + lần F5 (không dùng setState trong useEffect)
+  let safeIndex = 0;
+  if (companies.length > 0) {
+    if (manualCompanyId) {
+      const manualIdx = companies.findIndex(
+        (c) => c.companyId === manualCompanyId,
+      );
+      if (manualIdx !== -1) {
+        safeIndex = manualIdx;
+      }
+    } else if (companies.length > 1 && initialPrevCompanyId) {
+      const prevIdx = companies.findIndex(
+        (c) => c.companyId === initialPrevCompanyId,
+      );
+      if (prevIdx !== -1) {
+        safeIndex = (prevIdx + 1) % companies.length;
+      }
+    }
+  }
+
+  const activeCompanyId = companies[safeIndex]?.companyId;
+
+  // Đồng bộ external store (localStorage) để lần F5 tiếp theo đổi sang công ty khác
   useEffect(() => {
-    if (companies.length <= 1) return;
-
-    if (currentLoadSpotlightId) {
-      const existingIdx = companies.findIndex(
-        (c) => c.companyId === currentLoadSpotlightId,
-      );
-      if (existingIdx !== -1) {
-        setActiveIndex(existingIdx);
-        return;
-      }
-    }
-
-    let nextIndex = 0;
+    if (!activeCompanyId) return;
     try {
-      const lastCompanyId = window.localStorage.getItem(
-        LAST_SPOTLIGHT_STORAGE_KEY,
-      );
-      if (lastCompanyId) {
-        const lastIdx = companies.findIndex(
-          (c) => c.companyId === lastCompanyId,
-        );
-        if (lastIdx !== -1) {
-          nextIndex = (lastIdx + 1) % companies.length;
-        }
-      }
-      const nextCompany = companies[nextIndex];
-      currentLoadSpotlightId = nextCompany.companyId;
-      window.localStorage.setItem(
-        LAST_SPOTLIGHT_STORAGE_KEY,
-        nextCompany.companyId,
-      );
+      window.localStorage.setItem(LAST_SPOTLIGHT_STORAGE_KEY, activeCompanyId);
     } catch {
-      nextIndex = 0;
+      // Ignore storage errors in private mode
     }
-
-    setActiveIndex(nextIndex);
-  }, [companies]);
+  }, [activeCompanyId]);
 
   if (isLoading) {
     return (
@@ -117,24 +131,14 @@ export default function FeaturedEmployerBanner() {
 
   if (!companies.length) return null;
 
-  const safeIndex = activeIndex < companies.length ? activeIndex : 0;
   const company = companies[safeIndex];
   const spotlightJobs = (company.featuredJobs || []).slice(0, 5);
   const badgeLabel = company.bannerBadgeText?.trim() || "TOP HIRING";
 
   const handleManualSelect = (idx: number) => {
-    setActiveIndex(idx);
     const chosen = companies[idx];
     if (chosen) {
-      currentLoadSpotlightId = chosen.companyId;
-      try {
-        window.localStorage.setItem(
-          LAST_SPOTLIGHT_STORAGE_KEY,
-          chosen.companyId,
-        );
-      } catch {
-        // Ignore storage errors in private mode
-      }
+      setManualCompanyId(chosen.companyId);
     }
   };
 
@@ -145,18 +149,20 @@ export default function FeaturedEmployerBanner() {
     >
       <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">
         {/* Cột trái: Ảnh nền tùy chỉnh (hoặc gradient) + Ribbon + Logo chồng mép */}
-        <div className="lg:col-span-3 relative min-h-[148px] lg:min-h-[176px] flex items-center justify-between lg:justify-end">
+        <div className="lg:col-span-3 relative min-h-37 lg:min-h-44 flex items-center justify-between lg:justify-end">
           {company.bannerCoverUrl ? (
             <div className="absolute inset-0 overflow-hidden bg-slate-900">
-              <img
+              <Image
                 src={company.bannerCoverUrl}
                 alt={`Banner ${company.companyName}`}
-                className="w-full h-full object-cover"
+                fill
+                sizes="(max-width: 1024px) 100vw, 320px"
+                className="object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-slate-900/45 via-slate-900/20 to-transparent" />
+              <div className="absolute inset-0 bg-linear-to-r from-slate-900/45 via-slate-900/20 to-transparent" />
             </div>
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-primary-hover to-sky-700 overflow-hidden">
+            <div className="absolute inset-0 bg-linear-to-br from-slate-900 via-primary-hover to-sky-700 overflow-hidden">
               <div
                 className="absolute inset-0 opacity-20"
                 style={{

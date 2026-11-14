@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useTransition } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import toast from "react-hot-toast";
@@ -30,9 +30,7 @@ import {
   Code,
   Lightbulb,
   Building2,
-  Clock,
   Briefcase,
-  Award,
   Loader2,
 } from "lucide-react";
 import {
@@ -40,72 +38,124 @@ import {
   useUpdateEmployerProfile,
 } from "@/hooks/recruiter/useEmployerProfile";
 import type {
+  CompanyProfileResponse,
   UpdateCompanyProfilePayload,
   CompanyInfo,
   HrProfileInfo,
 } from "@viecngon/types";
+
+type ProfileTab = "general" | "culture" | "media" | "branches" | "reviews";
+
+const DEFAULT_SECTORS = [
+  "Công nghệ thông tin / Phần mềm",
+  "Fintech & Ví điện tử",
+  "Trò chơi trực tuyến (Game Publishing)",
+  "Điện toán đám mây & AI",
+];
 
 // =====================================================================
 // COMPONENT CHÍNH: QUẢN LÝ HỒ SƠ DOANH NGHIỆP
 // =====================================================================
 
 export default function CompanyProfilePage() {
-  const { data: profileData, isLoading, isError, refetch } = useEmployerProfile();
-  const { mutate: updateProfile, isPending: isUpdating } = useUpdateEmployerProfile();
+  const {
+    data: profileData,
+    isLoading,
+    isError,
+    refetch,
+  } = useEmployerProfile();
 
-  // Tab đang chọn
-  const [activeTab, setActiveTab] = useState<
-    "general" | "culture" | "media" | "branches" | "reviews"
-  >("general");
+  const [activeTab, setActiveTab] = useState<ProfileTab>("general");
 
-  // State quản lý Form cục bộ
-  const [companyForm, setCompanyForm] = useState<Partial<CompanyInfo>>({});
-  const [hrForm, setHrForm] = useState<Partial<HrProfileInfo>>({});
-  const [sectors, setSectors] = useState<string[]>([]);
+  if (isLoading) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center gap-3">
+        <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
+        <p className="text-slate-500 font-medium text-sm">
+          Đang tải dữ liệu hồ sơ doanh nghiệp...
+        </p>
+      </div>
+    );
+  }
+
+  if (isError || !profileData) {
+    return (
+      <div className="p-8 max-w-4xl mx-auto text-center">
+        <div className="bg-red-50 text-red-700 p-6 rounded-2xl border border-red-200">
+          <p className="font-semibold text-lg mb-2">
+            Không thể tải thông tin hồ sơ doanh nghiệp
+          </p>
+          <p className="text-sm mb-4">
+            Vui lòng kiểm tra lại quyền truy cập hoặc phiên đăng nhập của bạn.
+          </p>
+          <button
+            onClick={() => refetch()}
+            className="px-5 py-2.5 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 transition"
+          >
+            Thử tải lại
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <CompanyProfileEditor
+      key={profileData.company.maCongTy}
+      profileData={profileData}
+      activeTab={activeTab}
+      setActiveTab={setActiveTab}
+    />
+  );
+}
+
+function CompanyProfileEditor({
+  profileData,
+  activeTab,
+  setActiveTab,
+}: {
+  profileData: CompanyProfileResponse;
+  activeTab: ProfileTab;
+  setActiveTab: React.Dispatch<React.SetStateAction<ProfileTab>>;
+}) {
+  const { mutate: updateProfile, isPending: isUpdating } =
+    useUpdateEmployerProfile();
+
+  // State quản lý Form cục bộ (khởi tạo trực tiếp từ profileData, tránh setState trong useEffect)
+  const [companyForm, setCompanyForm] = useState<Partial<CompanyInfo>>(() => ({
+    tenCongTy: profileData.company.tenCongTy || "",
+    tenPhapLy: profileData.company.tenPhapLy || "",
+    slug: profileData.company.slug || "",
+    moTa: profileData.company.moTa || "",
+    phucLoi: profileData.company.phucLoi || "",
+    chuyenMon: profileData.company.chuyenMon || "",
+    aboutMe: profileData.company.aboutMe || "",
+    logoUrl: profileData.company.logoUrl || "",
+    website: profileData.company.website || "",
+    thanhPho: profileData.company.thanhPho || "",
+    diaChi: profileData.company.diaChi || "",
+    moHinhCongTy: profileData.company.moHinhCongTy || "Product & Service",
+    quyMo: profileData.company.quyMo || "1,000+ Kỹ sư",
+    quocGia: profileData.company.quocGia || "Toàn cầu & SEA",
+    thoiGianLamViec: profileData.company.thoiGianLamViec || "Thứ 2 - Thứ 6",
+    chinhSachOT:
+      profileData.company.chinhSachOT || "Không OT / Thêm lương OT",
+    giaiThuong: profileData.company.giaiThuong || "",
+  }));
+
+  const [hrForm] = useState<Partial<HrProfileInfo>>(() => ({
+    hoTen: profileData.hr.hoTen || "",
+    chucVu: profileData.hr.chucVu || "",
+    soDienThoai: profileData.hr.soDienThoai || "",
+    email: profileData.hr.email || "",
+  }));
+
+  const [sectors, setSectors] = useState<string[]>(() =>
+    profileData.company.linhVuc?.length
+      ? profileData.company.linhVuc
+      : DEFAULT_SECTORS,
+  );
   const [newSectorInput, setNewSectorInput] = useState<string>("");
-
-  // Đồng bộ dữ liệu từ query cache vào state khi fetch thành công
-  useEffect(() => {
-    if (profileData) {
-      setCompanyForm({
-        tenCongTy: profileData.company.tenCongTy || "",
-        tenPhapLy: profileData.company.tenPhapLy || "",
-        slug: profileData.company.slug || "",
-        moTa: profileData.company.moTa || "",
-        phucLoi: profileData.company.phucLoi || "",
-        chuyenMon: profileData.company.chuyenMon || "",
-        aboutMe: profileData.company.aboutMe || "",
-        logoUrl: profileData.company.logoUrl || "",
-        website: profileData.company.website || "",
-        thanhPho: profileData.company.thanhPho || "",
-        diaChi: profileData.company.diaChi || "",
-        moHinhCongTy: profileData.company.moHinhCongTy || "Product & Service",
-        quyMo: profileData.company.quyMo || "1,000+ Kỹ sư",
-        quocGia: profileData.company.quocGia || "Toàn cầu & SEA",
-        thoiGianLamViec: profileData.company.thoiGianLamViec || "Thứ 2 - Thứ 6",
-        chinhSachOT: profileData.company.chinhSachOT || "Không OT / Thêm lương OT",
-        giaiThuong: profileData.company.giaiThuong || "",
-      });
-
-      setHrForm({
-        hoTen: profileData.hr.hoTen || "",
-        chucVu: profileData.hr.chucVu || "",
-        soDienThoai: profileData.hr.soDienThoai || "",
-        email: profileData.hr.email || "",
-      });
-
-      setSectors(
-        profileData.company.linhVuc?.length
-          ? profileData.company.linhVuc
-          : [
-            "Công nghệ thông tin / Phần mềm",
-            "Fintech & Ví điện tử",
-            "Trò chơi trực tuyến (Game Publishing)",
-            "Điện toán đám mây & AI",
-          ],
-      );
-    }
-  }, [profileData]);
 
   // Thêm tag lĩnh vực hoạt động mới
   const handleAddSector = () => {
@@ -172,42 +222,6 @@ export default function CompanyProfilePage() {
     });
   };
 
-  // ===================================================================
-  // TRẠNG THÁI LOADING / ERROR
-  // ===================================================================
-
-  if (isLoading) {
-    return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center gap-3">
-        <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
-        <p className="text-slate-500 font-medium text-sm">
-          Đang tải dữ liệu hồ sơ doanh nghiệp...
-        </p>
-      </div>
-    );
-  }
-
-  if (isError || !profileData) {
-    return (
-      <div className="p-8 max-w-4xl mx-auto text-center">
-        <div className="bg-red-50 text-red-700 p-6 rounded-2xl border border-red-200">
-          <p className="font-semibold text-lg mb-2">
-            Không thể tải thông tin hồ sơ doanh nghiệp
-          </p>
-          <p className="text-sm mb-4">
-            Vui lòng kiểm tra lại quyền truy cập hoặc phiên đăng nhập của bạn.
-          </p>
-          <button
-            onClick={() => refetch()}
-            className="px-5 py-2.5 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 transition"
-          >
-            Thử tải lại
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   const { company, branches, completion, stats } = profileData;
   const completionPercent = completion?.percent ?? 92;
 
@@ -233,8 +247,8 @@ export default function CompanyProfilePage() {
           </div>
           <p className="text-xs md:text-sm text-slate-500 mt-1">
             Cập nhật thông tin công ty để tăng{" "}
-            <span className="text-blue-600 font-semibold">85% mức độ</span> thu hút ứng
-            viên tài năng.
+            <span className="text-blue-600 font-semibold">85% mức độ</span> thu
+            hút ứng viên tài năng.
           </p>
         </div>
 
@@ -278,10 +292,11 @@ export default function CompanyProfilePage() {
       <div className="border-b border-slate-200 bg-white rounded-t-xl px-4 flex items-center gap-2 sm:gap-6 overflow-x-auto no-scrollbar shadow-sm">
         <button
           onClick={() => setActiveTab("general")}
-          className={`relative flex items-center gap-2 py-4 px-2 text-sm font-semibold transition border-b-2 whitespace-nowrap cursor-pointer ${activeTab === "general"
+          className={`relative flex items-center gap-2 py-4 px-2 text-sm font-semibold transition border-b-2 whitespace-nowrap cursor-pointer ${
+            activeTab === "general"
               ? "text-blue-600 border-blue-600"
               : "text-slate-600 border-transparent hover:text-slate-900"
-            }`}
+          }`}
         >
           <Info size={16} />
           Thông tin chung
@@ -289,10 +304,11 @@ export default function CompanyProfilePage() {
 
         <button
           onClick={() => setActiveTab("culture")}
-          className={`relative flex items-center gap-2 py-4 px-2 text-sm font-semibold transition border-b-2 whitespace-nowrap cursor-pointer ${activeTab === "culture"
+          className={`relative flex items-center gap-2 py-4 px-2 text-sm font-semibold transition border-b-2 whitespace-nowrap cursor-pointer ${
+            activeTab === "culture"
               ? "text-blue-600 border-blue-600"
               : "text-slate-600 border-transparent hover:text-slate-900"
-            }`}
+          }`}
         >
           <Sparkles size={16} />
           Văn hóa & Đãi ngộ
@@ -300,10 +316,11 @@ export default function CompanyProfilePage() {
 
         <button
           onClick={() => setActiveTab("media")}
-          className={`relative flex items-center gap-2 py-4 px-2 text-sm font-semibold transition border-b-2 whitespace-nowrap cursor-pointer ${activeTab === "media"
+          className={`relative flex items-center gap-2 py-4 px-2 text-sm font-semibold transition border-b-2 whitespace-nowrap cursor-pointer ${
+            activeTab === "media"
               ? "text-blue-600 border-blue-600"
               : "text-slate-600 border-transparent hover:text-slate-900"
-            }`}
+          }`}
         >
           <ImageIcon size={16} />
           Hình ảnh & Video
@@ -314,10 +331,11 @@ export default function CompanyProfilePage() {
 
         <button
           onClick={() => setActiveTab("branches")}
-          className={`relative flex items-center gap-2 py-4 px-2 text-sm font-semibold transition border-b-2 whitespace-nowrap cursor-pointer ${activeTab === "branches"
+          className={`relative flex items-center gap-2 py-4 px-2 text-sm font-semibold transition border-b-2 whitespace-nowrap cursor-pointer ${
+            activeTab === "branches"
               ? "text-blue-600 border-blue-600"
               : "text-slate-600 border-transparent hover:text-slate-900"
-            }`}
+          }`}
         >
           <Building size={16} />
           Chi nhánh & Văn phòng
@@ -328,10 +346,11 @@ export default function CompanyProfilePage() {
 
         <button
           onClick={() => setActiveTab("reviews")}
-          className={`relative flex items-center gap-2 py-4 px-2 text-sm font-semibold transition border-b-2 whitespace-nowrap cursor-pointer ${activeTab === "reviews"
+          className={`relative flex items-center gap-2 py-4 px-2 text-sm font-semibold transition border-b-2 whitespace-nowrap cursor-pointer ${
+            activeTab === "reviews"
               ? "text-blue-600 border-blue-600"
               : "text-slate-600 border-transparent hover:text-slate-900"
-            }`}
+          }`}
         >
           <Star size={16} />
           Đánh giá & Xếp hạng
@@ -351,13 +370,15 @@ export default function CompanyProfilePage() {
               backgroundImage: `url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80')`,
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-black/20" />
 
           {/* Nút đổi ảnh bìa */}
           <button
             type="button"
             onClick={() =>
-              toast("Tính năng tải ảnh bìa đang kết nối Cloudinary...", { icon: "📸" })
+              toast("Tính năng tải ảnh bìa đang kết nối Cloudinary...", {
+                icon: "📸",
+              })
             }
             className="absolute top-4 right-4 inline-flex items-center gap-2 px-3.5 py-2 bg-white/90 hover:bg-white text-slate-800 rounded-lg text-xs font-semibold backdrop-blur-md shadow-md transition cursor-pointer"
           >
@@ -612,7 +633,10 @@ export default function CompanyProfilePage() {
                   type="text"
                   value={companyForm.tenCongTy || ""}
                   onChange={(e) =>
-                    setCompanyForm({ ...companyForm, tenCongTy: e.target.value })
+                    setCompanyForm({
+                      ...companyForm,
+                      tenCongTy: e.target.value,
+                    })
                   }
                   className="w-full px-3.5 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 />
@@ -641,7 +665,10 @@ export default function CompanyProfilePage() {
                   type="text"
                   value={companyForm.moHinhCongTy || ""}
                   onChange={(e) =>
-                    setCompanyForm({ ...companyForm, moHinhCongTy: e.target.value })
+                    setCompanyForm({
+                      ...companyForm,
+                      moHinhCongTy: e.target.value,
+                    })
                   }
                   placeholder="Product & Outsource..."
                   className="w-full px-3.5 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
@@ -713,8 +740,8 @@ export default function CompanyProfilePage() {
                 </p>
                 <p className="text-xs text-slate-600 leading-relaxed">
                   Thêm video giới thiệu văn phòng làm việc để đạt{" "}
-                  <strong className="text-blue-700">100%</strong> và được ưu tiên đưa
-                  lên danh sách Nhà tuyển dụng nổi bật.
+                  <strong className="text-blue-700">100%</strong> và được ưu
+                  tiên đưa lên danh sách Nhà tuyển dụng nổi bật.
                 </p>
               </div>
             </div>
@@ -732,7 +759,9 @@ export default function CompanyProfilePage() {
               <button
                 type="button"
                 onClick={() =>
-                  toast("Tính năng thêm mới địa điểm chi nhánh...", { icon: "🏢" })
+                  toast("Tính năng thêm mới địa điểm chi nhánh...", {
+                    icon: "🏢",
+                  })
                 }
                 className="text-xs font-semibold text-blue-600 hover:text-blue-700 inline-flex items-center gap-1 cursor-pointer"
               >
@@ -754,7 +783,10 @@ export default function CompanyProfilePage() {
                         {branch.thanhPho})
                       </p>
                       {branch.laTruSoChinh && (
-                        <Star size={14} className="text-amber-500 fill-amber-500" />
+                        <Star
+                          size={14}
+                          className="text-amber-500 fill-amber-500"
+                        />
                       )}
                     </div>
                     <p className="text-xs text-slate-600 leading-relaxed">
@@ -771,8 +803,8 @@ export default function CompanyProfilePage() {
                     <Star size={14} className="text-amber-500 fill-amber-500" />
                   </div>
                   <p className="text-xs text-slate-600 leading-relaxed">
-                    VNG Campus, Đường số 13, KCX Tân Thuận, Phường Tân Thuận Đông,
-                    Quận 7, TP. Hồ Chí Minh
+                    VNG Campus, Đường số 13, KCX Tân Thuận, Phường Tân Thuận
+                    Đông, Quận 7, TP. Hồ Chí Minh
                   </p>
                 </div>
               )}
