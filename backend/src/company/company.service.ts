@@ -1,6 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CompanyDetailResponse, FormattedTopCompany } from '@viecngon/types';
+import type {
+  CompanyDetailResponse,
+  FeaturedEmployerBannerItem,
+  FormattedTopCompany,
+} from '@viecngon/types';
 import { formatSalaryDisplay } from 'src/common/utils/format-salary';
 
 @Injectable()
@@ -26,7 +30,8 @@ export class CompanyService {
   }
 
   async getCompaniesWithJobCount() {
-    // Bước 1: Query database bằng Prisma
+    const now = new Date();
+    // Bước 1: Query database bằng Prisma kèm trạng thái gói Kim Cương đang chạy
     const companies = await this.prisma.congTy.findMany({
       select: {
         maCongTy: true,
@@ -34,14 +39,24 @@ export class CompanyService {
         logoUrl: true,
         thanhPho: true,
         slug: true,
-        // Lồng vào bảng con NHATUYENDUNG để lấy dữ liệu đếm
         nhaTuyenDungs: {
           select: {
+            muaQuangCaos: {
+              where: {
+                trangThai: { in: ['Đang chạy', 'DANG_CHAY'] },
+                ngayKetThuc: { gte: now },
+              },
+              select: {
+                goiQuangCao: {
+                  select: { capDoUuTien: true },
+                },
+              },
+            },
             _count: {
               select: {
                 congViecs: {
                   where: {
-                    trangThai: 'Đang tuyển',
+                    trangThai: { in: ['Đang tuyển', 'DA_DUYET'] },
                   },
                 },
               },
@@ -49,31 +64,105 @@ export class CompanyService {
           },
         },
       },
-      take: 8,
     });
 
-    // Bước 2: Chuẩn hóa lại dữ liệu (Format) để khớp với Component Frontend
-    const formattedCompanies: FormattedTopCompany[] = companies.map(
-      (company) => {
-        // Một công ty có thể có nhiều HR, phải cộng dồn tổng số tin của tất cả HR đó lại
-        const totalJobs = company.nhaTuyenDungs.reduce((sum, hr) => {
-          // TS tự hiểu hr có thuộc tính _count.congViecs nhờ Auto Inference
-          const jobCount = hr._count?.congViecs ?? 0;
-          return sum + jobCount;
+    // Bước 2: Ưu tiên các công ty có Gói Kim Cương (level >= 4) lên đầu danh sách "Nhà tuyển dụng hàng đầu"
+    const rankedCompanies = companies
+      .map((company) => {
+        const totalJobs = company.nhaTuyenDungs.reduce(
+          (sum, hr) => sum + (hr._count?.congViecs ?? 0),
+          0,
+        );
+        const maxTier = company.nhaTuyenDungs.reduce((max, hr) => {
+          const hrMax = hr.muaQuangCaos.reduce(
+            (m, c) => Math.max(m, c.goiQuangCao?.capDoUuTien ?? 0),
+            0,
+          );
+          return Math.max(max, hrMax);
         }, 0);
 
         return {
-          id: company.maCongTy,
-          name: company.tenCongTy,
-          logo: company.logoUrl,
-          location: company.thanhPho,
-          slug: company.slug,
-          jobs: totalJobs, // Đây là tổng số việc làm hiển thị trên Card
+          maxTier,
+          formatted: {
+            id: company.maCongTy,
+            name: company.tenCongTy,
+            logo: company.logoUrl,
+            location: company.thanhPho,
+            slug: company.slug,
+            jobs: totalJobs,
+          } satisfies FormattedTopCompany,
         };
-      },
-    );
+      })
+      .sort((a, b) => {
+        if (b.maxTier !== a.maxTier) return b.maxTier - a.maxTier;
+        return b.formatted.jobs - a.formatted.jobs;
+      })
+      .slice(0, 8)
+      .map((item) => item.formatted);
 
-    return formattedCompanies;
+    return rankedCompanies;
+  }
+
+  /**
+   * Lấy danh sách doanh nghiệp đang sở hữu Gói Kim Cương (cấp >= 4)
+   * để hiển thị tại Banner "Nhà Tuyển Dụng Nổi Bật" đầu trang /jobs
+   */
+  async getFeaturedBannerEmployers(): Promise<FeaturedEmployerBannerItem[]> {
+    const now = new Date();
+    const companies = await this.prisma.congTy.findMany({
+      where: {
+        nhaTuyenDungs: {
+          some: {
+            muaQuangCaos: {
+              some: {
+                trangThai: { in: ['Đang chạy', 'DANG_CHAY'] },
+                ngayKetThuc: { gte: now },
+                goiQuangCao: {
+                  capDoUuTien: { gte: 4 },
+                },
+              },
+            },
+          },
+        },
+      },
+      select: {
+        maCongTy: true,
+        tenCongTy: true,
+        slug: true,
+        logoUrl: true,
+        chuyenMon: true,
+        linhVuc: true,
+        nhaTuyenDungs: {
+          select: {
+            _count: {
+              select: {
+                congViecs: {
+                  where: {
+                    trangThai: { in: ['Đang tuyển', 'DA_DUYET'] },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      take: 4,
+    });
+
+    return companies.map((company) => ({
+      companyId: company.maCongTy,
+      companyName: company.tenCongTy,
+      slug: company.slug,
+      logo: company.logoUrl,
+      tagline:
+        company.chuyenMon ||
+        company.linhVuc ||
+        'Doanh nghiệp công nghệ nổi bật đang mở tuyển kỹ sư IT',
+      activeJobsCount: company.nhaTuyenDungs.reduce(
+        (sum, hr) => sum + (hr._count?.congViecs ?? 0),
+        0,
+      ),
+    }));
   }
 
   async getCompanyDetailBySlug(slug: string): Promise<CompanyDetailResponse> {
@@ -156,8 +245,6 @@ export class CompanyService {
           skills: job.congViecKyNangs.map((cvkn) => cvkn.kyNang.tenKyNang),
         };
       });
-
-    console.log('allActiveJobs: ', allActiveJobs);
 
     // Bước 3: Trả về dữ liệu đã được Format gọn gàng
     return {
