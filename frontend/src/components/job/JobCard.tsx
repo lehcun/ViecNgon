@@ -251,18 +251,6 @@ export default function JobCard({
           </div>
         )}
       </div>
-
-      {/* Điểm nổi bật phúc lợi cho card SUPER HOT / KIM CƯƠNG (như ảnh 3) */}
-      {isWarmTier && job.highlights && job.highlights.length > 0 && (
-        <ul className="mt-3.5 pt-3 border-t border-dashed border-vip-border space-y-1 text-xs text-text-primary">
-          {job.highlights.slice(0, 3).map((item, idx) => (
-            <li key={idx} className="flex items-start gap-2">
-              <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-danger shrink-0" />
-              <span className="line-clamp-1">{item}</span>
-            </li>
-          ))}
-        </ul>
-      )}
     </article>
   );
 }

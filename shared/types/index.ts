@@ -738,13 +738,21 @@ export interface PackageResponse {
   inheritedFrom?: string | null;
 }
 
+export interface FeaturedEmployerBannerJob {
+  id: string;
+  title: string;
+  slug: string;
+}
+
 export interface FeaturedEmployerBannerItem {
   companyId: string;
   companyName: string;
   slug: string;
   logo: string | null;
+  city?: string | null;
   tagline: string;
   activeJobsCount: number;
+  featuredJobs?: FeaturedEmployerBannerJob[];
 }
 
 export interface CampaignResponse {

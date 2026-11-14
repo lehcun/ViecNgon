@@ -103,6 +103,21 @@ export class CompanyService {
     return rankedCompanies;
   }
 
+  private stripHtml(value?: string | null): string {
+    if (!value) return '';
+    return value
+      .replace(/<\/(li|p|div|br|h[1-6])>/gi, ' ')
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&amp;/gi, '&')
+      .replace(/&lt;/gi, '<')
+      .replace(/&gt;/gi, '>')
+      .replace(/&quot;/gi, '"')
+      .replace(/&#39;/gi, "'")
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
   /**
    * Lấy danh sách doanh nghiệp đang sở hữu Gói Kim Cương (cấp >= 4)
    * để hiển thị tại Banner "Nhà Tuyển Dụng Nổi Bật" đầu trang /jobs
@@ -130,6 +145,7 @@ export class CompanyService {
         tenCongTy: true,
         slug: true,
         logoUrl: true,
+        thanhPho: true,
         chuyenMon: true,
         linhVuc: true,
         nhaTuyenDungs: {
@@ -143,26 +159,51 @@ export class CompanyService {
                 },
               },
             },
+            congViecs: {
+              where: {
+                trangThai: { in: ['Đang tuyển', 'DA_DUYET'] },
+              },
+              orderBy: [{ doUuTien: 'desc' }, { ngayDang: 'desc' }],
+              take: 3,
+              select: {
+                maCongViec: true,
+                tenCongViec: true,
+                slug: true,
+              },
+            },
           },
         },
       },
       take: 4,
     });
 
-    return companies.map((company) => ({
-      companyId: company.maCongTy,
-      companyName: company.tenCongTy,
-      slug: company.slug,
-      logo: company.logoUrl,
-      tagline:
-        company.chuyenMon ||
-        company.linhVuc ||
-        'Doanh nghiệp công nghệ nổi bật đang mở tuyển kỹ sư IT',
-      activeJobsCount: company.nhaTuyenDungs.reduce(
-        (sum, hr) => sum + (hr._count?.congViecs ?? 0),
-        0,
-      ),
-    }));
+    return companies.map((company) => {
+      const featuredJobs = company.nhaTuyenDungs
+        .flatMap((hr) => hr.congViecs || [])
+        .map((job) => ({
+          id: job.maCongViec,
+          title: job.tenCongViec,
+          slug: job.slug,
+        }))
+        .slice(0, 3);
+
+      return {
+        companyId: company.maCongTy,
+        companyName: company.tenCongTy,
+        slug: company.slug,
+        logo: company.logoUrl,
+        city: company.thanhPho,
+        tagline:
+          this.stripHtml(company.linhVuc) ||
+          this.stripHtml(company.chuyenMon) ||
+          'Doanh nghiệp công nghệ nổi bật đang mở tuyển kỹ sư IT',
+        activeJobsCount: company.nhaTuyenDungs.reduce(
+          (sum, hr) => sum + (hr._count?.congViecs ?? 0),
+          0,
+        ),
+        featuredJobs,
+      };
+    });
   }
 
   async getCompanyDetailBySlug(slug: string): Promise<CompanyDetailResponse> {

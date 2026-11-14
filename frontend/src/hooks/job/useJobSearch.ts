@@ -23,6 +23,8 @@ export const useJobSearch = () => {
     loaiHinh: searchParams.get("loaiHinh") || undefined,
     capBac: searchParams.get("capBac") || undefined,
     yeuCauKinhNghiem: searchParams.get("yeuCauKinhNghiem") || undefined,
+    mucLuongMin: searchParams.get("mucLuongMin") || undefined,
+    mucLuongMax: searchParams.get("mucLuongMax") || undefined,
     salaryRange: searchParams.get("salaryRange") || undefined,
     negotiable: searchParams.get("negotiable") || undefined,
     sortBy: searchParams.get("sortBy") || "NEWEST",
@@ -44,6 +46,10 @@ export const useJobSearch = () => {
       if (currentFilters.capBac) params.set("capBac", currentFilters.capBac);
       if (currentFilters.yeuCauKinhNghiem !== undefined)
         params.set("yeuCauKinhNghiem", String(currentFilters.yeuCauKinhNghiem));
+      if (currentFilters.mucLuongMin !== undefined)
+        params.set("mucLuongMin", String(currentFilters.mucLuongMin));
+      if (currentFilters.mucLuongMax !== undefined)
+        params.set("mucLuongMax", String(currentFilters.mucLuongMax));
       if (currentFilters.salaryRange)
         params.set("salaryRange", currentFilters.salaryRange);
       if (currentFilters.negotiable)

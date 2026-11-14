@@ -54,15 +54,8 @@ export default function JobSearchBanner({
   };
 
   return (
-    <section className="bg-linear-to-br from-primary-dark via-[#13294b] to-primary-dark pt-24 pb-14 px-4 sm:px-6 lg:px-8">
+    <section className="bg-linear-to-br from-primary-dark via-[#13294b] to-primary-dark pt-24 pb-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto text-center">
-        <h1 className="text-white text-2xl sm:text-3xl md:text-4xl font-bold mb-2.5 tracking-tight">
-          Tìm việc làm IT &amp; Cơ hội nghề nghiệp hấp dẫn
-        </h1>
-        <p className="text-slate-300 text-sm sm:text-base mb-7 max-w-2xl mx-auto">
-          Lọc nhanh theo kỹ năng, cấp bậc, hình thức làm việc và mức lương minh bạch
-        </p>
-
         {/* Thanh tìm kiếm */}
         <form
           onSubmit={handleSubmit}

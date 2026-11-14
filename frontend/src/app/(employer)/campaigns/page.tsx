@@ -45,7 +45,10 @@ function normalizeCampaignStatus(
     if (ngayKetThuc) {
       const endOfDay = new Date(ngayKetThuc);
       endOfDay.setHours(23, 59, 59, 999);
-      if (!Number.isNaN(endOfDay.getTime()) && endOfDay.getTime() < Date.now()) {
+      if (
+        !Number.isNaN(endOfDay.getTime()) &&
+        endOfDay.getTime() < Date.now()
+      ) {
         return "DA_KET_THUC";
       }
     }

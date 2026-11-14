@@ -52,17 +52,18 @@ function JobsPageContent() {
         onSearch={handleSearchBanner}
       />
 
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8">
+        {/* Banner Nhà tuyển dụng nổi bật (Gói Kim Cương) */}
+        <FeaturedEmployerBanner />
+
         <JobFilterPanel
           filters={currentFilters}
           activeCount={activeFilterCount}
           totalResults={total}
           onFilterChange={updateFilter}
+          onApplyMultiple={updateMultipleFilters}
           onClearAll={clearAllFilters}
         />
-
-        {/* Banner Nhà tuyển dụng nổi bật (Gói Kim Cương) */}
-        <FeaturedEmployerBanner />
 
         {isLoading ? (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
