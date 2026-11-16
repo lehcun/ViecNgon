@@ -47,10 +47,21 @@ export interface LoginResponse {
   access_token: string;
 }
 
+export type FieldErrorMap = Record<string, string>;
+
+export interface ApiValidationErrorResponse {
+  statusCode?: number;
+  message: string | string[];
+  error?: string;
+  fieldErrors?: FieldErrorMap;
+}
+
 export interface SignupPayload {
   email: string;
   name: string;
+  hoTen?: string;
   password: string;
+  soDienThoai?: string;
   role: "UNGVIEN" | "NHATUYENDUNG";
 }
 
