@@ -262,7 +262,7 @@ export class AiMatchService {
   private async evaluateMatch(
     candidate: {
       tenUngVien: string;
-      chuyenMon: string;
+      chuyenMon: string | null;
       soNamKinhNghiem: number | null;
       gioiThieuBanThan: string | null;
       kyNangs: { kyNang: { tenKyNang: string }; mucDo: string | null }[];

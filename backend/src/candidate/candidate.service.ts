@@ -98,7 +98,7 @@ export class CandidateService {
       gender: profile.gioiTinh,
       yearsOfExperience: profile.soNamKinhNghiem,
       avatarUrl: profile.avatarUrl,
-      profession: profile.chuyenMon,
+      profession: profile.chuyenMon ?? '',
       cvUrl: profile.cvUrl,
       address: profile.diaChi,
 

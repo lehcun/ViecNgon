@@ -233,7 +233,7 @@ export class ApplicationsService {
       candidateId: ungVien.maUngVien,
       candidateName: ungVien.tenUngVien,
       avatarUrl: ungVien.avatarUrl,
-      profession: ungVien.chuyenMon,
+      profession: ungVien.chuyenMon ?? '',
       aboutMe: ungVien.gioiThieuBanThan,
 
       contact: {
