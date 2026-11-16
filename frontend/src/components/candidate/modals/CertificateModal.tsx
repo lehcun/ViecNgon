@@ -5,11 +5,28 @@ import { X, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useManageCandidateItems } from "@/hooks/candidate/useManageCandidateItems";
 import { CertificateItem } from "@viecngon/types";
+import {
+  FieldError,
+  FormBannerError,
+  FormLabel,
+  getFieldA11yProps,
+  getInputClassName,
+} from "@/components/ui/FormField";
+import { useFormValidation } from "@/hooks/useFormValidation";
+import { validateDateOrder, validateRequiredText } from "@/lib/validation";
 
 interface CertificateModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialData?: CertificateItem | null;
+}
+
+interface CertificateFormValues {
+  name: string;
+  organization: string;
+  issueMonth: string;
+  expirationMonth: string;
+  noExpiry: boolean;
 }
 
 function toInputMonth(dateStr?: string | null): string {
@@ -45,46 +62,72 @@ export default function CertificateModal({
 
   const isPending = isCreatingCertificate || isUpdatingCertificate;
 
-  const [name, setName] = useState(initialData?.name || "");
-  const [organization, setOrganization] = useState(
-    initialData?.organization || "",
-  );
-  const [issueMonth, setIssueMonth] = useState(() =>
-    toInputMonth(initialData?.issueDate),
-  );
-  const [expirationMonth, setExpirationMonth] = useState(() =>
-    toInputMonth(initialData?.expirationDate),
-  );
-  const [noExpiry, setNoExpiry] = useState(
-    isEditing ? !initialData?.expirationDate : false,
-  );
+  const [values, setValues] = useState<CertificateFormValues>({
+    name: initialData?.name || "",
+    organization: initialData?.organization || "",
+    issueMonth: toInputMonth(initialData?.issueDate),
+    expirationMonth: toInputMonth(initialData?.expirationDate),
+    noExpiry: isEditing ? !initialData?.expirationDate : false,
+  });
+
+  const {
+    errors,
+    formError,
+    handleFieldBlur,
+    handleFieldChange,
+    validateAll,
+    applyServerError,
+  } = useFormValidation<CertificateFormValues>({
+    fieldOrder: ["name", "organization", "issueMonth", "expirationMonth"],
+    validators: {
+      name: (val) =>
+        validateRequiredText(val, "tên chứng chỉ", { maxLength: 150 }),
+      organization: (val) =>
+        validateRequiredText(val, "tổ chức cấp", { maxLength: 150 }),
+      issueMonth: (val) => (val ? "" : "Vui lòng chọn ngày cấp."),
+      expirationMonth: (val, all) =>
+        all.noExpiry
+          ? ""
+          : validateDateOrder(
+              all.issueMonth,
+              val,
+              "Ngày hết hạn không được trước ngày cấp.",
+            ),
+    },
+  });
+
+  const updateField = <K extends keyof CertificateFormValues>(
+    field: K,
+    nextVal: CertificateFormValues[K],
+  ) => {
+    const next = { ...values, [field]: nextVal };
+    if (field === "noExpiry" && nextVal === true) {
+      next.expirationMonth = "";
+    }
+    setValues(next);
+    handleFieldChange(field, nextVal, next);
+    if (field === "issueMonth" || field === "noExpiry") {
+      handleFieldChange("expirationMonth", next.expirationMonth, next);
+    }
+  };
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name.trim()) {
-      toast.error("Vui lòng nhập tên chứng chỉ");
-      return;
-    }
-    if (!organization.trim()) {
-      toast.error("Vui lòng nhập tổ chức cấp");
-      return;
-    }
-    if (!issueMonth) {
-      toast.error("Vui lòng chọn ngày cấp");
+    if (!validateAll(values)) {
       return;
     }
 
     const payload = {
-      name: name.trim(),
-      organization: organization.trim(),
-      issueDate: toIsoDate(issueMonth),
-      expirationDate: noExpiry
+      name: values.name.trim(),
+      organization: values.organization.trim(),
+      issueDate: toIsoDate(values.issueMonth),
+      expirationDate: values.noExpiry
         ? null
-        : expirationMonth
-          ? toIsoDate(expirationMonth)
+        : values.expirationMonth
+          ? toIsoDate(values.expirationMonth)
           : null,
     };
 
@@ -98,8 +141,10 @@ export default function CertificateModal({
       }
       onClose();
     } catch (error) {
-      const msg = error instanceof Error ? error.message : "Có lỗi xảy ra";
-      toast.error(msg);
+      const applied = applyServerError(error, {
+        fallbackMessage: "Có lỗi xảy ra, vui lòng thử lại.",
+      });
+      toast.error(applied.message);
     }
   };
 
@@ -114,6 +159,7 @@ export default function CertificateModal({
             {isEditing ? "Chỉnh sửa chứng chỉ" : "Thêm chứng chỉ mới"}
           </h2>
           <button
+            type="button"
             onClick={onClose}
             disabled={isPending}
             className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-full transition-colors"
@@ -122,76 +168,119 @@ export default function CertificateModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 md:p-8 space-y-5">
-          {/* Tên chứng chỉ */}
+        <form
+          onSubmit={handleSubmit}
+          noValidate
+          className="flex-1 overflow-y-auto p-6 md:p-8 space-y-5"
+        >
+          <FormBannerError message={formError} />
+
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-              Tên chứng chỉ / Giải thưởng <span className="text-red-500">*</span>
-            </label>
+            <FormLabel htmlFor="name" required>
+              Tên chứng chỉ / Giải thưởng
+            </FormLabel>
             <input
+              id="name"
+              name="name"
               type="text"
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={values.name}
+              onChange={(e) => updateField("name", e.target.value)}
+              onBlur={() => handleFieldBlur("name", values.name, values)}
               placeholder="VD: AWS Certified Solutions Architect - Associate"
-              className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+              className={getInputClassName({
+                hasError: Boolean(errors.name),
+                className: "h-10",
+              })}
+              {...getFieldA11yProps("name", errors.name)}
             />
+            <FieldError id="name-error" message={errors.name} />
           </div>
 
-          {/* Tổ chức cấp */}
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-              Tổ chức / Đơn vị cấp <span className="text-red-500">*</span>
-            </label>
+            <FormLabel htmlFor="organization" required>
+              Tổ chức / Đơn vị cấp
+            </FormLabel>
             <input
+              id="organization"
+              name="organization"
               type="text"
-              required
-              value={organization}
-              onChange={(e) => setOrganization(e.target.value)}
+              value={values.organization}
+              onChange={(e) => updateField("organization", e.target.value)}
+              onBlur={() =>
+                handleFieldBlur("organization", values.organization, values)
+              }
               placeholder="VD: Amazon Web Services (AWS) hoặc Coursera"
-              className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+              className={getInputClassName({
+                hasError: Boolean(errors.organization),
+                className: "h-10",
+              })}
+              {...getFieldA11yProps("organization", errors.organization)}
             />
+            <FieldError id="organization-error" message={errors.organization} />
           </div>
 
-          {/* Thời gian */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                Ngày cấp <span className="text-red-500">*</span>
-              </label>
+              <FormLabel htmlFor="issueMonth" required>
+                Ngày cấp
+              </FormLabel>
               <input
+                id="issueMonth"
+                name="issueMonth"
                 type="month"
-                required
-                value={issueMonth}
-                onChange={(e) => setIssueMonth(e.target.value)}
-                className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                value={values.issueMonth}
+                onChange={(e) => updateField("issueMonth", e.target.value)}
+                onBlur={() =>
+                  handleFieldBlur("issueMonth", values.issueMonth, values)
+                }
+                className={getInputClassName({
+                  hasError: Boolean(errors.issueMonth),
+                  className: "h-10",
+                })}
+                {...getFieldA11yProps("issueMonth", errors.issueMonth)}
               />
+              <FieldError id="issueMonth-error" message={errors.issueMonth} />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                Ngày hết hạn
-              </label>
+              <FormLabel htmlFor="expirationMonth">Ngày hết hạn</FormLabel>
               <input
+                id="expirationMonth"
+                name="expirationMonth"
                 type="month"
-                disabled={noExpiry}
-                value={noExpiry ? "" : expirationMonth}
-                onChange={(e) => setExpirationMonth(e.target.value)}
-                className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all disabled:bg-slate-100 disabled:cursor-not-allowed"
+                disabled={values.noExpiry}
+                value={values.noExpiry ? "" : values.expirationMonth}
+                onChange={(e) => updateField("expirationMonth", e.target.value)}
+                onBlur={() =>
+                  handleFieldBlur(
+                    "expirationMonth",
+                    values.expirationMonth,
+                    values,
+                  )
+                }
+                className={getInputClassName({
+                  hasError: Boolean(errors.expirationMonth),
+                  className:
+                    "h-10 disabled:bg-slate-100 disabled:cursor-not-allowed",
+                })}
+                {...getFieldA11yProps(
+                  "expirationMonth",
+                  errors.expirationMonth,
+                )}
+              />
+              <FieldError
+                id="expirationMonth-error"
+                message={errors.expirationMonth}
               />
             </div>
           </div>
 
-          {/* Checkbox không hết hạn */}
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
               id="noExpiryCheck"
-              checked={noExpiry}
-              onChange={(e) => {
-                setNoExpiry(e.target.checked);
-                if (e.target.checked) setExpirationMonth("");
-              }}
+              checked={values.noExpiry}
+              onChange={(e) => updateField("noExpiry", e.target.checked)}
               className="w-4 h-4 text-primary rounded border-slate-300 focus:ring-primary cursor-pointer"
             />
             <label
@@ -225,4 +314,3 @@ export default function CertificateModal({
     </div>
   );
 }
-

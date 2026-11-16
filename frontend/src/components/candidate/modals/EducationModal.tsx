@@ -5,11 +5,29 @@ import { X, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useManageCandidateItems } from "@/hooks/candidate/useManageCandidateItems";
 import { EducationItem } from "@viecngon/types";
+import {
+  FieldError,
+  FormBannerError,
+  FormLabel,
+  getFieldA11yProps,
+  getInputClassName,
+} from "@/components/ui/FormField";
+import { useFormValidation } from "@/hooks/useFormValidation";
+import { validateDateOrder, validateRequiredText } from "@/lib/validation";
 
 interface EducationModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialData?: EducationItem | null;
+}
+
+interface EducationFormValues {
+  schoolName: string;
+  major: string;
+  startMonth: string;
+  endMonth: string;
+  isStudying: boolean;
+  gpa: string;
 }
 
 function toInputMonth(dateStr?: string | null): string {
@@ -45,43 +63,79 @@ export default function EducationModal({
 
   const isPending = isCreatingEducation || isUpdatingEducation;
 
-  const [schoolName, setSchoolName] = useState(initialData?.schoolName || "");
-  const [major, setMajor] = useState(initialData?.major || "");
-  const [startMonth, setStartMonth] = useState(() =>
-    toInputMonth(initialData?.startDate),
-  );
-  const [endMonth, setEndMonth] = useState(() =>
-    toInputMonth(initialData?.endDate),
-  );
-  const [isStudying, setIsStudying] = useState(
-    isEditing ? !initialData?.endDate : false,
-  );
-  const [gpa, setGpa] = useState(initialData?.gpa || "");
+  const [values, setValues] = useState<EducationFormValues>({
+    schoolName: initialData?.schoolName || "",
+    major: initialData?.major || "",
+    startMonth: toInputMonth(initialData?.startDate),
+    endMonth: toInputMonth(initialData?.endDate),
+    isStudying: isEditing ? !initialData?.endDate : false,
+    gpa: initialData?.gpa || "",
+  });
+
+  const {
+    errors,
+    formError,
+    handleFieldBlur,
+    handleFieldChange,
+    validateAll,
+    applyServerError,
+  } = useFormValidation<EducationFormValues>({
+    fieldOrder: ["schoolName", "major", "startMonth", "endMonth", "gpa"],
+    validators: {
+      schoolName: (val) =>
+        validateRequiredText(val, "tên trường học", { maxLength: 150 }),
+      major: (val) =>
+        validateRequiredText(val, "chuyên ngành học", { maxLength: 100 }),
+      startMonth: (val) => (val ? "" : "Vui lòng chọn thời gian bắt đầu."),
+      endMonth: (val, all) =>
+        all.isStudying
+          ? ""
+          : validateDateOrder(
+              all.startMonth,
+              val,
+              "Thời gian tốt nghiệp không được trước thời gian bắt đầu.",
+            ),
+      gpa: (val) =>
+        val.trim().length > 10
+          ? "Điểm GPA không được vượt quá 10 ký tự."
+          : "",
+    },
+  });
+
+  const updateField = <K extends keyof EducationFormValues>(
+    field: K,
+    nextVal: EducationFormValues[K],
+  ) => {
+    const next = { ...values, [field]: nextVal };
+    if (field === "isStudying" && nextVal === true) {
+      next.endMonth = "";
+    }
+    setValues(next);
+    handleFieldChange(field, nextVal, next);
+    if (field === "startMonth" || field === "isStudying") {
+      handleFieldChange("endMonth", next.endMonth, next);
+    }
+  };
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!schoolName.trim()) {
-      toast.error("Vui lòng nhập tên trường học");
-      return;
-    }
-    if (!major.trim()) {
-      toast.error("Vui lòng nhập ngành học");
-      return;
-    }
-    if (!startMonth) {
-      toast.error("Vui lòng chọn thời gian bắt đầu");
+    if (!validateAll(values)) {
       return;
     }
 
     const payload = {
-      schoolName: schoolName.trim(),
-      major: major.trim(),
-      startDate: toIsoDate(startMonth),
-      endDate: isStudying ? null : endMonth ? toIsoDate(endMonth) : null,
-      gpa: gpa.trim() || null,
+      schoolName: values.schoolName.trim(),
+      major: values.major.trim(),
+      startDate: toIsoDate(values.startMonth),
+      endDate: values.isStudying
+        ? null
+        : values.endMonth
+          ? toIsoDate(values.endMonth)
+          : null,
+      gpa: values.gpa.trim() || null,
     };
 
     try {
@@ -94,8 +148,10 @@ export default function EducationModal({
       }
       onClose();
     } catch (error) {
-      const msg = error instanceof Error ? error.message : "Có lỗi xảy ra";
-      toast.error(msg);
+      const applied = applyServerError(error, {
+        fallbackMessage: "Có lỗi xảy ra, vui lòng thử lại.",
+      });
+      toast.error(applied.message);
     }
   };
 
@@ -110,6 +166,7 @@ export default function EducationModal({
             {isEditing ? "Chỉnh sửa học vấn" : "Thêm thông tin học vấn"}
           </h2>
           <button
+            type="button"
             onClick={onClose}
             disabled={isPending}
             className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-full transition-colors"
@@ -118,76 +175,109 @@ export default function EducationModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 md:p-8 space-y-5">
-          {/* Tên trường */}
+        <form
+          onSubmit={handleSubmit}
+          noValidate
+          className="flex-1 overflow-y-auto p-6 md:p-8 space-y-5"
+        >
+          <FormBannerError message={formError} />
+
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-              Trường học / Cơ sở đào tạo <span className="text-red-500">*</span>
-            </label>
+            <FormLabel htmlFor="schoolName" required>
+              Trường học / Cơ sở đào tạo
+            </FormLabel>
             <input
+              id="schoolName"
+              name="schoolName"
               type="text"
-              required
-              value={schoolName}
-              onChange={(e) => setSchoolName(e.target.value)}
+              value={values.schoolName}
+              onChange={(e) => updateField("schoolName", e.target.value)}
+              onBlur={() =>
+                handleFieldBlur("schoolName", values.schoolName, values)
+              }
               placeholder="VD: Đại học Bách Khoa - ĐHQG TP.HCM"
-              className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+              className={getInputClassName({
+                hasError: Boolean(errors.schoolName),
+                className: "h-10",
+              })}
+              {...getFieldA11yProps("schoolName", errors.schoolName)}
             />
+            <FieldError id="schoolName-error" message={errors.schoolName} />
           </div>
 
-          {/* Ngành học */}
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-              Chuyên ngành / Ngành học <span className="text-red-500">*</span>
-            </label>
+            <FormLabel htmlFor="major" required>
+              Chuyên ngành / Ngành học
+            </FormLabel>
             <input
+              id="major"
+              name="major"
               type="text"
-              required
-              value={major}
-              onChange={(e) => setMajor(e.target.value)}
+              value={values.major}
+              onChange={(e) => updateField("major", e.target.value)}
+              onBlur={() => handleFieldBlur("major", values.major, values)}
               placeholder="VD: Khoa học máy tính / Công nghệ phần mềm"
-              className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+              className={getInputClassName({
+                hasError: Boolean(errors.major),
+                className: "h-10",
+              })}
+              {...getFieldA11yProps("major", errors.major)}
             />
+            <FieldError id="major-error" message={errors.major} />
           </div>
 
-          {/* Thời gian */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                Bắt đầu từ <span className="text-red-500">*</span>
-              </label>
+              <FormLabel htmlFor="startMonth" required>
+                Bắt đầu từ
+              </FormLabel>
               <input
+                id="startMonth"
+                name="startMonth"
                 type="month"
-                required
-                value={startMonth}
-                onChange={(e) => setStartMonth(e.target.value)}
-                className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                value={values.startMonth}
+                onChange={(e) => updateField("startMonth", e.target.value)}
+                onBlur={() =>
+                  handleFieldBlur("startMonth", values.startMonth, values)
+                }
+                className={getInputClassName({
+                  hasError: Boolean(errors.startMonth),
+                  className: "h-10",
+                })}
+                {...getFieldA11yProps("startMonth", errors.startMonth)}
               />
+              <FieldError id="startMonth-error" message={errors.startMonth} />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                Đến tháng (Tốt nghiệp)
-              </label>
+              <FormLabel htmlFor="endMonth">Đến tháng (Tốt nghiệp)</FormLabel>
               <input
+                id="endMonth"
+                name="endMonth"
                 type="month"
-                disabled={isStudying}
-                value={isStudying ? "" : endMonth}
-                onChange={(e) => setEndMonth(e.target.value)}
-                className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all disabled:bg-slate-100 disabled:cursor-not-allowed"
+                disabled={values.isStudying}
+                value={values.isStudying ? "" : values.endMonth}
+                onChange={(e) => updateField("endMonth", e.target.value)}
+                onBlur={() =>
+                  handleFieldBlur("endMonth", values.endMonth, values)
+                }
+                className={getInputClassName({
+                  hasError: Boolean(errors.endMonth),
+                  className:
+                    "h-10 disabled:bg-slate-100 disabled:cursor-not-allowed",
+                })}
+                {...getFieldA11yProps("endMonth", errors.endMonth)}
               />
+              <FieldError id="endMonth-error" message={errors.endMonth} />
             </div>
           </div>
 
-          {/* Checkbox đang học */}
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
               id="isStudyingCheck"
-              checked={isStudying}
-              onChange={(e) => {
-                setIsStudying(e.target.checked);
-                if (e.target.checked) setEndMonth("");
-              }}
+              checked={values.isStudying}
+              onChange={(e) => updateField("isStudying", e.target.checked)}
               className="w-4 h-4 text-primary rounded border-slate-300 focus:ring-primary cursor-pointer"
             />
             <label
@@ -198,18 +288,26 @@ export default function EducationModal({
             </label>
           </div>
 
-          {/* Điểm GPA */}
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-              Điểm trung bình (GPA) <span className="text-slate-400 font-normal">(Tuỳ chọn)</span>
-            </label>
+            <FormLabel htmlFor="gpa">
+              Điểm trung bình (GPA){" "}
+              <span className="text-slate-400 font-normal">(Tuỳ chọn)</span>
+            </FormLabel>
             <input
+              id="gpa"
+              name="gpa"
               type="text"
-              value={gpa}
-              onChange={(e) => setGpa(e.target.value)}
+              value={values.gpa}
+              onChange={(e) => updateField("gpa", e.target.value)}
+              onBlur={() => handleFieldBlur("gpa", values.gpa, values)}
               placeholder="VD: 3.6/4.0 hoặc 8.5/10"
-              className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+              className={getInputClassName({
+                hasError: Boolean(errors.gpa),
+                className: "h-10",
+              })}
+              {...getFieldA11yProps("gpa", errors.gpa)}
             />
+            <FieldError id="gpa-error" message={errors.gpa} />
           </div>
 
           <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
@@ -235,4 +333,3 @@ export default function EducationModal({
     </div>
   );
 }
-

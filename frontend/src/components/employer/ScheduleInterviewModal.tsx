@@ -11,6 +11,15 @@ import {
   Loader2,
 } from "lucide-react";
 import { useScheduleInterview } from "@/hooks/recruiter/useScheduleInterview";
+import {
+  FieldError,
+  FormBannerError,
+  FormLabel,
+  getFieldA11yProps,
+  getInputClassName,
+} from "@/components/ui/FormField";
+import { useFormValidation } from "@/hooks/useFormValidation";
+import { validateRequiredText } from "@/lib/validation";
 
 interface ScheduleInterviewModalProps {
   isOpen: boolean;
@@ -20,6 +29,13 @@ interface ScheduleInterviewModalProps {
   jobTitle: string;
 }
 
+interface ScheduleInterviewValues {
+  title: string;
+  date: string;
+  time: string;
+  description: string;
+}
+
 export default function ScheduleInterviewModal({
   isOpen,
   onClose,
@@ -27,38 +43,93 @@ export default function ScheduleInterviewModal({
   candidateName,
   jobTitle,
 }: ScheduleInterviewModalProps) {
-  // --- STATES FORM ---
-  const [title, setTitle] = useState(`Phỏng vấn vị trí ${jobTitle}`);
-  const [date, setDate] = useState("");
-  const [time, setTime] = useState("");
-  const [description, setDescription] = useState(
-    "Chào bạn,\nChúng tôi rất ấn tượng với hồ sơ của bạn và muốn mời bạn tham gia buổi phỏng vấn trực tuyến...",
-  );
-  const [isGoogleMeet, setIsGoogleMeet] = useState(true); // Mặc định bật tạo Google Meet
+  const [values, setValues] = useState<ScheduleInterviewValues>({
+    title: `Phỏng vấn vị trí ${jobTitle}`,
+    date: "",
+    time: "",
+    description:
+      "Chào bạn,\nChúng tôi rất ấn tượng với hồ sơ của bạn và muốn mời bạn tham gia buổi phỏng vấn trực tuyến...",
+  });
+  const [isGoogleMeet, setIsGoogleMeet] = useState(true);
 
   const { mutate: scheduleInterview, isPending } = useScheduleInterview();
 
+  const {
+    errors,
+    formError,
+    handleFieldBlur,
+    handleFieldChange,
+    validateAll,
+    applyServerError,
+  } = useFormValidation<ScheduleInterviewValues>({
+    fieldOrder: ["title", "date", "time"],
+    validators: {
+      title: (val) =>
+        validateRequiredText(val, "tiêu đề phỏng vấn", { maxLength: 150 }),
+      date: (val) => {
+        if (!val) return "Vui lòng chọn ngày phỏng vấn.";
+        const today = new Date().toISOString().split("T")[0];
+        if (val < today) return "Ngày phỏng vấn không được ở quá khứ.";
+        return "";
+      },
+      time: (val, all) => {
+        if (!val) return "Vui lòng chọn giờ phỏng vấn.";
+        if (all.date) {
+          const dt = new Date(`${all.date}T${val}`);
+          if (!Number.isNaN(dt.getTime()) && dt.getTime() < Date.now()) {
+            return "Thời gian phỏng vấn phải ở tương lai.";
+          }
+        }
+        return "";
+      },
+    },
+  });
+
+  const updateField = (
+    field: keyof ScheduleInterviewValues,
+    nextVal: string,
+  ) => {
+    const next = { ...values, [field]: nextVal };
+    setValues(next);
+    handleFieldChange(field, nextVal, next);
+    if (field === "date" && next.time) {
+      handleFieldChange("time", next.time, next);
+    }
+  };
+
   if (!isOpen) return null;
 
-  // Xử lý Submit Form
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Ghép ngày và giờ thành 1 chuỗi ISO chuẩn để gửi xuống Backend
-    const interviewDateTime = new Date(`${date}T${time}`).toISOString();
+    if (!validateAll(values)) {
+      return;
+    }
+
+    const interviewDateTime = new Date(
+      `${values.date}T${values.time}`,
+    ).toISOString();
 
     scheduleInterview(
       {
         maDon: applicationId,
-        tieuDe: title,
+        tieuDe: values.title.trim(),
         thoiGian: interviewDateTime,
-        moTa: description,
+        moTa: values.description.trim(),
         taoGoogleMeet: isGoogleMeet,
       },
       {
-        // Khi API chạy thành công thì đóng Modal
         onSuccess: () => {
           onClose();
+        },
+        onError: (error) => {
+          applyServerError(error, {
+            fallbackMessage: "Không thể đặt lịch phỏng vấn. Vui lòng thử lại.",
+            fieldAliases: {
+              tieuDe: "title",
+              thoiGian: "date",
+            },
+          });
         },
       },
     );
@@ -67,7 +138,6 @@ export default function ScheduleInterviewModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm transition-opacity">
       <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-        {/* HEADER */}
         <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50/50">
           <div>
             <h2 className="text-lg font-bold text-slate-800">
@@ -81,6 +151,7 @@ export default function ScheduleInterviewModal({
             </p>
           </div>
           <button
+            type="button"
             onClick={onClose}
             className="p-2 text-slate-400 hover:bg-slate-200 hover:text-slate-700 rounded-full transition-colors"
           >
@@ -88,53 +159,81 @@ export default function ScheduleInterviewModal({
           </button>
         </div>
 
-        {/* BODY FORM */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          {/* Tiêu đề buổi phỏng vấn */}
+        <form onSubmit={handleSubmit} noValidate className="p-6 space-y-5">
+          <FormBannerError message={formError} />
+
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-              Tiêu đề phỏng vấn <span className="text-red-500">*</span>
-            </label>
+            <FormLabel htmlFor="title" required>
+              Tiêu đề phỏng vấn
+            </FormLabel>
             <input
+              id="title"
+              name="title"
               type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 text-sm"
-              required
+              value={values.title}
+              onChange={(e) => updateField("title", e.target.value)}
+              onBlur={() => handleFieldBlur("title", values.title, values)}
+              className={getInputClassName({
+                hasError: Boolean(errors.title),
+                className: "h-10",
+              })}
+              {...getFieldA11yProps("title", errors.title)}
             />
+            <FieldError id="title-error" message={errors.title} />
           </div>
 
-          {/* Ngày & Giờ (Chia 2 cột) */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className=" text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
-                <CalendarIcon size={16} className="text-slate-400" /> Ngày phỏng
-                vấn <span className="text-red-500">*</span>
-              </label>
+              <FormLabel
+                htmlFor="date"
+                required
+                className="flex items-center gap-1.5"
+              >
+                <CalendarIcon size={16} className="text-slate-400" /> Ngày
+                phỏng vấn
+              </FormLabel>
               <input
+                id="date"
+                name="date"
                 type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 text-sm cursor-pointer"
-                required
+                value={values.date}
+                min={new Date().toISOString().split("T")[0]}
+                onChange={(e) => updateField("date", e.target.value)}
+                onBlur={() => handleFieldBlur("date", values.date, values)}
+                className={getInputClassName({
+                  hasError: Boolean(errors.date),
+                  className: "h-10 cursor-pointer",
+                })}
+                {...getFieldA11yProps("date", errors.date)}
               />
+              <FieldError id="date-error" message={errors.date} />
             </div>
+
             <div>
-              <label className=" text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
-                <Clock size={16} className="text-slate-400" /> Thời gian{" "}
-                <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="time"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-                className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 text-sm cursor-pointer"
+              <FormLabel
+                htmlFor="time"
                 required
+                className="flex items-center gap-1.5"
+              >
+                <Clock size={16} className="text-slate-400" /> Thời gian
+              </FormLabel>
+              <input
+                id="time"
+                name="time"
+                type="time"
+                value={values.time}
+                onChange={(e) => updateField("time", e.target.value)}
+                onBlur={() => handleFieldBlur("time", values.time, values)}
+                className={getInputClassName({
+                  hasError: Boolean(errors.time),
+                  className: "h-10 cursor-pointer",
+                })}
+                {...getFieldA11yProps("time", errors.time)}
               />
+              <FieldError id="time-error" message={errors.time} />
             </div>
           </div>
 
-          {/* Tích hợp Google Meet (Công tắc) */}
           <div className="p-4 border border-indigo-100 bg-indigo-50/50 rounded-xl flex items-start gap-3">
             <div className="mt-0.5 p-2 bg-indigo-100 text-indigo-600 rounded-lg">
               <Video size={18} />
@@ -159,21 +258,24 @@ export default function ScheduleInterviewModal({
             </label>
           </div>
 
-          {/* Lời nhắn / Mô tả */}
           <div>
-            <label className="text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
+            <FormLabel
+              htmlFor="description"
+              className="flex items-center gap-1.5"
+            >
               <AlignLeft size={16} className="text-slate-400" /> Lời nhắn cho
               ứng viên
-            </label>
+            </FormLabel>
             <textarea
+              id="description"
+              name="description"
               rows={4}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 text-sm resize-none"
+              value={values.description}
+              onChange={(e) => updateField("description", e.target.value)}
+              className="w-full px-4 py-2.5 bg-white border border-border-default rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 text-sm resize-none"
             ></textarea>
           </div>
 
-          {/* FOOTER BUTTONS */}
           <div className="flex items-center justify-end gap-3 pt-2">
             <button
               type="button"
@@ -185,7 +287,7 @@ export default function ScheduleInterviewModal({
             </button>
             <button
               type="submit"
-              disabled={isPending} // Dùng isPending của React Query
+              disabled={isPending}
               className="px-6 py-2.5 bg-primary hover:bg-primary-hover text-white text-sm font-bold rounded-lg transition-all shadow-md shadow-primary/20 flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {isPending ? (

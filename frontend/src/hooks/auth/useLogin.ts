@@ -1,6 +1,7 @@
 import { useAuthStore } from "@/store/authStore";
 import { useMutation } from "@tanstack/react-query";
 import { LoginResponse } from "@viecngon/types";
+import { throwApiFormError } from "@/lib/validation";
 
 const fetchLogin = async (
   credentials: Record<string, string>,
@@ -18,8 +19,7 @@ const fetchLogin = async (
   );
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || "Đăng nhập thất bại");
+    await throwApiFormError(response, "Đăng nhập thất bại");
   }
 
   return response.json();
@@ -32,14 +32,12 @@ export const useLogin = () => {
     mutationFn: (credentials: Record<string, string>) =>
       fetchLogin(credentials),
     onSuccess: (data) => {
-      // Tự động lưu user vào Zustand ngay khi đăng nhập thành công
-      // Đã sửa lại thành setUser cho đúng với file store
       setUser(data.user);
     },
   });
 
   return {
     ...mutation,
-    login: mutation.mutateAsync, // Dùng mutateAsync tốt hơn nếu bạn muốn UI đợi (await) kết quả
+    login: mutation.mutateAsync,
   };
 };

@@ -24,6 +24,8 @@ import { useSpotlightBanner } from "@/hooks/recruiter/useSpotlightBanner";
 import { CompanyLogo } from "@/components/ui/CompanyLogo";
 import { ErrorState } from "@/components/ui/StateViews";
 import { cn } from "@/lib/utils";
+import { FieldError, getFieldA11yProps } from "@/components/ui/FormField";
+import { validateUrl } from "@/lib/validation";
 
 interface SpotlightBannerModalProps {
   isOpen: boolean;
@@ -254,8 +256,20 @@ function SpotlightBannerForm({
     }
   };
 
+  const [bannerCoverUrlError, setBannerCoverUrlError] = useState("");
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const coverUrlErr = validateUrl(bannerCoverUrl, {
+      required: false,
+      label: "đường dẫn ảnh nền",
+      maxLength: 255,
+    });
+    if (coverUrlErr) {
+      setBannerCoverUrlError(coverUrlErr);
+      return;
+    }
+
     await saveBanner({
       bannerCoverUrl: bannerCoverUrl.trim() || null,
       bannerCity: bannerCity.trim() || null,
@@ -270,6 +284,7 @@ function SpotlightBannerForm({
     <form
       id="spotlight-banner-form"
       onSubmit={handleSubmit}
+      noValidate
       className="flex flex-col flex-1 overflow-hidden"
     >
       <div className="p-6 space-y-6 overflow-y-auto">
@@ -415,13 +430,41 @@ function SpotlightBannerForm({
             </div>
           </div>
           <input
+            id="bannerCoverUrl"
             type="text"
             maxLength={255}
             value={bannerCoverUrl}
-            onChange={(e) => setBannerCoverUrl(e.target.value)}
+            onChange={(e) => {
+              setBannerCoverUrl(e.target.value);
+              if (bannerCoverUrlError) {
+                setBannerCoverUrlError(
+                  validateUrl(e.target.value, {
+                    required: false,
+                    label: "đường dẫn ảnh nền",
+                    maxLength: 255,
+                  }),
+                );
+              }
+            }}
+            onBlur={() =>
+              setBannerCoverUrlError(
+                validateUrl(bannerCoverUrl, {
+                  required: false,
+                  label: "đường dẫn ảnh nền",
+                  maxLength: 255,
+                }),
+              )
+            }
             placeholder="https://... hoặc bấm 'Tải ảnh từ máy' (JPG, PNG, WEBP <= 5MB)"
-            className="w-full h-10 px-3.5 rounded-lg border border-border-default bg-surface-page text-sm text-text-primary placeholder:text-text-placeholder focus:outline-none focus:border-primary focus:bg-surface-card transition-colors"
+            className={cn(
+              "w-full h-10 px-3.5 rounded-lg border bg-surface-page text-sm text-text-primary placeholder:text-text-placeholder focus:outline-none focus:bg-surface-card transition-colors",
+              bannerCoverUrlError
+                ? "border-danger bg-danger-soft/20 focus:border-danger focus:ring-2 focus:ring-danger/20"
+                : "border-border-default focus:border-primary",
+            )}
+            {...getFieldA11yProps("bannerCoverUrl", bannerCoverUrlError)}
           />
+          <FieldError id="bannerCoverUrl-error" message={bannerCoverUrlError} />
         </div>
 
         {/* Thành phố & Nhãn Badge */}

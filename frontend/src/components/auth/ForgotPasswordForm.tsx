@@ -5,13 +5,34 @@ import { FiMail, FiArrowLeft } from "react-icons/fi";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
+import {
+  FieldError,
+  FormLabel,
+  getFieldA11yProps,
+  getInputClassName,
+} from "@/components/ui/FormField";
+import { useFormValidation } from "@/hooks/useFormValidation";
+import { validateEmail } from "@/lib/validation";
+
+interface ForgotPasswordValues {
+  email: string;
+}
 
 export default function ForgotPasswordForm() {
-  const [email, setEmail] = useState("");
+  const [values, setValues] = useState<ForgotPasswordValues>({ email: "" });
+
+  const { errors, handleFieldBlur, handleFieldChange, validateAll } =
+    useFormValidation<ForgotPasswordValues>({
+      fieldOrder: ["email"],
+      validators: {
+        email: (val) => validateEmail(val, true),
+      },
+    });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) return;
+    if (!validateAll(values)) return;
+
     toast.success(
       "Nếu email tồn tại trên hệ thống, hướng dẫn khôi phục sẽ được gửi tới hộp thư của bạn.",
     );
@@ -27,7 +48,7 @@ export default function ForgotPasswordForm() {
       </Link>
 
       <div className="mb-8 text-center md:text-left">
-        <h1 className="text-2xl font-bold text-text-main mb-2">
+        <h1 className="text-2xl font-bold text-text-primary mb-2">
           Quên mật khẩu?
         </h1>
         <p className="text-text-muted text-sm leading-relaxed">
@@ -36,25 +57,37 @@ export default function ForgotPasswordForm() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} noValidate className="space-y-5">
         <div>
-          <label className="block text-sm font-semibold text-text-main mb-1.5">
+          <FormLabel htmlFor="email" required>
             Email của bạn
-          </label>
+          </FormLabel>
           <div className="relative">
             <FiMail
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-subtle"
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
               size={18}
             />
             <input
+              id="email"
+              name="email"
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              value={values.email}
+              onChange={(e) => {
+                const next = { email: e.target.value };
+                setValues(next);
+                handleFieldChange("email", e.target.value, next);
+              }}
+              onBlur={() => handleFieldBlur("email", values.email, values)}
               placeholder="Ví dụ: cuong.le@gmail.com"
-              className="w-full h-11 pl-10 pr-4 border border-border-default rounded-lg outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary transition-all text-sm bg-surface-card"
-              required
+              className={getInputClassName({
+                hasError: Boolean(errors.email),
+                className: "pl-10 pr-4",
+              })}
+              {...getFieldA11yProps("email", errors.email)}
             />
           </div>
+          <FieldError id="email-error" message={errors.email} />
         </div>
 
         <Button type="submit" size="lg" className="w-full">
@@ -62,7 +95,7 @@ export default function ForgotPasswordForm() {
         </Button>
       </form>
 
-      <div className="mt-8 p-4 bg-surface-subtle border border-border-default rounded-xl text-sm text-center">
+      <div className="mt-8 p-4 bg-surface-muted border border-border-default rounded-xl text-sm text-center">
         <p className="text-text-secondary">Cần hỗ trợ thêm?</p>
         <a
           href="mailto:love@viecngon.vn"

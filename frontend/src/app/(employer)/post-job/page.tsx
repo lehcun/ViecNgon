@@ -28,14 +28,23 @@ import {
   JOB_REQUIREMENT_TEMPLATES,
   JOB_BENEFIT_TEMPLATES,
 } from "@/constants/job-templates";
+import {
+  FieldError,
+  FormBannerError,
+  getFieldA11yProps,
+  getInputClassName,
+} from "@/components/ui/FormField";
 
 export default function PostJobPage() {
   const {
     formData,
+    errors,
+    formError,
     remainingCredits,
     showUpgradeModal,
     isLoading,
     handleInputChange,
+    handleFieldBlur,
     handleRichTextChange,
     handleSubmit,
     handleToggleSkill,
@@ -44,18 +53,15 @@ export default function PostJobPage() {
     closeModal,
   } = useCreateJob(1);
 
-  // Lấy dữ liệu hồ sơ công ty và danh sách chi nhánh thực tế
   const { data: employerProfile, isLoading: isProfileLoading } =
     useEmployerProfile();
   const branches = employerProfile?.branches || [];
 
-  // Dữ liệu Kỹ năng từ Database
   const { allSkill } = useAllSkill();
 
   const isRemote = formData.hinhThucLamViec === "Remote";
   const hasNoBranches = !isProfileLoading && branches.length === 0;
 
-  // Xử lý khi chọn chi nhánh: tự động điền gợi ý thành phố nếu ô thành phố đang trống
   const handleBranchSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedBranchId = e.target.value;
     handleInputChange(e);
@@ -70,7 +76,6 @@ export default function PostJobPage() {
 
   return (
     <div className="max-w-5xl mx-auto pb-12 pt-4">
-      {/* Header */}
       <div className="mb-6">
         <Link
           href="/employer-dashboard"
@@ -93,49 +98,71 @@ export default function PostJobPage() {
         </div>
       </div>
 
-      {/* Form Nhập liệu */}
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} noValidate className="space-y-6">
+        <FormBannerError message={formError} />
+
         {/* Khối 1: Thông tin cơ bản */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 sm:p-8">
           <h2 className="text-lg font-bold text-slate-800 mb-6 pb-2 border-b border-slate-100 flex items-center justify-between">
             <span>Thông tin cơ bản</span>
             <span className="text-xs font-normal text-slate-400">
-              Các trường có dấu <span className="text-red-500">*</span> là bắt buộc
+              Các trường có dấu <span className="text-danger">*</span> là bắt buộc
             </span>
           </h2>
 
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1">
-                Tiêu đề công việc <span className="text-red-500">*</span>
+              <label
+                htmlFor="tenCongViec"
+                className="block text-sm font-semibold text-slate-700 mb-1"
+              >
+                Tiêu đề công việc <span className="text-danger">*</span>
               </label>
               <input
+                id="tenCongViec"
                 type="text"
                 name="tenCongViec"
                 value={formData.tenCongViec}
                 onChange={handleInputChange}
+                onBlur={() =>
+                  handleFieldBlur("tenCongViec", formData.tenCongViec, formData)
+                }
                 placeholder="VD: Senior ReactJS / Fullstack Developer"
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
-                required
+                className={getInputClassName({
+                  hasError: Boolean(errors.tenCongViec),
+                  className: "h-10.5",
+                })}
+                {...getFieldA11yProps("tenCongViec", errors.tenCongViec)}
               />
+              <FieldError id="tenCongViec-error" message={errors.tenCongViec} />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1">
-                  Cấp bậc <span className="text-red-500">*</span>
+                <label
+                  htmlFor="capBac"
+                  className="block text-sm font-semibold text-slate-700 mb-1"
+                >
+                  Cấp bậc <span className="text-danger">*</span>
                 </label>
                 <div className="relative">
                   <Award
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
                     size={18}
                   />
                   <select
+                    id="capBac"
                     name="capBac"
                     value={formData.capBac}
                     onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none cursor-pointer text-sm"
-                    required
+                    onBlur={() =>
+                      handleFieldBlur("capBac", formData.capBac, formData)
+                    }
+                    className={getInputClassName({
+                      hasError: Boolean(errors.capBac),
+                      className: "h-10.5 pl-10 pr-4 appearance-none cursor-pointer",
+                    })}
+                    {...getFieldA11yProps("capBac", errors.capBac)}
                   >
                     <option value="" disabled>
                       Chọn cấp bậc
@@ -147,23 +174,34 @@ export default function PostJobPage() {
                     <option value="Lead">Trưởng nhóm (Lead / Manager)</option>
                   </select>
                 </div>
+                <FieldError id="capBac-error" message={errors.capBac} />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1">
-                  Loại hình làm việc <span className="text-red-500">*</span>
+                <label
+                  htmlFor="loaiHinh"
+                  className="block text-sm font-semibold text-slate-700 mb-1"
+                >
+                  Loại hình làm việc <span className="text-danger">*</span>
                 </label>
                 <div className="relative">
                   <Clock
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
                     size={18}
                   />
                   <select
+                    id="loaiHinh"
                     name="loaiHinh"
                     value={formData.loaiHinh}
                     onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none cursor-pointer text-sm"
-                    required
+                    onBlur={() =>
+                      handleFieldBlur("loaiHinh", formData.loaiHinh, formData)
+                    }
+                    className={getInputClassName({
+                      hasError: Boolean(errors.loaiHinh),
+                      className: "h-10.5 pl-10 pr-4 appearance-none cursor-pointer",
+                    })}
+                    {...getFieldA11yProps("loaiHinh", errors.loaiHinh)}
                   >
                     <option value="" disabled>
                       Chọn loại hình
@@ -173,24 +211,41 @@ export default function PostJobPage() {
                     <option value="Freelance">Nghề tự do (Freelance)</option>
                   </select>
                 </div>
+                <FieldError id="loaiHinh-error" message={errors.loaiHinh} />
               </div>
 
-              {/* Hình thức làm việc: Remote, Tại văn phòng, Hybrid */}
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1">
-                  Hình thức làm việc <span className="text-red-500">*</span>
+                <label
+                  htmlFor="hinhThucLamViec"
+                  className="block text-sm font-semibold text-slate-700 mb-1"
+                >
+                  Hình thức làm việc <span className="text-danger">*</span>
                 </label>
                 <div className="relative">
                   <Building2
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
                     size={18}
                   />
                   <select
+                    id="hinhThucLamViec"
                     name="hinhThucLamViec"
                     value={formData.hinhThucLamViec}
                     onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none cursor-pointer text-sm"
-                    required
+                    onBlur={() =>
+                      handleFieldBlur(
+                        "hinhThucLamViec",
+                        formData.hinhThucLamViec,
+                        formData,
+                      )
+                    }
+                    className={getInputClassName({
+                      hasError: Boolean(errors.hinhThucLamViec),
+                      className: "h-10.5 pl-10 pr-4 appearance-none cursor-pointer",
+                    })}
+                    {...getFieldA11yProps(
+                      "hinhThucLamViec",
+                      errors.hinhThucLamViec,
+                    )}
                   >
                     <option value="" disabled>
                       Chọn hình thức
@@ -200,9 +255,12 @@ export default function PostJobPage() {
                     <option value="Hybrid">Linh hoạt kết hợp (Hybrid)</option>
                   </select>
                 </div>
+                <FieldError
+                  id="hinhThucLamViec-error"
+                  message={errors.hinhThucLamViec}
+                />
               </div>
 
-              {/* Chọn Chi Nhánh (Lấy dữ liệu thực tế từ hồ sơ doanh nghiệp) */}
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="block text-sm font-semibold text-slate-700">
@@ -216,8 +274,9 @@ export default function PostJobPage() {
                 </div>
                 <div className="relative">
                   <MapPin
-                    className={`absolute left-3 top-1/2 -translate-y-1/2 ${isRemote || hasNoBranches ? "text-slate-300" : "text-slate-400"
-                      }`}
+                    className={`absolute left-3 top-1/2 -translate-y-1/2 ${
+                      isRemote || hasNoBranches ? "text-slate-300" : "text-slate-400"
+                    }`}
                     size={18}
                   />
                   <select
@@ -225,10 +284,11 @@ export default function PostJobPage() {
                     value={formData.maChiNhanh}
                     onChange={handleBranchSelect}
                     disabled={isRemote || hasNoBranches || isProfileLoading}
-                    className={`w-full pl-10 pr-4 py-2.5 border rounded-lg outline-none transition-all appearance-none text-sm ${isRemote || hasNoBranches
+                    className={`w-full pl-10 pr-4 py-2.5 border rounded-lg outline-none transition-all appearance-none text-sm ${
+                      isRemote || hasNoBranches
                         ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
                         : "bg-slate-50 text-slate-700 border-slate-300 hover:border-slate-400 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer"
-                      }`}
+                    }`}
                   >
                     {isProfileLoading && (
                       <option value="">Đang tải danh sách chi nhánh...</option>
@@ -258,7 +318,6 @@ export default function PostJobPage() {
                     )}
                   </select>
                 </div>
-                {/* Ghi chú ngữ cảnh cho Chi nhánh */}
                 {isRemote ? (
                   <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
                     <Info size={12} /> Việc làm từ xa không yêu cầu gắn liền với địa điểm chi nhánh cụ thể.
@@ -279,31 +338,42 @@ export default function PostJobPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1">
-                Thành phố / Khu vực làm việc <span className="text-red-500">*</span>
+              <label
+                htmlFor="thanhPho"
+                className="block text-sm font-semibold text-slate-700 mb-1"
+              >
+                Thành phố / Khu vực làm việc{" "}
+                <span className="text-danger">*</span>
               </label>
               <div className="relative">
                 <MapPin
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
                   size={18}
                 />
                 <input
+                  id="thanhPho"
                   type="text"
                   name="thanhPho"
                   value={formData.thanhPho}
                   onChange={handleInputChange}
+                  onBlur={() =>
+                    handleFieldBlur("thanhPho", formData.thanhPho, formData)
+                  }
                   placeholder="VD: TP. Hồ Chí Minh, Hà Nội, Đà Nẵng, Toàn quốc..."
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
-                  required
+                  className={getInputClassName({
+                    hasError: Boolean(errors.thanhPho),
+                    className: "h-10.5 pl-10 pr-4",
+                  })}
+                  {...getFieldA11yProps("thanhPho", errors.thanhPho)}
                 />
               </div>
+              <FieldError id="thanhPho-error" message={errors.thanhPho} />
             </div>
 
-            {/* Khối UI Chọn Kỹ Năng */}
-            <div className="pt-4 border-t border-slate-100">
+            <div className="pt-4 border-t border-slate-100" id="kyNangs">
               <label className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
                 <Code2 size={18} className="text-primary" />
-                Kỹ năng chuyên môn <span className="text-red-500">*</span>
+                Kỹ năng chuyên môn <span className="text-danger">*</span>
               </label>
               <div className="flex flex-wrap gap-2.5">
                 {allSkill?.map((skill) => {
@@ -311,10 +381,13 @@ export default function PostJobPage() {
                   return (
                     <label
                       key={skill.id}
-                      className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full border cursor-pointer select-none transition-all duration-200 text-sm ${isSelected
+                      className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full border cursor-pointer select-none transition-all duration-200 text-sm ${
+                        isSelected
                           ? "border-primary bg-primary/10 text-primary font-semibold shadow-xs"
-                          : "border-slate-200 bg-white text-slate-600 hover:border-primary/50 hover:bg-slate-50"
-                        }`}
+                          : errors.kyNangs
+                            ? "border-danger/60 bg-danger-soft/20 text-slate-700 hover:border-danger"
+                            : "border-slate-200 bg-white text-slate-600 hover:border-primary/50 hover:bg-slate-50"
+                      }`}
                     >
                       <input
                         type="checkbox"
@@ -327,11 +400,7 @@ export default function PostJobPage() {
                   );
                 })}
               </div>
-              {formData.kyNangs.length === 0 && (
-                <p className="text-xs text-red-500 mt-2 font-medium">
-                  * Vui lòng chọn ít nhất 1 kỹ năng chuyên môn để ứng viên tìm kiếm được tin tuyển dụng.
-                </p>
-              )}
+              <FieldError id="kyNangs-error" message={errors.kyNangs} />
             </div>
           </div>
         </div>
@@ -344,7 +413,7 @@ export default function PostJobPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1">
-                Kinh nghiệm yêu cầu <span className="text-red-500">*</span>
+                Kinh nghiệm yêu cầu <span className="text-danger">*</span>
               </label>
               <select
                 name="yeuCauKinhNghiem"
@@ -361,59 +430,117 @@ export default function PostJobPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1">
-                Hạn chót nộp hồ sơ <span className="text-red-500">*</span>
+              <label
+                htmlFor="ngayHetHan"
+                className="block text-sm font-semibold text-slate-700 mb-1"
+              >
+                Hạn chót nộp hồ sơ <span className="text-danger">*</span>
               </label>
               <div className="relative">
                 <Calendar
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
                   size={18}
                 />
                 <input
+                  id="ngayHetHan"
                   type="date"
                   name="ngayHetHan"
+                  min={new Date().toISOString().split("T")[0]}
                   value={formData.ngayHetHan}
                   onChange={handleInputChange}
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer text-sm"
-                  required
+                  onBlur={() =>
+                    handleFieldBlur("ngayHetHan", formData.ngayHetHan, formData)
+                  }
+                  className={getInputClassName({
+                    hasError: Boolean(errors.ngayHetHan),
+                    className: "h-10.5 pl-10 pr-4 cursor-pointer",
+                  })}
+                  {...getFieldA11yProps("ngayHetHan", errors.ngayHetHan)}
                 />
               </div>
+              <FieldError id="ngayHetHan-error" message={errors.ngayHetHan} />
             </div>
 
             <div className="md:col-span-2">
               <label className="block text-sm font-semibold text-slate-700 mb-1">
-                Mức lương (VNĐ) <span className="text-red-500">*</span>
+                Mức lương (VNĐ) <span className="text-danger">*</span>
               </label>
-              <div className="flex items-center gap-4">
-                <div className="relative flex-1">
-                  <DollarSign
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                    size={18}
-                  />
-                  <input
-                    type="number"
-                    name="mucLuongToiThieu"
-                    value={formData.mucLuongToiThieu}
-                    onChange={handleInputChange}
-                    disabled={formData.negotiable}
-                    placeholder="Mức lương tối thiểu (VD: 15000000)"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-start gap-3">
+                <div>
+                  <div className="relative">
+                    <DollarSign
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                      size={18}
+                    />
+                    <input
+                      id="mucLuongToiThieu"
+                      type="number"
+                      name="mucLuongToiThieu"
+                      value={formData.mucLuongToiThieu}
+                      onChange={handleInputChange}
+                      onBlur={() =>
+                        handleFieldBlur(
+                          "mucLuongToiThieu",
+                          formData.mucLuongToiThieu,
+                          formData,
+                        )
+                      }
+                      disabled={formData.negotiable}
+                      placeholder="Mức lương tối thiểu (VD: 15000000)"
+                      className={getInputClassName({
+                        hasError: Boolean(errors.mucLuongToiThieu),
+                        className:
+                          "h-10.5 pl-10 pr-4 disabled:opacity-50 disabled:cursor-not-allowed",
+                      })}
+                      {...getFieldA11yProps(
+                        "mucLuongToiThieu",
+                        errors.mucLuongToiThieu,
+                      )}
+                    />
+                  </div>
+                  <FieldError
+                    id="mucLuongToiThieu-error"
+                    message={errors.mucLuongToiThieu}
                   />
                 </div>
-                <span className="text-slate-400 font-semibold">-</span>
-                <div className="relative flex-1">
-                  <DollarSign
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                    size={18}
-                  />
-                  <input
-                    type="number"
-                    name="mucLuongToiDa"
-                    value={formData.mucLuongToiDa}
-                    onChange={handleInputChange}
-                    disabled={formData.negotiable}
-                    placeholder="Mức lương tối đa (VD: 30000000)"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                <span className="hidden sm:inline-block pt-2.5 text-slate-400 font-semibold text-center">
+                  -
+                </span>
+                <div>
+                  <div className="relative">
+                    <DollarSign
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                      size={18}
+                    />
+                    <input
+                      id="mucLuongToiDa"
+                      type="number"
+                      name="mucLuongToiDa"
+                      value={formData.mucLuongToiDa}
+                      onChange={handleInputChange}
+                      onBlur={() =>
+                        handleFieldBlur(
+                          "mucLuongToiDa",
+                          formData.mucLuongToiDa,
+                          formData,
+                        )
+                      }
+                      disabled={formData.negotiable}
+                      placeholder="Mức lương tối đa (VD: 30000000)"
+                      className={getInputClassName({
+                        hasError: Boolean(errors.mucLuongToiDa),
+                        className:
+                          "h-10.5 pl-10 pr-4 disabled:opacity-50 disabled:cursor-not-allowed",
+                      })}
+                      {...getFieldA11yProps(
+                        "mucLuongToiDa",
+                        errors.mucLuongToiDa,
+                      )}
+                    />
+                  </div>
+                  <FieldError
+                    id="mucLuongToiDa-error"
+                    message={errors.mucLuongToiDa}
                   />
                 </div>
               </div>
@@ -437,7 +564,7 @@ export default function PostJobPage() {
           </div>
         </div>
 
-        {/* Khối 3: Rich Text Editor Mô tả, Yêu cầu, Phúc lợi (Kèm Mẫu Gợi Ý Sẵn) */}
+        {/* Khối 3: Rich Text Editor Mô tả, Yêu cầu, Phúc lợi */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 sm:p-8">
           <div className="flex items-center justify-between mb-6 pb-2 border-b border-slate-100">
             <div>
@@ -451,12 +578,11 @@ export default function PostJobPage() {
           </div>
 
           <div className="space-y-8">
-            {/* 1. Mô tả công việc */}
-            <div className="bg-white">
+            <div className="bg-white" id="moTa">
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-sm font-semibold text-slate-700">
                   Mô tả công việc (Nhiệm vụ, trách nhiệm){" "}
-                  <span className="text-red-500">*</span>
+                  <span className="text-danger">*</span>
                 </label>
                 <JobTemplateSelector
                   label="Mô tả công việc"
@@ -465,18 +591,24 @@ export default function PostJobPage() {
                   onApply={(content) => handleRichTextChange("moTa", content)}
                 />
               </div>
-              <RichTextEditor
-                value={formData.moTa}
-                onChange={(content) => handleRichTextChange("moTa", content)}
-              />
+              <div
+                className={
+                  errors.moTa ? "rounded-lg ring-1 ring-danger" : undefined
+                }
+              >
+                <RichTextEditor
+                  value={formData.moTa}
+                  onChange={(content) => handleRichTextChange("moTa", content)}
+                />
+              </div>
+              <FieldError id="moTa-error" message={errors.moTa} />
             </div>
 
-            {/* 2. Yêu cầu ứng viên */}
-            <div className="bg-white">
+            <div className="bg-white" id="yeuCauCongViec">
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-sm font-semibold text-slate-700">
                   Yêu cầu ứng viên (Kỹ năng, bằng cấp, kinh nghiệm){" "}
-                  <span className="text-red-500">*</span>
+                  <span className="text-danger">*</span>
                 </label>
                 <JobTemplateSelector
                   label="Yêu cầu công việc"
@@ -487,20 +619,31 @@ export default function PostJobPage() {
                   }
                 />
               </div>
-              <RichTextEditor
-                value={formData.yeuCauCongViec}
-                onChange={(content) =>
-                  handleRichTextChange("yeuCauCongViec", content)
+              <div
+                className={
+                  errors.yeuCauCongViec
+                    ? "rounded-lg ring-1 ring-danger"
+                    : undefined
                 }
+              >
+                <RichTextEditor
+                  value={formData.yeuCauCongViec}
+                  onChange={(content) =>
+                    handleRichTextChange("yeuCauCongViec", content)
+                  }
+                />
+              </div>
+              <FieldError
+                id="yeuCauCongViec-error"
+                message={errors.yeuCauCongViec}
               />
             </div>
 
-            {/* 3. Phúc lợi & Đãi ngộ */}
-            <div className="bg-white">
+            <div className="bg-white" id="phucLoi">
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-sm font-semibold text-slate-700">
                   Quyền lợi & Đãi ngộ (Lương tháng 13, BHYT, Thiết bị,...){" "}
-                  <span className="text-red-500">*</span>
+                  <span className="text-danger">*</span>
                 </label>
                 <JobTemplateSelector
                   label="Quyền lợi & Đãi ngộ"
@@ -509,10 +652,17 @@ export default function PostJobPage() {
                   onApply={(content) => handleRichTextChange("phucLoi", content)}
                 />
               </div>
-              <RichTextEditor
-                value={formData.phucLoi}
-                onChange={(content) => handleRichTextChange("phucLoi", content)}
-              />
+              <div
+                className={
+                  errors.phucLoi ? "rounded-lg ring-1 ring-danger" : undefined
+                }
+              >
+                <RichTextEditor
+                  value={formData.phucLoi}
+                  onChange={(content) => handleRichTextChange("phucLoi", content)}
+                />
+              </div>
+              <FieldError id="phucLoi-error" message={errors.phucLoi} />
             </div>
           </div>
 
@@ -522,7 +672,6 @@ export default function PostJobPage() {
           </p>
         </div>
 
-        {/* Nút Submit & Lưu */}
         <div className="flex items-center justify-end gap-4 pt-4">
           <button
             type="button"
@@ -546,11 +695,10 @@ export default function PostJobPage() {
         </div>
       </form>
 
-      {/* ================= MODAL CẢNH BÁO HẾT LƯỢT ĐĂNG TIN ================= */}
       {showUpgradeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs transition-opacity">
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="bg-gradient-to-r from-orange-50 to-rose-50 p-6 flex justify-center border-b border-orange-100">
+            <div className="bg-linear-to-r from-orange-50 to-rose-50 p-6 flex justify-center border-b border-orange-100">
               <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-lg border border-orange-100">
                 <AlertCircle size={40} className="text-orange-500" />
               </div>
@@ -566,7 +714,7 @@ export default function PostJobPage() {
               <div className="flex flex-col gap-3">
                 <button
                   type="button"
-                  className="w-full py-3 bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-600 hover:to-rose-600 text-white font-bold rounded-lg shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer text-sm"
+                  className="w-full py-3 bg-linear-to-r from-orange-500 to-rose-500 hover:from-orange-600 hover:to-rose-600 text-white font-bold rounded-lg shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer text-sm"
                 >
                   <Crown size={18} /> Xem các gói dịch vụ
                 </button>

@@ -13,6 +13,11 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useRepostJob } from "@/hooks/recruiter/useEmployerJobs";
+import {
+  FieldError,
+  getFieldA11yProps,
+  getInputClassName,
+} from "@/components/ui/FormField";
 
 interface RepostJobModalProps {
   isOpen: boolean;
@@ -42,9 +47,17 @@ export default function RepostJobModal({
   const [newDeadline, setNewDeadline] = useState<string>(
     getDefaultExpirationDate(),
   );
+  const [deadlineError, setDeadlineError] = useState<string>("");
   const [option, setOption] = useState<"DIRECT" | "EDIT">("DIRECT");
 
   if (!isOpen) return null;
+
+  const validateDeadline = (val: string): string => {
+    if (!val) return "Vui lòng chọn hạn nộp hồ sơ mới.";
+    const today = new Date().toISOString().split("T")[0];
+    if (val < today) return "Hạn nộp hồ sơ mới phải từ hôm nay trở đi.";
+    return "";
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +65,12 @@ export default function RepostJobModal({
     if (option === "EDIT") {
       onClose();
       router.push(`/employer-jobs/${jobId}/edit?repost=true`);
+      return;
+    }
+
+    const err = validateDeadline(newDeadline);
+    if (err) {
+      setDeadlineError(err);
       return;
     }
 
@@ -100,7 +119,7 @@ export default function RepostJobModal({
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} noValidate className="p-6 space-y-5">
           {/* Tên bài đăng */}
           <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
@@ -123,13 +142,25 @@ export default function RepostJobModal({
               </span>
             </label>
             <input
+              id="newDeadline"
+              name="newDeadline"
               type="date"
               value={newDeadline}
               min={new Date().toISOString().split("T")[0]}
-              onChange={(e) => setNewDeadline(e.target.value)}
-              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-800 outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer font-medium"
-              required
+              onChange={(e) => {
+                setNewDeadline(e.target.value);
+                if (deadlineError) {
+                  setDeadlineError(validateDeadline(e.target.value));
+                }
+              }}
+              onBlur={() => setDeadlineError(validateDeadline(newDeadline))}
+              className={getInputClassName({
+                hasError: Boolean(deadlineError),
+                className: "h-10 cursor-pointer font-medium",
+              })}
+              {...getFieldA11yProps("newDeadline", deadlineError)}
             />
+            <FieldError id="newDeadline-error" message={deadlineError} />
             <p className="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
               <Clock size={12} />
               Ngày đăng sẽ được cập nhật thành ngày hôm nay ({new Date().toLocaleDateString("vi-VN")}).

@@ -13,6 +13,10 @@ import { RegisterCandidateDto } from './dto/register-candidate.dto';
 import { RegisterEmployerDto } from './dto/register-employer.dto';
 import { GoogleAuthDto } from './dto/google-auth.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import {
+  fieldBadRequest,
+  fieldUnauthorized,
+} from '../common/exceptions/field-validation.exception';
 
 interface GoogleJwtPayload {
   sub: string;
@@ -177,24 +181,26 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto) {
+    const normalizedEmail = loginDto.email.trim().slice(0, 100);
+
     // 1. Tìm tài khoản theo Email
     const user = await this.prisma.taiKhoan.findUnique({
-      where: { email: loginDto.email },
+      where: { email: normalizedEmail },
     });
 
     // Trường hợp 1: Email chưa tồn tại trong hệ thống
     if (!user) {
-      throw new UnauthorizedException(
-        'Email chưa tồn tại. Vui lòng đăng ký tài khoản!',
-      );
+      throw fieldUnauthorized({
+        email: 'Email chưa tồn tại. Vui lòng đăng ký tài khoản!',
+      });
     }
 
     // Trường hợp 2: Tài khoản đã đăng ký bằng Google
     // (matKhau là null / rỗng hoặc trường provider là GOOGLE)
     if (!user.matKhau || user.provider === 'GOOGLE') {
-      throw new BadRequestException(
-        'Mail này đã được dùng để đăng ký bằng google',
-      );
+      throw fieldBadRequest({
+        email: 'Mail này đã được dùng để đăng ký bằng google',
+      });
     }
 
     // 2. Kiểm tra mật khẩu mã hóa bằng bcrypt
@@ -205,7 +211,9 @@ export class AuthService {
 
     // Trường hợp 3: Sai mật khẩu
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Mật khẩu không chính xác!');
+      throw fieldUnauthorized({
+        password: 'Mật khẩu không chính xác!',
+      });
     }
 
     // 3. Tạo Payload cho JWT (Chỉ lưu thông tin cơ bản, không lưu mật khẩu)
@@ -234,14 +242,16 @@ export class AuthService {
 
   //1. Đăng ký dành cho ứng viên
   async registerCandidate(signupDto: RegisterCandidateDto) {
-    const { email, password, name } = signupDto;
+    const email = signupDto.email.trim().slice(0, 100);
+    const password = signupDto.password;
+    const name = (signupDto.name || signupDto.hoTen || '').trim().slice(0, 100);
 
     // 1. Kiểm tra email đã tồn tại chưa
     const existingUser = await this.prisma.taiKhoan.findUnique({
       where: { email },
     });
     if (existingUser) {
-      throw new BadRequestException('Email này đã được sử dụng!');
+      throw fieldBadRequest({ email: 'Email này đã được sử dụng!' });
     }
 
     // 2. Hash password
@@ -298,10 +308,10 @@ export class AuthService {
 
   // 2. Đăng ký Nhà tuyển dụng (HR)
   async registerEmployer(signupDto: RegisterEmployerDto) {
-    const email = signupDto.email;
+    const email = signupDto.email.trim().slice(0, 100);
     const password = signupDto.password;
-    const name = signupDto.employerName;
-    const companyName = signupDto.companyName;
+    const name = signupDto.employerName.trim().slice(0, 100);
+    const companyName = signupDto.companyName.trim().slice(0, 150);
     const maCongTyInput = signupDto.maCongTy;
 
     // Kiểm tra email đã tồn tại chưa
@@ -309,7 +319,9 @@ export class AuthService {
       where: { email },
     });
     if (existingUser) {
-      throw new BadRequestException('Email này đã được sử dụng trên hệ thống!');
+      throw fieldBadRequest({
+        email: 'Email này đã được sử dụng trên hệ thống!',
+      });
     }
 
     // Hash password
@@ -334,9 +346,9 @@ export class AuthService {
       // Nếu HR không chọn công ty có sẵn -> Tự động tạo Công ty mới từ tên công ty nhập vào
       if (!targetCompanyId) {
         if (!companyName) {
-          throw new BadRequestException(
-            'Vui lòng chọn công ty hoặc nhập tên công ty của bạn!',
-          );
+          throw fieldBadRequest({
+            companyName: 'Vui lòng chọn công ty hoặc nhập tên công ty của bạn!',
+          });
         }
 
         // Tạo slug chuẩn SEO cho công ty mới
@@ -412,7 +424,9 @@ export class AuthService {
     // 3. Kiểm tra mật khẩu cũ có khớp với DB hay không
     const isPasswordValid = await bcrypt.compare(dto.matKhauCu, user.matKhau);
     if (!isPasswordValid) {
-      throw new BadRequestException('Mật khẩu hiện tại không chính xác!');
+      throw fieldBadRequest({
+        matKhauCu: 'Mật khẩu hiện tại không chính xác!',
+      });
     }
 
     // 4. Băm (Hash) mật khẩu mới trước khi lưu
