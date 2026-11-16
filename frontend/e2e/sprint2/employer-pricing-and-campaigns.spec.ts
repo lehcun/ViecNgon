@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { mockAuthSession } from "./helpers/mockAuth";
+import { mockAuthSession } from "../helpers/mockAuth";
 
 const EMPLOYER_USER = {
   id: "hr-fpt-1",
@@ -234,7 +234,9 @@ test.describe("Nhà tuyển dụng: Bảng giá 4 cấp, Chiến dịch & Banner
 
     await page.goto("/campaigns");
 
-    const diamondRow = page.locator("tr", { hasText: "Chiến dịch Kim Cương Q4" });
+    const diamondRow = page.locator("tr", {
+      hasText: "Chiến dịch Kim Cương Q4",
+    });
     await expect(
       diamondRow.getByRole("button", { name: /Tùy chỉnh Banner/i }),
     ).toBeVisible();
@@ -279,9 +281,7 @@ test.describe("Nhà tuyển dụng: Bảng giá 4 cấp, Chiến dịch & Banner
 
     await dialog.getByRole("button", { name: "Lưu cấu hình Banner" }).click();
 
-    await expect
-      .poll(() => bannerState.bannerCity)
-      .toBe("Đà Nẵng");
+    await expect.poll(() => bannerState.bannerCity).toBe("Đà Nẵng");
     expect(bannerState.bannerBadgeText).toBe("HOT TECH");
     expect(bannerState.selectedJobIds).toEqual(["job-3"]);
   });

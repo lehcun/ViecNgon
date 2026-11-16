@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { createMockJwt, mockAuthSession } from "./helpers/mockAuth";
+import { createMockJwt, mockAuthSession } from "../helpers/mockAuth";
 
 test.describe("Xác thực & Phân quyền RBAC Middleware", () => {
   test("[Đơn giản] Các trang Đăng nhập, Đăng ký và Cổng Nhà tuyển dụng render sạch lỗi", async ({
