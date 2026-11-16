@@ -8,38 +8,80 @@ import { useLogin } from "@/hooks/auth/useLogin";
 import { useLogout } from "@/hooks/auth/useLogout";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import {
+  FieldError,
+  FormBannerError,
+  FormLabel,
+  getFieldA11yProps,
+  getInputClassName,
+} from "@/components/ui/FormField";
+import { useFormValidation } from "@/hooks/useFormValidation";
+import { validateEmail, validatePassword } from "@/lib/validation";
+
+interface EmployerLoginValues {
+  email: string;
+  password: string;
+}
 
 export default function EmployerLoginForm() {
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [roleError, setRoleError] = useState("");
+  const [values, setValues] = useState<EmployerLoginValues>({
+    email: "",
+    password: "",
+  });
 
   const router = useRouter();
-  const { login, isPending, isError, error } = useLogin();
+  const { login, isPending } = useLogin();
   const { mutate: silentLogout } = useLogout({ redirectTo: false });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const {
+    errors,
+    formError,
+    setFormError,
+    handleFieldBlur,
+    handleFieldChange,
+    validateAll,
+    applyServerError,
+  } = useFormValidation<EmployerLoginValues>({
+    fieldOrder: ["email", "password"],
+    validators: {
+      email: (val) => validateEmail(val, true),
+      password: (val) => validatePassword(val, { minLength: 6 }),
+    },
+  });
+
+  const handleChange = (field: keyof EmployerLoginValues, nextVal: string) => {
+    const nextValues = { ...values, [field]: nextVal };
+    setValues(nextValues);
+    handleFieldChange(field, nextVal, nextValues);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setRoleError("");
 
-    login(
-      { email, password },
-      {
-        onSuccess: (data) => {
-          if (data.user.role !== "NHATUYENDUNG") {
-            setRoleError(
-              "Tài khoản này không có quyền truy cập cổng Nhà tuyển dụng!",
-            );
-            silentLogout();
-            return;
-          }
+    if (!validateAll(values)) {
+      return;
+    }
 
-          toast.success("Đăng nhập Nhà tuyển dụng thành công!");
-          router.push("/employer-dashboard");
-        },
-      },
-    );
+    try {
+      const data = await login({
+        email: values.email.trim(),
+        password: values.password,
+      });
+
+      if (data.user.role !== "NHATUYENDUNG") {
+        setFormError(
+          "Tài khoản này không có quyền truy cập cổng Nhà tuyển dụng!",
+        );
+        silentLogout();
+        return;
+      }
+
+      toast.success("Đăng nhập Nhà tuyển dụng thành công!");
+      router.push("/employer-dashboard");
+    } catch (err) {
+      applyServerError(err, { fallbackMessage: "Đăng nhập thất bại." });
+    }
   };
 
   return (
@@ -63,7 +105,7 @@ export default function EmployerLoginForm() {
           </span>
         </Link>
 
-        <h1 className="text-2xl font-bold text-text-main">
+        <h1 className="text-2xl font-bold text-text-primary">
           Đăng nhập Nhà tuyển dụng
         </h1>
         <p className="text-sm text-text-muted mt-1">
@@ -71,26 +113,33 @@ export default function EmployerLoginForm() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} noValidate className="space-y-4">
+        <FormBannerError message={formError} />
+
         <div>
-          <label className="block text-sm font-semibold text-text-main mb-1.5">
+          <FormLabel htmlFor="email" required>
             Email doanh nghiệp
-          </label>
+          </FormLabel>
           <input
+            id="email"
+            name="email"
             type="email"
+            autoComplete="email"
             placeholder="hr@company.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full h-11 px-4 border border-border-default rounded-lg outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary transition-all text-sm placeholder:text-text-subtle bg-surface-card"
-            required
+            value={values.email}
+            onChange={(e) => handleChange("email", e.target.value)}
+            onBlur={() => handleFieldBlur("email", values.email, values)}
+            className={getInputClassName({ hasError: Boolean(errors.email) })}
+            {...getFieldA11yProps("email", errors.email)}
           />
+          <FieldError id="email-error" message={errors.email} />
         </div>
 
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label className="block text-sm font-semibold text-text-main">
+            <FormLabel htmlFor="password" required className="mb-0">
               Mật khẩu
-            </label>
+            </FormLabel>
             <Link
               href="/employer/forgot-password"
               className="text-xs text-primary font-semibold hover:underline"
@@ -100,29 +149,32 @@ export default function EmployerLoginForm() {
           </div>
           <div className="relative">
             <input
+              id="password"
+              name="password"
               type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
               placeholder="Nhập mật khẩu"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full h-11 pl-4 pr-12 border border-border-default rounded-lg outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary transition-all text-sm placeholder:text-text-subtle bg-surface-card"
-              required
+              value={values.password}
+              onChange={(e) => handleChange("password", e.target.value)}
+              onBlur={() => handleFieldBlur("password", values.password, values)}
+              className={getInputClassName({
+                hasError: Boolean(errors.password),
+                className: "pr-12",
+              })}
+              {...getFieldA11yProps("password", errors.password)}
             />
             <button
               type="button"
               disabled={isPending}
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-text-subtle hover:text-text-main transition-colors cursor-pointer"
+              aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors cursor-pointer"
             >
               {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
             </button>
           </div>
+          <FieldError id="password-error" message={errors.password} />
         </div>
-
-        {(isError || roleError) && (
-          <div className="p-3 rounded-lg bg-danger-soft border border-danger-border text-danger-text text-xs font-medium">
-            {roleError || error?.message || "Đăng nhập thất bại."}
-          </div>
-        )}
 
         <div className="flex items-center justify-between text-sm pt-1">
           <label className="flex items-center gap-2 cursor-pointer">
@@ -147,7 +199,7 @@ export default function EmployerLoginForm() {
         </Button>
       </form>
 
-      <div className="mt-10 pt-6 border-t border-border-subtle text-xs text-text-muted space-y-1.5">
+      <div className="mt-10 pt-6 border-t border-border-default text-xs text-text-muted space-y-1.5">
         <p className="font-semibold text-text-secondary mb-2">
           Hỗ trợ doanh nghiệp:
         </p>

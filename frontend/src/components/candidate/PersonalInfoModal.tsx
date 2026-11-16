@@ -2,9 +2,21 @@
 
 import React, { useState } from "react";
 import { X, Camera, Trash2, Calendar, ChevronDown } from "lucide-react";
+import Image from "next/image";
 import toast from "react-hot-toast";
 import { useUpdateCandidateProfile } from "@/hooks/candidate/useUpdateCandidateProfile";
 import { CandidateProfileResponse } from "@viecngon/types";
+import {
+  FieldError,
+  FormBannerError,
+  getFieldA11yProps,
+} from "@/components/ui/FormField";
+import { useFormValidation } from "@/hooks/useFormValidation";
+import {
+  validatePhoneVN,
+  validateRequiredText,
+  validateUrl,
+} from "@/lib/validation";
 
 interface PersonalInfoModalProps {
   isOpen: boolean;
@@ -12,7 +24,21 @@ interface PersonalInfoModalProps {
   initialData?: CandidateProfileResponse | null;
 }
 
-const getInitialFormData = (data?: CandidateProfileResponse | null) => {
+interface PersonalInfoFormValues {
+  userName: string;
+  profession: string;
+  phoneNumber: string;
+  dateOfBirth: string;
+  gender: string;
+  street: string;
+  city: string;
+  cvUrl: string;
+  avatarUrl: string;
+}
+
+const getInitialFormData = (
+  data?: CandidateProfileResponse | null,
+): PersonalInfoFormValues => {
   const addressParts = data?.address
     ? data.address.split(", ")
     : ["", "Đà Nẵng"];
@@ -40,51 +66,115 @@ export default function PersonalInfoModal({
 }: PersonalInfoModalProps) {
   const { updateCandidateProfile, isPending } = useUpdateCandidateProfile();
 
-  // Khởi tạo State lưu trữ dữ liệu form
-  const [formData, setFormData] = useState(() =>
+  const [formData, setFormData] = useState<PersonalInfoFormValues>(() =>
     getInitialFormData(initialData),
   );
   const [showAvatarInput, setShowAvatarInput] = useState(false);
 
-  // Hàm xử lý chung khi người dùng gõ vào input
+  const {
+    errors,
+    formError,
+    handleFieldBlur,
+    handleFieldChange,
+    validateAll,
+    applyServerError,
+  } = useFormValidation<PersonalInfoFormValues>({
+    fieldOrder: [
+      "userName",
+      "profession",
+      "phoneNumber",
+      "dateOfBirth",
+      "city",
+      "cvUrl",
+      "avatarUrl",
+    ],
+    validators: {
+      userName: (val) =>
+        validateRequiredText(val, "họ và tên", { minLength: 2, maxLength: 100 }),
+      profession: (val) =>
+        validateRequiredText(val, "chức danh", { maxLength: 100 }),
+      phoneNumber: (val) => validatePhoneVN(val, true),
+      dateOfBirth: (val) => {
+        if (!val) return "Vui lòng chọn ngày sinh.";
+        const dob = new Date(val);
+        if (Number.isNaN(dob.getTime())) return "Ngày sinh không hợp lệ.";
+        if (dob > new Date()) return "Ngày sinh không được ở tương lai.";
+        return "";
+      },
+      city: (val) => (val ? "" : "Vui lòng chọn tỉnh/thành phố."),
+      cvUrl: (val) =>
+        validateUrl(val, {
+          required: false,
+          label: "liên kết cá nhân",
+          maxLength: 255,
+        }),
+      avatarUrl: (val) =>
+        validateUrl(val, {
+          required: false,
+          label: "đường dẫn ảnh đại diện",
+          maxLength: 255,
+        }),
+    },
+  });
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const field = name as keyof PersonalInfoFormValues;
+    const next = { ...formData, [field]: value };
+    setFormData(next);
+    handleFieldChange(field, value, next);
   };
 
-  // 5. Hàm Submit gửi dữ liệu lên Backend
-  const handleSave = () => {
-    // Gom Tỉnh/Thành và Số nhà lại thành 1 chuỗi Địa chỉ chuẩn bị gửi
-    const fullAddress = formData.street
-      ? `${formData.street}, ${formData.city}`
+  const handleSave = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!validateAll(formData)) {
+      if (errors.avatarUrl) setShowAvatarInput(true);
+      return;
+    }
+
+    const fullAddress = formData.street.trim()
+      ? `${formData.street.trim()}, ${formData.city}`
       : formData.city;
 
     const payload = {
-      userName: formData.userName,
-      profession: formData.profession,
-      phoneNumber: formData.phoneNumber,
+      userName: formData.userName.trim(),
+      profession: formData.profession.trim(),
+      phoneNumber: formData.phoneNumber.trim(),
       dateOfBirth: formData.dateOfBirth,
       gender: formData.gender,
       address: fullAddress,
-      cvUrl: formData.cvUrl,
-      avatarUrl: formData.avatarUrl,
+      cvUrl: formData.cvUrl.trim(),
+      avatarUrl: formData.avatarUrl.trim(),
     };
 
     updateCandidateProfile(payload, {
       onSuccess: () => {
         toast.success("Cập nhật thông tin thành công!");
-        onClose(); // Đóng modal khi thành công
+        onClose();
       },
       onError: (error) => {
-        toast.error("Có lỗi xảy ra, vui lòng thử lại!");
-        console.error(error);
+        const applied = applyServerError(error, {
+          fallbackMessage: "Có lỗi xảy ra, vui lòng thử lại!",
+        });
+        toast.error(applied.message);
       },
     });
   };
 
   if (!isOpen) return null;
+
+  const isAvatarUrlValid =
+    Boolean(formData.avatarUrl.trim()) &&
+    validateUrl(formData.avatarUrl, { required: false }) === "";
+
+  const boxClass = (hasError: boolean) =>
+    `border rounded-lg px-4 py-2 transition-all bg-white ${
+      hasError
+        ? "border-danger bg-danger-soft/20 focus-within:border-danger focus-within:ring-2 focus-within:ring-danger/20"
+        : "border-slate-300 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15"
+    }`;
 
   return (
     <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm transition-opacity">
@@ -97,6 +187,7 @@ export default function PersonalInfoModal({
             Thông tin cá nhân
           </h2>
           <button
+            type="button"
             onClick={onClose}
             className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-full transition-colors"
           >
@@ -104,17 +195,29 @@ export default function PersonalInfoModal({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 md:p-8">
+        <form
+          id="personal-info-form"
+          onSubmit={handleSave}
+          noValidate
+          className="flex-1 overflow-y-auto p-6 md:p-8"
+        >
+          <FormBannerError message={formError} className="mb-5" />
+
           <div className="flex flex-col md:flex-row gap-10">
             {/* Avatar section */}
             <div className="flex flex-col items-center gap-4 w-full md:w-1/4">
               <div className="relative group">
-                {formData.avatarUrl ? (
-                  <img
-                    src={formData.avatarUrl}
-                    alt={formData.userName || "Avatar"}
-                    className="w-32 h-32 rounded-full object-cover shadow-md border-2 border-slate-200"
-                  />
+                {isAvatarUrlValid ? (
+                  <div className="relative w-32 h-32 rounded-full overflow-hidden shadow-md border-2 border-slate-200">
+                    <Image
+                      src={formData.avatarUrl.trim()}
+                      alt={formData.userName || "Avatar"}
+                      fill
+                      unoptimized
+                      sizes="128px"
+                      className="object-cover"
+                    />
+                  </div>
                 ) : (
                   <div className="w-32 h-32 rounded-full bg-primary text-white flex items-center justify-center text-5xl font-semibold shadow-md">
                     {formData.userName
@@ -135,28 +238,46 @@ export default function PersonalInfoModal({
                 {formData.avatarUrl && (
                   <button
                     type="button"
-                    onClick={() =>
-                      setFormData((prev) => ({ ...prev, avatarUrl: "" }))
-                    }
-                    className="flex items-center gap-1 text-slate-500 hover:text-rose-500 transition-colors cursor-pointer"
+                    onClick={() => {
+                      const next = { ...formData, avatarUrl: "" };
+                      setFormData(next);
+                      handleFieldChange("avatarUrl", "", next);
+                    }}
+                    className="flex items-center gap-1 text-slate-500 hover:text-danger transition-colors cursor-pointer"
                   >
                     <Trash2 size={16} /> Xoá
                   </button>
                 )}
               </div>
 
-              {showAvatarInput && (
+              {(showAvatarInput || Boolean(errors.avatarUrl)) && (
                 <div className="w-full mt-2 animate-in fade-in duration-150">
-                  <label className="block text-[11px] text-slate-500 font-medium mb-1 text-center">
+                  <label
+                    htmlFor="avatarUrl"
+                    className="block text-[11px] text-slate-500 font-medium mb-1 text-center"
+                  >
                     Đường dẫn ảnh (URL)
                   </label>
                   <input
+                    id="avatarUrl"
                     type="url"
                     name="avatarUrl"
                     value={formData.avatarUrl}
                     onChange={handleChange}
+                    onBlur={() =>
+                      handleFieldBlur("avatarUrl", formData.avatarUrl, formData)
+                    }
                     placeholder="https://example.com/avatar.jpg"
-                    className="w-full text-xs p-2 border border-slate-300 rounded-md focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                    className={`w-full text-xs p-2 border rounded-md outline-none transition-all ${
+                      errors.avatarUrl
+                        ? "border-danger bg-danger-soft/20 focus:border-danger focus:ring-2 focus:ring-danger/20"
+                        : "border-slate-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                    }`}
+                    {...getFieldA11yProps("avatarUrl", errors.avatarUrl)}
+                  />
+                  <FieldError
+                    id="avatarUrl-error"
+                    message={errors.avatarUrl}
                   />
                 </div>
               )}
@@ -164,30 +285,59 @@ export default function PersonalInfoModal({
 
             <div className="w-full md:w-3/4 flex flex-col gap-4">
               {/* Row 1 */}
-              <div className="border border-slate-300 rounded-lg px-4 py-2 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all bg-white">
-                <label className="block text-[11px] text-slate-500 font-medium mb-0.5">
-                  Họ và Tên <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="userName"
-                  value={formData.userName}
-                  onChange={handleChange}
-                  className="w-full text-sm font-semibold text-slate-800 outline-none bg-transparent"
-                />
+              <div>
+                <div className={boxClass(Boolean(errors.userName))}>
+                  <label
+                    htmlFor="userName"
+                    className="block text-[11px] text-slate-500 font-medium mb-0.5"
+                  >
+                    Họ và Tên <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    id="userName"
+                    type="text"
+                    name="userName"
+                    value={formData.userName}
+                    onChange={handleChange}
+                    onBlur={() =>
+                      handleFieldBlur("userName", formData.userName, formData)
+                    }
+                    className="w-full text-sm font-semibold text-slate-800 outline-none bg-transparent"
+                    {...getFieldA11yProps("userName", errors.userName)}
+                  />
+                </div>
+                <FieldError id="userName-error" message={errors.userName} />
               </div>
 
               {/* Row 2 */}
-              <div className="border border-slate-300 rounded-lg px-4 py-2 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all bg-white">
-                <label className="block text-[11px] text-slate-500 font-medium mb-0.5">
-                  Chức danh <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="profession"
-                  value={formData.profession}
-                  onChange={handleChange}
-                  className="w-full text-sm font-semibold text-slate-800 outline-none bg-transparent"
+              <div>
+                <div className={boxClass(Boolean(errors.profession))}>
+                  <label
+                    htmlFor="profession"
+                    className="block text-[11px] text-slate-500 font-medium mb-0.5"
+                  >
+                    Chức danh <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    id="profession"
+                    type="text"
+                    name="profession"
+                    value={formData.profession}
+                    onChange={handleChange}
+                    onBlur={() =>
+                      handleFieldBlur(
+                        "profession",
+                        formData.profession,
+                        formData,
+                      )
+                    }
+                    className="w-full text-sm font-semibold text-slate-800 outline-none bg-transparent"
+                    {...getFieldA11yProps("profession", errors.profession)}
+                  />
+                </div>
+                <FieldError
+                  id="profession-error"
+                  message={errors.profession}
                 />
               </div>
 
@@ -204,45 +354,86 @@ export default function PersonalInfoModal({
                     className="w-full text-sm font-semibold text-slate-600 outline-none bg-transparent cursor-not-allowed"
                   />
                 </div>
-                <div className="border border-slate-300 rounded-lg px-4 py-2 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all bg-white">
-                  <label className="block text-[11px] text-slate-500 font-medium mb-0.5">
-                    Số điện thoại <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="tel"
-                    name="phoneNumber"
-                    value={formData.phoneNumber}
-                    onChange={handleChange}
-                    className="w-full text-sm font-semibold text-slate-800 outline-none bg-transparent"
+                <div>
+                  <div className={boxClass(Boolean(errors.phoneNumber))}>
+                    <label
+                      htmlFor="phoneNumber"
+                      className="block text-[11px] text-slate-500 font-medium mb-0.5"
+                    >
+                      Số điện thoại <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      id="phoneNumber"
+                      type="tel"
+                      name="phoneNumber"
+                      value={formData.phoneNumber}
+                      onChange={handleChange}
+                      onBlur={() =>
+                        handleFieldBlur(
+                          "phoneNumber",
+                          formData.phoneNumber,
+                          formData,
+                        )
+                      }
+                      className="w-full text-sm font-semibold text-slate-800 outline-none bg-transparent"
+                      {...getFieldA11yProps("phoneNumber", errors.phoneNumber)}
+                    />
+                  </div>
+                  <FieldError
+                    id="phoneNumber-error"
+                    message={errors.phoneNumber}
                   />
                 </div>
               </div>
 
               {/* Row 4 */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="border border-slate-300 rounded-lg px-4 py-2 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all bg-white relative">
-                  <label className="block text-[11px] text-slate-500 font-medium mb-0.5">
-                    Ngày sinh <span className="text-red-500">*</span>
-                  </label>
-                  {/* Sửa thành type="date" để form tự bắt chuẩn format */}
-                  <input
-                    type="date"
-                    name="dateOfBirth"
-                    value={formData.dateOfBirth}
-                    onChange={handleChange}
-                    className="w-full text-sm font-semibold text-slate-800 outline-none bg-transparent [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-                  />
-                  <Calendar
-                    size={18}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                <div>
+                  <div
+                    className={`${boxClass(Boolean(errors.dateOfBirth))} relative`}
+                  >
+                    <label
+                      htmlFor="dateOfBirth"
+                      className="block text-[11px] text-slate-500 font-medium mb-0.5"
+                    >
+                      Ngày sinh <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      id="dateOfBirth"
+                      type="date"
+                      name="dateOfBirth"
+                      value={formData.dateOfBirth}
+                      onChange={handleChange}
+                      onBlur={() =>
+                        handleFieldBlur(
+                          "dateOfBirth",
+                          formData.dateOfBirth,
+                          formData,
+                        )
+                      }
+                      className="w-full text-sm font-semibold text-slate-800 outline-none bg-transparent [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                      {...getFieldA11yProps("dateOfBirth", errors.dateOfBirth)}
+                    />
+                    <Calendar
+                      size={18}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                    />
+                  </div>
+                  <FieldError
+                    id="dateOfBirth-error"
+                    message={errors.dateOfBirth}
                   />
                 </div>
 
                 <div className="border border-slate-300 rounded-lg px-4 py-2 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all bg-white relative">
-                  <label className="block text-[11px] text-slate-500 font-medium mb-0.5">
+                  <label
+                    htmlFor="gender"
+                    className="block text-[11px] text-slate-500 font-medium mb-0.5"
+                  >
                     Giới tính
                   </label>
                   <select
+                    id="gender"
                     name="gender"
                     value={formData.gender}
                     onChange={handleChange}
@@ -261,31 +452,46 @@ export default function PersonalInfoModal({
 
               {/* Row 5 */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="border border-slate-300 rounded-lg px-4 py-2 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all bg-white relative">
-                  <label className="block text-[11px] text-slate-500 font-medium mb-0.5">
-                    Tỉnh/Thành phố hiện tại{" "}
-                    <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    name="city"
-                    value={formData.city}
-                    onChange={handleChange}
-                    className="w-full text-sm font-semibold text-slate-800 outline-none bg-transparent appearance-none cursor-pointer"
-                  >
-                    <option value="Đà Nẵng">Đà Nẵng</option>
-                    <option value="Hà Nội">Hà Nội</option>
-                    <option value="TP HCM">TP. Hồ Chí Minh</option>
-                  </select>
-                  <ChevronDown
-                    size={18}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-                  />
+                <div>
+                  <div className={`${boxClass(Boolean(errors.city))} relative`}>
+                    <label
+                      htmlFor="city"
+                      className="block text-[11px] text-slate-500 font-medium mb-0.5"
+                    >
+                      Tỉnh/Thành phố hiện tại{" "}
+                      <span className="text-danger">*</span>
+                    </label>
+                    <select
+                      id="city"
+                      name="city"
+                      value={formData.city}
+                      onChange={handleChange}
+                      onBlur={() =>
+                        handleFieldBlur("city", formData.city, formData)
+                      }
+                      className="w-full text-sm font-semibold text-slate-800 outline-none bg-transparent appearance-none cursor-pointer"
+                      {...getFieldA11yProps("city", errors.city)}
+                    >
+                      <option value="Đà Nẵng">Đà Nẵng</option>
+                      <option value="Hà Nội">Hà Nội</option>
+                      <option value="TP HCM">TP. Hồ Chí Minh</option>
+                    </select>
+                    <ChevronDown
+                      size={18}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                    />
+                  </div>
+                  <FieldError id="city-error" message={errors.city} />
                 </div>
                 <div className="border border-slate-300 rounded-lg px-4 py-2 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all bg-white">
-                  <label className="block text-[11px] text-slate-500 font-medium mb-0.5">
+                  <label
+                    htmlFor="street"
+                    className="block text-[11px] text-slate-500 font-medium mb-0.5"
+                  >
                     Địa chỉ (Tên đường, quận/huyện,...)
                   </label>
                   <input
+                    id="street"
                     type="text"
                     name="street"
                     value={formData.street}
@@ -297,31 +503,45 @@ export default function PersonalInfoModal({
               </div>
 
               {/* Row 6 */}
-              <div className="border border-slate-300 rounded-lg px-4 py-2 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all bg-white">
-                <label className="block text-[11px] text-slate-500 font-medium mb-0.5">
-                  Link cá nhân (Linkedin, portfolio,...)
-                </label>
-                <input
-                  type="text"
-                  name="cvUrl"
-                  value={formData.cvUrl}
-                  onChange={handleChange}
-                  className="w-full text-sm font-semibold text-slate-800 outline-none bg-transparent"
-                />
+              <div>
+                <div className={boxClass(Boolean(errors.cvUrl))}>
+                  <label
+                    htmlFor="cvUrl"
+                    className="block text-[11px] text-slate-500 font-medium mb-0.5"
+                  >
+                    Link cá nhân (Linkedin, portfolio,...)
+                  </label>
+                  <input
+                    id="cvUrl"
+                    type="url"
+                    name="cvUrl"
+                    value={formData.cvUrl}
+                    onChange={handleChange}
+                    onBlur={() =>
+                      handleFieldBlur("cvUrl", formData.cvUrl, formData)
+                    }
+                    placeholder="https://linkedin.com/in/..."
+                    className="w-full text-sm font-semibold text-slate-800 outline-none bg-transparent"
+                    {...getFieldA11yProps("cvUrl", errors.cvUrl)}
+                  />
+                </div>
+                <FieldError id="cvUrl-error" message={errors.cvUrl} />
               </div>
             </div>
           </div>
-        </div>
+        </form>
 
         <div className="p-6 border-t border-slate-100 flex justify-end gap-4 bg-slate-50 rounded-b-2xl">
           <button
+            type="button"
             onClick={onClose}
             className="px-6 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-200 rounded-lg transition-colors"
           >
             Huỷ
           </button>
           <button
-            onClick={handleSave}
+            type="submit"
+            form="personal-info-form"
             disabled={isPending}
             className="px-8 py-2.5 text-sm font-bold text-white bg-primary hover:bg-primary-hover shadow-md shadow-primary/20 rounded-lg transition-all active:scale-95 disabled:bg-slate-400 disabled:cursor-not-allowed"
           >

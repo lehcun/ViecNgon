@@ -20,6 +20,12 @@ import { formatDateVN } from "@/lib/formatters";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { DetailPaneSkeleton, ErrorState } from "@/components/ui/StateViews";
+import {
+  FieldError,
+  getFieldA11yProps,
+  getInputClassName,
+} from "@/components/ui/FormField";
+import { validateUrl } from "@/lib/validation";
 
 export default function ApplyJobPage() {
   const router = useRouter();
@@ -37,6 +43,7 @@ export default function ApplyJobPage() {
   >(null);
   const [coverLetter, setCoverLetter] = useState("");
   const [cvUrl, setCvUrl] = useState("");
+  const [cvUrlError, setCvUrlError] = useState("");
 
   const defaultCv = profile?.defaultCvFile;
   const existingCvName =
@@ -79,6 +86,19 @@ export default function ApplyJobPage() {
 
   const handleApply = (e: React.FormEvent) => {
     e.preventDefault();
+    setCvUrlError("");
+
+    if (cvOption === "new") {
+      const urlErr = validateUrl(cvUrl, {
+        required: true,
+        label: "liên kết CV",
+        maxLength: 255,
+      });
+      if (urlErr) {
+        setCvUrlError(urlErr);
+        return;
+      }
+    }
 
     const finalCvUrl =
       cvOption === "existing" ? existingCvUrl : cvUrl.trim();
@@ -182,7 +202,7 @@ export default function ApplyJobPage() {
               </div>
             </div>
           ) : (
-            <form className="space-y-7 mt-4" onSubmit={handleApply}>
+            <form className="space-y-7 mt-4" onSubmit={handleApply} noValidate>
               <div>
                 <h2 className="text-base font-bold text-text-main mb-3 flex items-center gap-1">
                   CV ứng tuyển <span className="text-danger">*</span>
@@ -206,7 +226,10 @@ export default function ApplyJobPage() {
                         name="cvOption"
                         value="existing"
                         checked={cvOption === "existing"}
-                        onChange={() => setManualCvOption("existing")}
+                        onChange={() => {
+                          setManualCvOption("existing");
+                          setCvUrlError("");
+                        }}
                         disabled={!hasExistingCv}
                         className="w-4 h-4 text-primary focus:ring-primary border-border-default"
                       />
@@ -273,17 +296,34 @@ export default function ApplyJobPage() {
                         <div className="relative flex items-center">
                           <Link2
                             size={16}
-                            className="absolute left-3 text-text-subtle pointer-events-none"
+                            className="absolute left-3 text-text-muted pointer-events-none"
                           />
                           <input
+                            id="cvUrl"
+                            name="cvUrl"
                             type="url"
                             placeholder="https://drive.google.com/... hoặc đường dẫn CV"
                             value={cvUrl}
-                            onChange={(e) => setCvUrl(e.target.value)}
-                            required={cvOption === "new"}
-                            className="w-full h-10 pl-9 pr-3 text-sm border border-border-default rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 bg-surface-card"
+                            onChange={(e) => {
+                              setCvUrl(e.target.value);
+                              if (cvUrlError) setCvUrlError("");
+                            }}
+                            onBlur={() => {
+                              const err = validateUrl(cvUrl, {
+                                required: true,
+                                label: "liên kết CV",
+                                maxLength: 255,
+                              });
+                              setCvUrlError(err);
+                            }}
+                            className={getInputClassName({
+                              hasError: Boolean(cvUrlError),
+                              className: "h-10 pl-9 pr-3",
+                            })}
+                            {...getFieldA11yProps("cvUrl", cvUrlError)}
                           />
                         </div>
+                        <FieldError id="cvUrl-error" message={cvUrlError} />
                         <p className="text-xs text-text-muted mt-1.5">
                           Đảm bảo liên kết ở chế độ công khai để nhà tuyển dụng
                           có thể xem.

@@ -1,15 +1,33 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, Loader2, Calendar } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useManageCandidateItems } from "@/hooks/candidate/useManageCandidateItems";
 import { ExperienceItem } from "@viecngon/types";
+import {
+  FieldError,
+  FormBannerError,
+  FormLabel,
+  getFieldA11yProps,
+  getInputClassName,
+} from "@/components/ui/FormField";
+import { useFormValidation } from "@/hooks/useFormValidation";
+import { validateDateOrder, validateRequiredText } from "@/lib/validation";
 
 interface ExperienceModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialData?: ExperienceItem | null;
+}
+
+interface ExperienceFormValues {
+  position: string;
+  companyName: string;
+  startMonth: string;
+  endMonth: string;
+  isCurrent: boolean;
+  description: string;
 }
 
 // Chuyển chuỗi định dạng MM/YYYY hoặc ISO thành YYYY-MM cho input date/month
@@ -46,49 +64,75 @@ export default function ExperienceModal({
 
   const isPending = isCreatingExperience || isUpdatingExperience;
 
-  const [position, setPosition] = useState(initialData?.position || "");
-  const [companyName, setCompanyName] = useState(initialData?.companyName || "");
-  const [startMonth, setStartMonth] = useState(() =>
-    toInputMonth(initialData?.startDate),
-  );
-  const [endMonth, setEndMonth] = useState(() =>
-    toInputMonth(initialData?.endDate),
-  );
-  const [isCurrent, setIsCurrent] = useState(
-    isEditing ? !initialData?.endDate : false,
-  );
-  const [description, setDescription] = useState(
-    initialData?.description || "",
-  );
+  const [values, setValues] = useState<ExperienceFormValues>({
+    position: initialData?.position || "",
+    companyName: initialData?.companyName || "",
+    startMonth: toInputMonth(initialData?.startDate),
+    endMonth: toInputMonth(initialData?.endDate),
+    isCurrent: isEditing ? !initialData?.endDate : false,
+    description: initialData?.description || "",
+  });
+
+  const {
+    errors,
+    formError,
+    handleFieldBlur,
+    handleFieldChange,
+    validateAll,
+    applyServerError,
+  } = useFormValidation<ExperienceFormValues>({
+    fieldOrder: ["position", "companyName", "startMonth", "endMonth"],
+    validators: {
+      position: (val) =>
+        validateRequiredText(val, "vị trí công việc", { maxLength: 100 }),
+      companyName: (val) =>
+        validateRequiredText(val, "tên công ty", { maxLength: 150 }),
+      startMonth: (val) => (val ? "" : "Vui lòng chọn thời gian bắt đầu."),
+      endMonth: (val, all) =>
+        all.isCurrent
+          ? ""
+          : validateDateOrder(
+              all.startMonth,
+              val,
+              "Thời gian kết thúc không được trước thời gian bắt đầu.",
+            ),
+    },
+  });
+
+  const updateField = <K extends keyof ExperienceFormValues>(
+    field: K,
+    nextVal: ExperienceFormValues[K],
+  ) => {
+    const next = { ...values, [field]: nextVal };
+    if (field === "isCurrent" && nextVal === true) {
+      next.endMonth = "";
+    }
+    setValues(next);
+    handleFieldChange(field, nextVal, next);
+    if (field === "startMonth" || field === "isCurrent") {
+      handleFieldChange("endMonth", next.endMonth, next);
+    }
+  };
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!position.trim()) {
-      toast.error("Vui lòng nhập vị trí công việc");
-      return;
-    }
-    if (!companyName.trim()) {
-      toast.error("Vui lòng nhập tên công ty");
-      return;
-    }
-    if (!startMonth) {
-      toast.error("Vui lòng chọn thời gian bắt đầu");
-      return;
-    }
-    if (!isCurrent && endMonth && endMonth < startMonth) {
-      toast.error("Thời gian kết thúc không được trước thời gian bắt đầu");
+    if (!validateAll(values)) {
       return;
     }
 
     const payload = {
-      position: position.trim(),
-      companyName: companyName.trim(),
-      startDate: toIsoDate(startMonth),
-      endDate: isCurrent ? null : endMonth ? toIsoDate(endMonth) : null,
-      description: description.trim() || null,
+      position: values.position.trim(),
+      companyName: values.companyName.trim(),
+      startDate: toIsoDate(values.startMonth),
+      endDate: values.isCurrent
+        ? null
+        : values.endMonth
+          ? toIsoDate(values.endMonth)
+          : null,
+      description: values.description.trim() || null,
     };
 
     try {
@@ -101,8 +145,16 @@ export default function ExperienceModal({
       }
       onClose();
     } catch (error) {
-      const msg = error instanceof Error ? error.message : "Có lỗi xảy ra";
-      toast.error(msg);
+      const applied = applyServerError(error, {
+        fallbackMessage: "Có lỗi xảy ra, vui lòng thử lại.",
+        fieldAliases: {
+          viTri: "position",
+          tenCongTy: "companyName",
+          ngayBatDau: "startMonth",
+          ngayKetThuc: "endMonth",
+        },
+      });
+      toast.error(applied.message);
     }
   };
 
@@ -117,6 +169,7 @@ export default function ExperienceModal({
             {isEditing ? "Chỉnh sửa kinh nghiệm" : "Thêm kinh nghiệm làm việc"}
           </h2>
           <button
+            type="button"
             onClick={onClose}
             disabled={isPending}
             className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-full transition-colors"
@@ -125,80 +178,111 @@ export default function ExperienceModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 md:p-8 space-y-5">
-          {/* Vị trí */}
+        <form
+          onSubmit={handleSubmit}
+          noValidate
+          className="flex-1 overflow-y-auto p-6 md:p-8 space-y-5"
+        >
+          <FormBannerError message={formError} />
+
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-              Vị trí / Chức danh <span className="text-red-500">*</span>
-            </label>
+            <FormLabel htmlFor="position" required>
+              Vị trí / Chức danh
+            </FormLabel>
             <input
+              id="position"
+              name="position"
               type="text"
-              required
-              value={position}
-              onChange={(e) => setPosition(e.target.value)}
+              value={values.position}
+              onChange={(e) => updateField("position", e.target.value)}
+              onBlur={() =>
+                handleFieldBlur("position", values.position, values)
+              }
               placeholder="VD: Senior Frontend Developer"
-              className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+              className={getInputClassName({
+                hasError: Boolean(errors.position),
+                className: "h-10",
+              })}
+              {...getFieldA11yProps("position", errors.position)}
             />
+            <FieldError id="position-error" message={errors.position} />
           </div>
 
-          {/* Công ty */}
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-              Tên công ty / Doanh nghiệp <span className="text-red-500">*</span>
-            </label>
+            <FormLabel htmlFor="companyName" required>
+              Tên công ty / Doanh nghiệp
+            </FormLabel>
             <input
+              id="companyName"
+              name="companyName"
               type="text"
-              required
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
+              value={values.companyName}
+              onChange={(e) => updateField("companyName", e.target.value)}
+              onBlur={() =>
+                handleFieldBlur("companyName", values.companyName, values)
+              }
               placeholder="VD: VNG Corporation"
-              className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+              className={getInputClassName({
+                hasError: Boolean(errors.companyName),
+                className: "h-10",
+              })}
+              {...getFieldA11yProps("companyName", errors.companyName)}
             />
+            <FieldError id="companyName-error" message={errors.companyName} />
           </div>
 
-          {/* Thời gian */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                Bắt đầu từ <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <input
-                  type="month"
-                  required
-                  value={startMonth}
-                  onChange={(e) => setStartMonth(e.target.value)}
-                  className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
-                />
-              </div>
+              <FormLabel htmlFor="startMonth" required>
+                Bắt đầu từ
+              </FormLabel>
+              <input
+                id="startMonth"
+                name="startMonth"
+                type="month"
+                value={values.startMonth}
+                onChange={(e) => updateField("startMonth", e.target.value)}
+                onBlur={() =>
+                  handleFieldBlur("startMonth", values.startMonth, values)
+                }
+                className={getInputClassName({
+                  hasError: Boolean(errors.startMonth),
+                  className: "h-10",
+                })}
+                {...getFieldA11yProps("startMonth", errors.startMonth)}
+              />
+              <FieldError id="startMonth-error" message={errors.startMonth} />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                Đến tháng
-              </label>
-              <div className="relative">
-                <input
-                  type="month"
-                  disabled={isCurrent}
-                  value={isCurrent ? "" : endMonth}
-                  onChange={(e) => setEndMonth(e.target.value)}
-                  className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all disabled:bg-slate-100 disabled:cursor-not-allowed"
-                />
-              </div>
+              <FormLabel htmlFor="endMonth">Đến tháng</FormLabel>
+              <input
+                id="endMonth"
+                name="endMonth"
+                type="month"
+                disabled={values.isCurrent}
+                value={values.isCurrent ? "" : values.endMonth}
+                onChange={(e) => updateField("endMonth", e.target.value)}
+                onBlur={() =>
+                  handleFieldBlur("endMonth", values.endMonth, values)
+                }
+                className={getInputClassName({
+                  hasError: Boolean(errors.endMonth),
+                  className:
+                    "h-10 disabled:bg-slate-100 disabled:cursor-not-allowed",
+                })}
+                {...getFieldA11yProps("endMonth", errors.endMonth)}
+              />
+              <FieldError id="endMonth-error" message={errors.endMonth} />
             </div>
           </div>
 
-          {/* Checkbox đang làm việc */}
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
               id="isCurrentWork"
-              checked={isCurrent}
-              onChange={(e) => {
-                setIsCurrent(e.target.checked);
-                if (e.target.checked) setEndMonth("");
-              }}
+              checked={values.isCurrent}
+              onChange={(e) => updateField("isCurrent", e.target.checked)}
               className="w-4 h-4 text-primary rounded border-slate-300 focus:ring-primary cursor-pointer"
             />
             <label
@@ -209,17 +293,18 @@ export default function ExperienceModal({
             </label>
           </div>
 
-          {/* Mô tả */}
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+            <FormLabel htmlFor="description">
               Mô tả chi tiết công việc, dự án hoặc thành tích đạt được
-            </label>
+            </FormLabel>
             <textarea
+              id="description"
+              name="description"
               rows={4}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              value={values.description}
+              onChange={(e) => updateField("description", e.target.value)}
               placeholder="- Phụ trách phát triển tính năng web...&#10;- Tối ưu hiệu suất và tốc độ tải trang..."
-              className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+              className="w-full px-4 py-2.5 text-sm border border-border-default rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/15 outline-none transition-all"
             />
           </div>
 
@@ -246,4 +331,3 @@ export default function ExperienceModal({
     </div>
   );
 }
-

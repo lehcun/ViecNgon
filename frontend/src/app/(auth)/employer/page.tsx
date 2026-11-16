@@ -5,14 +5,39 @@ import { Mail, ChevronDown, CheckCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import LogoViecNgon from "@/components/LogoViecNgon";
 import Image from "next/image";
+import toast from "react-hot-toast";
+import {
+  FieldError,
+  getFieldA11yProps,
+  getInputClassName,
+} from "@/components/ui/FormField";
+import { useFormValidation } from "@/hooks/useFormValidation";
+import {
+  validateEmail,
+  validatePhoneVN,
+  validatePositiveNumber,
+  validateRequiredText,
+  validateUrl,
+} from "@/lib/validation";
+
+interface EmployerConsultForm {
+  fullName: string;
+  email: string;
+  phone: string;
+  company: string;
+  title: string;
+  location: string;
+  website: string;
+  agreed: boolean;
+  budget: string;
+  hiringDemand: string;
+  biggestChallenge: string;
+}
 
 export default function EmployerRegistrationPage() {
-  // Quản lý bước hiện tại (1 hoặc 2)
   const [step, setStep] = useState(1);
 
-  // State quản lý toàn bộ dữ liệu form cho cả 2 bước
-  const [formData, setFormData] = useState({
-    // --- Bước 1 ---
+  const [formData, setFormData] = useState<EmployerConsultForm>({
     fullName: "",
     email: "",
     phone: "",
@@ -21,10 +46,67 @@ export default function EmployerRegistrationPage() {
     location: "",
     website: "",
     agreed: false,
-    // --- Bước 2 ---
     budget: "",
     hiringDemand: "",
     biggestChallenge: "",
+  });
+
+  const step1Validation = useFormValidation<
+    Pick<
+      EmployerConsultForm,
+      | "fullName"
+      | "email"
+      | "phone"
+      | "company"
+      | "title"
+      | "location"
+      | "website"
+      | "agreed"
+    >
+  >({
+    fieldOrder: [
+      "fullName",
+      "email",
+      "phone",
+      "company",
+      "title",
+      "location",
+      "website",
+      "agreed",
+    ],
+    validators: {
+      fullName: (val) =>
+        validateRequiredText(val, "họ và tên", { maxLength: 100 }),
+      email: (val) => validateEmail(val, true),
+      phone: (val) => validatePhoneVN(val, true),
+      company: (val) =>
+        validateRequiredText(val, "tên công ty", { maxLength: 150 }),
+      title: (val) => validateRequiredText(val, "chức vụ", { maxLength: 100 }),
+      location: (val) => (val ? "" : "Vui lòng chọn địa điểm công ty."),
+      website: (val) =>
+        validateUrl(val, { required: false, label: "website công ty" }),
+      agreed: (checked) =>
+        checked
+          ? ""
+          : "Bạn cần đồng ý với Điều khoản dịch vụ và Chính sách bảo mật.",
+    },
+  });
+
+  const step2Validation = useFormValidation<
+    Pick<EmployerConsultForm, "budget" | "hiringDemand">
+  >({
+    fieldOrder: ["budget", "hiringDemand"],
+    validators: {
+      budget: (val) =>
+        val ? "" : "Vui lòng chọn ngân sách tuyển dụng dự kiến.",
+      hiringDemand: (val) =>
+        validatePositiveNumber(val, {
+          required: true,
+          min: 1,
+          max: 10000,
+          label: "số lượng nhân sự dự kiến",
+        }),
+    },
   });
 
   const handleChange = (
@@ -32,32 +114,59 @@ export default function EmployerRegistrationPage() {
   ) => {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    const nextValue = type === "checkbox" ? checked : value;
+
+    const nextForm = {
+      ...formData,
+      [name]: nextValue,
+    };
+    setFormData(nextForm);
+
+    if (
+      name === "fullName" ||
+      name === "email" ||
+      name === "phone" ||
+      name === "company" ||
+      name === "title" ||
+      name === "location" ||
+      name === "website" ||
+      name === "agreed"
+    ) {
+      step1Validation.handleFieldChange(name, nextValue as never, nextForm);
+    }
+
+    if (name === "hiringDemand") {
+      step2Validation.handleFieldChange("hiringDemand", value, nextForm);
+    }
   };
 
   const handleBudgetSelect = (budgetOption: string) => {
-    setFormData((prev) => ({
-      ...prev,
+    const nextForm = {
+      ...formData,
       budget: budgetOption,
-    }));
+    };
+    setFormData(nextForm);
+    step2Validation.handleFieldChange("budget", budgetOption, nextForm);
   };
 
-  // Điều kiện kích hoạt nút bấm của từng bước
-  const isStep1Valid =
-    formData.fullName &&
-    formData.email &&
-    formData.phone &&
-    formData.company &&
-    formData.title &&
-    formData.location &&
-    formData.agreed;
+  const handleNextStep = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!step1Validation.validateAll(formData)) {
+      return;
+    }
+    setStep(2);
+  };
 
-  const isStep2Valid = formData.budget && formData.hiringDemand;
+  const handleStep2Submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!step2Validation.validateAll(formData)) {
+      return;
+    }
+    toast.success(
+      "Đã gửi yêu cầu tư vấn! Đội ngũ ViecNgon sẽ liên hệ với bạn trong vòng 24 giờ.",
+    );
+  };
 
-  // Danh sách tùy chọn ngân sách cho Bước 2
   const budgetOptions = [
     { label: "< 50M", value: "<50M" },
     { label: "50 - 200M", value: "50-200M" },
@@ -68,7 +177,6 @@ export default function EmployerRegistrationPage() {
 
   return (
     <div className="min-h-screen bg-white font-sans">
-      {/* ================= NAVBAR ================= */}
       <nav className="bg-primary-dark text-white flex justify-between items-center px-4 md:px-8 py-4 sticky top-0 z-50">
         <div className="flex items-center gap-6">
           <LogoViecNgon logoTextColor="text-white" role={"NHATUYENDUNG"} />
@@ -90,22 +198,19 @@ export default function EmployerRegistrationPage() {
           <button className="hidden md:flex items-center gap-2 border border-slate-600 rounded px-4 py-2 hover:bg-slate-800 transition-colors">
             <Mail size={16} /> Liên hệ với chúng tôi
           </button>
-          <a href="#" className="hover:text-white transition-colors">
+          <Link href="/employer/login" className="hover:text-white transition-colors">
             Đăng nhập
-          </a>
+          </Link>
           <span className="border-l border-slate-600 pl-4 text-slate-400">
             EN | VI
           </span>
         </div>
       </nav>
 
-      {/* ================= HERO SECTION ================= */}
       <main className="flex flex-col lg:flex-row max-w-7xl mx-auto px-4 sm:px-8 py-12 gap-12 items-center relative overflow-hidden">
-        {/* Hình elip trang trí nền theo chuẩn class Tailwind mới (w-200 = 800px) */}
         <div className="absolute right-0 bottom-0 w-200 h-125 bg-blue-50 rounded-full blur-3xl -z-10 translate-x-1/4 translate-y-1/4"></div>
         <div className="absolute top-0 left-[-10%] w-150 h-150 bg-primary-light/50 rounded-full blur-3xl -z-10"></div>
 
-        {/* CỘT TRÁI: Text & Form */}
         <div className="w-full lg:w-1/2 flex flex-col gap-8 z-10">
           <div className="space-y-4">
             <h2 className="text-sm font-bold tracking-widest text-slate-800 uppercase">
@@ -124,12 +229,9 @@ export default function EmployerRegistrationPage() {
             </p>
           </div>
 
-          {/* Hộp chứa Form động */}
           <div className="bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-slate-100 p-6 md:p-8 relative overflow-hidden transition-all duration-300">
-            {/* Dải màu trang trí top */}
             <div className="absolute top-0 left-0 w-full h-1 bg-primary"></div>
 
-            {/* ================= FORM BƯỚC 1 ================= */}
             {step === 1 ? (
               <div className="animate-in fade-in slide-in-from-left-4 duration-300">
                 <div className="flex justify-between items-center mb-6">
@@ -141,63 +243,179 @@ export default function EmployerRegistrationPage() {
                   </span>
                 </div>
 
-                <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <form
+                  onSubmit={handleNextStep}
+                  noValidate
+                  className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                >
                   <div className="md:col-span-2">
                     <input
+                      id="fullName"
                       type="text"
                       name="fullName"
                       value={formData.fullName}
                       onChange={handleChange}
+                      onBlur={() =>
+                        step1Validation.handleFieldBlur(
+                          "fullName",
+                          formData.fullName,
+                          formData,
+                        )
+                      }
                       placeholder="Họ và tên *"
-                      className="w-full border border-slate-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all placeholder:text-slate-400 hover:border-slate-300"
+                      className={getInputClassName({
+                        hasError: Boolean(step1Validation.errors.fullName),
+                      })}
+                      {...getFieldA11yProps(
+                        "fullName",
+                        step1Validation.errors.fullName,
+                      )}
+                    />
+                    <FieldError
+                      id="fullName-error"
+                      message={step1Validation.errors.fullName}
                     />
                   </div>
+
                   <div>
                     <input
+                      id="email"
                       type="email"
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
+                      onBlur={() =>
+                        step1Validation.handleFieldBlur(
+                          "email",
+                          formData.email,
+                          formData,
+                        )
+                      }
                       placeholder="Email công việc *"
-                      className="w-full border border-slate-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all placeholder:text-slate-400 hover:border-slate-300"
+                      className={getInputClassName({
+                        hasError: Boolean(step1Validation.errors.email),
+                      })}
+                      {...getFieldA11yProps(
+                        "email",
+                        step1Validation.errors.email,
+                      )}
+                    />
+                    <FieldError
+                      id="email-error"
+                      message={step1Validation.errors.email}
                     />
                   </div>
+
                   <div>
                     <input
+                      id="phone"
                       type="tel"
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
+                      onBlur={() =>
+                        step1Validation.handleFieldBlur(
+                          "phone",
+                          formData.phone,
+                          formData,
+                        )
+                      }
                       placeholder="Số điện thoại *"
-                      className="w-full border border-slate-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all placeholder:text-slate-400 hover:border-slate-300"
+                      className={getInputClassName({
+                        hasError: Boolean(step1Validation.errors.phone),
+                      })}
+                      {...getFieldA11yProps(
+                        "phone",
+                        step1Validation.errors.phone,
+                      )}
+                    />
+                    <FieldError
+                      id="phone-error"
+                      message={step1Validation.errors.phone}
                     />
                   </div>
+
                   <div>
                     <input
+                      id="company"
                       type="text"
                       name="company"
                       value={formData.company}
                       onChange={handleChange}
+                      onBlur={() =>
+                        step1Validation.handleFieldBlur(
+                          "company",
+                          formData.company,
+                          formData,
+                        )
+                      }
                       placeholder="Tên công ty *"
-                      className="w-full border border-slate-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all placeholder:text-slate-400 hover:border-slate-300"
+                      className={getInputClassName({
+                        hasError: Boolean(step1Validation.errors.company),
+                      })}
+                      {...getFieldA11yProps(
+                        "company",
+                        step1Validation.errors.company,
+                      )}
+                    />
+                    <FieldError
+                      id="company-error"
+                      message={step1Validation.errors.company}
                     />
                   </div>
+
                   <div>
                     <input
+                      id="title"
                       type="text"
                       name="title"
                       value={formData.title}
                       onChange={handleChange}
+                      onBlur={() =>
+                        step1Validation.handleFieldBlur(
+                          "title",
+                          formData.title,
+                          formData,
+                        )
+                      }
                       placeholder="Chức vụ *"
-                      className="w-full border border-slate-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all placeholder:text-slate-400 hover:border-slate-300"
+                      className={getInputClassName({
+                        hasError: Boolean(step1Validation.errors.title),
+                      })}
+                      {...getFieldA11yProps(
+                        "title",
+                        step1Validation.errors.title,
+                      )}
+                    />
+                    <FieldError
+                      id="title-error"
+                      message={step1Validation.errors.title}
                     />
                   </div>
+
                   <div>
                     <select
+                      id="location"
                       name="location"
                       value={formData.location}
                       onChange={handleChange}
-                      className="w-full border border-slate-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all text-slate-500 bg-white hover:border-slate-300"
+                      onBlur={() =>
+                        step1Validation.handleFieldBlur(
+                          "location",
+                          formData.location,
+                          formData,
+                        )
+                      }
+                      className={getInputClassName({
+                        hasError: Boolean(step1Validation.errors.location),
+                        className: formData.location
+                          ? "text-text-primary"
+                          : "text-text-muted",
+                      })}
+                      {...getFieldA11yProps(
+                        "location",
+                        step1Validation.errors.location,
+                      )}
                     >
                       <option value="">Địa điểm công ty *</option>
                       <option value="HCM">Hồ Chí Minh</option>
@@ -205,59 +423,86 @@ export default function EmployerRegistrationPage() {
                       <option value="DN">Đà Nẵng</option>
                       <option value="OTHER">Khác</option>
                     </select>
+                    <FieldError
+                      id="location-error"
+                      message={step1Validation.errors.location}
+                    />
                   </div>
+
                   <div>
                     <input
+                      id="website"
                       type="url"
                       name="website"
                       value={formData.website}
                       onChange={handleChange}
-                      placeholder="Website URL"
-                      className="w-full border border-slate-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all placeholder:text-slate-400 hover:border-slate-300"
+                      onBlur={() =>
+                        step1Validation.handleFieldBlur(
+                          "website",
+                          formData.website,
+                          formData,
+                        )
+                      }
+                      placeholder="Website URL (https://...)"
+                      className={getInputClassName({
+                        hasError: Boolean(step1Validation.errors.website),
+                      })}
+                      {...getFieldA11yProps(
+                        "website",
+                        step1Validation.errors.website,
+                      )}
+                    />
+                    <FieldError
+                      id="website-error"
+                      message={step1Validation.errors.website}
                     />
                   </div>
 
-                  <div className="md:col-span-2 flex items-start gap-3 mt-3">
-                    <input
-                      type="checkbox"
-                      name="agreed"
-                      id="terms"
-                      checked={formData.agreed}
-                      onChange={handleChange}
-                      className="mt-1 w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600 cursor-pointer accent-primary"
+                  <div className="md:col-span-2 mt-2">
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        name="agreed"
+                        id="agreed"
+                        checked={formData.agreed}
+                        onChange={handleChange}
+                        className="mt-1 w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600 cursor-pointer accent-primary"
+                        {...getFieldA11yProps(
+                          "agreed",
+                          step1Validation.errors.agreed,
+                        )}
+                      />
+                      <label
+                        htmlFor="agreed"
+                        className="text-[13px] text-slate-600 leading-relaxed cursor-pointer select-none"
+                      >
+                        Tôi đã đọc và đồng ý với{" "}
+                        <a
+                          href="#"
+                          className="text-blue-600 font-bold hover:underline"
+                        >
+                          Điều khoản dịch vụ
+                        </a>{" "}
+                        và{" "}
+                        <a
+                          href="#"
+                          className="text-blue-600 font-bold hover:underline"
+                        >
+                          Chính sách bảo mật
+                        </a>{" "}
+                        của ViecNgon liên quan đến thông tin cá nhân của tôi.
+                      </label>
+                    </div>
+                    <FieldError
+                      id="agreed-error"
+                      message={step1Validation.errors.agreed}
                     />
-                    <label
-                      htmlFor="terms"
-                      className="text-[13px] text-slate-600 leading-relaxed cursor-pointer select-none"
-                    >
-                      Tôi đã đọc và đồng ý với{" "}
-                      <a
-                        href="#"
-                        className="text-blue-600 font-bold hover:underline"
-                      >
-                        Điều khoản dịch vụ
-                      </a>{" "}
-                      và{" "}
-                      <a
-                        href="#"
-                        className="text-blue-600 font-bold hover:underline"
-                      >
-                        Chính sách bảo mật
-                      </a>{" "}
-                      của ViecNgon liên quan đến thông tin cá nhân của tôi.
-                    </label>
                   </div>
 
                   <div className="md:col-span-2 mt-4">
                     <button
-                      type="button"
-                      disabled={!isStep1Valid}
-                      onClick={() => setStep(2)} // Chuyển state sang form 2
-                      className={`w-full font-bold py-3.5 rounded-lg transition-all duration-300 ${
-                        isStep1Valid
-                          ? "bg-primary text-white shadow-lg shadow-primary/30 hover:bg-primary-hover transform hover:-translate-y-0.5"
-                          : "bg-slate-300 text-slate-500 cursor-not-allowed"
-                      }`}
+                      type="submit"
+                      className="w-full font-bold py-3.5 rounded-lg transition-all duration-300 bg-primary text-white shadow-lg shadow-primary/30 hover:bg-primary-hover cursor-pointer"
                     >
                       Tiếp tục để nhận tư vấn
                     </button>
@@ -265,12 +510,11 @@ export default function EmployerRegistrationPage() {
                 </form>
               </div>
             ) : (
-              /* ================= FORM BƯỚC 2 ================= */
               <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="flex justify-between items-center mb-8">
                   <div className="flex items-center gap-3">
-                    {/* Nút Quay Lại */}
                     <button
+                      type="button"
                       onClick={() => setStep(1)}
                       className="p-1 text-slate-400 hover:text-primary hover:bg-primary-light rounded-full transition-colors"
                       title="Quay lại"
@@ -286,12 +530,15 @@ export default function EmployerRegistrationPage() {
                   </span>
                 </div>
 
-                <form className="flex flex-col gap-6">
-                  {/* Budget */}
+                <form
+                  onSubmit={handleStep2Submit}
+                  noValidate
+                  className="flex flex-col gap-6"
+                >
                   <div>
                     <label className="block text-[15px] font-medium text-slate-800 mb-3">
                       Ngân sách tuyển dụng hàng năm (VNĐ){" "}
-                      <span className="text-red-500">*</span>
+                      <span className="text-danger">*</span>
                     </label>
                     <div className="flex flex-wrap gap-2">
                       {budgetOptions.map((option) => (
@@ -302,38 +549,68 @@ export default function EmployerRegistrationPage() {
                           className={`px-4 py-2 rounded-full border text-sm font-medium transition-colors ${
                             formData.budget === option.value
                               ? "bg-primary text-white border-primary shadow-md shadow-primary/20"
-                              : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                              : step2Validation.errors.budget
+                                ? "bg-danger-soft/30 text-danger-text border-danger hover:bg-danger-soft"
+                                : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                           }`}
                         >
                           {option.label}
                         </button>
                       ))}
                     </div>
-                  </div>
-
-                  {/* Hiring Demand */}
-                  <div>
-                    <label className="block text-[15px] font-medium text-slate-800 mb-2">
-                      Nhu cầu tuyển dụng trong 6 tháng tới{" "}
-                      <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      name="hiringDemand"
-                      value={formData.hiringDemand}
-                      onChange={handleChange}
-                      placeholder="Nhập số lượng nhân sự dự kiến..."
-                      className="w-full border border-slate-200 rounded-lg px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-400 hover:border-slate-300"
+                    <FieldError
+                      id="budget-error"
+                      message={step2Validation.errors.budget}
                     />
                   </div>
 
-                  {/* Biggest Challenge */}
                   <div>
-                    <label className="block text-[15px] font-medium text-slate-800 mb-2">
+                    <label
+                      htmlFor="hiringDemand"
+                      className="block text-[15px] font-medium text-slate-800 mb-2"
+                    >
+                      Nhu cầu tuyển dụng trong 6 tháng tới{" "}
+                      <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      id="hiringDemand"
+                      type="number"
+                      name="hiringDemand"
+                      min={1}
+                      value={formData.hiringDemand}
+                      onChange={handleChange}
+                      onBlur={() =>
+                        step2Validation.handleFieldBlur(
+                          "hiringDemand",
+                          formData.hiringDemand,
+                          formData,
+                        )
+                      }
+                      placeholder="Nhập số lượng nhân sự dự kiến..."
+                      className={getInputClassName({
+                        hasError: Boolean(step2Validation.errors.hiringDemand),
+                      })}
+                      {...getFieldA11yProps(
+                        "hiringDemand",
+                        step2Validation.errors.hiringDemand,
+                      )}
+                    />
+                    <FieldError
+                      id="hiringDemand-error"
+                      message={step2Validation.errors.hiringDemand}
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="biggestChallenge"
+                      className="block text-[15px] font-medium text-slate-800 mb-2"
+                    >
                       Thách thức lớn nhất khi tuyển dụng
                     </label>
                     <div className="relative">
                       <select
+                        id="biggestChallenge"
                         name="biggestChallenge"
                         value={formData.biggestChallenge}
                         onChange={handleChange}
@@ -359,7 +636,6 @@ export default function EmployerRegistrationPage() {
                     </div>
                   </div>
 
-                  {/* Widget Cloudflare Mockup */}
                   <div className="mt-2 w-fit border border-slate-200 rounded-lg p-2.5 flex items-center justify-between gap-12 bg-white shadow-sm">
                     <div className="flex items-center gap-2">
                       <CheckCircle size={22} className="text-emerald-500" />
@@ -383,19 +659,10 @@ export default function EmployerRegistrationPage() {
                     </div>
                   </div>
 
-                  {/* Submit Button */}
                   <div className="mt-4">
                     <button
-                      type="button"
-                      disabled={!isStep2Valid}
-                      onClick={() =>
-                        alert("Gửi dữ liệu thành công lên hệ thống!")
-                      } // TODO: Xử lý gọi API ở đây
-                      className={`w-full font-bold py-4 rounded-lg transition-all duration-300 text-sm md:text-base ${
-                        isStep2Valid
-                          ? "bg-primary text-white shadow-lg shadow-primary/30 hover:bg-primary-hover transform hover:-translate-y-0.5"
-                          : "bg-slate-300 text-slate-500 cursor-not-allowed"
-                      }`}
+                      type="submit"
+                      className="w-full font-bold py-4 rounded-lg transition-all duration-300 text-sm md:text-base bg-primary text-white shadow-lg shadow-primary/30 hover:bg-primary-hover cursor-pointer"
                     >
                       Gửi yêu cầu tư vấn
                     </button>
@@ -406,10 +673,8 @@ export default function EmployerRegistrationPage() {
           </div>
         </div>
 
-        {/* CỘT PHẢI: Hình ảnh minh họa */}
         <div className="hidden lg:flex w-1/2 relative justify-center items-center z-10">
           <div className="relative w-full aspect-square max-w-lg">
-            {/* Viền trang trí */}
             <div className="absolute top-10 left-10 w-full h-full border-2 border-primary-light rounded-3xl -z-10"></div>
 
             <div className="w-full h-full rounded-3xl overflow-hidden shadow-2xl relative bg-white group">
@@ -425,7 +690,6 @@ export default function EmployerRegistrationPage() {
 
               <div className="absolute inset-0 bg-linear-to-t from-slate-900/60 via-transparent to-transparent"></div>
 
-              {/* Box hiển thị thay đổi theo Step */}
               <div className="absolute bottom-6 left-6 right-6 bg-white/95 backdrop-blur-sm p-4 md:p-5 rounded-xl shadow-lg border border-white/50 transition-all duration-300">
                 {step === 1 ? (
                   <div className="flex items-center gap-3 animate-in fade-in zoom-in duration-500">
