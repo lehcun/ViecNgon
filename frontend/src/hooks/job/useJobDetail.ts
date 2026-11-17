@@ -106,10 +106,10 @@ export const useApplyJob = (jobSlugOrId?: string) => {
     onSuccess: (data) => {
       toast.success("Nộp đơn ứng tuyển thành công!");
       if (jobSlugOrId) {
-        queryClient.invalidateQueries({ queryKey: ["jobDetail", jobSlugOrId] });
+        void queryClient.invalidateQueries({ queryKey: ["jobDetail", jobSlugOrId] });
       }
-      queryClient.invalidateQueries({ queryKey: ["jobDetail"] });
-      queryClient.invalidateQueries({ queryKey: ["myApplications"] });
+      void queryClient.invalidateQueries({ queryKey: ["jobDetail"] });
+      void queryClient.invalidateQueries({ queryKey: ["myApplications"] });
     },
     onError: (error: Error) => {
       toast.error(error.message || "Lỗi khi nộp đơn ứng tuyển");

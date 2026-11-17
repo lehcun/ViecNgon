@@ -101,7 +101,7 @@ export default function AuthProvider({
       }
     };
 
-    fetchUser();
+    void fetchUser();
   }, [setUser, isInitialized, pathname, router]);
 
   return <>{children}</>;

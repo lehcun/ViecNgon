@@ -8,6 +8,7 @@ import { ArrowRight, ChevronRight, Crown, MapPin } from "lucide-react";
 import { FeaturedEmployerBannerItem } from "@viecngon/types";
 import { CompanyLogo } from "@/components/ui/CompanyLogo";
 import { companyKeys } from "@/queries/queryKeys";
+import { stripHtmlTags } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -34,9 +35,8 @@ function readInitialLastCompanyId(): string | null {
 
 function toPlainText(value?: string | null): string {
   if (!value) return "";
-  return value
-    .replace(/<\/(li|p|div|br|h[1-6])>/gi, " ")
-    .replace(/<[^>]*>/g, " ")
+  const withoutBreaks = value.replace(/<\/(li|p|div|br|h[1-6])>/gi, " ");
+  return stripHtmlTags(withoutBreaks)
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")
     .replace(/&lt;/gi, "<")

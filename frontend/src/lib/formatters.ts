@@ -90,10 +90,29 @@ export function formatRelativeTimeVN(
   return formatDateVN(past);
 }
 
-export function stripHtmlTags(html: string | null | undefined): string {
+export function stripHtmlTags(
+  html: string | null | undefined,
+  replacement = " ",
+): string {
   if (!html) return "";
-  return html
-    .replace(/<[^>]*>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  let result = "";
+  let insideTag = false;
+
+  for (let i = 0; i < html.length; i += 1) {
+    const ch = html[i];
+    if (ch === "<") {
+      insideTag = true;
+      continue;
+    }
+    if (ch === ">" && insideTag) {
+      insideTag = false;
+      result += replacement;
+      continue;
+    }
+    if (!insideTag) {
+      result += ch;
+    }
+  }
+
+  return result.replace(/\s+/g, " ").trim();
 }

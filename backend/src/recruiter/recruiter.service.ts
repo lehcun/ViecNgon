@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { stripHtmlTags } from '../common/utils/html.util';
 import { UpdateRecruiterDto } from './dto/update-recruiter.dto';
 import { UpdateSpotlightBannerDto } from './dto/update-spotlight-banner.dto';
 import {
@@ -321,9 +322,8 @@ export class RecruiterService {
 
   private stripHtmlText(value?: string | null): string {
     if (!value) return '';
-    return value
-      .replace(/<\/(li|p|div|br|h[1-6])>/gi, ' ')
-      .replace(/<[^>]*>/g, ' ')
+    const withoutBreaks = value.replace(/<\/(li|p|div|br|h[1-6])>/gi, ' ');
+    return stripHtmlTags(withoutBreaks, ' ')
       .replace(/&nbsp;/gi, ' ')
       .replace(/&amp;/gi, '&')
       .replace(/&lt;/gi, '<')

@@ -85,7 +85,7 @@ export default function JobDetailMain({
 
   const handleCopyLink = () => {
     if (typeof window !== "undefined") {
-      navigator.clipboard.writeText(window.location.href);
+      void navigator.clipboard.writeText(window.location.href);
       toast.success("Đã sao chép liên kết vào bộ nhớ tạm!");
     }
   };

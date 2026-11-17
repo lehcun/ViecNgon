@@ -26,7 +26,7 @@ export const useUpdateCandidateProfile = () => {
     },
     onSuccess: () => {
       // Dọn dẹp cache để form tự động lấy dữ liệu mới
-      queryClient.invalidateQueries({ queryKey: ["candidateProfile"] });
+      void queryClient.invalidateQueries({ queryKey: ["candidateProfile"] });
     },
   });
 

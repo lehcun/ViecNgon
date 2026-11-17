@@ -101,7 +101,7 @@ export function parseApiError(
 // CÁC HÀM VALIDATION DÙNG CHUNG (KHỚP VỚI RÀNG BUỘC DTO & SQL SERVER)
 // =====================================================================
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/;
 const PHONE_VN_REGEX = /^(0|\+84)[0-9]{8,10}$/;
 
 export interface PasswordCriteria {

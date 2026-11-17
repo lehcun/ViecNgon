@@ -41,7 +41,7 @@ export default function EmployerPricingPage() {
     },
     onSuccess: () => {
       toast.success("Thanh toán và kích hoạt gói dịch vụ thành công!");
-      queryClient.invalidateQueries({ queryKey: packageKeys.myCampaigns() });
+      void queryClient.invalidateQueries({ queryKey: packageKeys.myCampaigns() });
       router.push("/campaigns");
     },
     onError: (error: Error) => {

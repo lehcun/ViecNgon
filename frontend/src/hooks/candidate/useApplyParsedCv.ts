@@ -32,7 +32,7 @@ export const useApplyParsedCv = () => {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["candidateProfile"] });
+      void queryClient.invalidateQueries({ queryKey: ["candidateProfile"] });
       toast.success("Đã cập nhật hồ sơ từ CV thành công!");
     },
     onError: (error) => {

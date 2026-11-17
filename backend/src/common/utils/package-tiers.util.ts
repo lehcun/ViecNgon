@@ -1,4 +1,5 @@
 import type { JobPromotionBadge } from '@viecngon/types';
+import { stripHtmlTags } from './html.util';
 
 export interface PackageTierTemplate {
   key: 'BASIC' | 'STANDARD' | 'VIP' | 'DIAMOND';
@@ -180,8 +181,7 @@ export function extractJobHighlights(
     phucLoiHtml.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi),
   )
     .map((m) =>
-      m[1]
-        .replace(/<[^>]+>/g, ' ')
+      stripHtmlTags(m[1], ' ')
         .replace(/&nbsp;/gi, ' ')
         .replace(/&amp;/gi, '&')
         .replace(/\s+/g, ' ')
@@ -193,9 +193,10 @@ export function extractJobHighlights(
     return liMatches.slice(0, maxItems);
   }
 
-  const plainLines = phucLoiHtml
-    .replace(/<\/(p|div|br|li)>/gi, '\n')
-    .replace(/<[^>]+>/g, ' ')
+  const plainLines = stripHtmlTags(
+    phucLoiHtml.replace(/<\/(p|div|br|li)>/gi, '\n'),
+    ' ',
+  )
     .replace(/&nbsp;/gi, ' ')
     .replace(/&amp;/gi, '&')
     .split('\n')

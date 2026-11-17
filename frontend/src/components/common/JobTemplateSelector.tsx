@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { stripHtmlTags } from "@/lib/formatters";
 import {
   Sparkles,
   Check,
@@ -36,8 +37,7 @@ export default function JobTemplateSelector({
   // Kiểm tra xem ô soạn thảo hiện tại có nội dung thực sự hay không
   const isContentEmpty = (html: string) => {
     if (!html) return true;
-    const stripped = html
-      .replace(/<[^>]*>/g, "")
+    const stripped = stripHtmlTags(html, "")
       .replace(/&nbsp;/g, " ")
       .trim();
     return stripped.length === 0;

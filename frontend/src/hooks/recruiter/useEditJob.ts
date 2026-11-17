@@ -73,9 +73,9 @@ export function useUpdateEmployerJob(jobId: string) {
     },
     onSuccess: () => {
       toast.success("Cập nhật tin tuyển dụng thành công!");
-      queryClient.invalidateQueries({ queryKey: EMPLOYER_JOBS_QUERY_KEY });
-      queryClient.invalidateQueries({ queryKey: ["employerJobDetail", jobId] });
-      queryClient.invalidateQueries({ queryKey: ["recruiterMetrics"] });
+      void queryClient.invalidateQueries({ queryKey: EMPLOYER_JOBS_QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: ["employerJobDetail", jobId] });
+      void queryClient.invalidateQueries({ queryKey: ["recruiterMetrics"] });
       router.push("/employer-jobs");
     },
     onError: (error) => {

@@ -120,7 +120,7 @@ export default function CandidateCVTemplatePage() {
       }
     };
 
-    generatePreview();
+    void generatePreview();
 
     // Dọn dẹp bộ nhớ (Thu hồi URL) khi component unmount hoặc đổi mẫu khác
     return () => {

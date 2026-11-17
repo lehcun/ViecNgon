@@ -11,12 +11,10 @@ import {
   validatePositiveNumber,
   validateRequiredText,
 } from "@/lib/validation";
+import { stripHtmlTags } from "@/lib/formatters";
 
 function stripHtmlText(html: string): string {
-  return html
-    .replace(/<[^>]*>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .trim();
+  return stripHtmlTags(html).replace(/&nbsp;/g, " ").trim();
 }
 
 export function useCreateJob(initialCredits: number = 0) {

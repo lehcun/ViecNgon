@@ -76,8 +76,8 @@ export function useRepostJob() {
     },
     onSuccess: () => {
       toast.success("Đăng lại và gia hạn tin tuyển dụng thành công!");
-      queryClient.invalidateQueries({ queryKey: EMPLOYER_JOBS_QUERY_KEY });
-      queryClient.invalidateQueries({ queryKey: ["recruiterMetrics"] });
+      void queryClient.invalidateQueries({ queryKey: EMPLOYER_JOBS_QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: ["recruiterMetrics"] });
     },
     onError: (error) => {
       toast.error(error.message || "Đã xảy ra lỗi khi đăng lại tin tuyển dụng.");
@@ -107,7 +107,7 @@ export function useToggleJobVisibility() {
     },
     onSuccess: () => {
       toast.success("Đã cập nhật trạng thái hiển thị của tin!");
-      queryClient.invalidateQueries({ queryKey: EMPLOYER_JOBS_QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: EMPLOYER_JOBS_QUERY_KEY });
     },
     onError: (error) => {
       toast.error(error.message || "Lỗi cập nhật trạng thái tin.");
@@ -137,8 +137,8 @@ export function useDeleteEmployerJob() {
     },
     onSuccess: () => {
       toast.success("Đã xóa tin tuyển dụng thành công!");
-      queryClient.invalidateQueries({ queryKey: EMPLOYER_JOBS_QUERY_KEY });
-      queryClient.invalidateQueries({ queryKey: ["recruiterMetrics"] });
+      void queryClient.invalidateQueries({ queryKey: EMPLOYER_JOBS_QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: ["recruiterMetrics"] });
     },
     onError: (error) => {
       toast.error(error.message || "Đã xảy ra lỗi khi xóa tin tuyển dụng.");

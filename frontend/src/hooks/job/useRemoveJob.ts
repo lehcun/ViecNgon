@@ -21,7 +21,7 @@ export const useRemoveJob = () => {
 
     // Chỉ làm nhiệm vụ của Data Layer: Cập nhật lại bộ nhớ đệm
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["recruiterProfile"] });
+      void queryClient.invalidateQueries({ queryKey: ["recruiterProfile"] });
     },
 
     // Bỏ qua onError ở đây, để Component tự lo

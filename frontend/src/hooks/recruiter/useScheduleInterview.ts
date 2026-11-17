@@ -33,8 +33,8 @@ export const useScheduleInterview = () => {
       toast.success("Đã lên lịch phỏng vấn và tạo Google Meet thành công!");
 
       // Tự động làm mới dữ liệu để UI đổi trạng thái sang "Phỏng vấn" mà không cần F5
-      queryClient.invalidateQueries({ queryKey: ["applicationDetail"] });
-      queryClient.invalidateQueries({ queryKey: ["employer-candidates"] });
+      void queryClient.invalidateQueries({ queryKey: ["applicationDetail"] });
+      void queryClient.invalidateQueries({ queryKey: ["employer-candidates"] });
     },
     onError: (error: Error) => {
       toast.error(`Thất bại: ${error.message}`);

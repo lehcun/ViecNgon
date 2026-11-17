@@ -6,6 +6,7 @@ import type {
   FormattedTopCompany,
 } from '@viecngon/types';
 import { formatSalaryDisplay } from 'src/common/utils/format-salary';
+import { stripHtmlTags } from 'src/common/utils/html.util';
 
 @Injectable()
 export class CompanyService {
@@ -105,9 +106,8 @@ export class CompanyService {
 
   private stripHtml(value?: string | null): string {
     if (!value) return '';
-    return value
-      .replace(/<\/(li|p|div|br|h[1-6])>/gi, ' ')
-      .replace(/<[^>]*>/g, ' ')
+    const withoutBreaks = value.replace(/<\/(li|p|div|br|h[1-6])>/gi, ' ');
+    return stripHtmlTags(withoutBreaks, ' ')
       .replace(/&nbsp;/gi, ' ')
       .replace(/&amp;/gi, '&')
       .replace(/&lt;/gi, '<')

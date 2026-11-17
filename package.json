@@ -14,7 +14,8 @@
     "dev:frontend": "npm run dev --workspace=frontend --turbopack",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "test:e2e": "npm run test:e2e --workspace=frontend",
-    "test:e2e:ui": "npm run test:e2e:ui --workspace=frontend"
+    "test:e2e:ui": "npm run test:e2e:ui --workspace=frontend",
+    "sonar": "npx @sonarsource/sonar-scanner -Dsonar.host.url=http://localhost:9000 -Dsonar.token=sqb_11df9cfbad0166b0b7eb8f07a982a2df5de3c381"
   },
   "keywords": [],
   "author": "",
@@ -24,7 +25,8 @@
     "@types/passport-jwt": "^4.0.1",
     "@viecngon/types": "*",
     "concurrently": "^9.2.5",
-    "cross-env": "^10.1.0"
+    "cross-env": "^10.1.0",
+    "sonarqube-scanner": "^5.1.0"
   },
   "dependencies": {
     "@nestjs/passport": "^11.0.5",

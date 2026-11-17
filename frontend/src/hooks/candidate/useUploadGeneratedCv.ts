@@ -27,7 +27,7 @@ export const useUploadGeneratedCv = () => {
   return useMutation({
     mutationFn: (formData: FormData) => cvService.uploadGeneratedCv(formData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["candidateProfile"] });
+      void queryClient.invalidateQueries({ queryKey: ["candidateProfile"] });
     },
   });
 };

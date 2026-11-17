@@ -143,8 +143,8 @@ export const useNotifications = (options: UseNotificationsOptions = {}) => {
     },
     onSettled: () => {
       // Đồng bộ lại với Backend
-      queryClient.invalidateQueries({ queryKey: ["candidate-notifications"] });
-      queryClient.invalidateQueries({ queryKey: unreadCountKey });
+      void queryClient.invalidateQueries({ queryKey: ["candidate-notifications"] });
+      void queryClient.invalidateQueries({ queryKey: unreadCountKey });
     },
   });
 
@@ -201,8 +201,8 @@ export const useNotifications = (options: UseNotificationsOptions = {}) => {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["candidate-notifications"] });
-      queryClient.invalidateQueries({ queryKey: unreadCountKey });
+      void queryClient.invalidateQueries({ queryKey: ["candidate-notifications"] });
+      void queryClient.invalidateQueries({ queryKey: unreadCountKey });
     },
   });
 

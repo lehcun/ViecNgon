@@ -31,8 +31,8 @@ export const useUpdateApplicationStatus = () => {
       toast.success("Đã cập nhật trạng thái ứng viên!");
 
       // QUAN TRỌNG: Báo cho React Query biết data đã cũ, cần gọi lại API GET để UI tự động cập nhật [1, 2]
-      queryClient.invalidateQueries({ queryKey: ["employer-candidates"] });
-      queryClient.invalidateQueries({ queryKey: ["recruiterProfile"] }); // Làm mới luôn số liệu thống kê ở Dashboard [10]
+      void queryClient.invalidateQueries({ queryKey: ["employer-candidates"] });
+      void queryClient.invalidateQueries({ queryKey: ["recruiterProfile"] }); // Làm mới luôn số liệu thống kê ở Dashboard [10]
     },
     onError: (error: Error) => {
       toast.error(error.message);

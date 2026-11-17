@@ -40,7 +40,7 @@ export const useManageCandidateItems = () => {
   const queryClient = useQueryClient();
 
   const invalidateProfile = () => {
-    queryClient.invalidateQueries({ queryKey: ["candidateProfile"] });
+    void queryClient.invalidateQueries({ queryKey: ["candidateProfile"] });
   };
 
   // ==========================================

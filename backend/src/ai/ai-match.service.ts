@@ -7,6 +7,7 @@ import {
 import { Schema, Type } from '@google/genai';
 import type { AiMatchResult } from '@viecngon/types';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { stripHtmlTags } from 'src/common/utils/html.util';
 import { GeminiService } from './gemini.service';
 
 const MATCH_SYSTEM_INSTRUCTION = `Bạn là chuyên gia đánh giá mức độ phù hợp ứng viên (AI Technical Recruiter).
@@ -367,8 +368,7 @@ ${JSON.stringify(jobSummary, null, 2)}`;
 
   private stripHtml(input: string | null | undefined): string | null {
     if (!input) return null;
-    const cleaned = input
-      .replace(/<[^>]*>/g, ' ')
+    const cleaned = stripHtmlTags(input, ' ')
       .replace(/&nbsp;/gi, ' ')
       .replace(/\s+/g, ' ')
       .trim();
