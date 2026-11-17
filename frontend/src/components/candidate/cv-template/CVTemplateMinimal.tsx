@@ -129,7 +129,7 @@ const formatDate = (dateValue: Date | string | null): string => {
   if (!dateValue) return "Hiện tại";
   try {
     const d = new Date(dateValue);
-    return isNaN(d.getTime())
+    return Number.isNaN(d.getTime())
       ? String(dateValue)
       : `${`0${d.getMonth() + 1}`.slice(-2)}/${d.getFullYear()}`;
   } catch {

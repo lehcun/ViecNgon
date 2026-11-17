@@ -7,9 +7,9 @@ interface LogoutOptions {
   redirectTo?: string | false; // Có thể truyền link ('/login') hoặc truyền false để đứng im
 }
 
-export const useLogout = (
-  options: LogoutOptions = { redirectTo: "/login" },
-) => {
+export const useLogout = (options?: LogoutOptions) => {
+  const redirectTo =
+    options?.redirectTo === undefined ? "/login" : options.redirectTo;
   const router = useRouter();
   const queryClient = useQueryClient();
   // Lấy hàm xóa dữ liệu từ Zustand store
@@ -41,8 +41,8 @@ export const useLogout = (
 
       // 3. Đưa người dùng về trang đăng nhập hoặc trang chủ
       // KIỂM TRA ĐIỀU KIỆN TRƯỚC KHI CHUYỂN TRANG
-      if (options.redirectTo) {
-        router.push(options.redirectTo);
+      if (redirectTo) {
+        router.push(redirectTo);
       }
 
       // toast.success("Đã đăng xuất thành công");

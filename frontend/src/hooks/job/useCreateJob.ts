@@ -254,7 +254,7 @@ export function useCreateJob(initialCredits: number = 0) {
         phucLoi: formData.phucLoi || undefined,
         ngayDang: new Date().toISOString(),
         ngayHetHan:
-          formData.ngayHetHan && !isNaN(new Date(formData.ngayHetHan).getTime())
+          formData.ngayHetHan && !Number.isNaN(new Date(formData.ngayHetHan).getTime())
             ? new Date(formData.ngayHetHan).toISOString()
             : undefined,
         trangThai: "Đang tuyển",

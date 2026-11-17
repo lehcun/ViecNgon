@@ -134,7 +134,6 @@ export default function AdminLoginForm() {
               id="email"
               name="email"
               type="email"
-              autoFocus
               autoComplete="email"
               value={values.email}
               onChange={(e) => handleChange("email", e.target.value)}

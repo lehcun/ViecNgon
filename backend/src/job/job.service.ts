@@ -29,7 +29,7 @@ import {
 
 @Injectable()
 export class JobService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   // Hàm private để dọn dẹp HTML dùng chung
   private sanitizeContent(htmlContent?: string): string | null {
@@ -97,10 +97,7 @@ export class JobService {
           soLuotConLai: { gt: 0 },
         },
         include: { goiQuangCao: true },
-        orderBy: [
-          { goiQuangCao: { capDoUuTien: 'desc' } },
-          { ngayMua: 'asc' },
-        ],
+        orderBy: [{ goiQuangCao: { capDoUuTien: 'desc' } }, { ngayMua: 'asc' }],
       });
 
       let priorityLevel = 0;
@@ -342,7 +339,7 @@ export class JobService {
     // 8. Lọc theo Số năm kinh nghiệm
     if (yeuCauKinhNghiem !== undefined && yeuCauKinhNghiem !== null) {
       const expNum = Number(yeuCauKinhNghiem);
-      if (!isNaN(expNum)) {
+      if (!Number.isNaN(expNum)) {
         if (expNum === 0) {
           // Chưa có kinh nghiệm: yêu cầu 0 năm hoặc không yêu cầu
           andConditions.push({
@@ -662,11 +659,11 @@ export class JobService {
           .filter(Boolean) || [],
       branch: job.chiNhanh
         ? {
-          id: job.chiNhanh.maChiNhanh,
-          city: job.chiNhanh.thanhPho,
-          address: job.chiNhanh.diaChi,
-          mapUrl: job.chiNhanh.mapUrl,
-        }
+            id: job.chiNhanh.maChiNhanh,
+            city: job.chiNhanh.thanhPho,
+            address: job.chiNhanh.diaChi,
+            mapUrl: job.chiNhanh.mapUrl,
+          }
         : null,
       isApplied: applicationInfo?.isApplied ?? false,
       applicationStatus: applicationInfo?.status ?? null,
@@ -699,11 +696,7 @@ export class JobService {
    * 1. Lấy danh sách tin tuyển dụng của công ty (có tìm kiếm, lọc theo status và phân trang)
    */
   async getEmployerJobs(userId: string, query: GetEmployerJobsQueryDto) {
-    const {
-      search,
-      status = 'ALL',
-      sortBy = 'newest',
-    } = query;
+    const { search, status = 'ALL', sortBy = 'newest' } = query;
 
     // Đảm bảo page và limit luôn luôn là kiểu number nguyên (Int), tránh lỗi PrismaClientValidationError khi query từ HTTP URL
     const pageNum = Math.max(1, Number(query.page) || 1);
@@ -878,10 +871,10 @@ export class JobService {
         })),
         branch: job.chiNhanh
           ? {
-            id: job.chiNhanh.maChiNhanh,
-            city: job.chiNhanh.thanhPho,
-            address: job.chiNhanh.diaChi,
-          }
+              id: job.chiNhanh.maChiNhanh,
+              city: job.chiNhanh.thanhPho,
+              address: job.chiNhanh.diaChi,
+            }
           : null,
         isExpired,
       };
@@ -976,10 +969,10 @@ export class JobService {
       })),
       branch: job.chiNhanh
         ? {
-          id: job.chiNhanh.maChiNhanh,
-          city: job.chiNhanh.thanhPho,
-          address: job.chiNhanh.diaChi,
-        }
+            id: job.chiNhanh.maChiNhanh,
+            city: job.chiNhanh.thanhPho,
+            address: job.chiNhanh.diaChi,
+          }
         : null,
       applicationsCount: job._count.donXinViecs,
       isExpired,
@@ -1257,7 +1250,9 @@ export class JobService {
       job.nhaTuyenDung.maCongTy !== nhaTuyenDung.maCongTy &&
       job.maNTD !== nhaTuyenDung.maNTD
     ) {
-      throw new ForbiddenException('Bạn không có quyền xóa tin tuyển dụng này.');
+      throw new ForbiddenException(
+        'Bạn không có quyền xóa tin tuyển dụng này.',
+      );
     }
 
     // Xóa liên kết kỹ năng trước, sau đó xóa tin tuyển dụng

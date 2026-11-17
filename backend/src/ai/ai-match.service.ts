@@ -346,7 +346,7 @@ ${JSON.stringify(jobSummary, null, 2)}`;
       });
 
     const clampScore = (val: number | undefined): number => {
-      if (typeof val !== 'number' || isNaN(val)) return 0;
+      if (typeof val !== 'number' || Number.isNaN(val)) return 0;
       return Math.max(0, Math.min(100, Math.round(val)));
     };
 

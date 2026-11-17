@@ -163,7 +163,7 @@ const formatDate = (dateValue: Date | string | null): string => {
   if (!dateValue) return "Hiện tại";
   try {
     const d = new Date(dateValue);
-    if (isNaN(d.getTime())) return String(dateValue);
+    if (Number.isNaN(d.getTime())) return String(dateValue);
     const month = `0${d.getMonth() + 1}`.slice(-2);
     const year = d.getFullYear();
     return `${month}/${year}`;
@@ -176,7 +176,7 @@ const formatDOB = (dateValue: Date | string | null): string => {
   if (!dateValue) return "";
   try {
     const d = new Date(dateValue);
-    if (isNaN(d.getTime())) return String(dateValue);
+    if (Number.isNaN(d.getTime())) return String(dateValue);
     const day = `0${d.getDate()}`.slice(-2);
     const month = `0${d.getMonth() + 1}`.slice(-2);
     const year = d.getFullYear();

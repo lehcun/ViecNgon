@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, use } from "react";
+import React, { useState, use } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
   ChevronLeft,
-  Briefcase,
   MapPin,
   DollarSign,
   Calendar,
@@ -38,6 +37,46 @@ interface EditJobPageProps {
   params: Promise<{ id: string }>;
 }
 
+type EmployerJobData = NonNullable<
+  ReturnType<typeof useEmployerJobDetail>["data"]
+>;
+
+function buildInitialFormData(jobData: EmployerJobData, isRepostMode: boolean) {
+  const isNegotiable = !jobData.mucLuongToiThieu && !jobData.mucLuongToiDa;
+  let deadlineValue = "";
+  if (isRepostMode) {
+    const d = new Date();
+    d.setDate(d.getDate() + 30);
+    deadlineValue = d.toISOString().split("T")[0];
+  } else if (jobData.ngayHetHan) {
+    deadlineValue = jobData.ngayHetHan.split("T")[0];
+  }
+
+  return {
+    tenCongViec: jobData.tenCongViec || "",
+    capBac: jobData.capBac || "",
+    loaiHinh: jobData.loaiHinh || "",
+    hinhThucLamViec: jobData.hinhThucLamViec || "",
+    maChiNhanh: jobData.maChiNhanh || "",
+    thanhPho: jobData.thanhPho || "",
+    yeuCauKinhNghiem:
+      jobData.yeuCauKinhNghiem !== null ? String(jobData.yeuCauKinhNghiem) : "",
+    ngayHetHan: deadlineValue,
+    mucLuongToiThieu: (jobData.mucLuongToiThieu !== null
+      ? jobData.mucLuongToiThieu
+      : "") as number | "",
+    mucLuongToiDa: (jobData.mucLuongToiDa !== null
+      ? jobData.mucLuongToiDa
+      : "") as number | "",
+    negotiable: isNegotiable,
+    moTa: jobData.moTa || "",
+    yeuCauCongViec: jobData.yeuCauCongViec || "",
+    phucLoi: jobData.phucLoi || "",
+    kyNangs: jobData.kyNangs || [],
+    trangThai: isRepostMode ? "DA_DUYET" : jobData.trangThai || "DA_DUYET",
+  };
+}
+
 export default function EditJobPage({ params }: EditJobPageProps) {
   const resolvedParams = use(params);
   const jobId = resolvedParams.id;
@@ -58,75 +97,91 @@ export default function EditJobPage({ params }: EditJobPageProps) {
   const branches = employerProfile?.branches || [];
   const { allSkill } = useAllSkill();
 
+  // Render Loading State
+  if (isLoadingJob) {
+    return (
+      <div className="max-w-5xl mx-auto pb-12 pt-6 px-4 space-y-6 animate-pulse">
+        <div className="h-8 bg-slate-200 rounded w-1/4"></div>
+        <div className="h-64 bg-slate-200 rounded-xl"></div>
+        <div className="h-48 bg-slate-200 rounded-xl"></div>
+        <div className="h-96 bg-slate-200 rounded-xl"></div>
+      </div>
+    );
+  }
+
+  // Render Error State
+  if (isJobError || !jobData) {
+    return (
+      <div className="max-w-xl mx-auto my-12 p-8 bg-white border border-rose-200 rounded-2xl shadow-sm text-center">
+        <div className="w-14 h-14 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4">
+          <AlertTriangle size={28} />
+        </div>
+        <h2 className="text-xl font-bold text-slate-800 mb-2">
+          Không thể tải thông tin tin tuyển dụng
+        </h2>
+        <p className="text-sm text-slate-500 mb-6">
+          {jobError?.message ||
+            "Tin tuyển dụng không tồn tại hoặc bạn không có quyền chỉnh sửa."}
+        </p>
+        <Link
+          href="/employer/jobs"
+          className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary-hover transition-colors shadow-sm"
+        >
+          <ChevronLeft size={16} /> Quay lại danh sách tin
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <EditJobFormContent
+      key={`${jobId}-${isRepostMode}`}
+      jobId={jobId}
+      jobData={jobData}
+      isRepostMode={isRepostMode}
+      branches={branches}
+      isProfileLoading={isProfileLoading}
+      allSkill={allSkill}
+    />
+  );
+}
+
+interface EditJobFormContentProps {
+  jobId: string;
+  jobData: EmployerJobData;
+  isRepostMode: boolean;
+  branches: NonNullable<
+    ReturnType<typeof useEmployerProfile>["data"]
+  >["branches"];
+  isProfileLoading: boolean;
+  allSkill: ReturnType<typeof useAllSkill>["allSkill"];
+}
+
+function EditJobFormContent({
+  jobId,
+  jobData,
+  isRepostMode,
+  branches,
+  isProfileLoading,
+  allSkill,
+}: EditJobFormContentProps) {
   // 3. Mutation cập nhật
   const { mutate: updateJob, isPending: isUpdating } =
     useUpdateEmployerJob(jobId);
 
-  // 4. Form State
-  const [formData, setFormData] = useState({
-    tenCongViec: "",
-    capBac: "",
-    loaiHinh: "",
-    hinhThucLamViec: "",
-    maChiNhanh: "",
-    thanhPho: "",
-    yeuCauKinhNghiem: "",
-    ngayHetHan: "",
-    mucLuongToiThieu: "" as number | "",
-    mucLuongToiDa: "" as number | "",
-    negotiable: false,
-    moTa: "",
-    yeuCauCongViec: "",
-    phucLoi: "",
-    kyNangs: [] as string[],
-    trangThai: "",
-  });
-
-  // Pre-fill dữ liệu khi tải thành công
-  useEffect(() => {
-    if (jobData) {
-      const isNegotiable = !jobData.mucLuongToiThieu && !jobData.mucLuongToiDa;
-
-      // Nếu đang ở chế độ đăng lại (repost), tự động gợi ý gia hạn thêm 30 ngày
-      let deadlineValue = "";
-      if (isRepostMode) {
-        const d = new Date();
-        d.setDate(d.getDate() + 30);
-        deadlineValue = d.toISOString().split("T")[0];
-      } else if (jobData.ngayHetHan) {
-        deadlineValue = jobData.ngayHetHan.split("T")[0];
-      }
-
-      setFormData({
-        tenCongViec: jobData.tenCongViec || "",
-        capBac: jobData.capBac || "",
-        loaiHinh: jobData.loaiHinh || "",
-        hinhThucLamViec: jobData.hinhThucLamViec || "",
-        maChiNhanh: jobData.maChiNhanh || "",
-        thanhPho: jobData.thanhPho || "",
-        yeuCauKinhNghiem:
-          jobData.yeuCauKinhNghiem !== null ? String(jobData.yeuCauKinhNghiem) : "",
-        ngayHetHan: deadlineValue,
-        mucLuongToiThieu:
-          jobData.mucLuongToiThieu !== null ? jobData.mucLuongToiThieu : "",
-        mucLuongToiDa:
-          jobData.mucLuongToiDa !== null ? jobData.mucLuongToiDa : "",
-        negotiable: isNegotiable,
-        moTa: jobData.moTa || "",
-        yeuCauCongViec: jobData.yeuCauCongViec || "",
-        phucLoi: jobData.phucLoi || "",
-        kyNangs: jobData.kyNangs || [],
-        trangThai: isRepostMode ? "DA_DUYET" : jobData.trangThai || "DA_DUYET",
-      });
-    }
-  }, [jobData, isRepostMode]);
+  // 4. Form State khởi tạo trực tiếp từ jobData (không gọi setState trong useEffect)
+  const [formData, setFormData] = useState(() =>
+    buildInitialFormData(jobData, isRepostMode),
+  );
 
   const isRemote = formData.hinhThucLamViec === "Remote";
   const hasNoBranches = !isProfileLoading && branches.length === 0;
 
   // Handlers
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
   ) => {
     const { name, value, type } = e.target;
 
@@ -145,7 +200,10 @@ export default function EditJobPage({ params }: EditJobPageProps) {
     });
   };
 
-  const handleRichTextChange = (field: "moTa" | "yeuCauCongViec" | "phucLoi", value: string) => {
+  const handleRichTextChange = (
+    field: "moTa" | "yeuCauCongViec" | "phucLoi",
+    value: string,
+  ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -153,7 +211,10 @@ export default function EditJobPage({ params }: EditJobPageProps) {
     setFormData((prev) => {
       const isSelected = prev.kyNangs.includes(skillId);
       if (isSelected) {
-        return { ...prev, kyNangs: prev.kyNangs.filter((id) => id !== skillId) };
+        return {
+          ...prev,
+          kyNangs: prev.kyNangs.filter((id) => id !== skillId),
+        };
       } else {
         return { ...prev, kyNangs: [...prev.kyNangs, skillId] };
       }
@@ -212,48 +273,14 @@ export default function EditJobPage({ params }: EditJobPageProps) {
       yeuCauCongViec: formData.yeuCauCongViec || undefined,
       phucLoi: formData.phucLoi || undefined,
       ngayHetHan:
-        formData.ngayHetHan && !isNaN(new Date(formData.ngayHetHan).getTime())
+        formData.ngayHetHan &&
+        !Number.isNaN(new Date(formData.ngayHetHan).getTime())
           ? new Date(formData.ngayHetHan).toISOString()
           : null,
       kyNangs: formData.kyNangs,
       trangThai: isRepostMode ? "DA_DUYET" : formData.trangThai || undefined,
     });
   };
-
-  // Render Loading State
-  if (isLoadingJob) {
-    return (
-      <div className="max-w-5xl mx-auto pb-12 pt-6 px-4 space-y-6 animate-pulse">
-        <div className="h-8 bg-slate-200 rounded w-1/4"></div>
-        <div className="h-64 bg-slate-200 rounded-xl"></div>
-        <div className="h-48 bg-slate-200 rounded-xl"></div>
-        <div className="h-96 bg-slate-200 rounded-xl"></div>
-      </div>
-    );
-  }
-
-  // Render Error State
-  if (isJobError) {
-    return (
-      <div className="max-w-xl mx-auto my-12 p-8 bg-white border border-rose-200 rounded-2xl shadow-sm text-center">
-        <div className="w-14 h-14 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4">
-          <AlertTriangle size={28} />
-        </div>
-        <h2 className="text-xl font-bold text-slate-800 mb-2">
-          Không thể tải thông tin tin tuyển dụng
-        </h2>
-        <p className="text-sm text-slate-500 mb-6">
-          {jobError?.message || "Tin tuyển dụng không tồn tại hoặc bạn không có quyền chỉnh sửa."}
-        </p>
-        <Link
-          href="/employer/jobs"
-          className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary-hover transition-colors shadow-sm"
-        >
-          <ChevronLeft size={16} /> Quay lại danh sách tin
-        </Link>
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-5xl mx-auto pb-12 pt-4 px-4 sm:px-0">
@@ -269,7 +296,9 @@ export default function EditJobPage({ params }: EditJobPageProps) {
           <div>
             <div className="flex items-center gap-2.5">
               <h1 className="text-2xl font-bold text-slate-800">
-                {isRepostMode ? "Đăng lại tin tuyển dụng" : "Chỉnh sửa tin tuyển dụng"}
+                {isRepostMode
+                  ? "Đăng lại tin tuyển dụng"
+                  : "Chỉnh sửa tin tuyển dụng"}
               </h1>
               {isRepostMode && (
                 <span className="bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 border border-amber-200">
@@ -278,7 +307,10 @@ export default function EditJobPage({ params }: EditJobPageProps) {
               )}
             </div>
             <p className="text-xs text-slate-500 mt-1">
-              Mã tin: <span className="font-mono text-slate-700 font-semibold">{jobId}</span>
+              Mã tin:{" "}
+              <span className="font-mono text-slate-700 font-semibold">
+                {jobId}
+              </span>
             </p>
           </div>
 
@@ -295,7 +327,11 @@ export default function EditJobPage({ params }: EditJobPageProps) {
         <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-3">
           <Info size={18} className="text-amber-600 shrink-0 mt-0.5" />
           <div className="text-xs text-amber-800 leading-relaxed">
-            <strong>Lưu ý quan trọng:</strong> Tin tuyển dụng của bạn đang ở trạng thái <em>Đã duyệt</em>. Nếu bạn chỉnh sửa các thông tin cốt lõi (Tiêu đề, Mô tả, Yêu cầu công việc), hệ thống có thể chuyển trạng thái về <strong>Chờ duyệt lại</strong> để ban quản trị kiểm tra tính chính xác.
+            <strong>Lưu ý quan trọng:</strong> Tin tuyển dụng của bạn đang ở
+            trạng thái <em>Đã duyệt</em>. Nếu bạn chỉnh sửa các thông tin cốt
+            lõi (Tiêu đề, Mô tả, Yêu cầu công việc), hệ thống có thể chuyển
+            trạng thái về <strong>Chờ duyệt lại</strong> để ban quản trị kiểm
+            tra tính chính xác.
           </div>
         </div>
       )}
@@ -307,7 +343,8 @@ export default function EditJobPage({ params }: EditJobPageProps) {
           <h2 className="text-lg font-bold text-slate-800 mb-6 pb-2 border-b border-slate-100 flex items-center justify-between">
             <span>1. Thông tin vị trí & Cơ bản</span>
             <span className="text-xs font-normal text-slate-400">
-              Các trường có dấu <span className="text-red-500">*</span> là bắt buộc
+              Các trường có dấu <span className="text-red-500">*</span> là bắt
+              buộc
             </span>
           </h2>
 
@@ -344,7 +381,9 @@ export default function EditJobPage({ params }: EditJobPageProps) {
                     className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none cursor-pointer text-sm"
                     required
                   >
-                    <option value="" disabled>Chọn cấp bậc</option>
+                    <option value="" disabled>
+                      Chọn cấp bậc
+                    </option>
                     <option value="Intern">Thực tập sinh (Intern)</option>
                     <option value="Fresher">Mới tốt nghiệp (Fresher)</option>
                     <option value="Junior">Nhân viên (Junior)</option>
@@ -370,7 +409,9 @@ export default function EditJobPage({ params }: EditJobPageProps) {
                     className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none cursor-pointer text-sm"
                     required
                   >
-                    <option value="" disabled>Chọn loại hình</option>
+                    <option value="" disabled>
+                      Chọn loại hình
+                    </option>
                     <option value="Fulltime">Toàn thời gian (Full-time)</option>
                     <option value="Parttime">Bán thời gian (Part-time)</option>
                     <option value="Freelance">Nghề tự do (Freelance)</option>
@@ -395,8 +436,12 @@ export default function EditJobPage({ params }: EditJobPageProps) {
                     className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none cursor-pointer text-sm"
                     required
                   >
-                    <option value="" disabled>Chọn hình thức</option>
-                    <option value="TaiVanPhong">Tại văn phòng (In-office)</option>
+                    <option value="" disabled>
+                      Chọn hình thức
+                    </option>
+                    <option value="TaiVanPhong">
+                      Tại văn phòng (In-office)
+                    </option>
                     <option value="Remote">Làm việc từ xa (Remote)</option>
                     <option value="Hybrid">Linh hoạt kết hợp (Hybrid)</option>
                   </select>
@@ -418,7 +463,9 @@ export default function EditJobPage({ params }: EditJobPageProps) {
                 <div className="relative">
                   <MapPin
                     className={`absolute left-3 top-1/2 -translate-y-1/2 ${
-                      isRemote || hasNoBranches ? "text-slate-300" : "text-slate-400"
+                      isRemote || hasNoBranches
+                        ? "text-slate-300"
+                        : "text-slate-400"
                     }`}
                     size={18}
                   />
@@ -437,16 +484,25 @@ export default function EditJobPage({ params }: EditJobPageProps) {
                       <option value="">Đang tải danh sách chi nhánh...</option>
                     )}
                     {!isProfileLoading && isRemote && (
-                      <option value="">-- Không áp dụng cho hình thức Remote --</option>
+                      <option value="">
+                        -- Không áp dụng cho hình thức Remote --
+                      </option>
                     )}
                     {!isProfileLoading && !isRemote && hasNoBranches && (
-                      <option value="">-- Công ty chưa đăng ký chi nhánh nào --</option>
+                      <option value="">
+                        -- Công ty chưa đăng ký chi nhánh nào --
+                      </option>
                     )}
                     {!isProfileLoading && !isRemote && !hasNoBranches && (
                       <>
-                        <option value="">-- Chọn chi nhánh làm việc (Tùy chọn) --</option>
+                        <option value="">
+                          -- Chọn chi nhánh làm việc (Tùy chọn) --
+                        </option>
                         {branches.map((branch) => (
-                          <option key={branch.maChiNhanh} value={branch.maChiNhanh}>
+                          <option
+                            key={branch.maChiNhanh}
+                            value={branch.maChiNhanh}
+                          >
                             {branch.diaChi} - {branch.thanhPho}{" "}
                             {branch.laTruSoChinh ? "(Trụ sở chính)" : ""}
                           </option>
@@ -460,7 +516,8 @@ export default function EditJobPage({ params }: EditJobPageProps) {
 
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1">
-                Thành phố / Địa điểm làm việc <span className="text-red-500">*</span>
+                Thành phố / Địa điểm làm việc{" "}
+                <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <MapPin
@@ -483,7 +540,8 @@ export default function EditJobPage({ params }: EditJobPageProps) {
             <div className="pt-4 border-t border-slate-100">
               <label className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
                 <Code2 size={18} className="text-primary" />
-                Kỹ năng chuyên môn yêu cầu <span className="text-red-500">*</span>
+                Kỹ năng chuyên môn yêu cầu{" "}
+                <span className="text-red-500">*</span>
               </label>
               <div className="flex flex-wrap gap-2.5">
                 {allSkill?.map((skill) => {
@@ -626,7 +684,8 @@ export default function EditJobPage({ params }: EditJobPageProps) {
                 3. Chi tiết nội dung tin đăng
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Bạn có thể tự do chỉnh sửa hoặc bấm "Dùng mẫu gợi ý" để chèn nhanh khung nội dung chuẩn
+                Bạn có thể tự do chỉnh sửa hoặc bấm &quot;Dùng mẫu gợi ý&quot;
+                để chèn nhanh khung nội dung chuẩn
               </p>
             </div>
           </div>
@@ -685,7 +744,9 @@ export default function EditJobPage({ params }: EditJobPageProps) {
                   label="Quyền lợi & Đãi ngộ"
                   templates={JOB_BENEFIT_TEMPLATES}
                   currentContent={formData.phucLoi}
-                  onApply={(content) => handleRichTextChange("phucLoi", content)}
+                  onApply={(content) =>
+                    handleRichTextChange("phucLoi", content)
+                  }
                 />
               </div>
               <RichTextEditor
@@ -718,8 +779,8 @@ export default function EditJobPage({ params }: EditJobPageProps) {
               {isUpdating
                 ? "Đang lưu..."
                 : isRepostMode
-                ? "Lưu & Kích hoạt tin"
-                : "Lưu thay đổi"}
+                  ? "Lưu & Kích hoạt tin"
+                  : "Lưu thay đổi"}
             </span>
           </button>
         </div>
@@ -727,4 +788,3 @@ export default function EditJobPage({ params }: EditJobPageProps) {
     </div>
   );
 }
-
