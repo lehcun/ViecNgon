@@ -350,10 +350,14 @@ function EditJobFormContent({
 
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1">
+              <label
+                htmlFor="edit-tenCongViec"
+                className="block text-sm font-semibold text-slate-700 mb-1"
+              >
                 Tiêu đề công việc <span className="text-red-500">*</span>
               </label>
               <input
+                id="edit-tenCongViec"
                 type="text"
                 name="tenCongViec"
                 value={formData.tenCongViec}
@@ -366,7 +370,10 @@ function EditJobFormContent({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1">
+                <label
+                  htmlFor="edit-capBac"
+                  className="block text-sm font-semibold text-slate-700 mb-1"
+                >
                   Cấp bậc <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
@@ -375,6 +382,7 @@ function EditJobFormContent({
                     size={18}
                   />
                   <select
+                    id="edit-capBac"
                     name="capBac"
                     value={formData.capBac}
                     onChange={handleInputChange}
@@ -394,7 +402,10 @@ function EditJobFormContent({
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1">
+                <label
+                  htmlFor="edit-loaiHinh"
+                  className="block text-sm font-semibold text-slate-700 mb-1"
+                >
                   Loại hình làm việc <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
@@ -403,6 +414,7 @@ function EditJobFormContent({
                     size={18}
                   />
                   <select
+                    id="edit-loaiHinh"
                     name="loaiHinh"
                     value={formData.loaiHinh}
                     onChange={handleInputChange}
@@ -421,7 +433,10 @@ function EditJobFormContent({
 
               {/* Hình thức làm việc */}
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1">
+                <label
+                  htmlFor="edit-hinhThucLamViec"
+                  className="block text-sm font-semibold text-slate-700 mb-1"
+                >
                   Hình thức làm việc <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
@@ -430,6 +445,7 @@ function EditJobFormContent({
                     size={18}
                   />
                   <select
+                    id="edit-hinhThucLamViec"
                     name="hinhThucLamViec"
                     value={formData.hinhThucLamViec}
                     onChange={handleInputChange}
@@ -451,7 +467,10 @@ function EditJobFormContent({
               {/* Chọn Chi Nhánh */}
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="block text-sm font-semibold text-slate-700">
+                  <label
+                    htmlFor="edit-maChiNhanh"
+                    className="block text-sm font-semibold text-slate-700"
+                  >
                     Chi nhánh làm việc
                   </label>
                   {isRemote && (
@@ -470,6 +489,7 @@ function EditJobFormContent({
                     size={18}
                   />
                   <select
+                    id="edit-maChiNhanh"
                     name="maChiNhanh"
                     value={formData.maChiNhanh}
                     onChange={handleBranchSelect}
@@ -515,7 +535,10 @@ function EditJobFormContent({
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1">
+              <label
+                htmlFor="edit-thanhPho"
+                className="block text-sm font-semibold text-slate-700 mb-1"
+              >
                 Thành phố / Địa điểm làm việc{" "}
                 <span className="text-red-500">*</span>
               </label>
@@ -525,6 +548,7 @@ function EditJobFormContent({
                   size={18}
                 />
                 <input
+                  id="edit-thanhPho"
                   type="text"
                   name="thanhPho"
                   value={formData.thanhPho}
@@ -538,11 +562,11 @@ function EditJobFormContent({
 
             {/* Kỹ năng chuyên môn */}
             <div className="pt-4 border-t border-slate-100">
-              <label className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+              <span className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
                 <Code2 size={18} className="text-primary" />
                 Kỹ năng chuyên môn yêu cầu{" "}
                 <span className="text-red-500">*</span>
-              </label>
+              </span>
               <div className="flex flex-wrap gap-2.5">
                 {allSkill?.map((skill) => {
                   const isSelected = formData.kyNangs.includes(skill.id);
@@ -582,10 +606,14 @@ function EditJobFormContent({
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1">
+              <label
+                htmlFor="edit-yeuCauKinhNghiem"
+                className="block text-sm font-semibold text-slate-700 mb-1"
+              >
                 Kinh nghiệm yêu cầu <span className="text-red-500">*</span>
               </label>
               <select
+                id="edit-yeuCauKinhNghiem"
                 name="yeuCauKinhNghiem"
                 value={formData.yeuCauKinhNghiem}
                 onChange={handleInputChange}

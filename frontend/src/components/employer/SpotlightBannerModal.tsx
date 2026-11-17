@@ -391,7 +391,10 @@ function SpotlightBannerForm({
         {/* Cover Upload + URL */}
         <div className="space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <label className="text-sm font-semibold text-text-primary">
+            <label
+              htmlFor="bannerCoverUrl"
+              className="text-sm font-semibold text-text-primary"
+            >
               Ảnh nền cột trái Banner (tùy chọn)
             </label>
             <div className="flex items-center gap-2">

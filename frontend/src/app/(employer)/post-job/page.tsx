@@ -263,7 +263,10 @@ export default function PostJobPage() {
 
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="block text-sm font-semibold text-slate-700">
+                  <label
+                    htmlFor="post-maChiNhanh"
+                    className="block text-sm font-semibold text-slate-700"
+                  >
                     Chi nhánh làm việc
                   </label>
                   {isRemote && (
@@ -280,6 +283,7 @@ export default function PostJobPage() {
                     size={18}
                   />
                   <select
+                    id="post-maChiNhanh"
                     name="maChiNhanh"
                     value={formData.maChiNhanh}
                     onChange={handleBranchSelect}
@@ -412,10 +416,14 @@ export default function PostJobPage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1">
+              <label
+                htmlFor="post-yeuCauKinhNghiem"
+                className="block text-sm font-semibold text-slate-700 mb-1"
+              >
                 Kinh nghiệm yêu cầu <span className="text-danger">*</span>
               </label>
               <select
+                id="post-yeuCauKinhNghiem"
                 name="yeuCauKinhNghiem"
                 value={formData.yeuCauKinhNghiem}
                 onChange={handleInputChange}
@@ -462,9 +470,9 @@ export default function PostJobPage() {
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-semibold text-slate-700 mb-1">
+              <span className="block text-sm font-semibold text-slate-700 mb-1">
                 Mức lương (VNĐ) <span className="text-danger">*</span>
-              </label>
+              </span>
               <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-start gap-3">
                 <div>
                   <div className="relative">

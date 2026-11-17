@@ -344,10 +344,14 @@ export default function PersonalInfoModal({
               {/* Row 3 */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="border border-slate-200 rounded-lg px-4 py-2 bg-slate-50 cursor-not-allowed">
-                  <label className="block text-[11px] text-slate-500 font-medium mb-0.5">
+                  <label
+                    htmlFor="personal-info-email"
+                    className="block text-[11px] text-slate-500 font-medium mb-0.5"
+                  >
                     Địa chỉ email (Không thể sửa)
                   </label>
                   <input
+                    id="personal-info-email"
                     type="email"
                     value={initialData?.account?.email || ""}
                     disabled

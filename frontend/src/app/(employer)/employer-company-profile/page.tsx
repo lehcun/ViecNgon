@@ -487,7 +487,10 @@ function CompanyProfileEditor({
             </div>
 
             <div>
-              <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-2">
+              <label
+                htmlFor="company-moTa"
+                className="block text-xs sm:text-sm font-semibold text-slate-700 mb-2"
+              >
                 Tóm tắt tiểu sử & Năng lực kỹ thuật
               </label>
 
@@ -552,6 +555,7 @@ function CompanyProfileEditor({
 
               {/* Textarea nội dung */}
               <textarea
+                id="company-moTa"
                 rows={6}
                 value={companyForm.moTa || ""}
                 onChange={(e) =>
@@ -626,10 +630,14 @@ function CompanyProfileEditor({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                <label
+                  htmlFor="company-tenCongTy"
+                  className="block text-xs font-semibold text-slate-600 mb-1.5"
+                >
                   Tên công ty
                 </label>
                 <input
+                  id="company-tenCongTy"
                   type="text"
                   value={companyForm.tenCongTy || ""}
                   onChange={(e) =>
@@ -643,10 +651,14 @@ function CompanyProfileEditor({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                <label
+                  htmlFor="company-website"
+                  className="block text-xs font-semibold text-slate-600 mb-1.5"
+                >
                   Website chính thức
                 </label>
                 <input
+                  id="company-website"
                   type="url"
                   value={companyForm.website || ""}
                   onChange={(e) =>
@@ -658,10 +670,14 @@ function CompanyProfileEditor({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                <label
+                  htmlFor="company-moHinhCongTy"
+                  className="block text-xs font-semibold text-slate-600 mb-1.5"
+                >
                   Mô hình công ty
                 </label>
                 <input
+                  id="company-moHinhCongTy"
                   type="text"
                   value={companyForm.moHinhCongTy || ""}
                   onChange={(e) =>
@@ -676,10 +692,14 @@ function CompanyProfileEditor({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                <label
+                  htmlFor="company-thoiGianLamViec"
+                  className="block text-xs font-semibold text-slate-600 mb-1.5"
+                >
                   Thời gian làm việc
                 </label>
                 <input
+                  id="company-thoiGianLamViec"
                   type="text"
                   value={companyForm.thoiGianLamViec || ""}
                   onChange={(e) =>
@@ -694,10 +714,14 @@ function CompanyProfileEditor({
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                <label
+                  htmlFor="company-aboutMe"
+                  className="block text-xs font-semibold text-slate-600 mb-1.5"
+                >
                   Slogan công ty (About Me)
                 </label>
                 <input
+                  id="company-aboutMe"
                   type="text"
                   value={companyForm.aboutMe || ""}
                   onChange={(e) =>

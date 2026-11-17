@@ -247,10 +247,14 @@ export default function AiCvUploadModal({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-text-secondary mb-1">
+                  <label
+                    htmlFor="ai-cv-fullName"
+                    className="block text-xs font-semibold text-text-secondary mb-1"
+                  >
                     Họ và tên
                   </label>
                   <input
+                    id="ai-cv-fullName"
                     type="text"
                     value={formData.fullName ?? ""}
                     onChange={(e) =>
@@ -260,10 +264,14 @@ export default function AiCvUploadModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-text-secondary mb-1">
+                  <label
+                    htmlFor="ai-cv-profession"
+                    className="block text-xs font-semibold text-text-secondary mb-1"
+                  >
                     Chức danh / Chuyên môn
                   </label>
                   <input
+                    id="ai-cv-profession"
                     type="text"
                     value={formData.profession ?? ""}
                     onChange={(e) =>
@@ -273,10 +281,14 @@ export default function AiCvUploadModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-text-secondary mb-1">
+                  <label
+                    htmlFor="ai-cv-phoneNumber"
+                    className="block text-xs font-semibold text-text-secondary mb-1"
+                  >
                     Số điện thoại
                   </label>
                   <input
+                    id="ai-cv-phoneNumber"
                     type="text"
                     value={formData.phoneNumber ?? ""}
                     onChange={(e) =>
@@ -286,10 +298,14 @@ export default function AiCvUploadModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-text-secondary mb-1">
+                  <label
+                    htmlFor="ai-cv-yearsOfExperience"
+                    className="block text-xs font-semibold text-text-secondary mb-1"
+                  >
                     Số năm kinh nghiệm
                   </label>
                   <input
+                    id="ai-cv-yearsOfExperience"
                     type="number"
                     min={0}
                     value={formData.yearsOfExperience ?? 0}
@@ -303,10 +319,14 @@ export default function AiCvUploadModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-text-secondary mb-1">
+                  <label
+                    htmlFor="ai-cv-dateOfBirth"
+                    className="block text-xs font-semibold text-text-secondary mb-1"
+                  >
                     Ngày sinh (YYYY-MM-DD)
                   </label>
                   <input
+                    id="ai-cv-dateOfBirth"
                     type="text"
                     value={formData.dateOfBirth ?? ""}
                     onChange={(e) =>
@@ -320,10 +340,14 @@ export default function AiCvUploadModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-text-secondary mb-1">
+                  <label
+                    htmlFor="ai-cv-address"
+                    className="block text-xs font-semibold text-text-secondary mb-1"
+                  >
                     Địa chỉ
                   </label>
                   <input
+                    id="ai-cv-address"
                     type="text"
                     value={formData.address ?? ""}
                     onChange={(e) =>
@@ -335,10 +359,14 @@ export default function AiCvUploadModal({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-text-secondary mb-1">
+                <label
+                  htmlFor="ai-cv-aboutMe"
+                  className="block text-xs font-semibold text-text-secondary mb-1"
+                >
                   Giới thiệu bản thân
                 </label>
                 <textarea
+                  id="ai-cv-aboutMe"
                   rows={3}
                   value={formData.aboutMe ?? ""}
                   onChange={(e) =>

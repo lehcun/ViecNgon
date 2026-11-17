@@ -247,8 +247,13 @@ export default function ScheduleInterviewModal({
                 cho ứng viên.
               </p>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer mt-2">
+            <label
+              htmlFor="isGoogleMeet"
+              className="relative inline-flex items-center cursor-pointer mt-2"
+            >
+              <span className="sr-only">Tự động tạo Google Meet</span>
               <input
+                id="isGoogleMeet"
                 type="checkbox"
                 className="sr-only peer"
                 checked={isGoogleMeet}

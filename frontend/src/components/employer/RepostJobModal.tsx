@@ -132,7 +132,10 @@ export default function RepostJobModal({
 
           {/* Chọn ngày hết hạn mới */}
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center justify-between">
+            <label
+              htmlFor="newDeadline"
+              className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center justify-between"
+            >
               <span className="flex items-center gap-1.5">
                 <Calendar size={16} className="text-primary" />
                 Hạn nộp hồ sơ mới <span className="text-red-500">*</span>
@@ -174,6 +177,7 @@ export default function RepostJobModal({
             </span>
 
             <label
+              htmlFor="repostOptionDirect"
               className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${
                 option === "DIRECT"
                   ? "border-primary bg-primary/5 shadow-xs"
@@ -181,6 +185,7 @@ export default function RepostJobModal({
               }`}
             >
               <input
+                id="repostOptionDirect"
                 type="radio"
                 name="repostOption"
                 checked={option === "DIRECT"}
@@ -198,6 +203,7 @@ export default function RepostJobModal({
             </label>
 
             <label
+              htmlFor="repostOptionEdit"
               className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${
                 option === "EDIT"
                   ? "border-primary bg-primary/5 shadow-xs"
@@ -205,6 +211,7 @@ export default function RepostJobModal({
               }`}
             >
               <input
+                id="repostOptionEdit"
                 type="radio"
                 name="repostOption"
                 checked={option === "EDIT"}
