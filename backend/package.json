@@ -80,11 +80,26 @@
     ],
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
+    "moduleNameMapper": {
+      "^src/(.*)$": "<rootDir>/$1",
+      "^@viecngon/types$": "<rootDir>/../../shared/types/index.ts",
+      "^sanitize-html$": "<rootDir>/test/__mocks__/sanitize-html.ts"
+    },
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s"
+      "**/*.(t|j)s",
+      "!main.ts",
+      "!**/*.module.ts",
+      "!**/*.dto.ts",
+      "!**/*.spec.ts",
+      "!test/**"
+    ],
+    "coverageReporters": [
+      "lcov",
+      "text",
+      "text-summary"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"

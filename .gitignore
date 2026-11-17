@@ -11,3 +11,6 @@ blob-report/
 playwright/.cache/
 sonar-project.properties
 .scannerwork/
+coverage/
+backend/coverage/
+frontend/coverage/

@@ -1,5 +1,8 @@
+import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
+import { AiMatchService } from 'src/ai/ai-match.service';
 import { JobController } from './job.controller';
+import { JobService } from './job.service';
 
 describe('JobController', () => {
   let controller: JobController;
@@ -7,6 +10,11 @@ describe('JobController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [JobController],
+      providers: [
+        { provide: JobService, useValue: {} },
+        { provide: JwtService, useValue: {} },
+        { provide: AiMatchService, useValue: {} },
+      ],
     }).compile();
 
     controller = module.get<JobController>(JobController);

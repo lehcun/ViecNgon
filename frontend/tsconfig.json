@@ -33,5 +33,12 @@
     "../shared/utils/date.ts",
     "../shared/utils/formatTime.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "coverage",
+    ".next",
+    "src/test/**",
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx"
+  ]
 }
