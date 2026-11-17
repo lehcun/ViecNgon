@@ -134,7 +134,7 @@ export default function RepostJobModal({
           <div>
             <label
               htmlFor="newDeadline"
-              className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center justify-between"
+              className="text-sm font-semibold text-slate-700 mb-1.5 flex items-center justify-between"
             >
               <span className="flex items-center gap-1.5">
                 <Calendar size={16} className="text-primary" />
@@ -166,7 +166,8 @@ export default function RepostJobModal({
             <FieldError id="newDeadline-error" message={deadlineError} />
             <p className="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
               <Clock size={12} />
-              Ngày đăng sẽ được cập nhật thành ngày hôm nay ({new Date().toLocaleDateString("vi-VN")}).
+              Ngày đăng sẽ được cập nhật thành ngày hôm nay (
+              {new Date().toLocaleDateString("vi-VN")}).
             </p>
           </div>
 
@@ -176,9 +177,8 @@ export default function RepostJobModal({
               Tùy chọn thao tác
             </span>
 
-            <label
-              htmlFor="repostOptionDirect"
-              className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${
+            <div
+              className={`flex items-start gap-3 p-3.5 rounded-xl border transition-all ${
                 option === "DIRECT"
                   ? "border-primary bg-primary/5 shadow-xs"
                   : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
@@ -190,21 +190,24 @@ export default function RepostJobModal({
                 name="repostOption"
                 checked={option === "DIRECT"}
                 onChange={() => setOption("DIRECT")}
-                className="mt-0.5 text-primary focus:ring-primary"
+                className="mt-0.5 text-primary focus:ring-primary cursor-pointer"
               />
-              <div>
+              <label
+                htmlFor="repostOptionDirect"
+                className="flex-1 cursor-pointer"
+              >
                 <span className="text-xs font-bold text-slate-800 block">
                   Kích hoạt lại ngay với nội dung hiện có
                 </span>
                 <span className="text-[11px] text-slate-500">
-                  Giữ nguyên mô tả, yêu cầu và phúc lợi, chỉ làm mới ngày đăng và gia hạn nhận hồ sơ.
+                  Giữ nguyên mô tả, yêu cầu và phúc lợi, chỉ làm mới ngày đăng
+                  và gia hạn nhận hồ sơ.
                 </span>
-              </div>
-            </label>
+              </label>
+            </div>
 
-            <label
-              htmlFor="repostOptionEdit"
-              className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${
+            <div
+              className={`flex items-start gap-3 p-3.5 rounded-xl border transition-all ${
                 option === "EDIT"
                   ? "border-primary bg-primary/5 shadow-xs"
                   : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
@@ -216,18 +219,22 @@ export default function RepostJobModal({
                 name="repostOption"
                 checked={option === "EDIT"}
                 onChange={() => setOption("EDIT")}
-                className="mt-0.5 text-primary focus:ring-primary"
+                className="mt-0.5 text-primary focus:ring-primary cursor-pointer"
               />
-              <div>
-                <span className="text-xs font-bold text-slate-800 block flex items-center gap-1.5">
+              <label
+                htmlFor="repostOptionEdit"
+                className="flex-1 cursor-pointer"
+              >
+                <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                   <Edit3 size={13} className="text-primary" />
                   Chỉnh sửa nội dung chi tiết trước khi đăng
                 </span>
                 <span className="text-[11px] text-slate-500">
-                  Chuyển tới trang chỉnh sửa để cập nhật lại mức lương, kỹ năng hoặc mô tả công việc.
+                  Chuyển tới trang chỉnh sửa để cập nhật lại mức lương, kỹ năng
+                  hoặc mô tả công việc.
                 </span>
-              </div>
-            </label>
+              </label>
+            </div>
           </div>
 
           {/* Action buttons */}
@@ -250,7 +257,11 @@ export default function RepostJobModal({
               ) : (
                 <CheckCircle2 size={15} />
               )}
-              <span>{option === "EDIT" ? "Đi tới trang sửa tin" : "Xác nhận đăng lại"}</span>
+              <span>
+                {option === "EDIT"
+                  ? "Đi tới trang sửa tin"
+                  : "Xác nhận đăng lại"}
+              </span>
             </button>
           </div>
         </form>
@@ -258,4 +269,3 @@ export default function RepostJobModal({
     </div>
   );
 }
-

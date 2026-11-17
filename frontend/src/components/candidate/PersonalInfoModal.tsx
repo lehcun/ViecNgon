@@ -178,10 +178,7 @@ export default function PersonalInfoModal({
 
   return (
     <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm transition-opacity">
-      <div
-        className="bg-white rounded-2xl w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-200"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="bg-white rounded-2xl w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-200">
         <div className="flex items-center justify-between p-6 border-b border-slate-100">
           <h2 className="text-xl font-bold text-slate-800">
             Thông tin cá nhân

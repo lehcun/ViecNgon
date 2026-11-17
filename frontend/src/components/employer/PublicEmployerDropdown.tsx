@@ -47,8 +47,9 @@ export default function PublicEmployerDropdown() {
   return (
     <div className="relative" ref={dropdownRef}>
       {/* ================= NÚT TRIGGER ================= */}
-      <div
-        className={`flex items-center gap-3 cursor-pointer select-none group border rounded-full px-1.5 py-1.5 pr-4 transition-all duration-200 ${isOpen
+      <button
+        type="button"
+        className={`flex items-center gap-3 cursor-pointer select-none group text-left border rounded-full px-1.5 py-1.5 pr-4 transition-all duration-200 ${isOpen
             ? "border-slate-200 bg-white shadow-sm"
             : "border-transparent bg-slate-200 hover:bg-slate-50"
           }`}
@@ -85,7 +86,7 @@ export default function PublicEmployerDropdown() {
             <span className="h-1.5 w-1.5 rounded-full bg-primary"></span>
           </div>
         </div>
-      </div>
+      </button>
 
       {/* ================= DROPDOWN MENU ================= */}
       {isOpen && (

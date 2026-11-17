@@ -49,8 +49,9 @@ export default function EmployerDashboardDropdown() {
   return (
     <div className="relative" ref={dropdownRef}>
       {/* ================= NÚT TRIGGER (AVATAR HEADER) ================= */}
-      <div
-        className="flex items-center gap-2.5 cursor-pointer select-none group"
+      <button
+        type="button"
+        className="flex items-center gap-2.5 cursor-pointer select-none group text-left"
         onClick={() => setIsOpen(!isOpen)}
       >
         {/* Avatar */}
@@ -88,7 +89,7 @@ export default function EmployerDashboardDropdown() {
             </span>
           </div>
         </div>
-      </div>
+      </button>
 
       {/* ================= MENU DROPDOWN ================= */}
       {isOpen && (

@@ -154,10 +154,11 @@ export default function CandidateNotificationsPage() {
               );
 
               return (
-                <div
+                <button
+                  type="button"
                   key={item.id}
                   onClick={() => handleNotificationClick(item)}
-                  className="group flex items-start gap-4 py-4 px-2 sm:px-3 hover:bg-surface-subtle/60 rounded-xl transition-colors cursor-pointer"
+                  className="w-full text-left group flex items-start gap-4 py-4 px-2 sm:px-3 hover:bg-surface-subtle/60 rounded-xl transition-colors cursor-pointer"
                 >
                   <div
                     className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${bg}`}
@@ -188,7 +189,7 @@ export default function CandidateNotificationsPage() {
                       <span className="w-2.5 h-2.5 bg-primary rounded-full ring-4 ring-primary/15" />
                     )}
                   </div>
-                </div>
+                </button>
               );
             })
           )}

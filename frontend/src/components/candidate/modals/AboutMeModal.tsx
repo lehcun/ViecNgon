@@ -39,10 +39,7 @@ export default function AboutMeModal({
 
   return (
     <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-primary-dark/50 backdrop-blur-xs">
-      <div
-        className="bg-surface-card rounded-2xl w-full max-w-3xl shadow-xl border border-border-default flex flex-col max-h-[90vh]"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="bg-surface-card rounded-2xl w-full max-w-3xl shadow-xl border border-border-default flex flex-col max-h-[90vh]">
         <div className="flex items-center justify-between p-6 border-b border-border-subtle">
           <h2 className="text-xl font-bold text-text-main">
             Giới thiệu bản thân

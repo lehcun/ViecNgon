@@ -84,14 +84,17 @@ export default function SpotlightBannerModal({
       aria-modal="true"
       aria-labelledby="spotlight-banner-modal-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/55 backdrop-blur-[1px]"
-      onClick={() => {
-        if (!isSaving && !isUploadingCover) onClose();
-      }}
     >
-      <div
-        className="w-full max-w-4xl bg-surface-card rounded-2xl border border-border-default shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <button
+        type="button"
+        aria-label="Đóng cửa sổ"
+        tabIndex={-1}
+        onClick={() => {
+          if (!isSaving && !isUploadingCover) onClose();
+        }}
+        className="fixed inset-0 bg-transparent cursor-default"
+      />
+      <div className="relative z-10 w-full max-w-4xl bg-surface-card rounded-2xl border border-border-default shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
         {/* Header Modal */}
         <div className="px-6 py-4 border-b border-border-default flex items-center justify-between bg-surface-card">
           <div className="flex items-center gap-2.5">

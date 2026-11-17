@@ -25,10 +25,7 @@ export default function ConfirmDeleteModal({
 
   return (
     <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-primary-dark/50 backdrop-blur-xs">
-      <div
-        className="bg-surface-card rounded-2xl w-full max-w-md shadow-xl border border-border-default p-6"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="bg-surface-card rounded-2xl w-full max-w-md shadow-xl border border-border-default p-6">
         <div className="flex items-start gap-4">
           <div className="w-11 h-11 rounded-full bg-danger-soft text-danger-text border border-danger-border flex items-center justify-center shrink-0">
             <AlertTriangle size={22} />

@@ -628,7 +628,10 @@ function EditJobFormContent({
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1">
+              <label
+                htmlFor="edit-ngayHetHan"
+                className="block text-sm font-semibold text-slate-700 mb-1"
+              >
                 Hạn chót nhận hồ sơ <span className="text-red-500">*</span>
               </label>
               <div className="relative">
@@ -637,6 +640,7 @@ function EditJobFormContent({
                   size={18}
                 />
                 <input
+                  id="edit-ngayHetHan"
                   type="date"
                   name="ngayHetHan"
                   value={formData.ngayHetHan}
@@ -648,9 +652,9 @@ function EditJobFormContent({
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-semibold text-slate-700 mb-1">
+              <span className="block text-sm font-semibold text-slate-700 mb-1">
                 Mức lương (VNĐ) <span className="text-red-500">*</span>
-              </label>
+              </span>
               <div className="flex items-center gap-4">
                 <div className="relative flex-1">
                   <DollarSign

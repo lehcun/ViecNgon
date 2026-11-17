@@ -86,7 +86,7 @@ export default function AiCvUploadModal({
     }
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = (e: React.DragEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setIsDragging(false);
     const file = e.dataTransfer.files?.[0];
@@ -152,7 +152,8 @@ export default function AiCvUploadModal({
 
         <div className="p-6 overflow-y-auto flex-1">
           {step === "UPLOAD" && (
-            <div
+            <button
+              type="button"
               onDragOver={(e) => {
                 e.preventDefault();
                 setIsDragging(true);
@@ -160,7 +161,7 @@ export default function AiCvUploadModal({
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
-              className={`border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all ${
+              className={`w-full border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all ${
                 isDragging
                   ? "border-ai bg-ai-light/60"
                   : "border-border-default hover:border-ai/60 hover:bg-surface-subtle/60"
@@ -186,7 +187,7 @@ export default function AiCvUploadModal({
                 Khuyên dùng CV PDF xuất từ Word, Canva, TopCV (không phải file
                 ảnh scan)
               </p>
-            </div>
+            </button>
           )}
 
           {step === "PROCESSING" && (

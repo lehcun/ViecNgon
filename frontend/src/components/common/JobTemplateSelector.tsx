@@ -136,10 +136,11 @@ export default function JobTemplateSelector({
                 {templates.map((tpl) => {
                   const isCurrentPreview = previewTemplate?.id === tpl.id;
                   return (
-                    <div
+                    <button
+                      type="button"
                       key={tpl.id}
                       onClick={() => setPreviewTemplate(tpl)}
-                      className={`p-3.5 rounded-xl border text-left cursor-pointer transition-all ${
+                      className={`w-full p-3.5 rounded-xl border text-left cursor-pointer transition-all ${
                         isCurrentPreview
                           ? "border-primary bg-primary/5 shadow-xs"
                           : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
@@ -162,7 +163,7 @@ export default function JobTemplateSelector({
                       <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
                         {tpl.description}
                       </p>
-                    </div>
+                    </button>
                   );
                 })}
               </div>

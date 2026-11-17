@@ -1,14 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import {
-  Check,
-  ChevronDown,
-  Filter,
-  Plus,
-  RotateCcw,
-  X,
-} from "lucide-react";
+import { Check, ChevronDown, Filter, Plus, RotateCcw, X } from "lucide-react";
 import { SearchJobsQuery } from "@viecngon/types";
 import { cn } from "@/lib/utils";
 
@@ -157,11 +150,7 @@ export default function JobFilterPanel({
   }, [isModalOpen]);
 
   const toggleDraftValue = (
-    field:
-      | "capBac"
-      | "hinhThucLamViec"
-      | "loaiHinh"
-      | "yeuCauKinhNghiem",
+    field: "capBac" | "hinhThucLamViec" | "loaiHinh" | "yeuCauKinhNghiem",
     value: string,
   ) => {
     setDraft((prev) => ({
@@ -254,7 +243,10 @@ export default function JobFilterPanel({
             {totalResults} việc làm IT{" "}
             {filters.thanhPho ? `tại ${filters.thanhPho}` : "tại Việt Nam"}
             {filters.keyword ? (
-              <span className="text-primary"> • &ldquo;{filters.keyword}&rdquo;</span>
+              <span className="text-primary">
+                {" "}
+                • &ldquo;{filters.keyword}&rdquo;
+              </span>
             ) : null}
           </h2>
 
@@ -430,7 +422,7 @@ export default function JobFilterPanel({
             <Filter size={15} />
             <span>Bộ lọc</span>
             {activeCount > 0 && (
-              <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-white text-[11px] font-bold tabular-nums">
+              <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-primary text-white text-[11px] font-bold tabular-nums">
                 {activeCount}
               </span>
             )}
@@ -445,12 +437,15 @@ export default function JobFilterPanel({
           aria-modal="true"
           aria-labelledby="job-filter-modal-title"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-[1px]"
-          onClick={() => setIsModalOpen(false)}
         >
-          <div
-            className="w-full max-w-2xl bg-surface-card rounded-2xl border border-border-default shadow-2xl flex flex-col max-h-[85vh] overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <button
+            type="button"
+            aria-label="Đóng bộ lọc"
+            tabIndex={-1}
+            onClick={() => setIsModalOpen(false)}
+            className="fixed inset-0 bg-transparent cursor-default"
+          />
+          <div className="relative z-10 w-full max-w-2xl bg-surface-card rounded-2xl border border-border-default shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
             {/* Header Modal */}
             <div className="px-6 py-4 border-b border-border-default flex items-center justify-between bg-surface-card">
               <h3
@@ -536,7 +531,7 @@ export default function JobFilterPanel({
                 </h4>
 
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
-                  <span className="text-sm font-medium text-text-primary min-w-[175px] tabular-nums">
+                  <span className="text-sm font-medium text-text-primary min-w-43.75 tabular-nums">
                     {activeSalaryLabel}
                   </span>
 
