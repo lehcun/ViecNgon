@@ -9,9 +9,9 @@ import { FeaturedEmployerBannerItem } from "@viecngon/types";
 import { CompanyLogo } from "@/components/ui/CompanyLogo";
 import { companyKeys } from "@/queries/queryKeys";
 import { stripHtmlTags } from "@/lib/formatters";
+import { API_BASE_URL as API_BASE } from "@/lib/env";
 import { cn } from "@/lib/utils";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 const LAST_SPOTLIGHT_STORAGE_KEY = "viecngon_spotlight_last_company_id";
 
 const emptySubscribe = () => () => {};

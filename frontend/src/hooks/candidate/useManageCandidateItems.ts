@@ -10,8 +10,7 @@ import {
   UpdatePortfolioPayload,
   CreateCvFilePayload,
 } from "@viecngon/types";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+import { API_BASE_URL as API_BASE } from "@/lib/env";
 
 // Helper gọi fetch có đính kèm cookie và Content-Type
 async function apiRequest<T>(

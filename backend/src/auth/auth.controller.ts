@@ -11,6 +11,7 @@ import {
   Patch,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import express from 'express';
@@ -31,20 +32,43 @@ export interface JwtPayload {
   exp?: number;
 }
 
-const COOKIE_OPTIONS = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax' as const,
-  maxAge: 1000 * 60 * 60 * 24 * 7, // 7 ngày
-  path: '/',
-};
+type SameSiteOption = 'lax' | 'strict' | 'none';
+
+function resolveSameSite(isProd: boolean): SameSiteOption {
+  const raw = process.env.COOKIE_SAME_SITE?.trim().toLowerCase();
+  if (raw === 'lax' || raw === 'strict' || raw === 'none') {
+    return raw;
+  }
+  return isProd ? 'none' : 'lax';
+}
+
+function getBaseCookieOptions(): express.CookieOptions {
+  const isProd = process.env.NODE_ENV === 'production';
+  const sameSite = resolveSameSite(isProd);
+  const domain = process.env.COOKIE_DOMAIN?.trim() || undefined;
+
+  return {
+    httpOnly: true,
+    secure: isProd || sameSite === 'none',
+    sameSite,
+    path: '/',
+    ...(domain ? { domain } : {}),
+  };
+}
+
+function getAuthCookieOptions(): express.CookieOptions {
+  return {
+    ...getBaseCookieOptions(),
+    maxAge: 1000 * 60 * 60 * 24 * 7, // 7 ngày
+  };
+}
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private jwtService: JwtService,
-  ) { }
+  ) {}
 
   @Get('me')
   async getProfile(@Req() req: express.Request) {
@@ -67,9 +91,7 @@ export class AuthController {
         iat: payload.iat,
       };
     } catch {
-      throw new UnauthorizedException(
-        'Token không hợp lệ hoặc đã hết hạn',
-      );
+      throw new UnauthorizedException('Token không hợp lệ hoặc đã hết hạn');
     }
   }
 
@@ -77,15 +99,12 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('logout')
   logout(@Res({ passthrough: true }) res: express.Response) {
-    // Xóa cookie chứa token
-    res.clearCookie('access_token', {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-    });
+    // Xóa cookie chứa token với đúng thuộc tính (sameSite/secure/domain)
+    res.clearCookie('access_token', getBaseCookieOptions());
     return { message: 'Đăng xuất thành công' };
   }
 
+  @Throttle({ default: { limit: 15, ttl: 60_000 } })
   @HttpCode(HttpStatus.OK)
   @Post('login')
   async login(
@@ -94,12 +113,13 @@ export class AuthController {
   ) {
     const { access_token, user } = await this.authService.login(loginDto);
 
-    res.cookie('access_token', access_token, COOKIE_OPTIONS);
+    res.cookie('access_token', access_token, getAuthCookieOptions());
 
     return { message: 'Đăng nhập thành công', user, access_token };
   }
 
   // Đăng ký cho Ứng viên (Public)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('register/candidate')
   async registerCandidate(
     @Body() dto: RegisterCandidateDto,
@@ -108,12 +128,13 @@ export class AuthController {
     const { access_token, user } =
       await this.authService.registerCandidate(dto);
 
-    res.cookie('access_token', access_token, COOKIE_OPTIONS);
+    res.cookie('access_token', access_token, getAuthCookieOptions());
 
     return { message: 'Đăng ký tài khoản thành công', user };
   }
 
   // Đăng ký cho HR (Public)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('register/employer')
   async registerEmployer(
     @Body() dto: RegisterEmployerDto,
@@ -121,7 +142,7 @@ export class AuthController {
   ) {
     const { access_token, user } = await this.authService.registerEmployer(dto);
 
-    res.cookie('access_token', access_token, COOKIE_OPTIONS);
+    res.cookie('access_token', access_token, getAuthCookieOptions());
 
     return { message: 'Đăng ký nhà tuyển dụng thành công', user };
   }
@@ -136,7 +157,7 @@ export class AuthController {
   ) {
     const { access_token, user } = await this.authService.googleRegister(dto);
 
-    res.cookie('access_token', access_token, COOKIE_OPTIONS);
+    res.cookie('access_token', access_token, getAuthCookieOptions());
 
     return { message: 'Đăng ký tài khoản bằng Google thành công', user };
   }
@@ -144,6 +165,7 @@ export class AuthController {
   // ==========================================
   // OAUTH2: ĐĂNG NHẬP BẰNG GOOGLE
   // ==========================================
+  @Throttle({ default: { limit: 15, ttl: 60_000 } })
   @HttpCode(HttpStatus.OK)
   @Post('google/login')
   async googleLogin(
@@ -152,7 +174,7 @@ export class AuthController {
   ) {
     const { access_token, user } = await this.authService.googleLogin(dto);
 
-    res.cookie('access_token', access_token, COOKIE_OPTIONS);
+    res.cookie('access_token', access_token, getAuthCookieOptions());
 
     return { message: 'Đăng nhập bằng Google thành công', user };
   }

@@ -25,7 +25,10 @@ function decodeToken(token: string): DecodedToken | null {
     if (!payloadBase64) return null;
 
     const base64 = payloadBase64.replace(/-/g, "+").replace(/_/g, "/");
-    const jsonPayload = Buffer.from(base64, "base64").toString("utf-8");
+    const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=");
+    const binary = atob(padded);
+    const bytes = Uint8Array.from(binary, (ch) => ch.charCodeAt(0));
+    const jsonPayload = new TextDecoder().decode(bytes);
     const parsed = JSON.parse(jsonPayload);
 
     if (!parsed?.role) return null;

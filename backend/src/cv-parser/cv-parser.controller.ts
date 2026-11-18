@@ -7,6 +7,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
@@ -17,8 +18,9 @@ const MAX_CV_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 @Controller('candidate/cv')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class CvParserController {
-  constructor(private readonly cvParserService: CvParserService) { }
+  constructor(private readonly cvParserService: CvParserService) {}
 
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('parse')
   @Roles('UNGVIEN')
   @UseInterceptors(
@@ -43,4 +45,3 @@ export class CvParserController {
     return await this.cvParserService.parseCvPdf(file);
   }
 }
-

@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
+import { API_BASE_URL } from "@/lib/env";
 
 const PROTECTED_PREFIXES = [
   "/dashboard",
@@ -47,8 +48,7 @@ export default function AuthProvider({
 
     const fetchUser = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-        const res = await fetch(`${apiUrl}/auth/me`, {
+        const res = await fetch(`${API_BASE_URL}/auth/me`, {
           method: "GET",
           credentials: "include", // BẮT BUỘC: Gửi kèm HttpOnly Cookie
         });

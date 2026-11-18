@@ -8,8 +8,7 @@ import type {
   RepostJobPayload,
 } from "@viecngon/types";
 import toast from "react-hot-toast";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+import { API_BASE_URL } from "@/lib/env";
 
 export const EMPLOYER_JOBS_QUERY_KEY = ["employerJobs"] as const;
 

@@ -8,8 +8,7 @@ import type {
   UpdateEmployerJobPayload,
 } from "@viecngon/types";
 import { EMPLOYER_JOBS_QUERY_KEY } from "./useEmployerJobs";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+import { API_BASE_URL } from "@/lib/env";
 
 /**
  * Hook fetch chi tiết một tin tuyển dụng của NTD để xem hoặc fill form sửa

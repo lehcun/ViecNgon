@@ -5,8 +5,7 @@ import {
   UpdateSpotlightBannerPayload,
 } from "@viecngon/types";
 import { companyKeys, recruiterKeys } from "@/queries/queryKeys";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+import { API_BASE_URL as API_BASE } from "@/lib/env";
 
 export const useSpotlightBanner = (enabled = true) => {
   const queryClient = useQueryClient();

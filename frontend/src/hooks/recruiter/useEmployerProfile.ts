@@ -12,12 +12,12 @@ import type {
   UpdateCompanyProfilePayload,
   UpdateCompanyProfileResponse,
 } from "@viecngon/types";
+import { API_BASE_URL } from "@/lib/env";
 
 // =====================================================================
 // CẤU HÌNH & CONSTANTS
 // =====================================================================
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 const EMPLOYER_PROFILE_URL = `${API_BASE_URL}/employer/profile`;
 
 /** Query key định danh hồ sơ doanh nghiệp trong TanStack Query cache */

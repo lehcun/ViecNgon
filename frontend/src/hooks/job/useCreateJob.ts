@@ -12,6 +12,7 @@ import {
   validateRequiredText,
 } from "@/lib/validation";
 import { stripHtmlTags } from "@/lib/formatters";
+import { API_BASE_URL } from "@/lib/env";
 
 function stripHtmlText(html: string): string {
   return stripHtmlTags(html).replace(/&nbsp;/g, " ").trim();
@@ -262,8 +263,7 @@ export function useCreateJob(initialCredits: number = 0) {
         kyNangs: formData.kyNangs,
       };
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-      const res = await fetch(`${apiUrl}/job`, {
+      const res = await fetch(`${API_BASE_URL}/job`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

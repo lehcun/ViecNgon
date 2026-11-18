@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -15,7 +16,10 @@ import { CandidateService } from './candidate.service';
 import { UpdateCandidateDto } from './dto/update-candidate.dto';
 import { CreateExperienceDto, UpdateExperienceDto } from './dto/experience.dto';
 import { CreateEducationDto, UpdateEducationDto } from './dto/education.dto';
-import { CreateCertificateDto, UpdateCertificateDto } from './dto/certificate.dto';
+import {
+  CreateCertificateDto,
+  UpdateCertificateDto,
+} from './dto/certificate.dto';
 import { CreatePortfolioDto, UpdatePortfolioDto } from './dto/portfolio.dto';
 import { CreateCvFileDto } from './dto/cv-file.dto';
 import { ApplyParsedCvDto } from './dto/apply-parsed-cv.dto';
@@ -25,7 +29,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 @Controller('candidate')
 @UseGuards(jwtAuthGuard.JwtAuthGuard)
 export class CandidateController {
-  constructor(private readonly candidateService: CandidateService) { }
+  constructor(private readonly candidateService: CandidateService) {}
 
   // ==========================================
   // THÔNG TIN HỒ SƠ CHÍNH
@@ -178,7 +182,20 @@ export class CandidateController {
   // TIỆN ÍCH KHÁC (UPLOAD GENERATED CV & APPLIED JOBS)
   // ==========================================
   @Post('cv/upload-generated')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 5 * 1024 * 1024 },
+      fileFilter: (_req, file, callback) => {
+        if (file.mimetype !== 'application/pdf') {
+          return callback(
+            new BadRequestException('Chỉ chấp nhận định dạng file PDF.'),
+            false,
+          );
+        }
+        callback(null, true);
+      },
+    }),
+  )
   async uploadGeneratedCv(
     @CurrentUser() user: jwtAuthGuard.AuthUser,
     @UploadedFile() file: any,

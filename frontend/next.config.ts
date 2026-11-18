@@ -1,7 +1,20 @@
 import type { NextConfig } from "next";
 import path from "path";
 
+const isProd = process.env.NODE_ENV === "production";
+const extraImageHosts = (process.env.NEXT_PUBLIC_IMAGE_HOSTS || "")
+  .split(",")
+  .map((host) => host.trim())
+  .filter(Boolean)
+  .map((hostname) => ({
+    protocol: "https" as const,
+    hostname,
+  }));
+
 const nextConfig: NextConfig = {
+  ...(process.env.NEXT_OUTPUT_STANDALONE === "true"
+    ? { output: "standalone" as const }
+    : {}),
   turbopack: {
     root: path.resolve(__dirname, ".."),
   },
@@ -9,16 +22,25 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "example.com",
-      },
-      {
-        protocol: "https",
         hostname: "res.cloudinary.com",
       },
       {
         protocol: "https",
-        hostname: "**", // Cho phép tất cả domains (cẩn thận với security)
+        hostname: "lh3.googleusercontent.com",
       },
+      {
+        protocol: "https",
+        hostname: "avatars.githubusercontent.com",
+      },
+      ...(!isProd
+        ? [
+            {
+              protocol: "https" as const,
+              hostname: "example.com",
+            },
+          ]
+        : []),
+      ...extraImageHosts,
     ],
     // Định dạng ưu tiên
     formats: ["image/avif", "image/webp"], // Tối ưu với AVIF/WebP

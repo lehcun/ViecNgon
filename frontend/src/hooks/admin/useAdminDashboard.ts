@@ -10,8 +10,7 @@ import {
   AdminChartPeriod,
 } from "@viecngon/types";
 import { adminDashboardKeys } from "@/queries/queryKeys";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+import { API_BASE_URL } from "@/lib/env";
 
 /**
  * Hàm gọi API chung cho phân hệ Admin (kèm HttpOnly Cookie xác thực)
