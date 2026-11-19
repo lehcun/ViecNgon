@@ -1,0 +1,75 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: viecngon-sqlserver
+    profiles: ["with-db"]
+    restart: unless-stopped
+    mem_limit: 2g
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Express"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:?MSSQL_SA_PASSWORD is required when using with-db profile}"
+    ports:
+      - "127.0.0.1:1433:1433"
+    volumes:
+      - viecngon_mssql_data:/var/opt/mssql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q \"SELECT 1\" || exit 1",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 25s
+    networks:
+      - viecngon-net
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: viecngon-backend
+    restart: unless-stopped
+    env_file:
+      - path: ./backend/.env.docker
+        required: false
+    ports:
+      - "127.0.0.1:3001:3001"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3001/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 25s
+    networks:
+      - viecngon-net
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: viecngon-cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: "${CLOUDFLARE_TUNNEL_TOKEN:?CLOUDFLARE_TUNNEL_TOKEN is required in root .env}"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - viecngon-net
+
+networks:
+  viecngon-net:
+    driver: bridge
+
+volumes:
+  viecngon_mssql_data:
