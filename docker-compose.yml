@@ -8,7 +8,7 @@ services:
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_PID: "Express"
-      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:?MSSQL_SA_PASSWORD is required when using with-db profile}"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:-}"
     ports:
       - "127.0.0.1:1433:1433"
     volumes:
@@ -60,7 +60,7 @@ services:
     restart: unless-stopped
     command: tunnel --no-autoupdate run
     environment:
-      TUNNEL_TOKEN: "${CLOUDFLARE_TUNNEL_TOKEN:?CLOUDFLARE_TUNNEL_TOKEN is required in root .env}"
+      TUNNEL_TOKEN: "${CLOUDFLARE_TUNNEL_TOKEN:-}"
     depends_on:
       backend:
         condition: service_healthy
