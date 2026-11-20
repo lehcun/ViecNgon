@@ -111,6 +111,41 @@ export interface CompanyProfileCompletion {
   missingFields: CompanyProfileCompletionField[];
 }
 
+/** Thông tin Bài viết & Tin tức công ty (Bảng BAIVIET) */
+export interface CompanyProfilePostItem {
+  maBaiViet: string;
+  tieuDe: string;
+  anhBiaUrl: string | null;
+  noiDung: string;
+  ngayDang: string | Date;
+}
+
+/** Payload tạo mới bài viết công ty */
+export interface CreateCompanyPostPayload {
+  tieuDe: string;
+  anhBiaUrl?: string | null;
+  noiDung: string;
+}
+
+/** Payload cập nhật bài viết công ty */
+export interface UpdateCompanyPostPayload {
+  tieuDe?: string;
+  anhBiaUrl?: string | null;
+  noiDung?: string;
+}
+
+/** Thông tin Đánh giá công ty hiển thị cho HR (Bảng DANHGIA) */
+export interface CompanyProfileReviewItem {
+  id: string;
+  title: string;
+  content: string | null;
+  pros: string | null;
+  cons: string | null;
+  rating: number;
+  recommend: boolean;
+  createdAt: string | Date;
+}
+
 /** Thống kê nhanh dùng cho Badges trên các Tabs giao diện */
 export interface CompanyProfileStats {
   /** Số lượng chi nhánh (hiển thị trên badge Tab Chi nhánh & Văn phòng) */
@@ -119,6 +154,14 @@ export interface CompanyProfileStats {
   averageRating: number | null;
   /** Tổng số lượt đánh giá */
   totalReviews: number;
+  /** Tỉ lệ % khuyên làm việc tại công ty */
+  recommendPercent?: number | null;
+  /** Tổng số bài viết đang hiển thị trên trang công ty */
+  totalPosts?: number;
+  /** Tổng số việc làm đang tuyển công khai */
+  totalActiveJobs?: number;
+  /** Tổng số ứng viên đang theo dõi công ty */
+  followerCount?: number;
 }
 
 /** Payload phản hồi đầy đủ của endpoint GET /employer/profile */
@@ -126,6 +169,8 @@ export interface CompanyProfileResponse {
   company: CompanyInfo;
   hr: HrProfileInfo;
   branches: CompanyBranchItem[];
+  posts?: CompanyProfilePostItem[];
+  reviews?: CompanyProfileReviewItem[];
   completion: CompanyProfileCompletion;
   stats: CompanyProfileStats;
 }

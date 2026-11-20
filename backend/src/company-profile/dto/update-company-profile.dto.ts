@@ -21,7 +21,10 @@ import type {
   UpdateCompanyProfilePayload,
   UpsertCompanyBranchPayload,
 } from '@viecngon/types';
-import { COMPANY_PROFILE_CONSTANTS, VALID_URL_OPTIONS } from '../company-profile.constants';
+import {
+  COMPANY_PROFILE_CONSTANTS,
+  VALID_URL_OPTIONS,
+} from '../company-profile.constants';
 import { TrimToNull } from './transformers';
 import { UpdateHrProfileDto } from './update-hr-profile.dto';
 
@@ -112,13 +115,17 @@ export class UpdateCompanyInfoDto implements UpdateCompanyInfoPayload {
 
   @IsOptional()
   @TrimToNull()
-  @IsString({ message: 'Slogan / Giới thiệu ngắn phải là chuỗi ký tự' })
-  @MaxLength(500, { message: 'Slogan tối đa 500 ký tự' })
+  @IsString({ message: 'Văn hóa & Con người phải là chuỗi ký tự' })
+  @MaxLength(COMPANY_PROFILE_CONSTANTS.MAX_RICH_TEXT_LENGTH, {
+    message: 'Nội dung Văn hóa & Con người quá dài',
+  })
   aboutMe?: string | null;
 
   @IsOptional()
   @TrimToNull()
-  @IsUrl(VALID_URL_OPTIONS, { message: 'Logo URL không đúng định dạng HTTP/HTTPS' })
+  @IsUrl(VALID_URL_OPTIONS, {
+    message: 'Logo URL không đúng định dạng HTTP/HTTPS',
+  })
   @MaxLength(255, { message: 'Logo URL tối đa 255 ký tự' })
   logoUrl?: string | null;
 
@@ -166,21 +173,24 @@ export class UpdateCompanyInfoDto implements UpdateCompanyInfoPayload {
   })
   @Matches(/^[^,;|]+$/, {
     each: true,
-    message: 'Tag lĩnh vực không được chứa các ký tự phân tách đặc biệt (, ; |)',
+    message:
+      'Tag lĩnh vực không được chứa các ký tự phân tách đặc biệt (, ; |)',
   })
   linhVuc?: string[];
 
   // --- Khối Thông tin bổ sung & Vận hành ---
   @IsOptional()
   @TrimToNull()
-  @IsUrl(VALID_URL_OPTIONS, { message: 'Website không đúng định dạng HTTP/HTTPS' })
+  @IsUrl(VALID_URL_OPTIONS, {
+    message: 'Website không đúng định dạng HTTP/HTTPS',
+  })
   @MaxLength(100, { message: 'Website tối đa 100 ký tự' })
   website?: string | null;
 
   @IsOptional()
   @TrimToNull()
   @IsString({ message: 'Tỉnh/Thành phố phải là chuỗi ký tự' })
-  @MaxLength(50, { message: 'Thành phố tối đa 50 ký tự' })
+  @MaxLength(100, { message: 'Thành phố tối đa 100 ký tự' })
   thanhPho?: string | null;
 
   @IsOptional()
@@ -255,4 +265,3 @@ export class UpdateCompanyProfileDto implements UpdateCompanyProfilePayload {
   @Type(() => UpsertCompanyBranchDto)
   branches?: UpsertCompanyBranchDto[];
 }
-

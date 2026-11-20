@@ -1,41 +1,35 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import toast from "react-hot-toast";
 import {
   ArrowLeft,
+  Award,
+  Bell,
+  Briefcase,
+  Building2,
+  Camera,
   CheckCircle2,
   ExternalLink,
-  Save,
-  Camera,
-  Pencil,
-  Info,
-  Sparkles,
-  Image as ImageIcon,
-  Building,
-  Star,
-  Users,
+  FileText,
   Globe,
-  MapPin,
-  Plus,
-  X,
-  Bold,
-  Italic,
-  Underline,
-  List,
-  ListOrdered,
-  Link as LinkIcon,
+  Image as ImageIcon,
+  Images,
+  Info,
   Lightbulb,
-  Building2,
-  Briefcase,
   Loader2,
+  MapPin,
+  Pencil,
+  Plus,
+  RotateCcw,
+  Save,
+  Sparkles,
+  Star,
   Trash2,
-  Navigation,
-  Crosshair,
-  Award,
-  Upload,
+  Users,
+  X,
 } from "lucide-react";
 import {
   useEmployerProfile,
@@ -43,26 +37,33 @@ import {
   useUploadCompanyImage,
 } from "@/hooks/recruiter/useEmployerProfile";
 import type {
-  CompanyProfileResponse,
-  UpdateCompanyProfilePayload,
   CompanyInfo,
-  CompanySectionImages,
   CompanyProfileCompletionField,
+  CompanyProfileResponse,
+  CompanySectionImages,
+  UpdateCompanyProfilePayload,
   UpsertCompanyBranchPayload,
 } from "@viecngon/types";
+import { RichTextSectionEditor } from "@/components/employer/company-profile/RichTextSectionEditor";
+import { SectionMediaPanel } from "@/components/employer/company-profile/SectionMediaPanel";
+import { CompanyPostsManager } from "@/components/employer/company-profile/CompanyPostsManager";
+import { CompanyReviewsSummaryTab } from "@/components/employer/company-profile/CompanyReviewsSummaryTab";
+import {
+  buildCitiesBannerPreview,
+  CITY_DEFAULT_COORDS,
+  CITY_OPTIONS,
+  CompanyBranchesManager,
+  type BranchFormItem,
+} from "@/components/employer/company-profile/CompanyBranchesManager";
 import { cn } from "@/lib/utils";
 
-type ProfileTab = "general" | "culture" | "media" | "branches" | "reviews";
-
-interface BranchFormItem {
-  localKey: string;
-  maChiNhanh?: string;
-  thanhPho: string;
-  diaChi: string;
-  mapUrl: string;
-  viDo: string;
-  kinhDo: string;
-}
+type ProfileTab =
+  | "general"
+  | "culture"
+  | "media"
+  | "branches"
+  | "posts"
+  | "reviews";
 
 const COMPANY_MODEL_OPTIONS = [
   "Sản phẩm",
@@ -104,39 +105,24 @@ const OT_POLICY_OPTIONS = [
   "Thưởng theo dự án",
 ];
 
-const CITY_OPTIONS = [
-  "Hà Nội",
-  "TP.HCM",
-  "Đà Nẵng",
-  "Hải Phòng",
-  "Cần Thơ",
-  "Bình Dương",
-];
-
-const CITY_DEFAULT_COORDS: Record<string, { lat: number; lng: number }> = {
-  "Hà Nội": { lat: 21.0285, lng: 105.8542 },
-  "TP.HCM": { lat: 10.7769, lng: 106.7009 },
-  "Đà Nẵng": { lat: 16.0544, lng: 108.2022 },
-  "Hải Phòng": { lat: 20.8449, lng: 106.6881 },
-  "Cần Thơ": { lat: 10.0452, lng: 105.7469 },
-  "Bình Dương": { lat: 10.9804, lng: 106.6519 },
-};
-
-const MISSING_FIELD_LABELS: Record<CompanyProfileCompletionField, string> = {
-  tenCongTy: "Tên công ty",
-  logoUrl: "Logo doanh nghiệp",
-  aboutMe: "Slogan / Giới thiệu ngắn",
-  moTa: "Mô tả chi tiết công ty",
-  phucLoi: "Phúc lợi & Đãi ngộ",
-  linhVuc: "Lĩnh vực hoạt động",
-  website: "Website chính thức",
-  thanhPho: "Thành phố",
-  diaChi: "Địa chỉ trụ sở chính",
-  quyMo: "Quy mô nhân sự",
-  quocGia: "Quốc gia",
-  moHinhCongTy: "Mô hình công ty",
-  thoiGianLamViec: "Thời gian làm việc",
-  chiNhanhs: "Danh sách chi nhánh",
+const MISSING_FIELD_META: Record<
+  CompanyProfileCompletionField,
+  { label: string; tab: ProfileTab }
+> = {
+  tenCongTy: { label: "Tên công ty", tab: "general" },
+  logoUrl: { label: "Logo doanh nghiệp", tab: "general" },
+  aboutMe: { label: "Văn hóa & Con người", tab: "culture" },
+  moTa: { label: "Mô tả chi tiết công ty", tab: "general" },
+  phucLoi: { label: "Phúc lợi & Đãi ngộ", tab: "culture" },
+  linhVuc: { label: "Lĩnh vực hoạt động", tab: "general" },
+  website: { label: "Website chính thức", tab: "general" },
+  thanhPho: { label: "Thành phố", tab: "general" },
+  diaChi: { label: "Địa chỉ trụ sở chính", tab: "general" },
+  quyMo: { label: "Quy mô nhân sự", tab: "general" },
+  quocGia: { label: "Quốc gia", tab: "general" },
+  moHinhCongTy: { label: "Mô hình công ty", tab: "general" },
+  thoiGianLamViec: { label: "Thời gian làm việc", tab: "general" },
+  chiNhanhs: { label: "Danh sách chi nhánh", tab: "branches" },
 };
 
 function buildSelectOptions(presets: string[], currentValue?: string | null) {
@@ -152,6 +138,96 @@ function getInitials(name?: string | null): string {
   return `${parts[0][0] ?? ""}${parts[parts.length - 1][0] ?? ""}`.toUpperCase();
 }
 
+function parseAwardsList(raw?: string | null): string[] {
+  if (!raw) return [];
+  return raw
+    .split(/[;\n]+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function createInitialFormState(profileData: CompanyProfileResponse): {
+  companyForm: Partial<CompanyInfo>;
+  sectors: string[];
+  awardsList: string[];
+  sectionImages: CompanySectionImages;
+  branchesList: BranchFormItem[];
+} {
+  return {
+    companyForm: {
+      tenCongTy: profileData.company.tenCongTy || "",
+      tenPhapLy: profileData.company.tenPhapLy || "",
+      slug: profileData.company.slug || "",
+      moTa: profileData.company.moTa || "",
+      phucLoi: profileData.company.phucLoi || "",
+      chuyenMon: profileData.company.chuyenMon || "",
+      aboutMe: profileData.company.aboutMe || "",
+      logoUrl: profileData.company.logoUrl || "",
+      website: profileData.company.website || "",
+      thanhPho: profileData.company.thanhPho || "Hà Nội",
+      diaChi: profileData.company.diaChi || "",
+      moHinhCongTy: profileData.company.moHinhCongTy || "Sản phẩm",
+      quyMo: profileData.company.quyMo || "151 - 300 nhân viên",
+      quocGia: profileData.company.quocGia || "Việt Nam",
+      thoiGianLamViec: profileData.company.thoiGianLamViec || "Thứ 2 - Thứ 6",
+      chinhSachOT: profileData.company.chinhSachOT || "Không có OT",
+      giaiThuong: profileData.company.giaiThuong || "",
+    },
+    sectors: profileData.company.linhVuc ?? [],
+    awardsList: parseAwardsList(profileData.company.giaiThuong),
+    sectionImages: {
+      introImages: profileData.company.sectionImages?.introImages ?? [],
+      cultureImages: profileData.company.sectionImages?.cultureImages ?? [],
+    },
+    branchesList: (profileData.branches ?? []).map((b) => ({
+      localKey: b.maChiNhanh,
+      maChiNhanh: b.maChiNhanh,
+      thanhPho: b.thanhPho,
+      diaChi: b.diaChi,
+      mapUrl: b.mapUrl || "",
+      viDo: b.viDo !== null && b.viDo !== undefined ? String(b.viDo) : "",
+      kinhDo:
+        b.kinhDo !== null && b.kinhDo !== undefined ? String(b.kinhDo) : "",
+    })),
+  };
+}
+
+function serializeSnapshot(state: {
+  companyForm: Partial<CompanyInfo>;
+  sectors: string[];
+  awardsList: string[];
+  sectionImages: CompanySectionImages;
+  branchesList: BranchFormItem[];
+}): string {
+  return JSON.stringify({
+    tenCongTy: state.companyForm.tenCongTy || "",
+    tenPhapLy: state.companyForm.tenPhapLy || "",
+    moTa: state.companyForm.moTa || "",
+    phucLoi: state.companyForm.phucLoi || "",
+    chuyenMon: state.companyForm.chuyenMon || "",
+    aboutMe: state.companyForm.aboutMe || "",
+    logoUrl: state.companyForm.logoUrl || "",
+    website: state.companyForm.website || "",
+    thanhPho: state.companyForm.thanhPho || "",
+    diaChi: state.companyForm.diaChi || "",
+    moHinhCongTy: state.companyForm.moHinhCongTy || "",
+    quyMo: state.companyForm.quyMo || "",
+    quocGia: state.companyForm.quocGia || "",
+    thoiGianLamViec: state.companyForm.thoiGianLamViec || "",
+    chinhSachOT: state.companyForm.chinhSachOT || "",
+    giaiThuong: state.awardsList.join("; "),
+    sectors: state.sectors,
+    sectionImages: state.sectionImages,
+    branches: state.branchesList.map((b) => ({
+      maChiNhanh: b.maChiNhanh || "",
+      thanhPho: b.thanhPho,
+      diaChi: b.diaChi,
+      viDo: b.viDo,
+      kinhDo: b.kinhDo,
+    })),
+  });
+}
+
 function CompanyProfileSkeleton() {
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6 animate-pulse">
@@ -159,7 +235,7 @@ function CompanyProfileSkeleton() {
         <div className="space-y-2.5">
           <div className="h-4 w-36 bg-surface-subtle rounded" />
           <div className="h-8 w-72 bg-surface-subtle rounded-lg" />
-          <div className="h-4 w-80 bg-surface-muted rounded" />
+          <div className="h-4 w-96 bg-surface-muted rounded" />
         </div>
         <div className="flex items-center gap-3">
           <div className="h-10 w-36 bg-surface-subtle rounded-lg" />
@@ -168,21 +244,21 @@ function CompanyProfileSkeleton() {
       </div>
 
       <div className="h-14 bg-surface-card rounded-t-xl border border-border-default px-4 flex items-center gap-6">
-        <div className="h-4 w-28 bg-surface-subtle rounded" />
-        <div className="h-4 w-32 bg-surface-subtle rounded" />
-        <div className="h-4 w-32 bg-surface-subtle rounded" />
-        <div className="h-4 w-36 bg-surface-subtle rounded" />
-        <div className="h-4 w-32 bg-surface-subtle rounded" />
+        {Array.from({ length: 6 }).map((_, idx) => (
+          <div key={idx} className="h-4 w-28 bg-surface-subtle rounded" />
+        ))}
       </div>
 
-      <div className="bg-surface-card rounded-2xl border border-border-default overflow-hidden">
-        <div className="h-48 sm:h-56 bg-surface-subtle" />
-        <div className="px-6 pb-6 flex items-end gap-5 -mt-12">
-          <div className="w-28 h-28 rounded-2xl bg-slate-300 border-4 border-white shrink-0" />
-          <div className="space-y-2 flex-1 pb-2">
-            <div className="h-6 w-56 bg-surface-subtle rounded" />
-            <div className="h-4 w-72 bg-surface-muted rounded" />
+      <div className="bg-surface-card rounded-2xl border border-border-default overflow-hidden p-6 bg-linear-to-br from-primary-dark/80 via-[#13294b]/80 to-primary-dark/80">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-center gap-5">
+            <div className="w-24 h-24 rounded-xl bg-white/15 shrink-0" />
+            <div className="space-y-2.5">
+              <div className="h-7 w-56 bg-white/20 rounded" />
+              <div className="h-4 w-72 bg-white/15 rounded" />
+            </div>
           </div>
+          <div className="h-20 w-56 bg-white/10 rounded-xl" />
         </div>
       </div>
 
@@ -209,7 +285,7 @@ function CompanyProfileSkeleton() {
           </div>
           <div className="bg-surface-card rounded-2xl border border-border-default p-6 space-y-3">
             <div className="h-5 w-36 bg-surface-subtle rounded" />
-            <div className="h-20 w-full bg-surface-muted rounded-xl" />
+            <div className="h-24 w-full bg-surface-muted rounded-xl" />
           </div>
         </div>
       </div>
@@ -226,6 +302,7 @@ export default function CompanyProfilePage() {
   } = useEmployerProfile();
 
   const [activeTab, setActiveTab] = useState<ProfileTab>("general");
+  const [editorResetCount, setEditorResetCount] = useState(0);
 
   if (isLoading) {
     return <CompanyProfileSkeleton />;
@@ -242,6 +319,7 @@ export default function CompanyProfilePage() {
             Vui lòng kiểm tra lại quyền truy cập hoặc phiên đăng nhập của bạn.
           </p>
           <button
+            type="button"
             onClick={() => refetch()}
             className="px-5 py-2.5 bg-danger text-white rounded-lg text-sm font-semibold hover:bg-danger-hover transition"
           >
@@ -254,10 +332,11 @@ export default function CompanyProfilePage() {
 
   return (
     <CompanyProfileEditor
-      key={`${profileData.company.maCongTy}-${profileData.branches.length}`}
+      key={`${profileData.company.maCongTy}-${profileData.branches.length}-${editorResetCount}`}
       profileData={profileData}
       activeTab={activeTab}
       setActiveTab={setActiveTab}
+      onResetFromServer={() => setEditorResetCount((c) => c + 1)}
     />
   );
 }
@@ -266,96 +345,65 @@ function CompanyProfileEditor({
   profileData,
   activeTab,
   setActiveTab,
+  onResetFromServer,
 }: {
   profileData: CompanyProfileResponse;
   activeTab: ProfileTab;
   setActiveTab: React.Dispatch<React.SetStateAction<ProfileTab>>;
+  onResetFromServer: () => void;
 }) {
   const { mutate: updateProfile, isPending: isUpdating } =
     useUpdateEmployerProfile();
   const { mutateAsync: uploadCompanyImage } = useUploadCompanyImage();
 
   const logoInputRef = useRef<HTMLInputElement>(null);
-  const introImageInputRef = useRef<HTMLInputElement>(null);
-  const cultureImageInputRef = useRef<HTMLInputElement>(null);
-  const moTaTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const phucLoiTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const initialData = useMemo(
+    () => createInitialFormState(profileData),
+    [profileData],
+  );
+  const initialSnapshot = useMemo(
+    () => serializeSnapshot(initialData),
+    [initialData],
+  );
 
   const [uploadingTarget, setUploadingTarget] = useState<
     "logo" | "intro" | "culture" | null
   >(null);
   const [geocodingKey, setGeocodingKey] = useState<string | null>(null);
 
-  const [companyForm, setCompanyForm] = useState<Partial<CompanyInfo>>(() => ({
-    tenCongTy: profileData.company.tenCongTy || "",
-    tenPhapLy: profileData.company.tenPhapLy || "",
-    slug: profileData.company.slug || "",
-    moTa: profileData.company.moTa || "",
-    phucLoi: profileData.company.phucLoi || "",
-    chuyenMon: profileData.company.chuyenMon || "",
-    aboutMe: profileData.company.aboutMe || "",
-    logoUrl: profileData.company.logoUrl || "",
-    website: profileData.company.website || "",
-    thanhPho: profileData.company.thanhPho || "Hà Nội",
-    diaChi: profileData.company.diaChi || "",
-    moHinhCongTy: profileData.company.moHinhCongTy || "Sản phẩm",
-    quyMo: profileData.company.quyMo || "151 - 300 nhân viên",
-    quocGia: profileData.company.quocGia || "Việt Nam",
-    thoiGianLamViec: profileData.company.thoiGianLamViec || "Thứ 2 - Thứ 6",
-    chinhSachOT: profileData.company.chinhSachOT || "Không có OT",
-    giaiThuong: profileData.company.giaiThuong || "",
-  }));
-
+  const [companyForm, setCompanyForm] = useState<Partial<CompanyInfo>>(
+    () => initialData.companyForm,
+  );
+  const [sectors, setSectors] = useState<string[]>(() => initialData.sectors);
+  const [newSectorInput, setNewSectorInput] = useState("");
+  const [awardsList, setAwardsList] = useState<string[]>(
+    () => initialData.awardsList,
+  );
+  const [newAwardInput, setNewAwardInput] = useState("");
   const [sectionImages, setSectionImages] = useState<CompanySectionImages>(
-    () => ({
-      introImages: profileData.company.sectionImages?.introImages ?? [],
-      cultureImages: profileData.company.sectionImages?.cultureImages ?? [],
-    }),
+    () => initialData.sectionImages,
   );
-
-  const [branchesList, setBranchesList] = useState<BranchFormItem[]>(() =>
-    (profileData.branches ?? []).map((b) => ({
-      localKey: b.maChiNhanh,
-      maChiNhanh: b.maChiNhanh,
-      thanhPho: b.thanhPho,
-      diaChi: b.diaChi,
-      mapUrl: b.mapUrl || "",
-      viDo: b.viDo !== null && b.viDo !== undefined ? String(b.viDo) : "",
-      kinhDo:
-        b.kinhDo !== null && b.kinhDo !== undefined ? String(b.kinhDo) : "",
-    })),
+  const [branchesList, setBranchesList] = useState<BranchFormItem[]>(
+    () => initialData.branchesList,
   );
-
-  const [sectors, setSectors] = useState<string[]>(
-    () => profileData.company.linhVuc ?? [],
+  const [selectedBranchKey, setSelectedBranchKey] = useState<string>(
+    () => initialData.branchesList[0]?.localKey ?? "",
   );
-  const [newSectorInput, setNewSectorInput] = useState<string>("");
+  const [savedSnapshotOverride, setSavedSnapshotOverride] = useState<
+    string | null
+  >(null);
 
-  const wrapSelectionWithHtml = (
-    field: "moTa" | "phucLoi",
-    ref: React.RefObject<HTMLTextAreaElement | null>,
-    openTag: string,
-    closeTag: string,
-  ) => {
-    const el = ref.current;
-    const current = companyForm[field] || "";
-    if (!el) return;
-    const start = el.selectionStart ?? current.length;
-    const end = el.selectionEnd ?? current.length;
-    const selected = current.slice(start, end) || "Nội dung";
-    const nextValue =
-      current.slice(0, start) +
-      openTag +
-      selected +
-      closeTag +
-      current.slice(end);
-    setCompanyForm((prev) => ({ ...prev, [field]: nextValue }));
-  };
+  const currentSnapshot = serializeSnapshot({
+    companyForm,
+    sectors,
+    awardsList,
+    sectionImages,
+    branchesList,
+  });
+  const hasUnsavedChanges =
+    currentSnapshot !== (savedSnapshotOverride ?? initialSnapshot);
 
-  const handleUploadImageFile = async (
-    file: File | undefined,
-    target: "logo" | "intro" | "culture",
-  ) => {
+  const handleUploadLogo = async (file: File | undefined) => {
     if (!file) return;
     const allowedTypes = new Set([
       "image/jpeg",
@@ -368,48 +416,79 @@ function CompanyProfileEditor({
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("Dung lượng ảnh tối đa là 5MB.");
-      return;
-    }
-
-    if (
-      target === "intro" &&
-      sectionImages.introImages.length >= 8
-    ) {
-      toast.error("Tối đa 8 ảnh cho section Giới thiệu công ty.");
-      return;
-    }
-    if (
-      target === "culture" &&
-      sectionImages.cultureImages.length >= 8
-    ) {
-      toast.error("Tối đa 8 ảnh cho section Văn hóa & Phúc lợi.");
+      toast.error("Dung lượng logo tối đa là 5MB.");
       return;
     }
 
     try {
-      setUploadingTarget(target);
+      setUploadingTarget("logo");
       const { url } = await uploadCompanyImage(file);
-      if (target === "logo") {
-        setCompanyForm((prev) => ({ ...prev, logoUrl: url }));
-        toast.success("Đã tải logo lên! Bấm 'Lưu thay đổi' để cập nhật.");
-      } else if (target === "intro") {
-        setSectionImages((prev) => ({
-          ...prev,
-          introImages: [...prev.introImages, url],
-        }));
-        toast.success("Đã thêm ảnh vào mục Giới thiệu công ty.");
-      } else {
-        setSectionImages((prev) => ({
-          ...prev,
-          cultureImages: [...prev.cultureImages, url],
-        }));
-        toast.success("Đã thêm ảnh vào mục Văn hóa & Phúc lợi.");
-      }
+      setCompanyForm((prev) => ({ ...prev, logoUrl: url }));
+      toast.success("Đã tải logo lên! Bấm 'Lưu thay đổi' để cập nhật.");
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Tải ảnh thất bại, thử lại sau.";
-      toast.error(message);
+      toast.error(
+        err instanceof Error ? err.message : "Tải logo thất bại, thử lại sau.",
+      );
+    } finally {
+      setUploadingTarget(null);
+    }
+  };
+
+  const handleUploadSectionFiles = async (
+    files: FileList | null,
+    target: "intro" | "culture",
+  ) => {
+    if (!files || files.length === 0) return;
+    const field = target === "intro" ? "introImages" : "cultureImages";
+    const sectionLabel =
+      target === "intro" ? "Giới thiệu công ty" : "Phúc lợi & Văn hóa";
+    const remainingSlots = 8 - sectionImages[field].length;
+
+    if (remainingSlots <= 0) {
+      toast.error(`Tối đa 8 ảnh cho section ${sectionLabel}.`);
+      return;
+    }
+
+    const allowedTypes = new Set([
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/gif",
+    ]);
+    const validFiles: File[] = [];
+    for (const file of Array.from(files).slice(0, remainingSlots)) {
+      if (!allowedTypes.has(file.type)) {
+        toast.error(`Bỏ qua "${file.name}": chỉ hỗ trợ JPG, PNG, WEBP, GIF.`);
+        continue;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(`Bỏ qua "${file.name}": dung lượng tối đa 5MB.`);
+        continue;
+      }
+      validFiles.push(file);
+    }
+
+    if (validFiles.length === 0) return;
+
+    try {
+      setUploadingTarget(target);
+      const uploadedUrls: string[] = [];
+      for (const file of validFiles) {
+        const { url } = await uploadCompanyImage(file);
+        uploadedUrls.push(url);
+      }
+
+      setSectionImages((prev) => ({
+        ...prev,
+        [field]: [...prev[field], ...uploadedUrls].slice(0, 8),
+      }));
+      toast.success(
+        `Đã thêm ${uploadedUrls.length} ảnh vào mục ${sectionLabel}. Nhớ bấm 'Lưu thay đổi'!`,
+      );
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Tải ảnh thất bại, thử lại sau.",
+      );
     } finally {
       setUploadingTarget(null);
     }
@@ -443,8 +522,20 @@ function CompanyProfileEditor({
     setNewSectorInput("");
   };
 
-  const handleRemoveSector = (indexToRemove: number) => {
-    setSectors(sectors.filter((_, idx) => idx !== indexToRemove));
+  const handleAddAward = () => {
+    const trimmed = newAwardInput.trim().replaceAll(";", ",");
+    if (!trimmed) return;
+    if (awardsList.some((a) => a.toLowerCase() === trimmed.toLowerCase())) {
+      toast.error("Giải thưởng này đã tồn tại trong danh sách.");
+      return;
+    }
+    const nextAwards = [...awardsList, trimmed];
+    if (nextAwards.join("; ").length > 255) {
+      toast.error("Tổng độ dài danh sách giải thưởng tối đa 255 ký tự.");
+      return;
+    }
+    setAwardsList(nextAwards);
+    setNewAwardInput("");
   };
 
   const handleAddBranch = () => {
@@ -454,10 +545,11 @@ function CompanyProfileEditor({
     }
     const fallbackCity = companyForm.thanhPho?.trim() || "Hà Nội";
     const coords = CITY_DEFAULT_COORDS[fallbackCity];
+    const newKey = `new-${Date.now()}-${branchesList.length}`;
     setBranchesList((prev) => [
       ...prev,
       {
-        localKey: `new-${Date.now()}-${prev.length}`,
+        localKey: newKey,
         thanhPho: fallbackCity,
         diaChi: "",
         mapUrl: "",
@@ -465,6 +557,7 @@ function CompanyProfileEditor({
         kinhDo: coords ? String(coords.lng) : "",
       },
     ]);
+    setSelectedBranchKey(newKey);
   };
 
   const handleUpdateBranch = (
@@ -479,8 +572,23 @@ function CompanyProfileEditor({
   };
 
   const handleRemoveBranch = (localKey: string) => {
-    setBranchesList((prev) =>
-      prev.filter((item) => item.localKey !== localKey),
+    setBranchesList((prev) => {
+      const next = prev.filter((item) => item.localKey !== localKey);
+      if (selectedBranchKey === localKey) {
+        setSelectedBranchKey(next[0]?.localKey ?? "");
+      }
+      return next;
+    });
+  };
+
+  const handleSetHeadquarters = (branch: BranchFormItem) => {
+    setCompanyForm((prev) => ({
+      ...prev,
+      thanhPho: branch.thanhPho || prev.thanhPho,
+      diaChi: branch.diaChi || prev.diaChi,
+    }));
+    toast.success(
+      `Đã chọn chi nhánh tại ${branch.thanhPho || "địa điểm này"} làm Trụ sở chính. Bấm 'Lưu thay đổi' để xác nhận.`,
     );
   };
 
@@ -524,11 +632,12 @@ function CompanyProfileEditor({
           viDo: String(cityCoords.lat),
           kinhDo: String(cityCoords.lng),
         });
-        toast("Không định vị được số nhà cụ thể, đã điền tọa độ trung tâm TP.", {
-          icon: "📍",
-        });
+        toast(
+          "Không định vị được số nhà cụ thể, đã điền tọa độ trung tâm TP.",
+          { icon: "📍" },
+        );
       } else {
-        toast.error("Không tìm thấy tọa độ, vui lòng nhập thủ công.");
+        toast.error("Không tìm thấy tọa độ, vui lòng chọn trực tiếp trên bản đồ.");
       }
     } catch {
       const cityCoords = CITY_DEFAULT_COORDS[branch.thanhPho.trim()];
@@ -539,7 +648,9 @@ function CompanyProfileEditor({
         });
         toast("Đã điền tọa độ trung tâm thành phố.", { icon: "📍" });
       } else {
-        toast.error("Không thể kết nối dịch vụ định vị, vui lòng nhập thủ công.");
+        toast.error(
+          "Không thể kết nối dịch vụ định vị, vui lòng chọn trực tiếp trên bản đồ.",
+        );
       }
     } finally {
       setGeocodingKey(null);
@@ -558,6 +669,7 @@ function CompanyProfileEditor({
         toast.error(
           "Mỗi chi nhánh phải điền đầy đủ Thành phố và Địa chỉ chi tiết.",
         );
+        setSelectedBranchKey(branch.localKey);
         setActiveTab("branches");
         return;
       }
@@ -566,6 +678,7 @@ function CompanyProfileEditor({
         const lat = Number(branch.viDo);
         if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
           toast.error("Vĩ độ (Latitude) phải nằm trong khoảng -90 đến 90.");
+          setSelectedBranchKey(branch.localKey);
           setActiveTab("branches");
           return;
         }
@@ -574,10 +687,21 @@ function CompanyProfileEditor({
         const lng = Number(branch.kinhDo);
         if (!Number.isFinite(lng) || lng < -180 || lng > 180) {
           toast.error("Kinh độ (Longitude) phải nằm trong khoảng -180 đến 180.");
+          setSelectedBranchKey(branch.localKey);
           setActiveTab("branches");
           return;
         }
       }
+    }
+
+    const serializedAwards = awardsList
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .join("; ");
+    if (serializedAwards.length > 255) {
+      toast.error("Tổng độ dài giải thưởng không được vượt quá 255 ký tự.");
+      setActiveTab("culture");
+      return;
     }
 
     const branchPayloads: UpsertCompanyBranchPayload[] = branchesList.map(
@@ -608,15 +732,17 @@ function CompanyProfileEditor({
         quocGia: companyForm.quocGia?.trim() || null,
         thoiGianLamViec: companyForm.thoiGianLamViec?.trim() || null,
         chinhSachOT: companyForm.chinhSachOT?.trim() || null,
-        giaiThuong: companyForm.giaiThuong?.trim() || null,
+        giaiThuong: serializedAwards || null,
         linhVuc: sectors,
         sectionImages,
       },
       branches: branchPayloads,
     };
 
+    const snapshotAtSubmit = currentSnapshot;
     updateProfile(payload, {
       onSuccess: () => {
+        setSavedSnapshotOverride(snapshotAtSubmit);
         toast.success("Cập nhật hồ sơ doanh nghiệp thành công!");
       },
       onError: (err) => {
@@ -626,10 +752,21 @@ function CompanyProfileEditor({
   };
 
   const { company, completion, stats } = profileData;
+  const posts = profileData.posts ?? [];
+  const reviews = profileData.reviews ?? [];
   const completionPercent = completion?.percent ?? 0;
   const missingFields = completion?.missingFields ?? [];
   const totalSectionMedia =
     sectionImages.introImages.length + sectionImages.cultureImages.length;
+  const citiesPreview = buildCitiesBannerPreview(
+    branchesList,
+    companyForm.thanhPho,
+  );
+  const normalizedMainAddress = (companyForm.diaChi || "").trim().toLowerCase();
+  const activeJobsCount = stats.totalActiveJobs ?? 0;
+  const followerCount = stats.followerCount ?? 0;
+  const serializedAwardsLength = awardsList.join("; ").length;
+  const sectorsLength = sectors.join(", ").length;
 
   const modelOptions = buildSelectOptions(
     COMPANY_MODEL_OPTIONS,
@@ -654,35 +791,14 @@ function CompanyProfileEditor({
   const cityOptions = buildSelectOptions(CITY_OPTIONS, companyForm.thanhPho);
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto font-sans text-text-primary space-y-6">
-      {/* Hidden File Inputs */}
+    <div className="p-6 md:p-8 max-w-7xl mx-auto font-sans text-text-primary space-y-6 pb-24">
       <input
         ref={logoInputRef}
         type="file"
         accept="image/jpeg,image/png,image/webp,image/gif"
         className="hidden"
         onChange={(e) => {
-          void handleUploadImageFile(e.target.files?.[0], "logo");
-          e.target.value = "";
-        }}
-      />
-      <input
-        ref={introImageInputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif"
-        className="hidden"
-        onChange={(e) => {
-          void handleUploadImageFile(e.target.files?.[0], "intro");
-          e.target.value = "";
-        }}
-      />
-      <input
-        ref={cultureImageInputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif"
-        className="hidden"
-        onChange={(e) => {
-          void handleUploadImageFile(e.target.files?.[0], "culture");
+          void handleUploadLogo(e.target.files?.[0]);
           e.target.value = "";
         }}
       />
@@ -700,17 +816,27 @@ function CompanyProfileEditor({
             Quản lý hồ sơ doanh nghiệp
           </h1>
           <p className="text-xs md:text-sm text-text-muted mt-1">
-            Đồng bộ thông tin chung, hình ảnh từng section và tọa độ chi nhánh
-            lên trang công khai của bạn.
+            Tùy chỉnh đồng bộ 100% các mục hiển thị trên trang DetailCompany
+            công khai của bạn.
           </p>
         </div>
 
-        {/* Cụm nút hành động */}
         <div className="flex flex-wrap items-center gap-3 self-start md:self-auto">
-          <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary-light text-primary rounded-full text-xs font-semibold border border-primary-subtle">
-            <CheckCircle2 size={14} />
-            Hồ sơ doanh nghiệp
-          </div>
+          {hasUnsavedChanges ? (
+            <button
+              type="button"
+              onClick={onResetFromServer}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-surface-card border border-border-strong text-text-secondary hover:bg-surface-muted rounded-lg text-xs md:text-sm font-semibold transition"
+            >
+              <RotateCcw size={15} />
+              <span>Hủy thay đổi</span>
+            </button>
+          ) : (
+            <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary-light text-primary rounded-full text-xs font-semibold border border-primary-subtle">
+              <CheckCircle2 size={14} />
+              Đã đồng bộ
+            </div>
+          )}
 
           <Link
             href={`/company/${companyForm.slug || company.slug}`}
@@ -742,7 +868,7 @@ function CompanyProfileEditor({
         </div>
       </div>
 
-      {/* --- 2. TABS NAVIGATION --- */}
+      {/* --- 2. TABS NAVIGATION (KHỚP 1-1 VỚI DETAIL COMPANY) --- */}
       <div className="border-b border-border-default bg-surface-card rounded-t-xl px-4 flex items-center gap-2 sm:gap-6 overflow-x-auto no-scrollbar shadow-2xs">
         <button
           type="button"
@@ -799,10 +925,27 @@ function CompanyProfileEditor({
               : "text-text-secondary border-transparent hover:text-text-primary",
           )}
         >
-          <Building size={16} />
+          <MapPin size={16} />
           Chi nhánh &amp; Bản đồ
           <span className="ml-1 px-1.5 py-0.5 text-xs bg-surface-muted text-text-secondary rounded-full font-bold tabular-nums">
             {branchesList.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("posts")}
+          className={cn(
+            "relative flex items-center gap-2 py-4 px-2 text-sm font-semibold transition border-b-2 whitespace-nowrap",
+            activeTab === "posts"
+              ? "text-primary border-primary"
+              : "text-text-secondary border-transparent hover:text-text-primary",
+          )}
+        >
+          <FileText size={16} />
+          Bài viết
+          <span className="ml-1 px-1.5 py-0.5 text-xs bg-surface-muted text-text-secondary rounded-full font-bold tabular-nums">
+            {posts.length}
           </span>
         </button>
 
@@ -819,32 +962,24 @@ function CompanyProfileEditor({
           <Star size={16} />
           Đánh giá &amp; Xếp hạng
           <span className="ml-1 px-2 py-0.5 text-xs bg-warning-soft text-warning-text border border-warning-border rounded-full font-bold flex items-center gap-1 tabular-nums">
-            {stats.averageRating ?? "4.8"} ★
+            {stats.averageRating !== null
+              ? `${stats.averageRating.toFixed(1)} ★`
+              : `${stats.totalReviews}`}
           </span>
         </button>
       </div>
 
-      {/* --- 3. BANNER PREVIEW & THÔNG TIN TÓM TẮT --- */}
-      <div className="bg-surface-card rounded-2xl border border-border-default overflow-hidden shadow-2xs">
-        <div className="relative h-44 sm:h-56 w-full bg-linear-to-r from-primary-dark via-[#13294b] to-primary-dark overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(37,99,235,0.28),transparent_60%)]" />
-          <button
-            type="button"
-            onClick={() => setActiveTab("media")}
-            className="absolute top-4 right-4 inline-flex items-center gap-2 px-3.5 py-2 bg-white/90 hover:bg-white text-text-primary rounded-lg text-xs font-semibold backdrop-blur-md shadow-sm transition"
-          >
-            <Camera size={15} />
-            Quản lý ảnh các Section ({totalSectionMedia})
-          </button>
-        </div>
-
-        <div className="px-6 pb-6 pt-0 relative flex flex-col md:flex-row md:items-end justify-between gap-6 -mt-14 sm:-mt-16">
-          <div className="flex flex-col sm:flex-row sm:items-end gap-5">
-            {/* Logo */}
+      {/* --- 3. BANNER PREVIEW 1-1 VỚI TRANG DETAIL COMPANY --- */}
+      <div className="bg-linear-to-br from-primary-dark via-[#13294b] to-primary-dark rounded-2xl border border-primary-dark/40 p-6 sm:p-7 text-white shadow-sm">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="flex items-start sm:items-center gap-5 min-w-0">
+            {/* Logo tràn viền (object-cover, không khung trắng) + nút Upload */}
             <div
               className={cn(
-                "relative w-28 h-28 sm:w-32 sm:h-32 rounded-2xl border-4 border-white shadow-xl flex items-center justify-center text-white font-extrabold text-2xl sm:text-3xl shrink-0 overflow-hidden",
-                companyForm.logoUrl ? "bg-surface-card" : "bg-primary",
+                "relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl border border-white/25 shadow-lg flex items-center justify-center font-extrabold text-xl sm:text-2xl shrink-0 overflow-hidden",
+                companyForm.logoUrl
+                  ? "bg-surface-card"
+                  : "bg-primary-light text-primary",
               )}
             >
               {companyForm.logoUrl ? (
@@ -853,8 +988,8 @@ function CompanyProfileEditor({
                   alt={companyForm.tenCongTy || "Company Logo"}
                   fill
                   unoptimized
-                  sizes="128px"
-                  className="object-cover rounded-xl"
+                  sizes="96px"
+                  className="object-cover"
                 />
               ) : (
                 getInitials(companyForm.tenCongTy)
@@ -862,7 +997,7 @@ function CompanyProfileEditor({
 
               {uploadingTarget === "logo" && (
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                  <Loader2 size={24} className="animate-spin text-white" />
+                  <Loader2 size={22} className="animate-spin text-white" />
                 </div>
               )}
 
@@ -871,61 +1006,83 @@ function CompanyProfileEditor({
                 title="Đổi logo công ty"
                 onClick={() => logoInputRef.current?.click()}
                 disabled={uploadingTarget === "logo"}
-                className="absolute bottom-1.5 right-1.5 p-2 bg-white text-text-secondary hover:text-primary rounded-full shadow-md transition"
+                className="absolute bottom-1 right-1 p-1.5 bg-white text-text-secondary hover:text-primary rounded-full shadow-md transition"
               >
-                <Pencil size={14} />
+                <Pencil size={12} />
               </button>
             </div>
 
-            {/* Tên & Slogan */}
-            <div className="space-y-1.5 pb-1">
+            <div className="min-w-0 space-y-2">
               <div className="flex flex-wrap items-center gap-2.5">
-                <h2 className="text-xl sm:text-2xl font-bold text-text-primary">
+                <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
                   {companyForm.tenCongTy || "Tên công ty"}
                 </h2>
                 {companyForm.tenPhapLy && (
-                  <span className="px-2.5 py-0.5 bg-surface-muted text-text-secondary rounded-md text-xs font-medium border border-border-default">
+                  <span className="px-2.5 py-0.5 bg-white/10 text-slate-200 rounded-md text-xs font-medium border border-white/15">
                     {companyForm.tenPhapLy}
                   </span>
                 )}
               </div>
-              <p className="text-xs sm:text-sm text-text-secondary italic">
-                {companyForm.aboutMe
-                  ? `“${companyForm.aboutMe}”`
-                  : "Chưa có slogan giới thiệu ngắn"}
-              </p>
+
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs sm:text-sm text-slate-200">
+                <span className="inline-flex items-center gap-1.5">
+                  <MapPin size={14} className="text-primary-disabled shrink-0" />
+                  <span>{citiesPreview}</span>
+                </span>
+                <Link
+                  href="/employer-jobs"
+                  className="inline-flex items-center gap-1.5 hover:text-white underline-offset-2 hover:underline transition tabular-nums"
+                >
+                  <Briefcase
+                    size={14}
+                    className="text-primary-disabled shrink-0"
+                  />
+                  <span>{activeJobsCount} việc làm đang tuyển dụng</span>
+                </Link>
+                <span className="inline-flex items-center gap-1.5 tabular-nums">
+                  <Bell size={14} className="text-primary-disabled shrink-0" />
+                  <span>{followerCount} người theo dõi</span>
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Quick Metrics */}
-          <div className="flex items-center gap-4 bg-surface-page p-3 sm:p-4 rounded-xl border border-border-default shrink-0">
-            <div className="flex items-center gap-3 pr-4 border-r border-border-default">
-              <div className="w-10 h-10 rounded-lg bg-primary-light text-primary flex items-center justify-center">
-                <Users size={20} />
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-4 shrink-0">
+            <div className="bg-white/10 backdrop-blur-xs rounded-xl px-4 py-3 flex items-center gap-5 border border-white/15">
+              <div className="text-center">
+                <p className="text-lg sm:text-xl font-bold text-white tabular-nums flex items-center gap-1 justify-center">
+                  <span>
+                    {stats.averageRating !== null
+                      ? stats.averageRating.toFixed(1)
+                      : "Chưa có"}
+                  </span>
+                  <Star
+                    size={14}
+                    className="text-amber-400"
+                    fill={stats.averageRating !== null ? "currentColor" : "none"}
+                  />
+                </p>
+                <p className="text-[11px] text-slate-300">Đánh giá</p>
               </div>
-              <div>
-                <p className="text-[11px] uppercase tracking-wider text-text-muted font-bold">
-                  QUY MÔ
+              <div className="w-px h-8 bg-white/15" />
+              <div className="text-center">
+                <p className="text-lg sm:text-xl font-bold text-emerald-400 tabular-nums">
+                  {typeof stats.recommendPercent === "number"
+                    ? `${stats.recommendPercent}%`
+                    : "—"}
                 </p>
-                <p className="text-sm font-bold text-text-primary">
-                  {companyForm.quyMo || "Chưa cập nhật"}
-                </p>
+                <p className="text-[11px] text-slate-300">Khuyên làm việc</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-success-light text-success-text flex items-center justify-center">
-                <Globe size={20} />
-              </div>
-              <div>
-                <p className="text-[11px] uppercase tracking-wider text-text-muted font-bold">
-                  QUỐC GIA
-                </p>
-                <p className="text-sm font-bold text-text-primary">
-                  {companyForm.quocGia || "Việt Nam"}
-                </p>
-              </div>
-            </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab("media")}
+              className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-white/95 hover:bg-white text-text-primary rounded-lg text-xs font-semibold shadow-sm transition"
+            >
+              <Camera size={15} />
+              <span>Quản lý ảnh các Section ({totalSectionMedia})</span>
+            </button>
           </div>
         </div>
       </div>
@@ -936,149 +1093,49 @@ function CompanyProfileEditor({
         <div className="lg:col-span-2 space-y-6">
           {activeTab === "general" && (
             <>
-              {/* KHỐI: GIỚI THIỆU CÔNG TY (RICH TEXT) */}
+              {/* KHỐI 1: GIỚI THIỆU CÔNG TY (RICH TEXT + XEM TRƯỚC) */}
+              <RichTextSectionEditor
+                id="company-moTa"
+                title="Giới thiệu công ty"
+                label="Tóm tắt tiểu sử & Năng lực doanh nghiệp"
+                value={companyForm.moTa || ""}
+                onChange={(nextValue) =>
+                  setCompanyForm((prev) => ({ ...prev, moTa: nextValue }))
+                }
+                placeholder="Nhập giới thiệu về công ty, sản phẩm chủ lực, định hướng phát triển..."
+                rows={6}
+                icon={<Building2 size={17} className="text-primary shrink-0" />}
+                footerSlot={
+                  <div className="pt-2 border-t border-border-default flex flex-wrap items-center justify-between gap-3 text-xs">
+                    <span className="inline-flex items-center gap-1.5 text-text-secondary font-medium">
+                      <Images size={14} className="text-primary" />
+                      Đang gắn{" "}
+                      <strong className="text-text-primary tabular-nums">
+                        {sectionImages.introImages.length}/8
+                      </strong>{" "}
+                      ảnh không gian cho section Giới thiệu công ty
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("media")}
+                      className="text-primary font-semibold hover:underline"
+                    >
+                      Quản lý ảnh Giới thiệu →
+                    </button>
+                  </div>
+                }
+              />
+
+              {/* KHỐI 2: LĨNH VỰC HOẠT ĐỘNG TRỌNG TÂM */}
               <div className="bg-surface-card rounded-2xl border border-border-default p-6 shadow-2xs space-y-4">
-                <div className="flex items-center justify-between border-b border-border-default pb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-primary-light text-primary flex items-center justify-center">
-                      <Building2 size={18} />
-                    </div>
-                    <h3 className="font-bold text-text-primary text-base">
-                      Giới thiệu công ty
-                    </h3>
-                  </div>
-                  <span className="text-xs text-text-muted font-medium">
-                    Hỗ trợ HTML cơ bản
-                  </span>
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="company-moTa"
-                    className="block text-xs sm:text-sm font-semibold text-text-secondary mb-2"
-                  >
-                    Tóm tắt tiểu sử &amp; Năng lực doanh nghiệp
-                  </label>
-
-                  <div className="border border-border-default rounded-t-lg bg-surface-page px-3 py-2 flex flex-wrap items-center gap-1">
-                    <button
-                      type="button"
-                      title="In đậm"
-                      onClick={() =>
-                        wrapSelectionWithHtml(
-                          "moTa",
-                          moTaTextareaRef,
-                          "<strong>",
-                          "</strong>",
-                        )
-                      }
-                      className="p-1.5 hover:bg-surface-card rounded text-text-secondary hover:text-text-primary"
-                    >
-                      <Bold size={15} />
-                    </button>
-                    <button
-                      type="button"
-                      title="In nghiêng"
-                      onClick={() =>
-                        wrapSelectionWithHtml(
-                          "moTa",
-                          moTaTextareaRef,
-                          "<em>",
-                          "</em>",
-                        )
-                      }
-                      className="p-1.5 hover:bg-surface-card rounded text-text-secondary hover:text-text-primary"
-                    >
-                      <Italic size={15} />
-                    </button>
-                    <button
-                      type="button"
-                      title="Gạch chân"
-                      onClick={() =>
-                        wrapSelectionWithHtml(
-                          "moTa",
-                          moTaTextareaRef,
-                          "<u>",
-                          "</u>",
-                        )
-                      }
-                      className="p-1.5 hover:bg-surface-card rounded text-text-secondary hover:text-text-primary"
-                    >
-                      <Underline size={15} />
-                    </button>
-
-                    <div className="w-px h-4 bg-border-strong mx-1" />
-
-                    <button
-                      type="button"
-                      title="Danh sách dấu chấm"
-                      onClick={() =>
-                        wrapSelectionWithHtml(
-                          "moTa",
-                          moTaTextareaRef,
-                          "<ul>\n  <li>",
-                          "</li>\n</ul>",
-                        )
-                      }
-                      className="p-1.5 hover:bg-surface-card rounded text-text-secondary hover:text-text-primary"
-                    >
-                      <List size={15} />
-                    </button>
-                    <button
-                      type="button"
-                      title="Danh sách số"
-                      onClick={() =>
-                        wrapSelectionWithHtml(
-                          "moTa",
-                          moTaTextareaRef,
-                          "<ol>\n  <li>",
-                          "</li>\n</ol>",
-                        )
-                      }
-                      className="p-1.5 hover:bg-surface-card rounded text-text-secondary hover:text-text-primary"
-                    >
-                      <ListOrdered size={15} />
-                    </button>
-                    <button
-                      type="button"
-                      title="Chèn liên kết"
-                      onClick={() =>
-                        wrapSelectionWithHtml(
-                          "moTa",
-                          moTaTextareaRef,
-                          '<a href="https://">',
-                          "</a>",
-                        )
-                      }
-                      className="p-1.5 hover:bg-surface-card rounded text-text-secondary hover:text-text-primary"
-                    >
-                      <LinkIcon size={15} />
-                    </button>
-                  </div>
-
-                  <textarea
-                    ref={moTaTextareaRef}
-                    id="company-moTa"
-                    rows={6}
-                    value={companyForm.moTa || ""}
-                    onChange={(e) =>
-                      setCompanyForm({ ...companyForm, moTa: e.target.value })
-                    }
-                    placeholder="Nhập giới thiệu về công ty, sản phẩm chủ lực, định hướng phát triển..."
-                    className="w-full p-4 border border-t-0 border-border-default rounded-b-lg text-sm text-text-primary leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition resize-y"
-                  />
-                </div>
-              </div>
-
-              {/* KHỐI: LĨNH VỰC HOẠT ĐỘNG TRỌNG TÂM */}
-              <div className="bg-surface-card rounded-2xl border border-border-default p-6 shadow-2xs space-y-4">
-                <div className="flex items-center gap-2 border-b border-border-default pb-3">
-                  <div className="w-8 h-8 rounded-lg bg-primary-light text-primary flex items-center justify-center">
-                    <Briefcase size={18} />
-                  </div>
-                  <h3 className="font-bold text-text-primary text-base">
-                    Lĩnh vực hoạt động trọng tâm
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-dashed border-border-default pb-3.5">
+                  <h3 className="flex-1 min-w-0 border-l-4 border-primary pl-3.5 pr-5 py-1 rounded-r-lg bg-linear-to-r from-primary-light via-primary-light/35 to-transparent font-bold text-text-primary text-base flex items-center gap-2">
+                    <Briefcase size={17} className="text-primary shrink-0" />
+                    <span>Lĩnh vực hoạt động trọng tâm</span>
                   </h3>
+                  <span className="text-xs text-text-muted tabular-nums">
+                    {sectorsLength}/150 ký tự
+                  </span>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
@@ -1096,7 +1153,9 @@ function CompanyProfileEditor({
                         <span>{tag}</span>
                         <button
                           type="button"
-                          onClick={() => handleRemoveSector(idx)}
+                          onClick={() =>
+                            setSectors(sectors.filter((_, i) => i !== idx))
+                          }
                           className="text-primary hover:text-danger transition"
                           aria-label={`Xóa ${tag}`}
                         >
@@ -1131,10 +1190,10 @@ function CompanyProfileEditor({
                 </div>
               </div>
 
-              {/* KHỐI: THÔNG TIN CHUNG CHUẨN HÓA (FIX CỨNG 1 DÒNG QUA SELECT) & LIÊN HỆ */}
+              {/* KHỐI 3: THÔNG TIN CHUNG CHUẨN HÓA (HIỂN THỊ 1 DÒNG TRÊN DETAIL COMPANY) */}
               <div className="bg-surface-card rounded-2xl border border-border-default p-6 shadow-2xs space-y-4">
-                <div className="flex items-center justify-between border-b border-border-default pb-3">
-                  <h3 className="font-bold text-text-primary text-base">
+                <div className="border-b border-dashed border-border-default pb-3.5">
+                  <h3 className="border-l-4 border-primary pl-3.5 pr-5 py-1 rounded-r-lg bg-linear-to-r from-primary-light via-primary-light/35 to-transparent font-bold text-text-primary text-base">
                     Thông tin chung &amp; Vận hành (Hiển thị 1 dòng chuẩn hóa)
                   </h3>
                 </div>
@@ -1152,10 +1211,10 @@ function CompanyProfileEditor({
                       type="text"
                       value={companyForm.tenCongTy || ""}
                       onChange={(e) =>
-                        setCompanyForm({
-                          ...companyForm,
+                        setCompanyForm((prev) => ({
+                          ...prev,
                           tenCongTy: e.target.value,
-                        })
+                        }))
                       }
                       className="w-full px-3.5 py-2 border border-border-default rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     />
@@ -1173,10 +1232,10 @@ function CompanyProfileEditor({
                       type="text"
                       value={companyForm.tenPhapLy || ""}
                       onChange={(e) =>
-                        setCompanyForm({
-                          ...companyForm,
+                        setCompanyForm((prev) => ({
+                          ...prev,
                           tenPhapLy: e.target.value,
-                        })
+                        }))
                       }
                       placeholder="Công ty Cổ phần..."
                       className="w-full px-3.5 py-2 border border-border-default rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
@@ -1194,10 +1253,10 @@ function CompanyProfileEditor({
                       id="company-moHinhCongTy"
                       value={companyForm.moHinhCongTy || ""}
                       onChange={(e) =>
-                        setCompanyForm({
-                          ...companyForm,
+                        setCompanyForm((prev) => ({
+                          ...prev,
                           moHinhCongTy: e.target.value,
-                        })
+                        }))
                       }
                       className="w-full px-3.5 py-2 border border-border-default rounded-lg text-sm text-text-primary bg-surface-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     >
@@ -1220,10 +1279,10 @@ function CompanyProfileEditor({
                       id="company-quyMo"
                       value={companyForm.quyMo || ""}
                       onChange={(e) =>
-                        setCompanyForm({
-                          ...companyForm,
+                        setCompanyForm((prev) => ({
+                          ...prev,
                           quyMo: e.target.value,
-                        })
+                        }))
                       }
                       className="w-full px-3.5 py-2 border border-border-default rounded-lg text-sm text-text-primary bg-surface-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     >
@@ -1246,10 +1305,10 @@ function CompanyProfileEditor({
                       id="company-quocGia"
                       value={companyForm.quocGia || ""}
                       onChange={(e) =>
-                        setCompanyForm({
-                          ...companyForm,
+                        setCompanyForm((prev) => ({
+                          ...prev,
                           quocGia: e.target.value,
-                        })
+                        }))
                       }
                       className="w-full px-3.5 py-2 border border-border-default rounded-lg text-sm text-text-primary bg-surface-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     >
@@ -1272,10 +1331,10 @@ function CompanyProfileEditor({
                       id="company-thoiGianLamViec"
                       value={companyForm.thoiGianLamViec || ""}
                       onChange={(e) =>
-                        setCompanyForm({
-                          ...companyForm,
+                        setCompanyForm((prev) => ({
+                          ...prev,
                           thoiGianLamViec: e.target.value,
-                        })
+                        }))
                       }
                       className="w-full px-3.5 py-2 border border-border-default rounded-lg text-sm text-text-primary bg-surface-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     >
@@ -1298,10 +1357,10 @@ function CompanyProfileEditor({
                       id="company-chinhSachOT"
                       value={companyForm.chinhSachOT || ""}
                       onChange={(e) =>
-                        setCompanyForm({
-                          ...companyForm,
+                        setCompanyForm((prev) => ({
+                          ...prev,
                           chinhSachOT: e.target.value,
-                        })
+                        }))
                       }
                       className="w-full px-3.5 py-2 border border-border-default rounded-lg text-sm text-text-primary bg-surface-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     >
@@ -1325,10 +1384,10 @@ function CompanyProfileEditor({
                       type="url"
                       value={companyForm.website || ""}
                       onChange={(e) =>
-                        setCompanyForm({
-                          ...companyForm,
+                        setCompanyForm((prev) => ({
+                          ...prev,
                           website: e.target.value,
-                        })
+                        }))
                       }
                       placeholder="https://example.com"
                       className="w-full px-3.5 py-2 border border-border-default rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
@@ -1346,10 +1405,10 @@ function CompanyProfileEditor({
                       id="company-thanhPho"
                       value={companyForm.thanhPho || ""}
                       onChange={(e) =>
-                        setCompanyForm({
-                          ...companyForm,
+                        setCompanyForm((prev) => ({
+                          ...prev,
                           thanhPho: e.target.value,
-                        })
+                        }))
                       }
                       className="w-full px-3.5 py-2 border border-border-default rounded-lg text-sm text-text-primary bg-surface-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     >
@@ -1373,34 +1432,12 @@ function CompanyProfileEditor({
                       type="text"
                       value={companyForm.diaChi || ""}
                       onChange={(e) =>
-                        setCompanyForm({
-                          ...companyForm,
+                        setCompanyForm((prev) => ({
+                          ...prev,
                           diaChi: e.target.value,
-                        })
+                        }))
                       }
                       placeholder="Số nhà, đường, quận/huyện..."
-                      className="w-full px-3.5 py-2 border border-border-default rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                    />
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label
-                      htmlFor="company-aboutMe"
-                      className="block text-xs font-semibold text-text-secondary mb-1.5"
-                    >
-                      Slogan / Văn hóa &amp; Con người ngắn
-                    </label>
-                    <input
-                      id="company-aboutMe"
-                      type="text"
-                      value={companyForm.aboutMe || ""}
-                      onChange={(e) =>
-                        setCompanyForm({
-                          ...companyForm,
-                          aboutMe: e.target.value,
-                        })
-                      }
-                      placeholder="Đón nhận thách thức - Đổi mới công nghệ..."
                       className="w-full px-3.5 py-2 border border-border-default rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     />
                   </div>
@@ -1411,517 +1448,208 @@ function CompanyProfileEditor({
 
           {activeTab === "culture" && (
             <>
-              <div className="bg-surface-card rounded-2xl border border-border-default p-6 shadow-2xs space-y-4">
-                <div className="flex items-center justify-between border-b border-border-default pb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-primary-light text-primary flex items-center justify-center">
-                      <Sparkles size={18} />
-                    </div>
-                    <h3 className="font-bold text-text-primary text-base">
-                      Phúc lợi &amp; Đãi ngộ
-                    </h3>
+              {/* CARD 1: GIẢI THƯỞNG (MÀU VÀNG ẤM KHỚP DETAIL COMPANY) */}
+              <div className="relative overflow-hidden rounded-2xl border border-amber-300/80 bg-linear-to-br from-amber-50/90 via-[#fffaf0] to-orange-50/75 p-6 space-y-4">
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -right-4 -bottom-6 text-amber-500/10"
+                >
+                  <Award size={160} strokeWidth={1.2} />
+                </div>
+
+                <div className="relative flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-base font-bold text-amber-800 flex items-center gap-2">
+                    <Award size={18} className="text-amber-600" />
+                    <span>Giải thưởng &amp; Ghi nhận</span>
+                  </h3>
+                  <span className="text-xs font-medium text-amber-800/80 tabular-nums">
+                    {serializedAwardsLength}/255 ký tự
+                  </span>
+                </div>
+
+                {awardsList.length === 0 ? (
+                  <p className="relative text-xs text-amber-900/75 italic bg-surface-card/75 px-4 py-3 rounded-lg border border-amber-200/70">
+                    Chưa có giải thưởng nào. Hãy thêm thành tựu để hiển thị khối
+                    Giải thưởng nổi bật trên trang công ty.
+                  </p>
+                ) : (
+                  <div className="relative space-y-2">
+                    {awardsList.map((awardTitle, idx) => (
+                      <div
+                        key={`${awardTitle}-${idx}`}
+                        className="flex items-center justify-between gap-3 bg-surface-card px-4 py-3 rounded-lg border border-amber-200/80 shadow-2xs"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-7 h-7 bg-amber-50 border border-amber-200 rounded-full flex items-center justify-center text-amber-600 shrink-0">
+                            <Award size={14} />
+                          </div>
+                          <span className="text-sm font-semibold text-text-primary truncate">
+                            {awardTitle}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setAwardsList(awardsList.filter((_, i) => i !== idx))
+                          }
+                          aria-label={`Xóa giải thưởng ${awardTitle}`}
+                          className="p-1 text-text-muted hover:text-danger transition shrink-0"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                </div>
+                )}
 
-                <div className="border border-border-default rounded-t-lg bg-surface-page px-3 py-2 flex flex-wrap items-center gap-1">
-                  <button
-                    type="button"
-                    title="In đậm"
-                    onClick={() =>
-                      wrapSelectionWithHtml(
-                        "phucLoi",
-                        phucLoiTextareaRef,
-                        "<strong>",
-                        "</strong>",
-                      )
-                    }
-                    className="p-1.5 hover:bg-surface-card rounded text-text-secondary"
-                  >
-                    <Bold size={15} />
-                  </button>
-                  <button
-                    type="button"
-                    title="Danh sách"
-                    onClick={() =>
-                      wrapSelectionWithHtml(
-                        "phucLoi",
-                        phucLoiTextareaRef,
-                        "<ul>\n  <li>",
-                        "</li>\n</ul>",
-                      )
-                    }
-                    className="p-1.5 hover:bg-surface-card rounded text-text-secondary"
-                  >
-                    <List size={15} />
-                  </button>
-                </div>
-
-                <textarea
-                  ref={phucLoiTextareaRef}
-                  rows={6}
-                  value={companyForm.phucLoi || ""}
-                  onChange={(e) =>
-                    setCompanyForm({ ...companyForm, phucLoi: e.target.value })
-                  }
-                  placeholder="Lương tháng 13, thưởng hiệu suất, bảo hiểm sức khỏe cao cấp, du lịch công ty..."
-                  className="w-full p-4 border border-t-0 border-border-default rounded-b-lg text-sm text-text-primary leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-y"
-                />
-              </div>
-
-              <div className="bg-surface-card rounded-2xl border border-border-default p-6 shadow-2xs space-y-4">
-                <h3 className="font-bold text-text-primary text-base border-b border-border-default pb-3">
-                  Chuyên môn kỹ thuật &amp; Giải thưởng
-                </h3>
-
-                <div>
-                  <label
-                    htmlFor="company-chuyenMon"
-                    className="block text-xs font-semibold text-text-secondary mb-1.5"
-                  >
-                    Chuyên môn công nghệ (Ngăn cách bằng dấu phẩy hoặc HTML)
-                  </label>
-                  <textarea
-                    id="company-chuyenMon"
-                    rows={3}
-                    value={companyForm.chuyenMon || ""}
-                    onChange={(e) =>
-                      setCompanyForm({
-                        ...companyForm,
-                        chuyenMon: e.target.value,
-                      })
-                    }
-                    placeholder="Java, Microservices, ReactJS, TypeScript, Kubernetes, AWS"
-                    className="w-full p-3.5 border border-border-default rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="company-giaiThuong"
-                    className="block text-xs font-semibold text-text-secondary mb-1.5 flex items-center gap-1.5"
-                  >
-                    <Award size={14} className="text-amber-600" />
-                    Giải thưởng doanh nghiệp (Tách nhiều giải bằng dấu chấm phẩy ;)
-                  </label>
+                <div className="relative flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1">
                   <input
-                    id="company-giaiThuong"
                     type="text"
-                    maxLength={255}
-                    value={companyForm.giaiThuong || ""}
-                    onChange={(e) =>
-                      setCompanyForm({
-                        ...companyForm,
-                        giaiThuong: e.target.value,
-                      })
-                    }
-                    placeholder="Công ty IT tốt nhất Việt Nam 2026; Top 10 Nơi làm việc tốt nhất"
-                    className="w-full px-3.5 py-2 border border-border-default rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                    value={newAwardInput}
+                    onChange={(e) => setNewAwardInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddAward();
+                      }
+                    }}
+                    placeholder="VD: Công ty IT tốt nhất Việt Nam 2026"
+                    className="flex-1 px-3.5 py-2 border border-amber-200 rounded-lg text-sm bg-surface-card text-text-primary focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-500"
                   />
+                  <button
+                    type="button"
+                    onClick={handleAddAward}
+                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold transition shrink-0"
+                  >
+                    <Plus size={15} />
+                    <span>Thêm giải thưởng</span>
+                  </button>
                 </div>
               </div>
+
+              {/* CARD 2: CHUYÊN MÔN CỦA CHÚNG TÔI */}
+              <RichTextSectionEditor
+                id="company-chuyenMon"
+                title="Chuyên môn của chúng tôi"
+                label="Năng lực công nghệ & Stack kỹ thuật (Nhập danh sách cách nhau bằng dấu phẩy hoặc HTML <ul><li>)"
+                value={companyForm.chuyenMon || ""}
+                onChange={(nextValue) =>
+                  setCompanyForm((prev) => ({ ...prev, chuyenMon: nextValue }))
+                }
+                placeholder="Java, Microservices, ReactJS, TypeScript, Kubernetes, AWS"
+                rows={4}
+                previewRenderer={(rawValue) =>
+                  rawValue.includes("<") ? (
+                    <div
+                      className="prose prose-sm prose-slate max-w-none text-text-secondary leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: rawValue }}
+                    />
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {rawValue
+                        .split(",")
+                        .map((s) => s.trim())
+                        .filter(Boolean)
+                        .map((skill) => (
+                          <span
+                            key={skill}
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary-light text-primary border border-primary-subtle"
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                    </div>
+                  )
+                }
+              />
+
+              {/* CARD 3: PHÚC LỢI & ĐÃI NGỘ */}
+              <RichTextSectionEditor
+                id="company-phucLoi"
+                title="Phúc lợi & Đãi ngộ"
+                label="Chính sách lương thưởng, bảo hiểm và đãi ngộ nhân viên"
+                value={companyForm.phucLoi || ""}
+                onChange={(nextValue) =>
+                  setCompanyForm((prev) => ({ ...prev, phucLoi: nextValue }))
+                }
+                placeholder="Lương tháng 13, thưởng hiệu suất, bảo hiểm sức khỏe cao cấp, du lịch công ty..."
+                rows={6}
+                icon={<Sparkles size={17} className="text-primary shrink-0" />}
+                footerSlot={
+                  <div className="pt-2 border-t border-border-default flex flex-wrap items-center justify-between gap-3 text-xs">
+                    <span className="inline-flex items-center gap-1.5 text-text-secondary font-medium">
+                      <Images size={14} className="text-primary" />
+                      Đang gắn{" "}
+                      <strong className="text-text-primary tabular-nums">
+                        {sectionImages.cultureImages.length}/8
+                      </strong>{" "}
+                      ảnh hoạt động văn hóa
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("media")}
+                      className="text-primary font-semibold hover:underline"
+                    >
+                      Quản lý ảnh Văn hóa →
+                    </button>
+                  </div>
+                }
+              />
+
+              {/* CARD 4: VĂN HÓA & CON NGƯỜI (ABOUT ME RICH TEXT) */}
+              <RichTextSectionEditor
+                id="company-aboutMe"
+                title="Văn hóa & Con người"
+                label="Môi trường làm việc, con người và giá trị cốt lõi (Hiển thị tại mục Văn hóa & Con người)"
+                value={companyForm.aboutMe || ""}
+                onChange={(nextValue) =>
+                  setCompanyForm((prev) => ({ ...prev, aboutMe: nextValue }))
+                }
+                placeholder="Chia sẻ môi trường kỹ sư, tinh thần teamwork và cơ hội phát triển tại công ty..."
+                rows={5}
+                icon={<Users size={17} className="text-primary shrink-0" />}
+              />
             </>
           )}
 
           {activeTab === "media" && (
-            <div className="space-y-6">
-              {/* Ảnh section Giới thiệu công ty */}
-              <div className="bg-surface-card rounded-2xl border border-border-default p-6 shadow-2xs space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-default pb-3">
-                  <div>
-                    <h3 className="font-bold text-text-primary text-base">
-                      Ảnh cho Section &ldquo;Giới thiệu công ty&rdquo;
-                    </h3>
-                    <p className="text-xs text-text-muted mt-0.5">
-                      Hiển thị ảnh văn phòng, không gian làm việc trên trang công
-                      khai (tối đa 8 ảnh, dưới 5MB/ảnh).
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => introImageInputRef.current?.click()}
-                    disabled={uploadingTarget === "intro"}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary-light hover:bg-primary-subtle text-primary border border-primary-subtle rounded-lg text-xs font-semibold transition"
-                  >
-                    {uploadingTarget === "intro" ? (
-                      <Loader2 size={15} className="animate-spin" />
-                    ) : (
-                      <Upload size={15} />
-                    )}
-                    <span>Tải ảnh lên</span>
-                  </button>
-                </div>
-
-                {sectionImages.introImages.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-border-strong bg-surface-page p-8 text-center">
-                    <ImageIcon
-                      size={28}
-                      className="mx-auto text-text-placeholder mb-2"
-                    />
-                    <p className="text-sm font-semibold text-text-primary">
-                      Chưa có ảnh cho phần Giới thiệu công ty
-                    </p>
-                    <p className="text-xs text-text-muted mt-1">
-                      Hãy tải lên ảnh văn phòng hoặc đội ngũ kỹ sư của bạn.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    {sectionImages.introImages.map((imgUrl, idx) => (
-                      <div
-                        key={`${imgUrl}-${idx}`}
-                        className="relative aspect-video rounded-xl overflow-hidden border border-border-default bg-surface-muted group"
-                      >
-                        <Image
-                          src={imgUrl}
-                          alt={`Ảnh giới thiệu ${idx + 1}`}
-                          fill
-                          unoptimized
-                          sizes="(max-width: 640px) 50vw, 240px"
-                          className="object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setSectionImages((prev) => ({
-                              ...prev,
-                              introImages: prev.introImages.filter(
-                                (_, i) => i !== idx,
-                              ),
-                            }))
-                          }
-                          aria-label="Xóa ảnh"
-                          className="absolute top-2 right-2 p-1.5 rounded-full bg-black/65 hover:bg-danger text-white transition"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Ảnh section Văn hóa & Phúc lợi */}
-              <div className="bg-surface-card rounded-2xl border border-border-default p-6 shadow-2xs space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-default pb-3">
-                  <div>
-                    <h3 className="font-bold text-text-primary text-base">
-                      Ảnh cho Section &ldquo;Phúc lợi &amp; Văn hóa&rdquo;
-                    </h3>
-                    <p className="text-xs text-text-muted mt-0.5">
-                      Hình ảnh team building, workshop, hoạt động nội bộ (tối đa
-                      8 ảnh).
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => cultureImageInputRef.current?.click()}
-                    disabled={uploadingTarget === "culture"}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary-light hover:bg-primary-subtle text-primary border border-primary-subtle rounded-lg text-xs font-semibold transition"
-                  >
-                    {uploadingTarget === "culture" ? (
-                      <Loader2 size={15} className="animate-spin" />
-                    ) : (
-                      <Upload size={15} />
-                    )}
-                    <span>Tải ảnh lên</span>
-                  </button>
-                </div>
-
-                {sectionImages.cultureImages.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-border-strong bg-surface-page p-8 text-center">
-                    <Sparkles
-                      size={28}
-                      className="mx-auto text-text-placeholder mb-2"
-                    />
-                    <p className="text-sm font-semibold text-text-primary">
-                      Chưa có ảnh cho phần Phúc lợi &amp; Văn hóa
-                    </p>
-                    <p className="text-xs text-text-muted mt-1">
-                      Bấm &ldquo;Tải ảnh lên&rdquo; để bổ sung ảnh hoạt động văn
-                      hóa công ty.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    {sectionImages.cultureImages.map((imgUrl, idx) => (
-                      <div
-                        key={`${imgUrl}-${idx}`}
-                        className="relative aspect-video rounded-xl overflow-hidden border border-border-default bg-surface-muted group"
-                      >
-                        <Image
-                          src={imgUrl}
-                          alt={`Ảnh văn hóa ${idx + 1}`}
-                          fill
-                          unoptimized
-                          sizes="(max-width: 640px) 50vw, 240px"
-                          className="object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setSectionImages((prev) => ({
-                              ...prev,
-                              cultureImages: prev.cultureImages.filter(
-                                (_, i) => i !== idx,
-                              ),
-                            }))
-                          }
-                          aria-label="Xóa ảnh"
-                          className="absolute top-2 right-2 p-1.5 rounded-full bg-black/65 hover:bg-danger text-white transition"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+            <SectionMediaPanel
+              sectionImages={sectionImages}
+              uploadingTarget={uploadingTarget}
+              onUploadFiles={handleUploadSectionFiles}
+              onUpdateImages={(field, nextList) =>
+                setSectionImages((prev) => ({ ...prev, [field]: nextList }))
+              }
+            />
           )}
 
           {activeTab === "branches" && (
-            <div className="bg-surface-card rounded-2xl border border-border-default p-6 shadow-2xs space-y-5">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-default pb-3">
-                <div>
-                  <h3 className="font-bold text-text-primary text-base">
-                    Quản lý Chi nhánh &amp; Tọa độ Bản đồ
-                  </h3>
-                  <p className="text-xs text-text-muted mt-0.5">
-                    Nhập địa chỉ và tọa độ (Vĩ độ / Kinh độ) để hiển thị bản đồ
-                    OpenStreetMap và nút &ldquo;Open in Maps&rdquo; cho ứng viên.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleAddBranch}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-primary-light hover:bg-primary-subtle text-primary border border-primary-subtle rounded-lg text-xs font-semibold transition"
-                >
-                  <Plus size={15} />
-                  <span>Thêm chi nhánh</span>
-                </button>
-              </div>
-
-              {branchesList.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-border-strong bg-surface-page p-8 text-center">
-                  <MapPin
-                    size={28}
-                    className="mx-auto text-text-placeholder mb-2"
-                  />
-                  <p className="text-sm font-semibold text-text-primary">
-                    Chưa có chi nhánh nào được khai báo
-                  </p>
-                  <p className="text-xs text-text-muted mt-1 mb-4">
-                    Thêm các chi nhánh (VD: Hà Nội, TP.HCM) để trang công ty
-                    hiển thị đầy đủ danh sách địa điểm &amp; bản đồ.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={handleAddBranch}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-lg text-xs font-semibold transition"
-                  >
-                    <Plus size={15} /> Thêm chi nhánh đầu tiên
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {branchesList.map((branch, idx) => {
-                    const hasCoords =
-                      branch.viDo.trim() !== "" &&
-                      branch.kinhDo.trim() !== "" &&
-                      Number.isFinite(Number(branch.viDo)) &&
-                      Number.isFinite(Number(branch.kinhDo));
-                    const previewGoogleMapsUrl = hasCoords
-                      ? `https://www.google.com/maps?q=${branch.viDo.trim()},${branch.kinhDo.trim()}`
-                      : `https://www.google.com/maps?q=${encodeURIComponent(
-                          `${branch.diaChi} ${branch.thanhPho}`,
-                        )}`;
-
-                    return (
-                      <div
-                        key={branch.localKey}
-                        className="rounded-xl border border-border-default bg-surface-page p-4 space-y-3"
-                      >
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <span className="text-xs font-bold text-text-primary uppercase tracking-wider">
-                            Chi nhánh #{idx + 1}
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => void handleLookupCoords(branch)}
-                              disabled={geocodingKey === branch.localKey}
-                              className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-surface-card hover:bg-primary-light text-primary border border-primary-subtle rounded-md text-xs font-semibold transition"
-                            >
-                              {geocodingKey === branch.localKey ? (
-                                <Loader2 size={13} className="animate-spin" />
-                              ) : (
-                                <Crosshair size={13} />
-                              )}
-                              <span>Lấy tọa độ</span>
-                            </button>
-
-                            <a
-                              href={previewGoogleMapsUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 px-2.5 py-1 bg-surface-card hover:bg-surface-muted text-text-secondary border border-border-default rounded-md text-xs font-semibold transition"
-                            >
-                              <Navigation size={12} />
-                              <span>Open in Maps</span>
-                            </a>
-
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleRemoveBranch(branch.localKey)
-                              }
-                              aria-label="Xóa chi nhánh"
-                              className="p-1.5 text-text-muted hover:text-danger transition"
-                            >
-                              <Trash2 size={15} />
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-xs font-semibold text-text-secondary mb-1">
-                              Thành phố <span className="text-danger">*</span>
-                            </label>
-                            <select
-                              value={branch.thanhPho}
-                              onChange={(e) => {
-                                const city = e.target.value;
-                                const defaults = CITY_DEFAULT_COORDS[city];
-                                handleUpdateBranch(branch.localKey, {
-                                  thanhPho: city,
-                                  ...(defaults && !branch.viDo && !branch.kinhDo
-                                    ? {
-                                        viDo: String(defaults.lat),
-                                        kinhDo: String(defaults.lng),
-                                      }
-                                    : {}),
-                                });
-                              }}
-                              className="w-full px-3 py-2 border border-border-default rounded-lg text-sm bg-surface-card text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                            >
-                              {buildSelectOptions(
-                                CITY_OPTIONS,
-                                branch.thanhPho,
-                              ).map((city) => (
-                                <option key={city} value={city}>
-                                  {city}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-
-                          <div>
-                            <label className="block text-xs font-semibold text-text-secondary mb-1">
-                              Địa chỉ chi tiết{" "}
-                              <span className="text-danger">*</span>
-                            </label>
-                            <input
-                              type="text"
-                              value={branch.diaChi}
-                              onChange={(e) =>
-                                handleUpdateBranch(branch.localKey, {
-                                  diaChi: e.target.value,
-                                })
-                              }
-                              placeholder="VD: Số 8 Hoàng Văn Thái, Quận 7..."
-                              className="w-full px-3 py-2 border border-border-default rounded-lg text-sm bg-surface-card text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-xs font-semibold text-text-secondary mb-1">
-                              Vĩ độ (Latitude)
-                            </label>
-                            <input
-                              type="number"
-                              step="any"
-                              value={branch.viDo}
-                              onChange={(e) =>
-                                handleUpdateBranch(branch.localKey, {
-                                  viDo: e.target.value,
-                                })
-                              }
-                              placeholder="VD: 10.7295"
-                              className="w-full px-3 py-2 border border-border-default rounded-lg text-sm bg-surface-card text-text-primary tabular-nums focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-xs font-semibold text-text-secondary mb-1">
-                              Kinh độ (Longitude)
-                            </label>
-                            <input
-                              type="number"
-                              step="any"
-                              value={branch.kinhDo}
-                              onChange={(e) =>
-                                handleUpdateBranch(branch.localKey, {
-                                  kinhDo: e.target.value,
-                                })
-                              }
-                              placeholder="VD: 106.7218"
-                              className="w-full px-3 py-2 border border-border-default rounded-lg text-sm bg-surface-card text-text-primary tabular-nums focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+            <CompanyBranchesManager
+              branchesList={branchesList}
+              selectedBranchKey={selectedBranchKey}
+              mainAddress={companyForm.diaChi || ""}
+              citiesPreview={citiesPreview}
+              geocodingKey={geocodingKey}
+              onSelectBranch={setSelectedBranchKey}
+              onAddBranch={handleAddBranch}
+              onUpdateBranch={handleUpdateBranch}
+              onRemoveBranch={handleRemoveBranch}
+              onLookupCoords={handleLookupCoords}
+              onSetHeadquarters={handleSetHeadquarters}
+            />
           )}
 
-          {activeTab === "reviews" && (
-            <div className="bg-surface-card rounded-2xl border border-border-default p-6 shadow-2xs space-y-5">
-              <div className="flex items-center justify-between border-b border-border-default pb-3">
-                <h3 className="font-bold text-text-primary text-base">
-                  Thống kê Đánh giá từ ứng viên &amp; nhân viên
-                </h3>
-                <Link
-                  href={`/company/${companyForm.slug || company.slug}`}
-                  target="_blank"
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
-                >
-                  <span>Xem tại trang công khai</span>
-                  <ExternalLink size={13} />
-                </Link>
-              </div>
+          {activeTab === "posts" && <CompanyPostsManager posts={posts} />}
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="rounded-xl border border-border-default bg-surface-page p-4">
-                  <p className="text-xs text-text-muted mb-1">
-                    Điểm trung bình
-                  </p>
-                  <p className="text-2xl font-bold text-text-primary tabular-nums flex items-center gap-1.5">
-                    {stats.averageRating ?? "Chưa có"}
-                    <Star
-                      size={18}
-                      className="text-amber-400"
-                      fill="currentColor"
-                    />
-                  </p>
-                </div>
-                <div className="rounded-xl border border-border-default bg-surface-page p-4">
-                  <p className="text-xs text-text-muted mb-1">Tổng đánh giá</p>
-                  <p className="text-2xl font-bold text-text-primary tabular-nums">
-                    {stats.totalReviews}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-border-default bg-surface-page p-4">
-                  <p className="text-xs text-text-muted mb-1">Số chi nhánh</p>
-                  <p className="text-2xl font-bold text-text-primary tabular-nums">
-                    {branchesList.length}
-                  </p>
-                </div>
-              </div>
-            </div>
+          {activeTab === "reviews" && (
+            <CompanyReviewsSummaryTab
+              slug={companyForm.slug || company.slug}
+              companyName={
+                companyForm.tenCongTy || company.tenCongTy || "Công ty"
+              }
+              stats={stats}
+              reviews={reviews}
+            />
           )}
         </div>
 
@@ -1947,24 +1675,39 @@ function CompanyProfileEditor({
 
             <div className="bg-primary-light/70 border border-primary-subtle rounded-xl p-4 flex gap-3 text-text-secondary">
               <Lightbulb size={20} className="text-primary shrink-0 mt-0.5" />
-              <div className="space-y-1">
+              <div className="space-y-2 min-w-0">
                 <p className="text-xs font-bold text-text-primary">
                   {missingFields.length > 0
-                    ? "Gợi ý tối ưu hồ sơ"
+                    ? "Gợi ý tối ưu hồ sơ (Nhấp để bổ sung)"
                     : "Hồ sơ doanh nghiệp đã đầy đủ!"}
                 </p>
                 {missingFields.length > 0 ? (
-                  <p className="text-xs text-text-secondary leading-relaxed">
-                    Còn thiếu:{" "}
-                    {missingFields
-                      .slice(0, 4)
-                      .map((f) => MISSING_FIELD_LABELS[f] ?? f)
-                      .join(", ")}
-                    {missingFields.length > 4
-                      ? ` (+${missingFields.length - 4} mục)`
-                      : ""}
-                    .
-                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {missingFields.slice(0, 5).map((field) => {
+                      const meta = MISSING_FIELD_META[field];
+                      return (
+                        <button
+                          key={field}
+                          type="button"
+                          onClick={() => {
+                            if (field === "logoUrl") {
+                              logoInputRef.current?.click();
+                            } else {
+                              setActiveTab(meta?.tab ?? "general");
+                            }
+                          }}
+                          className="px-2 py-1 rounded-md bg-surface-card hover:bg-primary text-text-secondary hover:text-white border border-primary-subtle text-[11px] font-semibold transition"
+                        >
+                          + {meta?.label ?? field}
+                        </button>
+                      );
+                    })}
+                    {missingFields.length > 5 && (
+                      <span className="text-[11px] text-text-muted self-center">
+                        +{missingFields.length - 5} mục khác
+                      </span>
+                    )}
+                  </div>
                 ) : (
                   <p className="text-xs text-text-secondary leading-relaxed">
                     Hồ sơ công ty đạt 100% thông tin chuẩn giúp tăng uy tín với
@@ -1972,6 +1715,67 @@ function CompanyProfileEditor({
                   </p>
                 )}
               </div>
+            </div>
+          </div>
+
+          {/* TỔNG QUAN HIỂN THỊ TRÊN DETAIL COMPANY */}
+          <div className="bg-surface-card rounded-2xl border border-border-default p-6 shadow-2xs space-y-3.5">
+            <div className="flex items-center justify-between border-b border-border-default pb-3">
+              <div className="flex items-center gap-2">
+                <Globe size={18} className="text-primary" />
+                <h3 className="font-bold text-text-primary text-base">
+                  Đồng bộ trang công khai
+                </h3>
+              </div>
+              <Link
+                href={`/company/${companyForm.slug || company.slug}`}
+                target="_blank"
+                className="text-xs font-semibold text-primary hover:underline"
+              >
+                Mở trang →
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5 text-xs">
+              <div className="rounded-lg bg-surface-page border border-border-default p-3">
+                <p className="text-text-muted mb-0.5">Việc làm đang mở</p>
+                <p className="font-bold text-text-primary text-sm tabular-nums">
+                  {activeJobsCount} vị trí
+                </p>
+              </div>
+              <div className="rounded-lg bg-surface-page border border-border-default p-3">
+                <p className="text-text-muted mb-0.5">Bài viết công ty</p>
+                <p className="font-bold text-text-primary text-sm tabular-nums">
+                  {posts.length} bài viết
+                </p>
+              </div>
+              <div className="rounded-lg bg-surface-page border border-border-default p-3">
+                <p className="text-text-muted mb-0.5">Ảnh các Section</p>
+                <p className="font-bold text-text-primary text-sm tabular-nums">
+                  {totalSectionMedia}/16 ảnh
+                </p>
+              </div>
+              <div className="rounded-lg bg-surface-page border border-border-default p-3">
+                <p className="text-text-muted mb-0.5">Người theo dõi</p>
+                <p className="font-bold text-primary text-sm tabular-nums">
+                  {followerCount} ứng viên
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-2 pt-1 text-xs">
+              <Link
+                href="/employer-jobs"
+                className="text-primary font-semibold hover:underline"
+              >
+                Quản lý việc làm
+              </Link>
+              <Link
+                href="/post-job"
+                className="text-primary font-semibold hover:underline"
+              >
+                + Đăng tin tuyển dụng
+              </Link>
             </div>
           </div>
 
@@ -1995,27 +1799,38 @@ function CompanyProfileEditor({
 
             <div className="space-y-3">
               {branchesList.length > 0 ? (
-                branchesList.map((branch, idx) => (
-                  <div
-                    key={branch.localKey}
-                    className="p-3.5 bg-surface-page border border-border-default rounded-xl space-y-1"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-xs font-bold text-text-primary uppercase tracking-wide">
-                        {idx === 0 ? "TRỤ SỞ / CHÍNH" : "CHI NHÁNH"} (
-                        {branch.thanhPho || "Chưa chọn TP"})
+                branchesList.map((branch) => {
+                  const isHq =
+                    normalizedMainAddress !== "" &&
+                    branch.diaChi.trim().toLowerCase() ===
+                      normalizedMainAddress;
+                  return (
+                    <button
+                      key={branch.localKey}
+                      type="button"
+                      onClick={() => {
+                        setSelectedBranchKey(branch.localKey);
+                        setActiveTab("branches");
+                      }}
+                      className="w-full text-left p-3.5 bg-surface-page hover:border-primary/60 border border-border-default rounded-xl space-y-1 transition"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-bold text-text-primary uppercase tracking-wide">
+                          {isHq ? "TRỤ SỞ CHÍNH" : "CHI NHÁNH"} (
+                          {branch.thanhPho || "Chưa chọn TP"})
+                        </p>
+                        {branch.viDo && branch.kinhDo && (
+                          <span className="text-[11px] font-medium text-success-text">
+                            Có tọa độ
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-text-secondary leading-relaxed">
+                        {branch.diaChi || "Chưa nhập địa chỉ chi tiết"}
                       </p>
-                      {branch.viDo && branch.kinhDo && (
-                        <span className="text-[11px] font-medium text-success-text">
-                          Có tọa độ
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-text-secondary leading-relaxed">
-                      {branch.diaChi || "Chưa nhập địa chỉ chi tiết"}
-                    </p>
-                  </div>
-                ))
+                    </button>
+                  );
+                })
               ) : (
                 <div className="p-4 bg-surface-page border border-dashed border-border-default rounded-xl text-center space-y-2">
                   <p className="text-xs text-text-muted">
@@ -2037,6 +1852,32 @@ function CompanyProfileEditor({
           </div>
         </div>
       </div>
+
+      {/* Thanh nhắc thay đổi chưa lưu */}
+      {hasUnsavedChanges && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-2xl rounded-xl border border-warning-border bg-surface-card/95 backdrop-blur-md px-4 py-3 shadow-lg flex flex-wrap items-center justify-between gap-3">
+          <p className="text-xs sm:text-sm font-medium text-text-primary">
+            Bạn có thay đổi chưa được lưu lên trang công khai.
+          </p>
+          <div className="flex items-center gap-2 ml-auto">
+            <button
+              type="button"
+              onClick={onResetFromServer}
+              className="px-3 py-1.5 rounded-lg border border-border-default text-xs font-semibold text-text-secondary hover:bg-surface-muted transition"
+            >
+              Hủy bỏ
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveProfile}
+              disabled={isUpdating}
+              className="px-3.5 py-1.5 rounded-lg bg-primary-light hover:bg-primary-subtle text-primary border border-primary-subtle text-xs font-semibold transition"
+            >
+              Cập nhật ngay
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

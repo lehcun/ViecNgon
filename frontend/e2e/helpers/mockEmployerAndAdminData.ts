@@ -99,7 +99,7 @@ export function createMockEmployerCompanyProfile() {
       moTa: "<p>Doanh nghiệp công nghệ hàng đầu Việt Nam.</p>",
       phucLoi: "<p>Lương tháng 13, thưởng hiệu suất.</p>",
       chuyenMon: "<p>Cloud, AI, Fintech &amp; Web Platform.</p>",
-      aboutMe: "Build Technologies and Grow People",
+      aboutMe: "<p>Build Technologies and Grow People</p>",
       logoUrl: null,
       website: "https://vng.com.vn",
       thanhPho: "TP.HCM",
@@ -143,6 +143,27 @@ export function createMockEmployerCompanyProfile() {
         laTruSoChinh: false,
       },
     ],
+    posts: [
+      {
+        maBaiViet: "post-vng-1",
+        tieuDe: "VNG Campus đón đoàn sinh viên Công nghệ thông tin",
+        anhBiaUrl: null,
+        noiDung: "Buổi giao lưu chia sẻ kiến trúc hệ thống quy mô lớn.",
+        ngayDang: "2026-11-10T08:00:00.000Z",
+      },
+    ],
+    reviews: [
+      {
+        id: "rev-vng-1",
+        title: "Môi trường kỹ thuật năng động, đồng nghiệp giỏi",
+        content: "Cơ hội làm việc với hệ thống triệu người dùng thực tế.",
+        pros: "Phúc lợi Campus đầy đủ",
+        cons: null,
+        rating: 5,
+        recommend: true,
+        createdAt: "2026-11-05T08:00:00.000Z",
+      },
+    ],
     completion: {
       percent: 92,
       missingFields: ["logoUrl"],
@@ -151,6 +172,10 @@ export function createMockEmployerCompanyProfile() {
       totalBranches: 2,
       averageRating: 4.8,
       totalReviews: 45,
+      recommendPercent: 95,
+      totalPosts: 1,
+      totalActiveJobs: 3,
+      followerCount: 28,
     },
   };
 }

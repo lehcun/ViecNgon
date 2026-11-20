@@ -9,7 +9,9 @@ import type {
   CompanyInfo,
   CompanyProfileCompletion,
   CompanyProfileCompletionField,
+  CompanyProfilePostItem,
   CompanyProfileResponse,
+  CompanyProfileReviewItem,
   CompanyProfileStats,
   CompanySectionImages,
   HrProfileInfo,
@@ -24,6 +26,10 @@ import {
   stripHtml,
 } from '../common/utils/sanitize-html.util';
 import {
+  CreateCompanyPostDto,
+  UpdateCompanyPostDto,
+} from './dto/company-post.dto';
+import {
   UpdateCompanyInfoDto,
   UpdateCompanyProfileDto,
 } from './dto/update-company-profile.dto';
@@ -35,6 +41,13 @@ const RECRUITER_PROFILE_INCLUDE = {
   congTy: {
     include: {
       chiNhanhs: { orderBy: { thanhPho: 'asc' } },
+      baiViets: { orderBy: { ngayDang: 'desc' }, take: 30 },
+      _count: {
+        select: {
+          nguoiTheoDois: true,
+          baiViets: true,
+        },
+      },
     },
   },
 } satisfies Prisma.NhaTuyenDungInclude;
@@ -66,14 +79,157 @@ export class CompanyProfileService {
     }
 
     const { congTy } = recruiter;
-    const stats = await this.getCompanyStats(congTy);
+    const { reviews, stats } = await this.getCompanyReviewsAndStats(congTy);
 
     return {
       company: this.mapCompanyInfo(congTy),
       hr: this.mapHrInfo(recruiter),
       branches: this.mapBranches(congTy),
+      posts: this.mapPosts(congTy),
+      reviews,
       completion: this.calculateCompletion(congTy),
       stats,
+    };
+  }
+
+  /**
+   * 3. QUẢN LÝ BÀI VIẾT CÔNG TY (TAB BÀI VIẾT TRÊN DETAIL COMPANY)
+   */
+  async createCompanyPost(
+    userId: string,
+    dto: CreateCompanyPostDto,
+  ): Promise<CompanyProfilePostItem> {
+    const recruiter = await this.prisma.nhaTuyenDung.findUnique({
+      where: { maTaiKhoan: userId },
+      select: { maCongTy: true },
+    });
+    if (!recruiter) {
+      throw new NotFoundException(
+        'Không tìm thấy tài khoản nhà tuyển dụng trong hệ thống.',
+      );
+    }
+
+    const tieuDe = this.truncateText(stripHtml(dto.tieuDe), 255);
+    const noiDung = sanitizePlainText(dto.noiDung);
+    if (!tieuDe || !noiDung) {
+      throw new BadRequestException(
+        'Tiêu đề và nội dung bài viết không được để trống.',
+      );
+    }
+
+    const created = await this.prisma.baiViet.create({
+      data: {
+        maCongTy: recruiter.maCongTy,
+        tieuDe,
+        anhBiaUrl: this.truncateText(dto.anhBiaUrl, 255),
+        noiDung,
+      },
+    });
+
+    return {
+      maBaiViet: created.maBaiViet,
+      tieuDe: created.tieuDe,
+      anhBiaUrl: created.anhBiaUrl ?? null,
+      noiDung: created.noiDung,
+      ngayDang: created.ngayDang,
+    };
+  }
+
+  async updateCompanyPost(
+    userId: string,
+    postId: string,
+    dto: UpdateCompanyPostDto,
+  ): Promise<CompanyProfilePostItem> {
+    const recruiter = await this.prisma.nhaTuyenDung.findUnique({
+      where: { maTaiKhoan: userId },
+      select: { maCongTy: true },
+    });
+    if (!recruiter) {
+      throw new NotFoundException(
+        'Không tìm thấy tài khoản nhà tuyển dụng trong hệ thống.',
+      );
+    }
+
+    const existing = await this.prisma.baiViet.findFirst({
+      where: { maBaiViet: postId, maCongTy: recruiter.maCongTy },
+      select: { maBaiViet: true },
+    });
+    if (!existing) {
+      throw new NotFoundException(
+        'Không tìm thấy bài viết thuộc doanh nghiệp của bạn.',
+      );
+    }
+
+    const data: Prisma.BaiVietUpdateInput = {};
+    if (dto.tieuDe !== undefined) {
+      const tieuDe = this.truncateText(stripHtml(dto.tieuDe), 255);
+      if (!tieuDe) {
+        throw new BadRequestException('Tiêu đề bài viết không được để trống.');
+      }
+      data.tieuDe = tieuDe;
+    }
+    if (dto.anhBiaUrl !== undefined) {
+      data.anhBiaUrl = this.truncateText(dto.anhBiaUrl, 255);
+    }
+    if (dto.noiDung !== undefined) {
+      const noiDung = sanitizePlainText(dto.noiDung);
+      if (!noiDung) {
+        throw new BadRequestException('Nội dung bài viết không được để trống.');
+      }
+      data.noiDung = noiDung;
+    }
+
+    if (Object.keys(data).length === 0) {
+      throw new BadRequestException(
+        'Không có dữ liệu hợp lệ nào để cập nhật bài viết.',
+      );
+    }
+
+    const updated = await this.prisma.baiViet.update({
+      where: { maBaiViet: postId },
+      data,
+    });
+
+    return {
+      maBaiViet: updated.maBaiViet,
+      tieuDe: updated.tieuDe,
+      anhBiaUrl: updated.anhBiaUrl ?? null,
+      noiDung: updated.noiDung,
+      ngayDang: updated.ngayDang,
+    };
+  }
+
+  async deleteCompanyPost(
+    userId: string,
+    postId: string,
+  ): Promise<{ message: string; deletedId: string }> {
+    const recruiter = await this.prisma.nhaTuyenDung.findUnique({
+      where: { maTaiKhoan: userId },
+      select: { maCongTy: true },
+    });
+    if (!recruiter) {
+      throw new NotFoundException(
+        'Không tìm thấy tài khoản nhà tuyển dụng trong hệ thống.',
+      );
+    }
+
+    const existing = await this.prisma.baiViet.findFirst({
+      where: { maBaiViet: postId, maCongTy: recruiter.maCongTy },
+      select: { maBaiViet: true },
+    });
+    if (!existing) {
+      throw new NotFoundException(
+        'Không tìm thấy bài viết thuộc doanh nghiệp của bạn.',
+      );
+    }
+
+    await this.prisma.baiViet.delete({
+      where: { maBaiViet: postId },
+    });
+
+    return {
+      message: 'Đã xóa bài viết thành công.',
+      deletedId: postId,
     };
   }
 
@@ -159,8 +315,9 @@ export class CompanyProfileService {
     if (dto.tenPhapLy !== undefined) {
       data.tenPhapLy = this.truncateText(dto.tenPhapLy, 255);
     }
-    if (dto.aboutMe !== undefined)
-      data.aboutMe = sanitizePlainText(dto.aboutMe);
+    if (dto.aboutMe !== undefined) {
+      data.aboutMe = sanitizeRichText(dto.aboutMe);
+    }
     if (dto.logoUrl !== undefined) {
       data.logoUrl = this.truncateText(dto.logoUrl, 255);
     }
@@ -444,27 +601,89 @@ export class CompanyProfileService {
     return { percent, missingFields };
   }
 
-  /** Tính các chỉ số thống kê hiển thị trên Tab */
-  private async getCompanyStats(
-    congTy: CompanyWithBranches,
-  ): Promise<CompanyProfileStats> {
-    const reviewData = await this.prisma.danhGia.aggregate({
-      where: {
-        maDoiTuongDuocDanhGia: congTy.maCongTy,
-        loaiDoiTuong: COMPANY_PROFILE_CONSTANTS.REVIEW_TARGET_COMPANY,
-      },
-      _avg: { rating: true },
-      _count: { _all: true },
-    });
+  private mapPosts(congTy: CompanyWithBranches): CompanyProfilePostItem[] {
+    return (congTy.baiViets ?? []).map((post) => ({
+      maBaiViet: post.maBaiViet,
+      tieuDe: post.tieuDe,
+      anhBiaUrl: post.anhBiaUrl ?? null,
+      noiDung: post.noiDung,
+      ngayDang: post.ngayDang,
+    }));
+  }
 
-    const avgDecimal = reviewData._avg.rating;
+  /** Lấy danh sách đánh giá thực tế và chỉ số thống kê đồng bộ với DetailCompany */
+  private async getCompanyReviewsAndStats(
+    congTy: CompanyWithBranches,
+  ): Promise<{
+    reviews: CompanyProfileReviewItem[];
+    stats: CompanyProfileStats;
+  }> {
+    const now = new Date();
+    const reviewWhere = {
+      maDoiTuongDuocDanhGia: congTy.maCongTy,
+      loaiDoiTuong: COMPANY_PROFILE_CONSTANTS.REVIEW_TARGET_COMPANY,
+      deletedAt: null,
+    };
+
+    const [rawReviews, reviewAggregate, recommendCount, totalActiveJobs] =
+      await Promise.all([
+        this.prisma.danhGia.findMany({
+          where: reviewWhere,
+          orderBy: { ngayDanhGia: 'desc' },
+          take: 30,
+        }),
+        this.prisma.danhGia.aggregate({
+          where: reviewWhere,
+          _avg: { rating: true },
+          _count: { _all: true },
+        }),
+        this.prisma.danhGia.count({
+          where: {
+            ...reviewWhere,
+            khuyenLamViec: true,
+          },
+        }),
+        this.prisma.congViec.count({
+          where: {
+            nhaTuyenDung: { maCongTy: congTy.maCongTy },
+            trangThai: { in: ['Đang tuyển', 'DA_DUYET'] },
+            deletedAt: null,
+            OR: [{ ngayHetHan: null }, { ngayHetHan: { gte: now } }],
+          },
+        }),
+      ]);
+
+    const reviews: CompanyProfileReviewItem[] = rawReviews.map((review) => ({
+      id: review.maDanhGia,
+      title: review.tieuDe?.trim() || 'Đánh giá môi trường làm việc',
+      content: review.noiDung ?? null,
+      pros: review.noiDungUuDiem ?? null,
+      cons: review.noiDungCaiThien ?? null,
+      rating: review.rating !== null ? Number(review.rating) : 5,
+      recommend: review.khuyenLamViec ?? true,
+      createdAt: review.ngayDanhGia,
+    }));
+
+    const totalReviews = reviewAggregate._count._all;
+    const avgDecimal = reviewAggregate._avg.rating;
     const averageRating =
       avgDecimal !== null ? Math.round(avgDecimal.toNumber() * 10) / 10 : null;
+    const recommendPercent =
+      totalReviews > 0
+        ? Math.round((recommendCount / totalReviews) * 100)
+        : null;
 
     return {
-      totalBranches: congTy.chiNhanhs.length,
-      averageRating,
-      totalReviews: reviewData._count._all,
+      reviews,
+      stats: {
+        totalBranches: congTy.chiNhanhs.length,
+        averageRating,
+        totalReviews,
+        recommendPercent,
+        totalPosts: congTy._count?.baiViets ?? congTy.baiViets.length,
+        totalActiveJobs,
+        followerCount: congTy._count?.nguoiTheoDois ?? 0,
+      },
     };
   }
 }

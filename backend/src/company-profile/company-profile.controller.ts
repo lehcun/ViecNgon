@@ -1,7 +1,9 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  Param,
   Patch,
   Post,
   Put,
@@ -12,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type {
+  CompanyProfilePostItem,
   CompanyProfileResponse,
   UpdateCompanyProfileResponse,
 } from '@viecngon/types';
@@ -24,6 +27,10 @@ import {
   type UploadedBinaryFile,
 } from '../cloudinary/cloudinary.service';
 import { CompanyProfileService } from './company-profile.service';
+import {
+  CreateCompanyPostDto,
+  UpdateCompanyPostDto,
+} from './dto/company-post.dto';
 import { UpdateCompanyProfileDto } from './dto/update-company-profile.dto';
 
 /**
@@ -106,5 +113,56 @@ export class CompanyProfileController {
       'viecngon_company_media',
     );
     return { url };
+  }
+
+  /**
+   * [POST] /employer/profile/posts
+   * Tạo mới bài viết cho tab Bài viết trên trang công khai công ty
+   */
+  @Post('posts')
+  async createPost(
+    @CurrentUser('userId') userId: string,
+    @Body(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
+    )
+    dto: CreateCompanyPostDto,
+  ): Promise<CompanyProfilePostItem> {
+    return this.companyProfileService.createCompanyPost(userId, dto);
+  }
+
+  /**
+   * [PATCH] /employer/profile/posts/:postId
+   * Cập nhật bài viết công ty
+   */
+  @Patch('posts/:postId')
+  async updatePost(
+    @CurrentUser('userId') userId: string,
+    @Param('postId') postId: string,
+    @Body(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
+    )
+    dto: UpdateCompanyPostDto,
+  ): Promise<CompanyProfilePostItem> {
+    return this.companyProfileService.updateCompanyPost(userId, postId, dto);
+  }
+
+  /**
+   * [DELETE] /employer/profile/posts/:postId
+   * Xóa bài viết công ty
+   */
+  @Delete('posts/:postId')
+  async deletePost(
+    @CurrentUser('userId') userId: string,
+    @Param('postId') postId: string,
+  ): Promise<{ message: string; deletedId: string }> {
+    return this.companyProfileService.deleteCompanyPost(userId, postId);
   }
 }

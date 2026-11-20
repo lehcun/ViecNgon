@@ -69,6 +69,7 @@ export const packageKeys = {
 
 export const recruiterKeys = {
   all: ["recruiter"] as const,
+  companyProfile: () => [...recruiterKeys.all, "company-profile"] as const,
   spotlightBanner: () => [...recruiterKeys.all, "spotlight-banner"] as const,
 };
 
