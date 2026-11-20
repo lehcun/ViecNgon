@@ -852,6 +852,7 @@ function CompanyProfileEditor({
                   src={companyForm.logoUrl}
                   alt={companyForm.tenCongTy || "Company Logo"}
                   fill
+                  unoptimized
                   sizes="128px"
                   className="object-cover rounded-xl"
                 />
@@ -1574,6 +1575,7 @@ function CompanyProfileEditor({
                           src={imgUrl}
                           alt={`Ảnh giới thiệu ${idx + 1}`}
                           fill
+                          unoptimized
                           sizes="(max-width: 640px) 50vw, 240px"
                           className="object-cover"
                         />
@@ -1650,6 +1652,7 @@ function CompanyProfileEditor({
                           src={imgUrl}
                           alt={`Ảnh văn hóa ${idx + 1}`}
                           fill
+                          unoptimized
                           sizes="(max-width: 640px) 50vw, 240px"
                           className="object-cover"
                         />

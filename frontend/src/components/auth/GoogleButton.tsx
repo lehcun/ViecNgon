@@ -66,6 +66,7 @@ export default function GoogleButton({
         alt="Google"
         width={19}
         height={19}
+        unoptimized
       />
       <span>
         {isPending

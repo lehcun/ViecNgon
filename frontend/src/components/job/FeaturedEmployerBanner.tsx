@@ -156,6 +156,7 @@ export default function FeaturedEmployerBanner() {
                 src={company.bannerCoverUrl}
                 alt={`Banner ${company.companyName}`}
                 fill
+                unoptimized
                 sizes="(max-width: 1024px) 100vw, 320px"
                 className="object-cover"
               />

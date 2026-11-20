@@ -68,6 +68,7 @@ export default function EmployerLoginBanner() {
                     alt="avatar"
                     width={64}
                     height={64}
+                    unoptimized
                     className="object-contain w-full h-full"
                   />
                 </div>

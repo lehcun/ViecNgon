@@ -672,6 +672,7 @@ export default function CompanyDetailModel() {
                             src={imgUrl}
                             alt={`Hình ảnh ${company.name} ${idx + 1}`}
                             fill
+                            unoptimized
                             sizes="(max-width: 640px) 50vw, 260px"
                             className="object-cover group-hover:scale-105 transition-transform duration-300"
                           />
@@ -769,6 +770,7 @@ export default function CompanyDetailModel() {
                               src={imgUrl}
                               alt={`Văn hóa ${company.name} ${idx + 1}`}
                               fill
+                              unoptimized
                               sizes="(max-width: 640px) 50vw, 260px"
                               className="object-cover group-hover:scale-105 transition-transform duration-300"
                             />
@@ -1154,6 +1156,7 @@ export default function CompanyDetailModel() {
                             src={post.coverUrl}
                             alt={post.title}
                             fill
+                            unoptimized
                             sizes="(max-width: 768px) 100vw, 380px"
                             className="object-cover"
                           />
@@ -1219,6 +1222,7 @@ export default function CompanyDetailModel() {
               src={lightboxImage}
               alt="Xem ảnh công ty"
               fill
+              unoptimized
               sizes="(max-width: 1024px) 100vw, 900px"
               className="object-contain"
             />
