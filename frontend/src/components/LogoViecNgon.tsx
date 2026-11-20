@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 
@@ -12,6 +13,8 @@ const LogoViecNgon = ({
   role,
   href = "/",
 }: LogoViecNgonProps) => {
+  const isLightLogo = logoTextColor.includes("text-white");
+
   // Hàm xử lý hiển thị chữ phụ (Subtitle) tùy theo Role
   const renderSubtitle = () => {
     if (role === "employer" || role === "NHATUYENDUNG") {
@@ -34,10 +37,30 @@ const LogoViecNgon = ({
 
   return (
     <Link href={href} className="flex items-center gap-1.5 cursor-pointer">
-      {/* Biểu tượng chữ V */}
-      <div className="bg-primary rounded-full w-8 h-8 flex items-center justify-center text-white font-bold shadow-md shrink-0">
-        V
-      </div>
+      {/* Biểu tượng chữ V đồng bộ đổi trắng/đen theo màu chữ iecNgon */}
+      <span className="relative w-9 h-9 shrink-0">
+        <Image
+          src="/logo-viecngon-dark.png"
+          alt="Logo ViecNgon"
+          width={36}
+          height={36}
+          priority
+          className={`w-9 h-9 object-contain transition-opacity duration-300 ${
+            isLightLogo ? "opacity-0" : "opacity-100"
+          }`}
+        />
+        <Image
+          src="/logo-viecngon-white.png"
+          alt=""
+          aria-hidden="true"
+          width={36}
+          height={36}
+          priority
+          className={`w-9 h-9 object-contain absolute inset-0 transition-opacity duration-300 ${
+            isLightLogo ? "opacity-100" : "opacity-0"
+          }`}
+        />
+      </span>
 
       {/* Cụm Text (Chữ chính và Phụ đề) */}
       <div className="flex flex-col justify-center">
