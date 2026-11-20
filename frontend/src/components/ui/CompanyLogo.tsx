@@ -45,9 +45,7 @@ export function CompanyLogo({
         "shrink-0 border border-border-default bg-surface-card flex items-center justify-center overflow-hidden",
         SIZE_MAP[size],
         shapeClass,
-        showFallback
-          ? "bg-primary-light text-primary font-bold"
-          : "p-1.5",
+        showFallback && "bg-primary-light text-primary font-bold",
         className,
       )}
     >
@@ -58,10 +56,7 @@ export function CompanyLogo({
         <img
           src={src}
           alt={name ? `Logo ${name}` : "Logo"}
-          className={cn(
-            "w-full h-full",
-            shape === "circle" ? "object-cover" : "object-contain",
-          )}
+          className="w-full h-full object-cover"
           onError={() => setHasError(true)}
         />
       )}

@@ -26,6 +26,7 @@ async function main(): Promise<void> {
   // =====================================================================
   console.log('🧹 Đang dọn dẹp dữ liệu cũ...');
 
+  await prisma.congViecDaLuu.deleteMany();
   await prisma.theoDoiCongTy.deleteMany();
   await prisma.congViecKyNang.deleteMany();
   await prisma.ungVienKyNang.deleteMany();
@@ -134,10 +135,9 @@ async function main(): Promise<void> {
       linhVuc: 'Dịch vụ Phần mềm & Chuyển đổi số',
       quyMo: '10,000+ nhân viên',
       quocGia: 'Việt Nam',
-      thoiGianLamViec: 'Thứ 2 - Thứ 6 (08:30 - 17:30)',
-      chinhSachOT:
-        'Thanh toán 150% ngày thường, 200% cuối tuần, 300% ngày lễ theo Luật Lao động',
-      giaiThuong: 'Top 100 Nơi làm việc tốt nhất Việt Nam, Sao Khuê 2025',
+      thoiGianLamViec: 'Thứ 2 - Thứ 6',
+      chinhSachOT: 'Thêm lương OT',
+      giaiThuong: 'Top 100 Nơi làm việc tốt nhất Việt Nam; Sao Khuê 2025',
       moTa: '<p><strong>FPT Software</strong> là doanh nghiệp xuất khẩu phần mềm và dịch vụ CNTT hàng đầu Đông Nam Á với hơn 30.000 kỹ sư tại 30 quốc gia.</p>',
       aboutMe:
         '<p>Tại FPT Software, đội ngũ kỹ sư được tham gia trực tiếp các dự án quy mô lớn cho hơn 100 tập đoàn Fortune 500 tại Mỹ, Nhật Bản và Châu Âu trong các mảng Automotive, BFSI, Aviation và Healthcare.</p>',
@@ -151,19 +151,25 @@ async function main(): Promise<void> {
             thanhPho: 'Hà Nội',
             diaChi:
               'Tòa nhà FPT Tower, Số 10 Phạm Văn Bạch, Dịch Vọng, Cầu Giấy, Hà Nội',
-            mapUrl: 'https://maps.google.com/?q=FPT+Tower+Cau+Giay+Ha+Noi',
+            mapUrl: 'https://maps.google.com/?q=21.0268,105.7885',
+            viDo: 21.0268,
+            kinhDo: 105.7885,
           },
           {
             thanhPho: 'Đà Nẵng',
             diaChi:
               'FPT Complex, Đường Nam Kỳ Khởi Nghĩa, Hòa Hải, Ngũ Hành Sơn, Đà Nẵng',
-            mapUrl: 'https://maps.google.com/?q=FPT+Complex+Da+Nang',
+            mapUrl: 'https://maps.google.com/?q=15.9788,108.2621',
+            viDo: 15.9788,
+            kinhDo: 108.2621,
           },
           {
             thanhPho: 'TP.HCM',
             diaChi:
               'Tòa nhà F-Town 3, Đường D2, Khu Công nghệ cao, TP. Thủ Đức, TP.HCM',
-            mapUrl: 'https://maps.google.com/?q=F-Town+3+Thu+Duc+TPHCM',
+            mapUrl: 'https://maps.google.com/?q=10.8552,106.7972',
+            viDo: 10.8552,
+            kinhDo: 106.7972,
           },
         ],
       },
@@ -182,13 +188,13 @@ async function main(): Promise<void> {
       thanhPho: 'TP.HCM',
       diaChi:
         'VNG Campus, Z06 Đường số 13, Khu chế xuất Tân Thuận, Quận 7, TP.HCM',
-      moHinhCongTy: 'Product',
+      moHinhCongTy: 'Sản phẩm',
       linhVuc: 'Hệ sinh thái Internet, FinTech & Cloud',
-      quyMo: '1000-5000 nhân viên',
+      quyMo: '1,000+ nhân viên',
       quocGia: 'Việt Nam',
-      thoiGianLamViec: 'Thứ 2 - Thứ 6 (09:00 - 18:30)',
-      chinhSachOT: 'Không khuyến khích OT, hỗ trợ nghỉ bù và phụ cấp ăn tối',
-      giaiThuong: 'Kỳ lân công nghệ Việt Nam, Top 10 Doanh nghiệp CNTT uy tín',
+      thoiGianLamViec: 'Thứ 2 - Thứ 6',
+      chinhSachOT: 'Nghỉ bù linh hoạt',
+      giaiThuong: 'Kỳ lân công nghệ Việt Nam; Top 10 Doanh nghiệp CNTT uy tín',
       moTa: '<p><strong>VNG Corporation</strong> phát triển các nền tảng số phục vụ hàng chục triệu người dùng Việt Nam như Zalo, ZaloPay, VNG Cloud và VNGGames.</p>',
       aboutMe:
         '<p>VNG xây dựng văn hóa "Đón nhận Thách thức" với Campus hiện đại hàng đầu Việt Nam, nơi các kỹ sư tự chủ hoàn toàn kiến trúc hệ thống chịu tải hàng triệu kết nối đồng thời.</p>',
@@ -202,13 +208,17 @@ async function main(): Promise<void> {
             thanhPho: 'TP.HCM',
             diaChi:
               'VNG Campus, Lô Z06 Đường số 13, Tân Thuận Đông, Quận 7, TP.HCM',
-            mapUrl: 'https://maps.google.com/?q=VNG+Campus+Quan+7+TPHCM',
+            mapUrl: 'https://maps.google.com/?q=10.7586,106.7421',
+            viDo: 10.7586,
+            kinhDo: 106.7421,
           },
           {
             thanhPho: 'Hà Nội',
             diaChi:
               'Tầng 12, Tòa nhà TNR Tower, 54A Nguyễn Chí Thanh, Đống Đa, Hà Nội',
-            mapUrl: 'https://maps.google.com/?q=54A+Nguyen+Chi+Thanh+Ha+Noi',
+            mapUrl: 'https://maps.google.com/?q=21.0235,105.8091',
+            viDo: 21.0235,
+            kinhDo: 105.8091,
           },
         ],
       },
@@ -227,13 +237,13 @@ async function main(): Promise<void> {
       thanhPho: 'TP.HCM',
       diaChi:
         'Tòa nhà Phú Mỹ Hưng, Số 8 Hoàng Văn Thái, Tân Phú, Quận 7, TP.HCM',
-      moHinhCongTy: 'Product',
-      linhVuc: 'FinTech / Siêu ứng dụng Tài chính',
-      quyMo: '1000-5000 nhân viên',
+      moHinhCongTy: 'Sản phẩm',
+      linhVuc: 'FinTech & Siêu ứng dụng Tài chính',
+      quyMo: '1,000+ nhân viên',
       quocGia: 'Việt Nam',
-      thoiGianLamViec: 'Thứ 2 - Thứ 6 (Linh hoạt 08:30 - 18:00)',
-      chinhSachOT: 'Nghỉ bù linh hoạt 1:1 và phụ cấp trực hệ thống Payment',
-      giaiThuong: 'Siêu ứng dụng thanh toán số 1 Việt Nam, Top 10 FinTech APAC',
+      thoiGianLamViec: 'Thứ 2 - Thứ 6',
+      chinhSachOT: 'Nghỉ bù linh hoạt',
+      giaiThuong: 'Công ty IT tốt nhất Việt Nam 2026; Top 10 FinTech APAC',
       moTa: '<p><strong>MoMo</strong> là siêu ứng dụng tài chính phục vụ hơn 31 triệu người dùng với hệ sinh thái thanh toán, đầu tư, bảo hiểm và Mini App hàng đầu Việt Nam.</p>',
       aboutMe:
         '<p>Đội ngũ Engineering tại MoMo vận hành hàng trăm Microservices xử lý hàng nghìn giao dịch/giây với tiêu chuẩn an toàn bảo mật cấp độ ngân hàng (PCI-DSS).</p>',
@@ -247,13 +257,17 @@ async function main(): Promise<void> {
             thanhPho: 'TP.HCM',
             diaChi:
               'Tòa nhà Phú Mỹ Hưng, Số 8 Hoàng Văn Thái, Phường Tân Phú, Quận 7, TP.HCM',
-            mapUrl: 'https://maps.google.com/?q=Phu+My+Hung+Tower+Quan+7',
+            mapUrl: 'https://maps.google.com/?q=10.7295,106.7218',
+            viDo: 10.7295,
+            kinhDo: 106.7218,
           },
           {
             thanhPho: 'Hà Nội',
             diaChi:
               'Tầng 8, Tòa nhà Lotte Center, 54 Liễu Giai, Ba Đình, Hà Nội',
-            mapUrl: 'https://maps.google.com/?q=Lotte+Center+Lieu+Giai+Ha+Noi',
+            mapUrl: 'https://maps.google.com/?q=21.0322,105.8126',
+            viDo: 21.0322,
+            kinhDo: 105.8126,
           },
         ],
       },
@@ -271,13 +285,12 @@ async function main(): Promise<void> {
       website: 'https://careers.shopee.vn',
       thanhPho: 'TP.HCM',
       diaChi: 'Saigon Centre Tower 2, 67 Lê Lợi, Bến Nghé, Quận 1, TP.HCM',
-      moHinhCongTy: 'Product',
+      moHinhCongTy: 'Sản phẩm',
       linhVuc: 'Thương mại điện tử (E-Commerce)',
-      quyMo: '1000-5000 nhân viên',
+      quyMo: '1,000+ nhân viên',
       quocGia: 'Singapore',
-      thoiGianLamViec: 'Thứ 2 - Thứ 6 (09:00 - 18:00)',
-      chinhSachOT:
-        'Thanh toán lương OT theo quy định hoặc nghỉ bù chiến dịch Mega Sale',
+      thoiGianLamViec: 'Thứ 2 - Thứ 6',
+      chinhSachOT: 'Thêm lương OT',
       giaiThuong: 'Nền tảng Thương mại điện tử được yêu thích nhất Việt Nam',
       moTa: '<p><strong>Shopee Vietnam</strong> thuộc tập đoàn Sea, là nền tảng thương mại điện tử hàng đầu Đông Nam Á với lưu lượng truy cập bùng nổ vào các ngày Mega Campaign.</p>',
       aboutMe:
@@ -292,13 +305,17 @@ async function main(): Promise<void> {
             thanhPho: 'TP.HCM',
             diaChi:
               'Tầng 17, Saigon Centre Tower 2, 67 Lê Lợi, Phường Bến Nghé, Quận 1, TP.HCM',
-            mapUrl: 'https://maps.google.com/?q=Saigon+Centre+67+Le+Loi+TPHCM',
+            mapUrl: 'https://maps.google.com/?q=10.7731,106.7007',
+            viDo: 10.7731,
+            kinhDo: 106.7007,
           },
           {
             thanhPho: 'Hà Nội',
             diaChi:
               'Tòa nhà Capital Place, 29 Liễu Giai, Ngọc Khánh, Ba Đình, Hà Nội',
-            mapUrl: 'https://maps.google.com/?q=Capital+Place+29+Lieu+Giai',
+            mapUrl: 'https://maps.google.com/?q=21.0318,105.8141',
+            viDo: 21.0318,
+            kinhDo: 105.8141,
           },
         ],
       },
@@ -316,14 +333,14 @@ async function main(): Promise<void> {
       website: 'https://nab.com.au',
       thanhPho: 'TP.HCM',
       diaChi: 'Etown Central, 11 Đoàn Văn Bơ, Phường 13, Quận 4, TP.HCM',
-      moHinhCongTy: 'Product',
-      linhVuc: 'Ngân hàng số & FinTech (Digital Banking)',
-      quyMo: '1000-5000 nhân viên',
-      quocGia: 'Úc (Australia)',
-      thoiGianLamViec: 'Thứ 2 - Thứ 6 (Hybrid chuẩn quốc tế)',
-      chinhSachOT: 'Văn hóa tôn trọng Work-Life Balance, hầu như không OT',
+      moHinhCongTy: 'Sản phẩm',
+      linhVuc: 'Ngân hàng số & FinTech',
+      quyMo: '1,000+ nhân viên',
+      quocGia: 'Úc',
+      thoiGianLamViec: 'Linh hoạt (Hybrid)',
+      chinhSachOT: 'Không có OT',
       giaiThuong:
-        'Top 5 Công ty IT tốt nhất Việt Nam (ITviec Best IT Companies)',
+        'Top 5 Công ty IT tốt nhất Việt Nam 2026; Công ty IT tốt nhất Việt Nam 2025',
       moTa: '<p><strong>NAB Innovation Centre Vietnam</strong> là trung tâm công nghệ chiến lược trực thuộc Ngân hàng Quốc gia Úc (NAB), xây dựng nền tảng Digital Banking hiện đại phục vụ hàng triệu khách hàng tại Úc.</p>',
       aboutMe:
         '<p>Chúng tôi áp dụng 100% quy trình Agile/Scrum, Engineering Excellence và kiến trúc Cloud-Native trên AWS với môi trường giao tiếp tiếng Anh chuyên nghiệp.</p>',
@@ -337,13 +354,17 @@ async function main(): Promise<void> {
             thanhPho: 'TP.HCM',
             diaChi:
               'Tòa nhà Etown Central, 11 Đoàn Văn Bơ, Phường 13, Quận 4, TP.HCM',
-            mapUrl: 'https://maps.google.com/?q=Etown+Central+Quan+4+TPHCM',
+            mapUrl: 'https://maps.google.com/?q=10.7647,106.7068',
+            viDo: 10.7647,
+            kinhDo: 106.7068,
           },
           {
             thanhPho: 'Hà Nội',
             diaChi:
               'Tòa nhà Leadvisors Place, 41A Lý Thái Tổ, Hoàn Kiếm, Hà Nội',
-            mapUrl: 'https://maps.google.com/?q=41A+Ly+Thai+To+Ha+Noi',
+            mapUrl: 'https://maps.google.com/?q=21.0273,105.8559',
+            viDo: 21.0273,
+            kinhDo: 105.8559,
           },
         ],
       },
@@ -361,13 +382,12 @@ async function main(): Promise<void> {
       website: 'https://solutions.viettel.vn',
       thanhPho: 'Hà Nội',
       diaChi: 'Số 1 Trần Hữu Dực, Mỹ Đình 2, Nam Từ Liêm, Hà Nội',
-      moHinhCongTy: 'Product',
-      linhVuc: 'Hạ tầng Số, Smart City, Cloud & Cybersecurity',
-      quyMo: '1000-5000 nhân viên',
+      moHinhCongTy: 'Sản phẩm & Dịch vụ',
+      linhVuc: 'Hạ tầng Số, Smart City & Cloud',
+      quyMo: '1,000+ nhân viên',
       quocGia: 'Việt Nam',
-      thoiGianLamViec: 'Thứ 2 - Thứ 6 (08:00 - 17:30)',
-      chinhSachOT:
-        'Theo quy định tập đoàn và phụ cấp triển khai dự án trọng điểm',
+      thoiGianLamViec: 'Thứ 2 - Thứ 6',
+      chinhSachOT: 'Thưởng theo dự án',
       giaiThuong: 'Doanh nghiệp Chuyển đổi số xuất sắc Quốc gia',
       moTa: '<p><strong>Viettel Solutions</strong> là đơn vị tiên phong kiến tạo Chính phủ số, Thành phố thông minh, Y tế số và nền tảng Viettel Cloud Make-in-Vietnam.</p>',
       aboutMe:
@@ -382,13 +402,17 @@ async function main(): Promise<void> {
             thanhPho: 'Hà Nội',
             diaChi:
               'Trụ sở Tập đoàn Viettel, Lô D26 Khu đô thị mới Cầu Giấy, Nam Từ Liêm, Hà Nội',
-            mapUrl: 'https://maps.google.com/?q=Viettel+Group+Ha+Noi',
+            mapUrl: 'https://maps.google.com/?q=21.0289,105.7825',
+            viDo: 21.0289,
+            kinhDo: 105.7825,
           },
           {
             thanhPho: 'Đà Nẵng',
             diaChi:
               'Tòa nhà Viettel Đà Nẵng, Số 286 Cách Mạng Tháng Tám, Cẩm Lệ, Đà Nẵng',
-            mapUrl: 'https://maps.google.com/?q=Viettel+Da+Nang',
+            mapUrl: 'https://maps.google.com/?q=16.0287,108.2094',
+            viDo: 16.0287,
+            kinhDo: 108.2094,
           },
         ],
       },
@@ -539,8 +563,12 @@ async function main(): Promise<void> {
   console.log('💼 Đang tạo 15 Bài đăng tuyển dụng IT chuẩn Rich Text HTML...');
 
   const now = new Date();
-  const nextMonth = new Date(now);
-  nextMonth.setDate(nextMonth.getDate() + 30);
+  const daysAhead = (days: number): Date => {
+    const d = new Date(now);
+    d.setDate(d.getDate() + days);
+    return d;
+  };
+  const nextQuarter = daysAhead(90);
 
   const daysAgo = (days: number): Date => {
     const d = new Date(now);
@@ -563,6 +591,7 @@ async function main(): Promise<void> {
     loaiHinh: string;
     hinhThucLamViec: string;
     ngayDang: Date;
+    ngayHetHan?: Date;
     luotXem: number;
     trangThai: string;
     doUuTien?: number;
@@ -573,12 +602,12 @@ async function main(): Promise<void> {
   }
 
   const createJobWithSkills = async (input: SeedJobInput) => {
-    const { skills, ...jobFields } = input;
+    const { skills, ngayHetHan, ...jobFields } = input;
     return prisma.congViec.create({
       data: {
         ...jobFields,
         lastRefreshedAt: jobFields.ngayDang,
-        ngayHetHan: nextMonth,
+        ngayHetHan: ngayHetHan ?? nextQuarter,
         congViecKyNangs: {
           create: skills.map((skillName) => ({
             maKyNang: getSkillId(skillName),
@@ -1879,17 +1908,10 @@ async function main(): Promise<void> {
     },
   });
 
-  const endIn14Days = new Date(now);
-  endIn14Days.setDate(endIn14Days.getDate() + 14);
-
-  const endIn30Days = new Date(now);
-  endIn30Days.setDate(endIn30Days.getDate() + 30);
-
-  const endIn45Days = new Date(now);
-  endIn45Days.setDate(endIn45Days.getDate() + 45);
-
-  const endIn60Days = new Date(now);
-  endIn60Days.setDate(endIn60Days.getDate() + 60);
+  const endIn14Days = daysAhead(30);
+  const endIn30Days = daysAhead(60);
+  const endIn45Days = daysAhead(90);
+  const endIn60Days = daysAhead(120);
 
   // Giao dịch 1: FPT Software mua Gói Kim Cương / Doanh nghiệp
   const buyFPT = await prisma.muaQuangCao.create({
@@ -2019,6 +2041,7 @@ async function main(): Promise<void> {
         tieuDe: 'Môi trường FinTech cực kỳ năng động và học hỏi nhiều',
         noiDung:
           'Đội ngũ Tech giỏi, sẵn sàng chia sẻ kiến thức về Microservices và hiệu năng Web. Chính sách Hybrid rất thoải mái.',
+        khuyenLamViec: true,
         ngayDanhGia: daysAgo(12),
         maDoiTuongDuocDanhGia: ctyMomo.maCongTy,
         loaiDoiTuong: 'CONGTY',
@@ -2029,6 +2052,7 @@ async function main(): Promise<void> {
         tieuDe: 'Văn hóa Engineering chuẩn quốc tế, ít OT',
         noiDung:
           'Quy trình Agile bài bản, làm việc trực tiếp với chuyên gia Úc giúp nâng trình tiếng Anh và kỹ năng kiến trúc hệ thống.',
+        khuyenLamViec: true,
         ngayDanhGia: daysAgo(9),
         maDoiTuongDuocDanhGia: ctyNAB.maCongTy,
         loaiDoiTuong: 'CONGTY',
@@ -2039,6 +2063,7 @@ async function main(): Promise<void> {
         tieuDe: 'Campus đẹp, đồng nghiệp thân thiện',
         noiDung:
           'Nhiều dự án lớn để thử sức, đặc biệt phù hợp với các bạn thích bài toán High Traffic.',
+        khuyenLamViec: true,
         ngayDanhGia: daysAgo(7),
         maDoiTuongDuocDanhGia: ctyVNG.maCongTy,
         loaiDoiTuong: 'CONGTY',

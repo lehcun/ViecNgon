@@ -171,7 +171,8 @@ model CongTy {
   quocGia         String? @db.NVarChar(100) // Singapore
   thoiGianLamViec String? @db.NVarChar(100) // Thứ 2 - Thứ 6
   chinhSachOT     String? @db.NVarChar(150) // Thêm lương OT
-  giaiThuong      String? @db.NVarChar(255) // Công ty IT tốt nhất VN...
+  giaiThuong        String? @db.NVarChar(255) // Công ty IT tốt nhất VN...
+  hinhAnhCongTyJson String? @db.NVarChar(Max) // JSON lưu mảng ảnh từng section (introImages, cultureImages)
 
   // Cấu hình tùy chỉnh Banner Nhà Tuyển Dụng Nổi Bật (Gói Kim Cương)
   bannerCoverUrl   String? @db.VarChar(255)
@@ -201,6 +202,8 @@ model ChiNhanh {
   thanhPho   String  @db.NVarChar(100)
   diaChi     String  @db.NVarChar(255)
   mapUrl     String? @db.VarChar(500)
+  viDo       Float?
+  kinhDo     Float?
 
   // Khóa ngoại
   maCongTy String @db.VarChar(50)

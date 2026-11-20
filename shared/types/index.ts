@@ -113,6 +113,52 @@ export interface CompanyActiveJobItem {
   skills: string[];
   benefits: string;
   workModel: string;
+  level?: string | null;
+  priorityLevel?: number;
+  promotionBadge?: JobPromotionBadge | null;
+  highlights?: string[];
+}
+
+export interface CompanyBranchDetailItem {
+  id: string;
+  city: string;
+  address: string;
+  mapUrl: string | null;
+  lat: number | null;
+  lng: number | null;
+  isHeadquarters: boolean;
+}
+
+export interface CompanyReviewItem {
+  id: string;
+  title: string;
+  content: string | null;
+  pros: string | null;
+  cons: string | null;
+  rating: number;
+  recommend: boolean;
+  createdAt: string | Date;
+}
+
+export interface CompanyPostItem {
+  id: string;
+  title: string;
+  coverUrl: string | null;
+  content: string;
+  publishedAt: string | Date;
+}
+
+export interface CompanyReviewSummary {
+  averageRating: number;
+  recommendPercent: number;
+  totalReviews: number;
+  latestReview: CompanyReviewItem | null;
+}
+
+export interface CompanyFollowResponse {
+  isFollowing: boolean;
+  followerCount: number;
+  message?: string;
 }
 
 export interface CompanyDetailResponse {
@@ -120,11 +166,13 @@ export interface CompanyDetailResponse {
   name: string;
   logo: string | null;
   location: string | null;
+  citiesDisplay?: string;
   website: string | null;
   slug: string;
   description: string | null;
   benefits: string | null;
   skills: string[];
+  expertise?: string | null;
   aboutMe: string | null;
   city: string | null;
   companyModel: string | null;
@@ -133,8 +181,20 @@ export interface CompanyDetailResponse {
   country: string | null;
   workingTime: string | null;
   otPolicy: string | null;
+  awards?: string[];
+  sectionImages?: {
+    introImages: string[];
+    cultureImages: string[];
+  };
+  branches?: CompanyBranchDetailItem[];
   totalJobs: number;
   activeJobs: CompanyActiveJobItem[];
+  reviewSummary?: CompanyReviewSummary;
+  reviews?: CompanyReviewItem[];
+  totalPosts?: number;
+  posts?: CompanyPostItem[];
+  followerCount?: number;
+  isFollowing?: boolean;
 }
 
 // =====================================================================

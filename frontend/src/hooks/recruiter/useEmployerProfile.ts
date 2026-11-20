@@ -169,3 +169,31 @@ export function useUpdateEmployerProfile(): UseMutationResult<
     },
   });
 }
+
+export function useUploadCompanyImage(): UseMutationResult<
+  { url: string },
+  EmployerProfileApiError,
+  File
+> {
+  return useMutation<{ url: string }, EmployerProfileApiError, File>({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch(`${EMPLOYER_PROFILE_URL}/upload-image`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw await parseResponseError(
+          response,
+          "Không thể tải ảnh lên hệ thống. Vui lòng thử lại.",
+        );
+      }
+
+      return (await response.json()) as { url: string };
+    },
+  });
+}

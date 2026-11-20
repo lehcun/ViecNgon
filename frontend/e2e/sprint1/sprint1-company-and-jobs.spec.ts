@@ -5,7 +5,8 @@ const MOCK_MOMO_COMPANY = {
   id: "comp-momo",
   name: "MoMo",
   logo: null,
-  location: "TP.HCM",
+  location: "Số 8 Hoàng Văn Thái, Quận 7, TP.HCM",
+  citiesDisplay: "Hà Nội - TP.HCM",
   website: "https://momo.vn",
   slug: "momo",
   description: "<p>Siêu ứng dụng thanh toán số 1 Việt Nam.</p>",
@@ -13,12 +14,78 @@ const MOCK_MOMO_COMPANY = {
   skills: ["React", "Next.js", "TypeScript"],
   aboutMe: "<p>Văn hóa sáng tạo và lấy người dùng làm trung tâm.</p>",
   city: "TP.HCM",
-  companyModel: "Product",
+  companyModel: "Sản phẩm",
   industry: "Fintech",
   size: "1000+ nhân viên",
   country: "Việt Nam",
   workingTime: "Thứ 2 - Thứ 6",
-  otPolicy: "Không OT",
+  otPolicy: "Không có OT",
+  awards: [
+    "Công ty IT tốt nhất Việt Nam 2026",
+    "Công ty IT tốt nhất Việt Nam 2025",
+  ],
+  sectionImages: {
+    introImages: [],
+    cultureImages: [],
+  },
+  branches: [
+    {
+      id: "br-hcm",
+      city: "TP.HCM",
+      address: "Số 8 Hoàng Văn Thái, Quận 7, TP.HCM",
+      mapUrl: null,
+      lat: 10.7295,
+      lng: 106.7218,
+      isHeadquarters: true,
+    },
+    {
+      id: "br-hn",
+      city: "Hà Nội",
+      address: "Tòa nhà Hoàng Thành, Hai Bà Trưng, Hà Nội",
+      mapUrl: null,
+      lat: 21.0124,
+      lng: 105.8492,
+      isHeadquarters: false,
+    },
+  ],
+  reviewSummary: {
+    averageRating: 4.8,
+    recommendPercent: 97,
+    totalReviews: 14,
+    latestReview: {
+      id: "rv-1",
+      title: "Employee benefit is really good.",
+      content: "Môi trường năng động.",
+      pros: "Lương thưởng tốt",
+      cons: null,
+      rating: 5,
+      recommend: true,
+      createdAt: "2026-11-05T00:00:00.000Z",
+    },
+  },
+  reviews: [
+    {
+      id: "rv-1",
+      title: "Employee benefit is really good.",
+      content: "Môi trường năng động.",
+      pros: "Lương thưởng tốt",
+      cons: null,
+      rating: 5,
+      recommend: true,
+      createdAt: "2026-11-05T00:00:00.000Z",
+    },
+  ],
+  totalPosts: 1,
+  posts: [
+    {
+      id: "post-1",
+      title: "Hành trình chuyển đổi kiến trúc Microservices tại MoMo",
+      coverUrl: null,
+      content: "Chia sẻ kinh nghiệm mở rộng hệ thống thanh toán.",
+      publishedAt: "2026-11-10T00:00:00.000Z",
+    },
+  ],
+  followerCount: 25,
   totalJobs: 1,
   activeJobs: [
     {
@@ -113,9 +180,11 @@ test.describe("Sprint 1 - Module Xem thông tin công ty (TTCT)", () => {
     await expect(page).toHaveURL(/\/company\/momo$/);
 
     // GUI-TTCT01: Banner MoMo
-    await expect(page.getByRole("heading", { name: "MoMo" })).toBeVisible();
     await expect(
-      page.getByText("1 việc làm đang tuyển dụng"),
+      page.getByRole("heading", { name: "MoMo", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("1 việc làm đang tuyển dụng").first(),
     ).toBeVisible();
 
     // GUI-TTCT04: Thông tin chung & Giải thưởng
@@ -189,6 +258,159 @@ test.describe("Sprint 1 - Module Xem thông tin công ty (TTCT)", () => {
     await page.goto("/company/momo");
     await page.getByRole("link", { name: /Xem tất cả việc làm/i }).click();
     await expect(page).toHaveURL(/\/jobs$/);
+  });
+
+  test("[GUI-TTCT07] Hiển thị 4 Tabs, thành phố ghép trên Banner, Bản đồ chi nhánh Open in Maps và cột phải khi 0 việc làm", async ({
+    page,
+  }) => {
+    await page.route("http://localhost:3001/company/naver-vietnam", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          ...MOCK_MOMO_COMPANY,
+          id: "comp-naver",
+          name: "NAVER VIETNAM",
+          slug: "naver-vietnam",
+          totalJobs: 0,
+          activeJobs: [],
+        }),
+      }),
+    );
+
+    await page.goto("/company/naver-vietnam");
+
+    await expect(page.getByText("Hà Nội - TP.HCM")).toBeVisible();
+    const openMapsLinks = page.getByRole("link", { name: /Open in Maps/i });
+    await expect(openMapsLinks).toHaveCount(1);
+    await expect(openMapsLinks.first()).toHaveAttribute(
+      "href",
+      "https://www.google.com/maps?q=10.7295,106.7218",
+    );
+    await expect(page.getByText("10.7295, 106.7218")).toHaveCount(0);
+    await expect(page.getByText(/Đang xem:/i)).toHaveCount(0);
+    await expect(page.locator(".leaflet-container")).toBeVisible();
+    await expect(page.locator(".leaflet-tile").first()).toHaveAttribute(
+      "src",
+      /https:\/\/(tile\.openstreetmap\.org|server\.arcgisonline\.com)\//,
+    );
+    await expect(
+      page.locator('.leaflet-tile[src*="cartocdn.com"]'),
+    ).toHaveCount(0);
+
+    // Chọn chi nhánh Hà Nội cập nhật nút Open in Maps sang tọa độ Hà Nội
+    await page.getByText("Tòa nhà Hoàng Thành, Hai Bà Trưng, Hà Nội").click();
+    await expect(openMapsLinks.first()).toHaveAttribute(
+      "href",
+      "https://www.google.com/maps?q=21.0124,105.8492",
+    );
+
+    // Khi 0 việc làm: cột phải hiển thị Đánh giá mới nhất & Theo dõi nhận email
+    await expect(
+      page.getByRole("heading", { name: "Đánh giá mới nhất" }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("Employee benefit is really good."),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", {
+        name: /Nhận thông báo việc làm qua email từ/i,
+      }),
+    ).toBeVisible();
+
+    // Chuyển qua tab Đánh giá & Bài viết
+    await page.getByRole("button", { name: /Đánh giá\s*14/i }).click();
+    await expect(
+      page.getByRole("heading", { name: /Đánh giá từ nhân viên/i }),
+    ).toBeVisible();
+
+    await page.getByRole("button", { name: /Bài viết\s*1/i }).click();
+    await expect(
+      page.getByText("Hành trình chuyển đổi kiến trúc Microservices tại MoMo"),
+    ).toBeVisible();
+  });
+
+  test("[GUI-TTCT08] Carousel việc làm bên phải và Tab Việc làm hiển thị Ribbon, Highlights & Lưu việc này", async ({
+    page,
+  }) => {
+    await page.route("http://localhost:3001/company/money-forward", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          ...MOCK_MOMO_COMPANY,
+          id: "comp-mf",
+          name: "Money Forward Vietnam",
+          slug: "money-forward",
+          totalJobs: 2,
+          activeJobs: [
+            {
+              id: "job-mf-1",
+              title: "Solution Architect (Digital Banking)",
+              slug: "solution-architect-mf",
+              salaryDisplay: "50 - 75 triệu",
+              location: "TP.HCM",
+              postedAt: new Date().toISOString(),
+              skills: ["Software Architecture", "Spring Boot", "Java"],
+              benefits: "Hybrid working; Macbook Pro; 17 days off",
+              highlights: [
+                "Hybrid working; Flexible time; Macbook Pro",
+                "L&D programs; 17 days off",
+              ],
+              workModel: "Linh hoạt",
+              level: "Kiến trúc sư Phần mềm",
+              priorityLevel: 3,
+              promotionBadge: "SUPER_HOT",
+            },
+            {
+              id: "job-mf-2",
+              title: "Chief Information Security Officer",
+              slug: "ciso-mf",
+              salaryDisplay: "Thỏa thuận",
+              location: "TP.HCM - Hà Nội",
+              postedAt: new Date().toISOString(),
+              skills: ["Cybersecurity", "DevSecOps"],
+              benefits: "Macbook Pro; 17 days off",
+              highlights: ["Macbook Pro", "17 days off"],
+              workModel: "Linh hoạt",
+              level: "Cấp điều hành",
+              priorityLevel: 2,
+              promotionBadge: "HOT",
+            },
+          ],
+        }),
+      }),
+    );
+
+    await page.goto("/company/money-forward");
+
+    // Carousel cột phải: hiện 2 việc làm đang tuyển dụng và job đầu tiên
+    await expect(
+      page.getByRole("heading", { name: /2 việc làm đang tuyển dụng/i }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("Solution Architect (Digital Banking)"),
+    ).toBeVisible();
+
+    // Bấm nút chuyển tiếp sang job thứ 2
+    await page.getByRole("button", { name: "Việc làm tiếp theo" }).click();
+    await expect(
+      page.getByText("Chief Information Security Officer"),
+    ).toBeVisible();
+
+    // Cột phải cũng hiển thị Đánh giá mới nhất & Theo dõi
+    await expect(
+      page.getByRole("heading", { name: "Đánh giá mới nhất" }),
+    ).toBeVisible();
+
+    // Chuyển sang Tab Việc làm
+    await page.getByRole("button", { name: /^Việc làm\s*2$/i }).click();
+    await expect(page.getByText("SUPER HOT")).toBeVisible();
+    await expect(
+      page.getByText("Hybrid working; Flexible time; Macbook Pro"),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Lưu việc này" }).first().click();
+    await expect(page.getByRole("button", { name: "Đã lưu" })).toBeVisible();
   });
 });
 

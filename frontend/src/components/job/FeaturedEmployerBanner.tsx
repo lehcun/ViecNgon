@@ -182,13 +182,13 @@ export default function FeaturedEmployerBanner() {
           {/* Khung Logo công ty nổi bật chồng qua mép phải cột visual */}
           <Link
             href={`/company/${company.slug}`}
-            className="relative z-10 mx-auto lg:mx-0 lg:-mr-10 mt-6 lg:mt-0 w-24 h-24 rounded-xl bg-surface-card border border-border-default shadow-md p-2 flex items-center justify-center hover:scale-[1.02] transition-transform"
+            className="relative z-10 mx-auto lg:mx-0 lg:-mr-10 mt-6 lg:mt-0 w-24 h-24 rounded-xl bg-surface-card border border-border-default shadow-md overflow-hidden flex items-center justify-center hover:scale-[1.02] transition-transform"
           >
             <CompanyLogo
               src={company.logo}
               name={company.companyName}
               size="lg"
-              className="border-0 bg-transparent shadow-none"
+              className="w-full h-full border-0 bg-transparent shadow-none rounded-xl"
             />
           </Link>
         </div>

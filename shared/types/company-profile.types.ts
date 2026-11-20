@@ -33,6 +33,12 @@ export type CompanyProfileCompletionField =
 // 1. DATA MODELS & API RESPONSE (GET /employer/profile)
 // ---------------------------------------------------------------------
 
+/** Ảnh hiển thị theo từng Section của trang Công ty */
+export interface CompanySectionImages {
+  introImages: string[];
+  cultureImages: string[];
+}
+
 /** Thông tin Công ty (Bảng CONGTY) */
 export interface CompanyInfo {
   maCongTy: string;
@@ -62,6 +68,8 @@ export interface CompanyInfo {
   thoiGianLamViec: string | null;
   chinhSachOT: string | null;
   giaiThuong: string | null;
+  /** Ảnh từng section hiển thị trên trang chi tiết công ty */
+  sectionImages: CompanySectionImages;
 }
 
 /** Thông tin Nhà tuyển dụng / HR đang phụ trách (Bảng NHATUYENDUNG & TAIKHOAN) */
@@ -79,8 +87,20 @@ export interface CompanyBranchItem {
   thanhPho: string;
   diaChi: string;
   mapUrl: string | null;
+  viDo: number | null;
+  kinhDo: number | null;
   /** Xác định chi nhánh có trùng địa chỉ chính của công ty (TRỤ SỞ CHÍNH) */
   laTruSoChinh: boolean;
+}
+
+/** Payload tạo/cập nhật danh sách Chi nhánh */
+export interface UpsertCompanyBranchPayload {
+  maChiNhanh?: string;
+  thanhPho: string;
+  diaChi: string;
+  mapUrl?: string | null;
+  viDo?: number | null;
+  kinhDo?: number | null;
 }
 
 /** Khối trạng thái "Độ hoàn thiện hồ sơ" */
@@ -133,6 +153,7 @@ export interface UpdateCompanyInfoPayload {
   thoiGianLamViec?: string | null;
   chinhSachOT?: string | null;
   giaiThuong?: string | null;
+  sectionImages?: CompanySectionImages;
 }
 
 /** Payload cập nhật thông tin cá nhân HR */
@@ -146,6 +167,7 @@ export interface UpdateHrProfilePayload {
 export interface UpdateCompanyProfilePayload {
   company?: UpdateCompanyInfoPayload;
   hr?: UpdateHrProfilePayload;
+  branches?: UpsertCompanyBranchPayload[];
 }
 
 /** Phản hồi sau khi cập nhật thành công */

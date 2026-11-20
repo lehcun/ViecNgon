@@ -3,22 +3,93 @@ import {
   ArrayMaxSize,
   IsArray,
   IsNotEmpty,
+  IsNumber,
   IsObject,
   IsOptional,
   IsString,
   IsUrl,
   Matches,
+  Max,
   MaxLength,
+  Min,
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import type {
+  CompanySectionImages,
   UpdateCompanyInfoPayload,
   UpdateCompanyProfilePayload,
+  UpsertCompanyBranchPayload,
 } from '@viecngon/types';
 import { COMPANY_PROFILE_CONSTANTS, VALID_URL_OPTIONS } from '../company-profile.constants';
 import { TrimToNull } from './transformers';
 import { UpdateHrProfileDto } from './update-hr-profile.dto';
+
+export class CompanySectionImagesDto implements CompanySectionImages {
+  @IsOptional()
+  @IsArray({ message: 'Danh sách ảnh giới thiệu phải là mảng chuỗi' })
+  @ArrayMaxSize(8, { message: 'Tối đa 8 ảnh cho phần Giới thiệu công ty' })
+  @IsString({ each: true, message: 'Mỗi đường dẫn ảnh phải là chuỗi ký tự' })
+  @MaxLength(500, { each: true, message: 'Đường dẫn ảnh tối đa 500 ký tự' })
+  introImages!: string[];
+
+  @IsOptional()
+  @IsArray({ message: 'Danh sách ảnh văn hóa phải là mảng chuỗi' })
+  @ArrayMaxSize(8, { message: 'Tối đa 8 ảnh cho phần Văn hóa & Phúc lợi' })
+  @IsString({ each: true, message: 'Mỗi đường dẫn ảnh phải là chuỗi ký tự' })
+  @MaxLength(500, { each: true, message: 'Đường dẫn ảnh tối đa 500 ký tự' })
+  cultureImages!: string[];
+}
+
+function parseNullableCoordinate({ value }: TransformFnParams): unknown {
+  if (value === '' || value === null || value === undefined) return null;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : NaN;
+  if (typeof value === 'string') {
+    const parsed = Number(value.trim());
+    return Number.isFinite(parsed) ? parsed : NaN;
+  }
+  return NaN;
+}
+
+export class UpsertCompanyBranchDto implements UpsertCompanyBranchPayload {
+  @IsOptional()
+  @TrimToNull()
+  @IsString({ message: 'Mã chi nhánh phải là chuỗi ký tự' })
+  @MaxLength(50, { message: 'Mã chi nhánh tối đa 50 ký tự' })
+  maChiNhanh?: string;
+
+  @TrimToNull()
+  @IsString({ message: 'Thành phố chi nhánh phải là chuỗi ký tự' })
+  @IsNotEmpty({ message: 'Thành phố chi nhánh không được để trống' })
+  @MaxLength(100, { message: 'Thành phố chi nhánh tối đa 100 ký tự' })
+  thanhPho!: string;
+
+  @TrimToNull()
+  @IsString({ message: 'Địa chỉ chi nhánh phải là chuỗi ký tự' })
+  @IsNotEmpty({ message: 'Địa chỉ chi nhánh không được để trống' })
+  @MaxLength(255, { message: 'Địa chỉ chi nhánh tối đa 255 ký tự' })
+  diaChi!: string;
+
+  @IsOptional()
+  @TrimToNull()
+  @IsString({ message: 'Đường dẫn bản đồ phải là chuỗi ký tự' })
+  @MaxLength(500, { message: 'Đường dẫn bản đồ tối đa 500 ký tự' })
+  mapUrl?: string | null;
+
+  @IsOptional()
+  @Transform(parseNullableCoordinate)
+  @IsNumber({}, { message: 'Vĩ độ (Latitude) phải là số hợp lệ' })
+  @Min(-90, { message: 'Vĩ độ phải nằm trong khoảng -90 đến 90' })
+  @Max(90, { message: 'Vĩ độ phải nằm trong khoảng -90 đến 90' })
+  viDo?: number | null;
+
+  @IsOptional()
+  @Transform(parseNullableCoordinate)
+  @IsNumber({}, { message: 'Kinh độ (Longitude) phải là số hợp lệ' })
+  @Min(-180, { message: 'Kinh độ phải nằm trong khoảng -180 đến 180' })
+  @Max(180, { message: 'Kinh độ phải nằm trong khoảng -180 đến 180' })
+  kinhDo?: number | null;
+}
 
 /**
  * DTO Cập nhật thông tin Công ty (Bảng CONGTY)
@@ -153,6 +224,12 @@ export class UpdateCompanyInfoDto implements UpdateCompanyInfoPayload {
   @IsString({ message: 'Giải thưởng phải là chuỗi ký tự' })
   @MaxLength(255, { message: 'Giải thưởng tối đa 255 ký tự' })
   giaiThuong?: string | null;
+
+  @IsOptional()
+  @IsObject({ message: 'Hình ảnh section phải là một đối tượng' })
+  @ValidateNested()
+  @Type(() => CompanySectionImagesDto)
+  sectionImages?: CompanySectionImagesDto;
 }
 
 /**
@@ -170,5 +247,12 @@ export class UpdateCompanyProfileDto implements UpdateCompanyProfilePayload {
   @ValidateNested()
   @Type(() => UpdateHrProfileDto)
   hr?: UpdateHrProfileDto;
+
+  @IsOptional()
+  @IsArray({ message: 'Danh sách chi nhánh phải là mảng' })
+  @ArrayMaxSize(20, { message: 'Tối đa 20 chi nhánh cho mỗi doanh nghiệp' })
+  @ValidateNested({ each: true })
+  @Type(() => UpsertCompanyBranchDto)
+  branches?: UpsertCompanyBranchDto[];
 }
 

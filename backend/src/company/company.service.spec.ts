@@ -89,4 +89,108 @@ describe('CompanyService', () => {
     expect(items[0].tagline).toBe('Top IT & AI <2026>');
     expect(items[0].featuredJobs.map((j) => j.id)).toEqual(['job-2']);
   });
+
+  it('trả về getCompanyDetailBySlug đầy đủ citiesDisplay, branches kèm tọa độ, reviews và sectionImages', async () => {
+    prisma.congTy.findUnique.mockResolvedValue({
+      maCongTy: 'ct-1',
+      tenCongTy: 'MoMo',
+      logoUrl: null,
+      diaChi: 'Quận 7, TP.HCM',
+      website: 'https://momo.vn',
+      slug: 'momo',
+      moTa: '<p>Fintech</p>',
+      phucLoi: '<p>Bảo hiểm</p>',
+      chuyenMon: 'ReactJS, NestJS',
+      aboutMe: 'Ví điện tử',
+      quocGia: 'Việt Nam',
+      thanhPho: 'TP.HCM',
+      moHinhCongTy: 'Sản phẩm',
+      linhVuc: 'Fintech',
+      quyMo: '1000+ nhân viên',
+      thoiGianLamViec: 'Thứ 2 - Thứ 6',
+      chinhSachOT: 'Nghỉ bù linh hoạt',
+      giaiThuong: 'Top IT 2026; Top Fintech 2025',
+      hinhAnhCongTyJson: JSON.stringify({
+        introImages: ['https://res.cloudinary.com/demo/image/upload/intro1.jpg'],
+        cultureImages: ['https://res.cloudinary.com/demo/image/upload/cul1.jpg'],
+      }),
+      chiNhanhs: [
+        {
+          maChiNhanh: 'cn-hn',
+          thanhPho: 'Hà Nội',
+          diaChi: 'Cầu Giấy, Hà Nội',
+          mapUrl: null,
+          viDo: 21.0285,
+          kinhDo: 105.8542,
+        },
+        {
+          maChiNhanh: 'cn-hcm',
+          thanhPho: 'Thành phố Hồ Chí Minh',
+          diaChi: 'Quận 7, TP.HCM',
+          mapUrl: null,
+          viDo: 10.7295,
+          kinhDo: 106.7218,
+        },
+      ],
+      baiViets: [
+        {
+          maBaiViet: 'bv-1',
+          tieuDe: 'Kỹ thuật hệ thống thanh toán',
+          anhBiaUrl: null,
+          noiDung: 'Nội dung bài viết',
+          ngayDang: new Date('2026-11-01T00:00:00Z'),
+        },
+      ],
+      _count: { nguoiTheoDois: 12 },
+      nhaTuyenDungs: [],
+    });
+
+    prisma.danhGia.findMany.mockResolvedValue([
+      {
+        maDanhGia: 'dg-1',
+        rating: 5,
+        tieuDe: 'Môi trường tuyệt vời',
+        noiDung: null,
+        noiDungUuDiem: 'Lương thưởng tốt',
+        noiDungCaiThien: null,
+        khuyenLamViec: true,
+        ngayDanhGia: new Date('2026-11-10T00:00:00Z'),
+      },
+    ]);
+
+    const detail = await service.getCompanyDetailBySlug('momo');
+    expect(detail.citiesDisplay).toBe('Hà Nội - TP.HCM');
+    expect(detail.branches).toHaveLength(2);
+    expect(detail.branches?.[0].isHeadquarters).toBe(true);
+    expect(detail.branches?.[0].lat).toBe(10.7295);
+    expect(detail.sectionImages?.introImages).toHaveLength(1);
+    expect(detail.awards).toEqual(['Top IT 2026', 'Top Fintech 2025']);
+    expect(detail.reviewSummary?.totalReviews).toBe(1);
+    expect(detail.reviewSummary?.latestReview?.title).toBe('Môi trường tuyệt vời');
+    expect(detail.totalPosts).toBe(1);
+    expect(detail.followerCount).toBe(12);
+  });
+
+  it('toggleFollow thêm mới và xóa theo dõi công ty cho ứng viên', async () => {
+    prisma.congTy.findUnique.mockResolvedValue({ maCongTy: 'ct-1' });
+    prisma.ungVien.findUnique.mockResolvedValue({ maUngVien: 'uv-1' });
+    prisma.theoDoiCongTy.findUnique.mockResolvedValue(null);
+    prisma.theoDoiCongTy.count.mockResolvedValue(5);
+
+    const followed = await service.toggleFollow('ct-1', 'tk-1');
+    expect(followed.isFollowing).toBe(true);
+    expect(followed.followerCount).toBe(5);
+    expect(prisma.theoDoiCongTy.create).toHaveBeenCalled();
+
+    prisma.theoDoiCongTy.findUnique.mockResolvedValue({
+      maUngVien: 'uv-1',
+      maCongTy: 'ct-1',
+    });
+    prisma.theoDoiCongTy.count.mockResolvedValue(4);
+
+    const unfollowed = await service.toggleFollow('ct-1', 'tk-1');
+    expect(unfollowed.isFollowing).toBe(false);
+    expect(unfollowed.followerCount).toBe(4);
+    expect(prisma.theoDoiCongTy.delete).toHaveBeenCalled();
+  });
 });

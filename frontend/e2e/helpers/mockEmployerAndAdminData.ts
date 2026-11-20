@@ -111,6 +111,10 @@ export function createMockEmployerCompanyProfile() {
       thoiGianLamViec: "Thứ 2 - Thứ 6",
       chinhSachOT: "Không OT / Thêm lương OT",
       giaiThuong: "Top 10 Doanh nghiệp CNTT Việt Nam",
+      sectionImages: {
+        introImages: [],
+        cultureImages: [],
+      },
     },
     hr: {
       maNTD: "rec-vng-1",
@@ -125,6 +129,8 @@ export function createMockEmployerCompanyProfile() {
         thanhPho: "TP.HCM",
         diaChi: "VNG Campus, Quận 7",
         mapUrl: null,
+        viDo: 10.7295,
+        kinhDo: 106.7218,
         laTruSoChinh: true,
       },
       {
@@ -132,6 +138,8 @@ export function createMockEmployerCompanyProfile() {
         thanhPho: "Hà Nội",
         diaChi: "Tòa nhà Hoàng Thành, Hai Bà Trưng",
         mapUrl: null,
+        viDo: 21.0285,
+        kinhDo: 105.8542,
         laTruSoChinh: false,
       },
     ],

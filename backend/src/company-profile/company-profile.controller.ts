@@ -3,10 +3,14 @@ import {
   Controller,
   Get,
   Patch,
+  Post,
   Put,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
   ValidationPipe,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import type {
   CompanyProfileResponse,
   UpdateCompanyProfileResponse,
@@ -15,6 +19,10 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import {
+  CloudinaryService,
+  type UploadedBinaryFile,
+} from '../cloudinary/cloudinary.service';
 import { CompanyProfileService } from './company-profile.service';
 import { UpdateCompanyProfileDto } from './dto/update-company-profile.dto';
 
@@ -28,6 +36,7 @@ import { UpdateCompanyProfileDto } from './dto/update-company-profile.dto';
 export class CompanyProfileController {
   constructor(
     private readonly companyProfileService: CompanyProfileService,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   /**
@@ -78,5 +87,24 @@ export class CompanyProfileController {
   ): Promise<UpdateCompanyProfileResponse> {
     return this.companyProfileService.updateCompanyProfile(userId, dto);
   }
-}
 
+  /**
+   * [POST] /employer/profile/upload-image
+   * Upload ảnh Logo công ty hoặc ảnh cho từng Section lên Cloudinary
+   */
+  @Post('upload-image')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 5 * 1024 * 1024 },
+    }),
+  )
+  async uploadImage(
+    @UploadedFile() file: UploadedBinaryFile,
+  ): Promise<{ url: string }> {
+    const url = await this.cloudinaryService.uploadImage(
+      file,
+      'viecngon_company_media',
+    );
+    return { url };
+  }
+}

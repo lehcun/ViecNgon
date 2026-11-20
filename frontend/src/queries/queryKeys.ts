@@ -39,6 +39,8 @@ export const companyKeys = {
   // Chi tiết hồ sơ công ty
   details: () => [...companyKeys.all, "detail"],
   detail: (id: string) => [...companyKeys.details(), id],
+  followStatus: (companyId: string) =>
+    [...companyKeys.detail(companyId), "follow-status"] as const,
 
   // Lấy danh sách các jobs thuộc về 1 công ty cụ thể
   // (Rất hữu ích khi hiển thị trên trang chi tiết công ty hoặc dashboard nhà tuyển dụng)
