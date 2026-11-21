@@ -1,10 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
-import { X, Camera, Trash2, Calendar, ChevronDown } from "lucide-react";
+import React, { useRef, useState } from "react";
+import { X, Camera, Trash2, Calendar, ChevronDown, Link as LinkIcon } from "lucide-react";
 import Image from "next/image";
 import toast from "react-hot-toast";
 import { useUpdateCandidateProfile } from "@/hooks/candidate/useUpdateCandidateProfile";
+import { useUploadCandidateAvatar } from "@/hooks/candidate/useUploadCandidateAvatar";
+import {
+  ImageCropperModal,
+  validateAvatarImageFile,
+} from "@/components/ui/ImageCropperModal";
 import { CandidateProfileResponse } from "@viecngon/types";
 import {
   FieldError,
@@ -65,11 +70,15 @@ export default function PersonalInfoModal({
   initialData,
 }: PersonalInfoModalProps) {
   const { updateCandidateProfile, isPending } = useUpdateCandidateProfile();
+  const { mutateAsync: uploadAvatarAsync, isPending: isUploadingAvatar } =
+    useUploadCandidateAvatar();
 
+  const avatarFileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<PersonalInfoFormValues>(() =>
     getInitialFormData(initialData),
   );
   const [showAvatarInput, setShowAvatarInput] = useState(false);
+  const [cropAvatarFile, setCropAvatarFile] = useState<File | null>(null);
 
   const {
     errors,
@@ -169,6 +178,36 @@ export default function PersonalInfoModal({
     Boolean(formData.avatarUrl.trim()) &&
     validateUrl(formData.avatarUrl, { required: false }) === "";
 
+  const handleSelectAvatarFile = (file: File | undefined) => {
+    if (!file) return;
+    const validationError = validateAvatarImageFile(file);
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
+    setCropAvatarFile(file);
+  };
+
+  const handleConfirmCroppedAvatar = async (croppedFile: File) => {
+    try {
+      const { url } = await uploadAvatarAsync({
+        file: croppedFile,
+        persist: false,
+      });
+      const next = { ...formData, avatarUrl: url };
+      setFormData(next);
+      handleFieldChange("avatarUrl", url, next);
+      setCropAvatarFile(null);
+      toast.success("Đã cắt ảnh đại diện! Bấm 'Lưu' để hoàn tất cập nhật.");
+    } catch (error) {
+      const msg =
+        error instanceof Error
+          ? error.message
+          : "Không thể tải ảnh đại diện lên.";
+      toast.error(msg);
+    }
+  };
+
   const boxClass = (hasError: boolean) =>
     `border rounded-lg px-4 py-2 transition-all bg-white ${
       hasError
@@ -203,7 +242,23 @@ export default function PersonalInfoModal({
           <div className="flex flex-col md:flex-row gap-10">
             {/* Avatar section */}
             <div className="flex flex-col items-center gap-4 w-full md:w-1/4">
-              <div className="relative group">
+              <input
+                ref={avatarFileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="hidden"
+                onChange={(e) => {
+                  handleSelectAvatarFile(e.target.files?.[0]);
+                  e.target.value = "";
+                }}
+              />
+
+              <button
+                type="button"
+                onClick={() => avatarFileInputRef.current?.click()}
+                title="Tải ảnh đại diện từ máy"
+                className="relative group rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
                 {isAvatarUrlValid ? (
                   <div className="relative w-32 h-32 rounded-full overflow-hidden shadow-md border-2 border-slate-200">
                     <Image
@@ -222,11 +277,15 @@ export default function PersonalInfoModal({
                       : "U"}
                   </div>
                 )}
-              </div>
+                <span className="absolute inset-0 rounded-full bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                  <Camera size={22} />
+                </span>
+              </button>
+
               <div className="flex items-center gap-4 text-sm font-medium">
                 <button
                   type="button"
-                  onClick={() => setShowAvatarInput((prev) => !prev)}
+                  onClick={() => avatarFileInputRef.current?.click()}
                   className="flex items-center gap-1 text-primary hover:text-primary-hover transition-colors cursor-pointer"
                 >
                   <Camera size={16} />{" "}
@@ -246,6 +305,15 @@ export default function PersonalInfoModal({
                   </button>
                 )}
               </div>
+
+              <button
+                type="button"
+                onClick={() => setShowAvatarInput((prev) => !prev)}
+                className="inline-flex items-center gap-1 text-[11px] font-medium text-text-muted hover:text-primary transition-colors"
+              >
+                <LinkIcon size={11} />
+                <span>{showAvatarInput ? "Ẩn nhập URL" : "Hoặc dán URL ảnh"}</span>
+              </button>
 
               {(showAvatarInput || Boolean(errors.avatarUrl)) && (
                 <div className="w-full mt-2 animate-in fade-in duration-150">
@@ -550,6 +618,20 @@ export default function PersonalInfoModal({
           </button>
         </div>
       </div>
+      <ImageCropperModal
+        key={
+          cropAvatarFile
+            ? `${cropAvatarFile.name}-${cropAvatarFile.size}-${cropAvatarFile.lastModified}`
+            : "candidate-modal-crop-closed"
+        }
+        isOpen={Boolean(cropAvatarFile)}
+        file={cropAvatarFile}
+        title="Cập nhật ảnh đại diện"
+        cropShape="circle"
+        isSubmitting={isUploadingAvatar}
+        onClose={() => setCropAvatarFile(null)}
+        onConfirm={handleConfirmCroppedAvatar}
+      />
     </div>
   );
 }

@@ -8,12 +8,13 @@ import { CandidateService } from './candidate.service';
 describe('CandidateService', () => {
   let service: CandidateService;
   let prisma: ReturnType<typeof createPrismaMock>;
-  let cloudinaryService: { uploadCvPdf: jest.Mock };
+  let cloudinaryService: { uploadCvPdf: jest.Mock; uploadImage: jest.Mock };
 
   beforeEach(async () => {
     prisma = createPrismaMock();
     cloudinaryService = {
       uploadCvPdf: jest.fn(),
+      uploadImage: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -203,7 +204,7 @@ describe('CandidateService', () => {
       position: 'Dev',
       startDate: '2024-01-01',
       description: '<p>Build</p>',
-    } as any);
+    });
     expect(created.data.maKinhNghiem).toBe('kn-1');
 
     const updated = await service.updateExperience('tk-1', 'kn-1', {
@@ -211,7 +212,7 @@ describe('CandidateService', () => {
       position: 'Senior Dev',
       endDate: '',
       description: '<p>Updated</p>',
-    } as any);
+    });
     expect(updated.data.tenCongTy).toBe('New Corp');
   });
 
@@ -220,7 +221,7 @@ describe('CandidateService', () => {
     const profRes = await service.updateProfile('tk-1', {
       userName: 'Nguyễn A',
       aboutMe: '<p>Bio</p>',
-    } as any);
+    });
     expect(profRes.candidateId).toBe('uv-1');
 
     prisma.ungVien.findUnique.mockResolvedValueOnce(null);
@@ -262,5 +263,35 @@ describe('CandidateService', () => {
     await expect(service.deleteCvFile('tk-1', 'missing')).rejects.toThrow(
       NotFoundException,
     );
+  });
+
+  it('uploadAvatar đẩy ảnh lên Cloudinary folder viecngon_avatars và lưu DB khi persistToProfile=true', async () => {
+    prisma.ungVien.findUnique.mockResolvedValue({ maUngVien: 'uv-1' });
+    prisma.ungVien.update.mockResolvedValue({ maUngVien: 'uv-1' });
+    cloudinaryService.uploadImage.mockResolvedValue(
+      'https://res.cloudinary.com/demo/image/upload/v1/viecngon_avatars/avatar.png',
+    );
+
+    const mockFile = {
+      buffer: Buffer.from('fake-img'),
+      mimetype: 'image/png',
+      size: 1024,
+      originalname: 'avatar.png',
+    };
+
+    const previewOnly = await service.uploadAvatar('tk-1', mockFile, false);
+    expect(previewOnly.url).toContain('viecngon_avatars/avatar.png');
+    expect(cloudinaryService.uploadImage).toHaveBeenCalledWith(
+      mockFile,
+      'viecngon_avatars',
+    );
+    expect(prisma.ungVien.update).not.toHaveBeenCalled();
+
+    const savedRes = await service.uploadAvatar('tk-1', mockFile, true);
+    expect(savedRes.url).toContain('viecngon_avatars/avatar.png');
+    expect(prisma.ungVien.update).toHaveBeenCalledWith({
+      where: { maTaiKhoan: 'tk-1' },
+      data: { avatarUrl: savedRes.url },
+    });
   });
 });

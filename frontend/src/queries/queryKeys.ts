@@ -73,3 +73,8 @@ export const recruiterKeys = {
   spotlightBanner: () => [...recruiterKeys.all, "spotlight-banner"] as const,
 };
 
+export const candidateKeys = {
+  all: ["candidate"] as const,
+  profile: () => ["candidateProfile"] as const,
+};
+

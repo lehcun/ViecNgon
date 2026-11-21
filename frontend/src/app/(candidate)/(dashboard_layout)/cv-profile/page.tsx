@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
+  Camera,
   Edit3,
   PlusCircle,
   Trash2,
@@ -33,6 +35,11 @@ import AiCvUploadModal from "@/components/candidate/modals/AiCvUploadModal";
 import { calculateProfileCompletion } from "@/components/candidate/CandidateMain";
 import { useCandidateProfile } from "@/hooks/candidate/useCandidateProfile";
 import { useManageCandidateItems } from "@/hooks/candidate/useManageCandidateItems";
+import { useUploadCandidateAvatar } from "@/hooks/candidate/useUploadCandidateAvatar";
+import {
+  ImageCropperModal,
+  validateAvatarImageFile,
+} from "@/components/ui/ImageCropperModal";
 import { formatDateVN } from "@/lib/formatters";
 import { CandidateProfileResponse } from "@viecngon/types";
 import { ErrorState, ProfileHeaderSkeleton } from "@/components/ui/StateViews";
@@ -60,9 +67,14 @@ export default function CandidateProfilePage() {
     isDeletingPortfolio,
   } = useManageCandidateItems();
 
+  const avatarFileInputRef = useRef<HTMLInputElement>(null);
+  const { mutateAsync: uploadAvatarAsync, isPending: isUploadingAvatar } =
+    useUploadCandidateAvatar();
+
   const [isEditInfoOpen, setIsEditInfoOpen] = useState(false);
   const [isAboutMeOpen, setIsAboutMeOpen] = useState(false);
   const [isAiCvModalOpen, setIsAiCvModalOpen] = useState(false);
+  const [cropAvatarFile, setCropAvatarFile] = useState<File | null>(null);
 
   const [experienceModal, setExperienceModal] = useState<{
     isOpen: boolean;
@@ -123,6 +135,30 @@ export default function CandidateProfilePage() {
       setDeleteModal((prev) => ({ ...prev, isOpen: false }));
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Có lỗi xảy ra";
+      toast.error(msg);
+    }
+  };
+
+  const handleSelectQuickAvatar = (file: File | undefined) => {
+    if (!file) return;
+    const validationError = validateAvatarImageFile(file);
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
+    setCropAvatarFile(file);
+  };
+
+  const handleConfirmQuickAvatar = async (croppedFile: File) => {
+    try {
+      await uploadAvatarAsync({ file: croppedFile, persist: true });
+      setCropAvatarFile(null);
+      toast.success("Đã cập nhật ảnh đại diện!");
+    } catch (error) {
+      const msg =
+        error instanceof Error
+          ? error.message
+          : "Không thể cập nhật ảnh đại diện.";
       toast.error(msg);
     }
   };
@@ -231,6 +267,32 @@ export default function CandidateProfilePage() {
         onClose={() => setIsAiCvModalOpen(false)}
       />
 
+      <input
+        ref={avatarFileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        className="hidden"
+        onChange={(e) => {
+          handleSelectQuickAvatar(e.target.files?.[0]);
+          e.target.value = "";
+        }}
+      />
+
+      <ImageCropperModal
+        key={
+          cropAvatarFile
+            ? `${cropAvatarFile.name}-${cropAvatarFile.size}-${cropAvatarFile.lastModified}`
+            : "quick-avatar-crop-closed"
+        }
+        isOpen={Boolean(cropAvatarFile)}
+        file={cropAvatarFile}
+        title="Cập nhật ảnh đại diện"
+        cropShape="circle"
+        isSubmitting={isUploadingAvatar}
+        onClose={() => setCropAvatarFile(null)}
+        onConfirm={handleConfirmQuickAvatar}
+      />
+
       {/* CỘT CHÍNH */}
       <div className="xl:col-span-2 flex flex-col gap-6">
         <div className="bg-surface-card rounded-xl border border-border-default p-6 sm:p-7 shadow-xs relative">
@@ -244,18 +306,33 @@ export default function CandidateProfilePage() {
           </button>
 
           <div className="flex items-center gap-5 mb-6 pr-8">
-            <div className="shrink-0">
+            <div className="relative shrink-0">
               {candidateProfile.avatarUrl ? (
-                <img
-                  src={candidateProfile.avatarUrl}
-                  alt={candidateDisplayName}
-                  className="w-20 h-20 rounded-full object-cover border border-border-default shadow-xs"
-                />
+                <div className="relative w-20 h-20 rounded-full overflow-hidden border border-border-default shadow-xs">
+                  <Image
+                    src={candidateProfile.avatarUrl}
+                    alt={candidateDisplayName}
+                    fill
+                    unoptimized
+                    sizes="80px"
+                    className="object-cover"
+                  />
+                </div>
               ) : (
                 <div className="w-20 h-20 bg-primary text-white rounded-full flex items-center justify-center text-2xl font-bold shadow-xs">
                   {candidateDisplayName.charAt(0).toUpperCase()}
                 </div>
               )}
+
+              <button
+                type="button"
+                onClick={() => avatarFileInputRef.current?.click()}
+                title="Cập nhật ảnh đại diện"
+                aria-label="Cập nhật ảnh đại diện"
+                className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-surface-card border border-border-default text-text-secondary hover:text-primary shadow-sm flex items-center justify-center transition cursor-pointer"
+              >
+                <Camera size={14} />
+              </button>
             </div>
             <div className="min-w-0">
               <h1 className="text-xl sm:text-2xl font-bold text-text-main truncate">

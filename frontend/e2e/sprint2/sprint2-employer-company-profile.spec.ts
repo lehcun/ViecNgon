@@ -256,4 +256,79 @@ test.describe("Sprint 2 - Module Quản lý hồ sơ doanh nghiệp (QLHS)", () 
       page.getByText("Đã xóa bài viết khỏi trang công ty."),
     ).toBeVisible();
   });
+
+  test("[FUNC-QLHS07] Mở Modal cắt/thu phóng Logo công ty và tải lên Cloudinary", async ({
+    page,
+  }) => {
+    await setupEmployerSessionWithBaseMocks(page);
+
+    const companyProfile = createMockEmployerCompanyProfile();
+    let uploadCalled = false;
+
+    await page.route(
+      "http://localhost:3001/employer/profile/upload-image",
+      async (route) => {
+        uploadCalled = true;
+        return route.fulfill({
+          status: 201,
+          contentType: "application/json",
+          body: JSON.stringify({
+            url: "https://res.cloudinary.com/demo/image/upload/v1/viecngon_company_media/cropped-logo.png",
+          }),
+        });
+      },
+    );
+
+    await page.route("http://localhost:3001/employer/profile", async (route) => {
+      if (route.request().method() === "GET") {
+        return route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(companyProfile),
+        });
+      }
+      return route.fallback();
+    });
+
+    await page.goto("/company-profile");
+
+    const tinyPng = Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+      "base64",
+    );
+
+    await page.locator('input[type="file"]').first().setInputFiles({
+      name: "company-logo.png",
+      mimeType: "image/png",
+      buffer: tinyPng,
+    });
+
+    const cropDialog = page.getByRole("dialog", {
+      name: "Cập nhật logo công ty",
+    });
+    await expect(cropDialog).toBeVisible();
+    const previewImg = cropDialog.locator('img[alt="Xem trước ảnh cắt"]');
+    await expect(previewImg).toBeVisible();
+    await expect
+      .poll(() =>
+        previewImg.evaluate(
+          (img: HTMLImageElement) => img.complete && img.naturalWidth > 0,
+        ),
+      )
+      .toBe(true);
+    await expect(cropDialog.getByText("Kéo để di chuyển")).toBeVisible();
+    await cropDialog.getByRole("button", { name: "Phóng to" }).click();
+    await cropDialog.getByRole("button", { name: "Cập nhật" }).click();
+
+    await expect.poll(() => uploadCalled).toBe(true);
+    await expect(cropDialog).toBeHidden();
+    await expect(
+      page.getByText(/Đã cắt và tải logo lên/i),
+    ).toBeVisible();
+    await expect(
+      page.locator(
+        'img[src="https://res.cloudinary.com/demo/image/upload/v1/viecngon_company_media/cropped-logo.png"]',
+      ),
+    ).toBeVisible();
+  });
 });

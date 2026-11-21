@@ -17,6 +17,7 @@ import type {
   CompanyProfilePostItem,
   CompanyProfileResponse,
   UpdateCompanyProfileResponse,
+  UploadedImageResponse,
 } from '@viecngon/types';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -107,7 +108,7 @@ export class CompanyProfileController {
   )
   async uploadImage(
     @UploadedFile() file: UploadedBinaryFile,
-  ): Promise<{ url: string }> {
+  ): Promise<UploadedImageResponse> {
     const url = await this.cloudinaryService.uploadImage(
       file,
       'viecngon_company_media',

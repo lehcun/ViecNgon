@@ -904,7 +904,17 @@ export interface UnreadCountResponse {
 }
 
 // =====================================================================
-// 9. SUB-MODULE EXPORTS
+// 9. MEDIA & CROPPER SHARED TYPES
+// =====================================================================
+
+export interface UploadedImageResponse {
+  url: string;
+}
+
+export type ImageCropShape = "circle" | "rounded-square";
+
+// =====================================================================
+// 10. SUB-MODULE EXPORTS
 // =====================================================================
 
 export * from "./company-profile.types";

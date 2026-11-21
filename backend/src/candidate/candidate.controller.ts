@@ -7,11 +7,16 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import type { UploadedImageResponse } from '@viecngon/types';
 import * as jwtAuthGuard from 'src/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import type { UploadedBinaryFile } from 'src/cloudinary/cloudinary.service';
 import { CandidateService } from './candidate.service';
 import { UpdateCandidateDto } from './dto/update-candidate.dto';
 import { CreateExperienceDto, UpdateExperienceDto } from './dto/experience.dto';
@@ -45,6 +50,26 @@ export class CandidateController {
     @Body() updateData: UpdateCandidateDto,
   ) {
     return await this.candidateService.updateProfile(user.id, updateData);
+  }
+
+  @Post('profile/upload-avatar')
+  @UseGuards(RolesGuard)
+  @Roles('UNGVIEN')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 5 * 1024 * 1024 },
+    }),
+  )
+  async uploadAvatar(
+    @CurrentUser() user: jwtAuthGuard.AuthUser,
+    @UploadedFile() file: UploadedBinaryFile,
+    @Query('persist') persist?: string,
+  ): Promise<UploadedImageResponse> {
+    return await this.candidateService.uploadAvatar(
+      user.id,
+      file,
+      persist === 'true',
+    );
   }
 
   // ==========================================

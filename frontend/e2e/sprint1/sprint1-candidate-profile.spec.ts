@@ -107,7 +107,7 @@ test.describe("Sprint 1 - Module Quản lý tài khoản cá nhân (TTCN)", () =
       page.getByText("Cập nhật thông tin thành công!"),
     ).toBeVisible();
     await expect(
-      page.getByRole("heading", { name: "Nguyễn Quang Ý Updated" }),
+      page.getByRole("heading", { level: 1, name: "Nguyễn Quang Ý Updated" }),
     ).toBeVisible();
   });
 
@@ -341,5 +341,68 @@ test.describe("Sprint 1 - Module Quản lý hồ sơ ứng viên (HSUV)", () => 
     await downloadBtn.click();
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toMatch(/\.pdf$/i);
+  });
+
+  test("[FUNC-TTCN07] Mở Modal cắt/thu phóng ảnh đại diện Ứng viên tại /cv-profile và PersonalInfoModal", async ({
+    page,
+  }) => {
+    const { profileState } = await setupCandidateSessionWithBaseMocks(page);
+
+    let persistQueryValue: string | null = null;
+    await page.route("**/candidate/profile/upload-avatar*", async (route) => {
+      const url = new URL(route.request().url());
+      persistQueryValue = url.searchParams.get("persist");
+      const uploadedUrl =
+        "https://res.cloudinary.com/demo/image/upload/v1/viecngon_avatars/cropped-avatar.png";
+      if (persistQueryValue === "true") {
+        profileState.avatarUrl = uploadedUrl;
+      }
+      return route.fulfill({
+        status: 201,
+        contentType: "application/json",
+        body: JSON.stringify({ url: uploadedUrl }),
+      });
+    });
+
+    await page.goto("/cv-profile");
+
+    const tinyPng = Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+      "base64",
+    );
+
+    await page.locator('input[type="file"]').first().setInputFiles({
+      name: "candidate-avatar.png",
+      mimeType: "image/png",
+      buffer: tinyPng,
+    });
+
+    const cropDialog = page.getByRole("dialog", {
+      name: "Cập nhật ảnh đại diện",
+    });
+    await expect(cropDialog).toBeVisible();
+    const previewImg = cropDialog.locator('img[alt="Xem trước ảnh cắt"]');
+    await expect(previewImg).toBeVisible();
+    await expect
+      .poll(() =>
+        previewImg.evaluate(
+          (img: HTMLImageElement) => img.complete && img.naturalWidth > 0,
+        ),
+      )
+      .toBe(true);
+    await expect(cropDialog.getByText("Kéo để di chuyển")).toBeVisible();
+    await cropDialog.getByRole("button", { name: "Phóng to" }).click();
+    await cropDialog.getByRole("button", { name: "Cập nhật" }).click();
+
+    await expect.poll(() => persistQueryValue).toBe("true");
+    await expect(cropDialog).toBeHidden();
+    await expect(
+      page.getByText("Đã cập nhật ảnh đại diện!"),
+    ).toBeVisible();
+
+    // Kiểm tra thêm nút dán URL vẫn khả dụng trong PersonalInfoModal
+    await page.getByTitle("Chỉnh sửa thông tin cơ bản").click();
+    await page.getByRole("button", { name: /Hoặc dán URL ảnh/i }).click();
+    await expect(page.locator("#avatarUrl")).toBeVisible();
   });
 });

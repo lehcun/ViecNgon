@@ -15,8 +15,14 @@ import {
 import { CreatePortfolioDto, UpdatePortfolioDto } from './dto/portfolio.dto';
 import { CreateCvFileDto } from './dto/cv-file.dto';
 import { ApplyParsedCvDto } from './dto/apply-parsed-cv.dto';
-import { CandidateProfileResponse } from '@viecngon/types';
-import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import type {
+  CandidateProfileResponse,
+  UploadedImageResponse,
+} from '@viecngon/types';
+import {
+  CloudinaryService,
+  type UploadedBinaryFile,
+} from 'src/cloudinary/cloudinary.service';
 import { formatSalaryDisplay } from 'src/common/utils/format-salary';
 import { sanitizeRichText } from 'src/common/utils/sanitize-html.util';
 
@@ -215,6 +221,33 @@ export class CandidateService {
         candidateId: updatedProfile.maUngVien,
       };
     });
+  }
+
+  /**
+   * Upload ảnh đại diện đã cắt/thu phóng lên Cloudinary và đồng bộ vào bảng UNGVIEN (khi persistToProfile = true)
+   */
+  async uploadAvatar(
+    userId: string,
+    file: UploadedBinaryFile,
+    persistToProfile = false,
+  ): Promise<UploadedImageResponse> {
+    await this.getCandidateByUserId(userId);
+    const rawUrl = await this.cloudinaryService.uploadImage(
+      file,
+      'viecngon_avatars',
+    );
+    const safeUrl = this.truncateText(rawUrl, 255) ?? rawUrl.slice(0, 255);
+
+    if (persistToProfile) {
+      await this.prisma.$transaction(async (tx) => {
+        await tx.ungVien.update({
+          where: { maTaiKhoan: userId },
+          data: { avatarUrl: safeUrl },
+        });
+      });
+    }
+
+    return { url: safeUrl };
   }
 
   // =========================================================================

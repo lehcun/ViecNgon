@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { CandidateProfileResponse } from "@viecngon/types";
+import type { CandidateProfileResponse } from "@viecngon/types";
+import { candidateKeys } from "@/queries/queryKeys";
 
 export const useCandidateProfile = () => {
   const query = useQuery<CandidateProfileResponse, Error>({
-    queryKey: ["candidateProfile"],
+    queryKey: candidateKeys.profile(),
     queryFn: async () => {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/candidate/profile`,

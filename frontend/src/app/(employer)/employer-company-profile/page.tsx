@@ -55,6 +55,10 @@ import {
   CompanyBranchesManager,
   type BranchFormItem,
 } from "@/components/employer/company-profile/CompanyBranchesManager";
+import {
+  ImageCropperModal,
+  validateAvatarImageFile,
+} from "@/components/ui/ImageCropperModal";
 import { cn } from "@/lib/utils";
 
 type ProfileTab =
@@ -369,6 +373,7 @@ function CompanyProfileEditor({
   const [uploadingTarget, setUploadingTarget] = useState<
     "logo" | "intro" | "culture" | null
   >(null);
+  const [cropLogoFile, setCropLogoFile] = useState<File | null>(null);
   const [geocodingKey, setGeocodingKey] = useState<string | null>(null);
 
   const [companyForm, setCompanyForm] = useState<Partial<CompanyInfo>>(
@@ -403,28 +408,23 @@ function CompanyProfileEditor({
   const hasUnsavedChanges =
     currentSnapshot !== (savedSnapshotOverride ?? initialSnapshot);
 
-  const handleUploadLogo = async (file: File | undefined) => {
+  const handleSelectLogoFile = (file: File | undefined) => {
     if (!file) return;
-    const allowedTypes = new Set([
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-      "image/gif",
-    ]);
-    if (!allowedTypes.has(file.type)) {
-      toast.error("Chỉ hỗ trợ ảnh định dạng JPG, PNG, WEBP hoặc GIF.");
+    const validationError = validateAvatarImageFile(file);
+    if (validationError) {
+      toast.error(validationError);
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Dung lượng logo tối đa là 5MB.");
-      return;
-    }
+    setCropLogoFile(file);
+  };
 
+  const handleConfirmCroppedLogo = async (croppedFile: File) => {
     try {
       setUploadingTarget("logo");
-      const { url } = await uploadCompanyImage(file);
+      const { url } = await uploadCompanyImage(croppedFile);
       setCompanyForm((prev) => ({ ...prev, logoUrl: url }));
-      toast.success("Đã tải logo lên! Bấm 'Lưu thay đổi' để cập nhật.");
+      setCropLogoFile(null);
+      toast.success("Đã cắt và tải logo lên! Bấm 'Lưu thay đổi' để cập nhật.");
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Tải logo thất bại, thử lại sau.",
@@ -798,9 +798,24 @@ function CompanyProfileEditor({
         accept="image/jpeg,image/png,image/webp,image/gif"
         className="hidden"
         onChange={(e) => {
-          void handleUploadLogo(e.target.files?.[0]);
+          handleSelectLogoFile(e.target.files?.[0]);
           e.target.value = "";
         }}
+      />
+
+      <ImageCropperModal
+        key={
+          cropLogoFile
+            ? `${cropLogoFile.name}-${cropLogoFile.size}-${cropLogoFile.lastModified}`
+            : "logo-crop-closed"
+        }
+        isOpen={Boolean(cropLogoFile)}
+        file={cropLogoFile}
+        title="Cập nhật logo công ty"
+        cropShape="rounded-square"
+        isSubmitting={uploadingTarget === "logo"}
+        onClose={() => setCropLogoFile(null)}
+        onConfirm={handleConfirmCroppedLogo}
       />
 
       {/* --- 1. HEADER TOP BAR --- */}
