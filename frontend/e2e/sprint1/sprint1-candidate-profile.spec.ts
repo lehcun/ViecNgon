@@ -257,9 +257,10 @@ test.describe("Sprint 1 - Module Quản lý hồ sơ ứng viên (HSUV)", () => 
       page.getByRole("heading", { name: "Kinh nghiệm làm việc" }),
     ).toBeVisible();
     await expect(page.getByRole("heading", { name: "Học vấn" })).toBeVisible();
+    // Khi chưa có Học vấn và Kinh nghiệm (55% < 70%), nút Xem và tải CV mẫu bị khóa
     await expect(
-      page.getByRole("link", { name: /Xem và tải CV mẫu/i }),
-    ).toBeVisible();
+      page.getByRole("button", { name: /Xem và tải CV mẫu/i }),
+    ).toBeDisabled();
 
     // FUNC-HSUV03: Cập nhật mục "Giới thiệu bản thân"
     await page.getByTitle("Chỉnh sửa giới thiệu bản thân").click();
@@ -319,6 +320,10 @@ test.describe("Sprint 1 - Module Quản lý hồ sơ ứng viên (HSUV)", () => 
 
     await expect(page.getByText("Thêm kinh nghiệm thành công!")).toBeVisible();
     await expect(page.getByText("Next.js Engineer")).toBeVisible();
+    // Sau khi thêm Học vấn (+15%) và Kinh nghiệm (+10%) đạt 80% >= 70%, link Xem và tải CV mẫu mở khóa
+    await expect(
+      page.getByRole("link", { name: /Xem và tải CV mẫu/i }),
+    ).toBeVisible();
   });
 
   test("[FUNC-HSUV06] Xem và tải xuống CV mẫu chuẩn A4", async ({ page }) => {
@@ -406,34 +411,35 @@ test.describe("Sprint 1 - Module Quản lý hồ sơ ứng viên (HSUV)", () => 
     await expect(page.locator("#avatarUrl")).toBeVisible();
   });
 
-  test("[FUNC-HSUV08] Kiểm tra gauge tràn 100% và khóa Tạo/Xem/Ứng tuyển CV hệ thống khi hồ sơ dưới 70%", async ({
+  test("[FUNC-HSUV08] Kiểm tra gauge tràn 100%, card gợi ý + AI, trang hướng dẫn và khóa CV dưới 70%", async ({
     page,
   }) => {
-    // 1. Hồ sơ 100%: Gauge phải tràn kín 100% (stroke-dashoffset = 0)
+    // 1. Hồ sơ 100%: Gauge SVG trên /dashboard và thanh progress trên /cv-profile đều tràn 100%
     await setupCandidateSessionWithBaseMocks(page);
-    await page.goto("/cv-profile");
-
-    const fullGauge = page.getByTestId("profile-completion-progress");
-    await expect(fullGauge).toBeVisible();
-    const dashOffset = await fullGauge.getAttribute("stroke-dashoffset");
+    await page.goto("/dashboard");
+    const fullSvgGauge = page.getByTestId("profile-completion-progress");
+    await expect(fullSvgGauge).toBeVisible();
+    const dashOffset = await fullSvgGauge.getAttribute("stroke-dashoffset");
     expect(Number(dashOffset)).toBeCloseTo(0, 2);
 
-    // 2. Hồ sơ dưới 70% (40%) nhưng vẫn có CV cũ: khóa Tạo/Xem/Nộp CV hệ thống
+    await page.goto("/cv-profile");
+    const cvProfileGauge = page.getByTestId("profile-completion-progress");
+    await expect(cvProfileGauge).toBeVisible();
+    const cvProfileOffset = await cvProfileGauge.getAttribute(
+      "stroke-dashoffset",
+    );
+    expect(Number(cvProfileOffset)).toBeCloseTo(0, 2);
+    await expect(page.getByText("100%", { exact: true })).toBeVisible();
+    await expect(page.getByTestId("ai-cv-autofill-card")).toContainText("AI");
+
+    // 2. Hồ sơ dưới 70% (20%: chỉ có info cơ bản 5% + học vấn 15%): kiểm tra gợi ý +X% và khóa CV
     const lowProfile = createMockCandidateProfile({
-      profession: "",
-      dateOfBirth: null,
-      address: null,
       aboutMe: "",
       skills: [],
       experiences: [],
-      educations: [],
-      account: {
-        email: "quangy.dev@viecngon.vn",
-        userName: "Nguyễn Quang Ý",
-        phoneNumber: null,
-      },
+      portfolios: [],
+      certificates: [],
     });
-    // Lúc này chỉ đạt: candidateName + defaultCvFileId = 20% (< 70%)
     await setupCandidateSessionWithBaseMocks(page, { profile: lowProfile });
 
     await page.route("**/job/nextjs-developer", (route) =>
@@ -478,10 +484,29 @@ test.describe("Sprint 1 - Module Quản lý hồ sơ ứng viên (HSUV)", () => 
 
     // Kiểm tra /cv-profile
     await page.goto("/cv-profile");
+    await expect(page.getByTestId("profile-completion-progress")).toBeVisible();
+    await expect(page.getByText("20%", { exact: true })).toBeVisible();
+    const suggestionList = page.getByTestId("profile-completion-suggestions");
+    await expect(suggestionList).toContainText("Kinh nghiệm làm việc");
+    await expect(suggestionList).toContainText("10%");
+    await expect(suggestionList).toContainText("Chứng chỉ");
+    await expect(suggestionList).toContainText("5%");
     const lockedTemplateBtn = page.getByRole("button", {
       name: /Xem và tải CV mẫu/i,
     });
     await expect(lockedTemplateBtn).toBeDisabled();
+
+    // Kiểm tra trang hướng dẫn /huong-dan/ho-so
+    await page.getByRole("link", { name: /Bảng tính điểm %/i }).click();
+    await expect(page).toHaveURL(/\/huong-dan\/ho-so$/, { timeout: 15000 });
+    await expect(
+      page.getByRole("heading", {
+        name: /Bảng phân bổ trọng số % đề xuất/i,
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByText(/Ứng viên Fresher \/ mới ra trường/i),
+    ).toBeVisible();
 
     // Kiểm tra /cv-template
     await page.goto("/cv-template");

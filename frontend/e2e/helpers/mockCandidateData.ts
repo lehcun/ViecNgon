@@ -44,6 +44,7 @@ export function createMockCandidateProfile(
     skills: [
       { skillId: "sk-1", skillName: "Next.js", level: "Senior" },
       { skillId: "sk-2", skillName: "TypeScript", level: "Middle" },
+      { skillId: "sk-3", skillName: "NestJS", level: "Middle" },
     ],
     experiences: [
       {
@@ -53,6 +54,22 @@ export function createMockCandidateProfile(
         startDate: "2024-01-01",
         endDate: null,
         description: "Phát triển hệ thống tuyển dụng bằng Next.js.",
+      },
+      {
+        id: "exp-2",
+        companyName: "ViecNgon Tech",
+        position: "Backend Developer",
+        startDate: "2022-06-01",
+        endDate: "2023-12-01",
+        description: "Xây dựng REST API NestJS và SQL Server.",
+      },
+      {
+        id: "exp-3",
+        companyName: "DaNang Lab",
+        position: "Software Intern",
+        startDate: "2021-06-01",
+        endDate: "2022-05-01",
+        description: "Tham gia phát triển giao diện web React.",
       },
     ],
     educations: [
@@ -65,10 +82,31 @@ export function createMockCandidateProfile(
         gpa: "3.6/4.0",
       },
     ],
-    certificates: [],
+    certificates: [
+      {
+        id: "cert-1",
+        name: "AWS Certified Cloud Practitioner",
+        organization: "Amazon Web Services",
+        issueDate: "05/2025",
+        expirationDate: null,
+      },
+    ],
     languages: [],
     uploadedCvs: [],
-    portfolios: [],
+    portfolios: [
+      {
+        id: "port-1",
+        title: "ViecNgon Recruitment Platform",
+        description: "Nền tảng tuyển dụng IT tích hợp AI Match.",
+        projectUrl: "https://github.com/demo/viecngon",
+      },
+      {
+        id: "port-2",
+        title: "Realtime Interview Scheduler",
+        description: "Hệ thống đặt lịch phỏng vấn tự động qua Google Calendar.",
+        projectUrl: "https://github.com/demo/scheduler",
+      },
+    ],
     ...overrides,
   };
 }

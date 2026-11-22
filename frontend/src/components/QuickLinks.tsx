@@ -39,9 +39,9 @@ export default function QuickLinks() {
             <Link
               key={item.href}
               href={item.href}
-              className="group inline-flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-text-secondary hover:text-primary hover:bg-primary-light/60 font-medium text-sm transition-colors shrink-0"
+              className="group inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-text-secondary hover:text-primary font-medium text-sm transition-colors shrink-0"
             >
-              <span className="w-8 h-8 rounded-lg bg-primary-light text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+              <span className="flex items-center justify-center text-text-secondary group-hover:text-primary transition-colors shrink-0">
                 {item.icon}
               </span>
               <span>{item.label}</span>

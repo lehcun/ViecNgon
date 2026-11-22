@@ -101,6 +101,8 @@ export interface FormattedTopCompany {
   location: string | null;
   slug: string;
   jobs: number;
+  skills?: string[];
+  isTopHiring?: boolean;
 }
 
 export interface CompanyActiveJobItem {

@@ -222,9 +222,11 @@ describe('CandidateService', () => {
       maFileCvMacDinh: null,
       cvUrl: null,
       taiKhoan: { tenNguoiDung: 'Nguyễn A', sdt: '0901234567' },
-      kinhNghiems: [{ maKinhNghiem: 'kn-1' }],
-      hocVans: [],
-      kyNangs: [],
+      kinhNghiems: [{ maKinhNghiem: 'kn-1' }, { maKinhNghiem: 'kn-2' }],
+      hocVans: [{ maHocVan: 'hv-1' }],
+      portfolios: [{ maPortfolio: 'p-1' }],
+      kyNangs: [{ maKyNang: 's-1' }, { maKyNang: 's-2' }],
+      chungChis: [],
     });
     cloudinaryService.uploadCvPdf.mockResolvedValue('https://cdn/cv-new.pdf');
     prisma.fileCv.create.mockResolvedValue({

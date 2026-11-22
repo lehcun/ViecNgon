@@ -63,11 +63,16 @@ export default function TopEmployers() {
           </Link>
         </div>
 
-        {/* Trạng thái Loading Skeleton */}
+        {/* Trạng thái Loading Skeleton (bố cục 3 + 2 cân đều) */}
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {Array.from({ length: 8 }).map((_, idx) => (
-              <CompanyCardSkeleton key={idx} />
+          <div className="flex flex-wrap justify-center gap-6">
+            {Array.from({ length: 5 }).map((_, idx) => (
+              <div
+                key={idx}
+                className="w-full md:w-[calc(50%-12px)] lg:w-[calc((100%-48px)/3)]"
+              >
+                <CompanyCardSkeleton />
+              </div>
             ))}
           </div>
         ) : isError ? (
@@ -105,10 +110,15 @@ export default function TopEmployers() {
               </Marquee>
             </div>
 
-            {/* Lưới 4 cột */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {companies.map((company: FormattedTopCompany) => (
-                <EmployerCard key={company.id} {...company} />
+            {/* Lưới 5 công ty chia 3 trên - 2 dưới căn giữa đều nhau */}
+            <div className="flex flex-wrap justify-center gap-6">
+              {companies.slice(0, 5).map((company: FormattedTopCompany) => (
+                <div
+                  key={company.id}
+                  className="w-full md:w-[calc(50%-12px)] lg:w-[calc((100%-48px)/3)] flex"
+                >
+                  <EmployerCard {...company} />
+                </div>
               ))}
             </div>
           </>

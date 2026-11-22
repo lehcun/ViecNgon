@@ -36,6 +36,8 @@ export class ApplicationsService {
         kinhNghiems: { select: { maKinhNghiem: true } },
         hocVans: { select: { maHocVan: true } },
         kyNangs: { select: { maKyNang: true } },
+        chungChis: { select: { maChungChi: true } },
+        portfolios: { select: { maPortfolio: true } },
       },
     });
 

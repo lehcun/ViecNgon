@@ -329,7 +329,7 @@ async function main(): Promise<void> {
       tenPhapLy: 'Công ty TNHH NAB Innovation Centre Vietnam',
       slug: 'nab-innovation-centre',
       logoUrl:
-        'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/National_Australia_Bank_logo.svg/512px-National_Australia_Bank_logo.svg.png',
+        'https://res.cloudinary.com/dbvlsf9bi/image/upload/v1795318961/viettel_gdaetb.png',
       website: 'https://nab.com.au',
       thanhPho: 'TP.HCM',
       diaChi: 'Etown Central, 11 Đoàn Văn Bơ, Phường 13, Quận 4, TP.HCM',
@@ -378,7 +378,7 @@ async function main(): Promise<void> {
       tenPhapLy: 'Tổng Công ty Giải pháp Doanh nghiệp Viettel',
       slug: 'viettel-solutions',
       logoUrl:
-        'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Viettel_logo_2021.svg/512px-Viettel_logo_2021.svg.png',
+        'https://res.cloudinary.com/dbvlsf9bi/image/upload/v1795318962/NAB_Logo_RGB_1x1_o21s8d.png',
       website: 'https://solutions.viettel.vn',
       thanhPho: 'Hà Nội',
       diaChi: 'Số 1 Trần Hữu Dực, Mỹ Đình 2, Nam Từ Liêm, Hà Nội',

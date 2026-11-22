@@ -14,15 +14,11 @@ import {
   User,
   MapPin,
   Link as LinkIcon,
-  Bot,
-  FileText,
   ExternalLink,
   Briefcase,
   GraduationCap,
   Award,
   FolderGit2,
-  Sparkles,
-  Lock,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import PersonalInfoModal from "@/components/candidate/PersonalInfoModal";
@@ -33,11 +29,8 @@ import CertificateModal from "@/components/candidate/modals/CertificateModal";
 import PortfolioModal from "@/components/candidate/modals/PortfolioModal";
 import ConfirmDeleteModal from "@/components/candidate/modals/ConfirmDeleteModal";
 import AiCvUploadModal from "@/components/candidate/modals/AiCvUploadModal";
-import ProfileCompletionGauge from "@/components/candidate/ProfileCompletionGauge";
-import {
-  calculateProfileCompletion,
-  MIN_PROFILE_COMPLETION_FOR_CV,
-} from "@/lib/candidate-completion";
+import ProfileCompletionSidebarCard from "@/components/candidate/ProfileCompletionSidebarCard";
+import type { ProfileSuggestionKey } from "@/lib/candidate-completion";
 import { useCandidateProfile } from "@/hooks/candidate/useCandidateProfile";
 import { useManageCandidateItems } from "@/hooks/candidate/useManageCandidateItems";
 import { useUploadCandidateAvatar } from "@/hooks/candidate/useUploadCandidateAvatar";
@@ -192,9 +185,34 @@ export default function CandidateProfilePage() {
     );
   }
 
-  const profileCompletion = calculateProfileCompletion(candidateProfile);
-  const isEligibleForCv =
-    profileCompletion >= MIN_PROFILE_COMPLETION_FOR_CV;
+  const handleSelectSuggestion = (key: ProfileSuggestionKey) => {
+    switch (key) {
+      case "personalInfo":
+        setIsEditInfoOpen(true);
+        break;
+      case "aboutMe":
+        setIsAboutMeOpen(true);
+        break;
+      case "education":
+        setEducationModal({ isOpen: true, data: null });
+        break;
+      case "experience":
+        setExperienceModal({ isOpen: true, data: null });
+        break;
+      case "portfolio":
+        setPortfolioModal({ isOpen: true, data: null });
+        break;
+      case "certificate":
+        setCertificateModal({ isOpen: true, data: null });
+        break;
+      case "skills":
+        document
+          .getElementById("skills-section")
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+        setIsAiCvModalOpen(true);
+        break;
+    }
+  };
 
   const candidateDisplayName =
     candidateProfile.candidateName || candidateProfile.account.userName;
@@ -390,7 +408,7 @@ export default function CandidateProfilePage() {
                   }
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-primary hover:underline truncate max-w-[200px]"
+                  className="text-primary hover:underline truncate max-w-50"
                 >
                   {candidateProfile.cvUrl.replace(/^https?:\/\//, "")}
                 </Link>
@@ -756,7 +774,10 @@ export default function CandidateProfilePage() {
           )}
         </div>
 
-        <div className="bg-surface-card rounded-xl border border-border-default p-6 sm:p-7 shadow-xs">
+        <div
+          id="skills-section"
+          className="bg-surface-card rounded-xl border border-border-default p-6 sm:p-7 shadow-xs"
+        >
           <div className="flex items-center justify-between mb-4 border-b border-border-subtle pb-3.5">
             <h2 className="text-lg font-bold text-text-main">Kỹ năng</h2>
           </div>
@@ -785,63 +806,13 @@ export default function CandidateProfilePage() {
         </div>
       </div>
 
-      {/* CỘT PHẢI: WIDGET */}
-      <div className="xl:col-span-1 flex flex-col gap-6">
-        <div className="bg-surface-card rounded-xl border border-border-default p-6 shadow-xs sticky top-24">
-          <h2 className="text-center font-bold text-text-main mb-5">
-            Độ hoàn thiện hồ sơ
-          </h2>
-
-          <div className="flex justify-center mb-5">
-            <ProfileCompletionGauge percentage={profileCompletion} />
-          </div>
-
-          <div className="flex items-end gap-3 mb-6">
-            <div className="bg-surface-subtle border border-border-subtle rounded-2xl rounded-br-none p-3 text-xs text-text-secondary relative flex-1 leading-relaxed">
-              {isEligibleForCv
-                ? "Hồ sơ của bạn đã đạt mốc ≥ 70%, đủ điều kiện tạo CV, xem CV, dùng CV ứng tuyển và chấm điểm AI Match!"
-                : `Hoàn thiện hồ sơ đạt tối thiểu ${MIN_PROFILE_COMPLETION_FOR_CV}% (hiện tại ${profileCompletion}%) để mở khóa tạo CV, xem CV và dùng CV ứng tuyển.`}
-            </div>
-            <div className="w-10 h-10 bg-ai-light border border-ai-border rounded-full flex items-center justify-center shrink-0 text-ai">
-              <Bot size={20} />
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setIsAiCvModalOpen(true)}
-            className="inline-flex items-center justify-center gap-2 w-full px-5 py-2.5 mb-3 bg-ai hover:bg-ai/90 text-white rounded-lg font-semibold transition-colors text-sm cursor-pointer"
-          >
-            <Sparkles size={17} />
-            Tải lên CV để AI tự điền hồ sơ
-          </button>
-
-          {isEligibleForCv ? (
-            <Link
-              href="/cv-template"
-              className="inline-flex items-center justify-center gap-2 w-full px-5 py-2.5 bg-surface-card border border-border-default hover:border-primary hover:text-primary text-text-main rounded-lg font-semibold transition-colors text-sm"
-            >
-              <FileText size={17} />
-              Xem và tải CV mẫu
-            </Link>
-          ) : (
-            <div className="space-y-2">
-              <button
-                type="button"
-                disabled
-                aria-disabled="true"
-                className="inline-flex items-center justify-center gap-2 w-full px-5 py-2.5 bg-surface-muted border border-border-default text-text-muted rounded-lg font-semibold text-sm opacity-65 cursor-not-allowed"
-              >
-                <Lock size={16} />
-                Xem và tải CV mẫu
-              </button>
-              <p className="text-[11px] text-warning-text text-center font-medium">
-                Đạt tối thiểu {MIN_PROFILE_COMPLETION_FOR_CV}% để tạo, xem và
-                dùng CV ứng tuyển
-              </p>
-            </div>
-          )}
-        </div>
+      {/* CỘT PHẢI: WIDGET HOÀN THIỆN HỒ SƠ & QUÉT CV AI */}
+      <div className="xl:col-span-1">
+        <ProfileCompletionSidebarCard
+          profile={candidateProfile}
+          onSelectSuggestion={handleSelectSuggestion}
+          onOpenAiCvModal={() => setIsAiCvModalOpen(true)}
+        />
       </div>
     </div>
   );

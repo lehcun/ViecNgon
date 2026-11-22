@@ -99,7 +99,7 @@ export class CompanyService {
 
   async getCompaniesWithJobCount() {
     const now = new Date();
-    // Bước 1: Query database bằng Prisma kèm trạng thái gói Kim Cương đang chạy
+    // Bước 1: Query database bằng Prisma kèm trạng thái gói Kim Cương đang chạy và kỹ năng tuyển dụng
     const companies = await this.prisma.congTy.findMany({
       select: {
         maCongTy: true,
@@ -107,6 +107,7 @@ export class CompanyService {
         logoUrl: true,
         thanhPho: true,
         slug: true,
+        chuyenMon: true,
         nhaTuyenDungs: {
           select: {
             muaQuangCaos: {
@@ -117,6 +118,22 @@ export class CompanyService {
               select: {
                 goiQuangCao: {
                   select: { capDoUuTien: true },
+                },
+              },
+            },
+            congViecs: {
+              where: {
+                trangThai: { in: ['Đang tuyển', 'DA_DUYET'] },
+                deletedAt: null,
+                OR: [{ ngayHetHan: null }, { ngayHetHan: { gte: now } }],
+              },
+              select: {
+                congViecKyNangs: {
+                  select: {
+                    kyNang: {
+                      select: { tenKyNang: true },
+                    },
+                  },
                 },
               },
             },
@@ -151,6 +168,30 @@ export class CompanyService {
           return Math.max(max, hrMax);
         }, 0);
 
+        const skillCounts = new Map<string, number>();
+        for (const hr of company.nhaTuyenDungs) {
+          for (const job of hr.congViecs ?? []) {
+            for (const item of job.congViecKyNangs ?? []) {
+              const name = item.kyNang?.tenKyNang?.trim();
+              if (!name) continue;
+              skillCounts.set(name, (skillCounts.get(name) ?? 0) + 1);
+            }
+          }
+        }
+
+        let topSkills = Array.from(skillCounts.entries())
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 6)
+          .map(([name]) => name);
+
+        if (topSkills.length === 0 && company.chuyenMon) {
+          topSkills = company.chuyenMon
+            .split(/[,;|/]/)
+            .map((s) => s.trim())
+            .filter(Boolean)
+            .slice(0, 6);
+        }
+
         return {
           maxTier,
           formatted: {
@@ -160,6 +201,8 @@ export class CompanyService {
             location: company.thanhPho,
             slug: company.slug,
             jobs: totalJobs,
+            skills: topSkills,
+            isTopHiring: maxTier >= 4,
           } satisfies FormattedTopCompany,
         };
       })

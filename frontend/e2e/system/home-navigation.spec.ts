@@ -8,6 +8,8 @@ const MOCK_TOP_COMPANIES = [
     logo: null,
     location: "Hà Nội",
     jobs: 12,
+    skills: ["Java", "ReactJS", "Node.js"],
+    isTopHiring: true,
   },
   {
     id: "comp-vng",
@@ -16,6 +18,7 @@ const MOCK_TOP_COMPANIES = [
     logo: null,
     location: "TP. Hồ Chí Minh",
     jobs: 8,
+    skills: ["Go", "Kubernetes", "ReactJS"],
   },
   {
     id: "comp-momo",
@@ -24,6 +27,7 @@ const MOCK_TOP_COMPANIES = [
     logo: null,
     location: "TP. Hồ Chí Minh",
     jobs: 5,
+    skills: ["Java", "Spring Boot", "AWS"],
   },
   {
     id: "comp-viettel",
@@ -32,6 +36,25 @@ const MOCK_TOP_COMPANIES = [
     logo: null,
     location: "Đà Nẵng",
     jobs: 9,
+    skills: ["Python", "Docker"],
+  },
+  {
+    id: "comp-mb",
+    slug: "mb-bank",
+    name: "MB Bank",
+    logo: null,
+    location: "Hà Nội",
+    jobs: 17,
+    skills: ["Java", "Oracle", "AngularJS"],
+  },
+  {
+    id: "comp-extra",
+    slug: "extra-hidden",
+    name: "Hidden 6th Corp",
+    logo: null,
+    location: "Hà Nội",
+    jobs: 2,
+    skills: ["Rust"],
   },
 ];
 
@@ -90,8 +113,21 @@ test.describe("Trang chủ & Điều hướng tìm việc IT", () => {
     ).toBeVisible();
     await expect(page.getByText("12 việc làm")).toBeVisible();
     await expect(
+      page.locator("#top-companies").getByText("Node.js"),
+    ).toBeVisible();
+    await expect(page.getByText("TOP HIRING")).toBeVisible();
+    await expect(
+      page.getByText("Doanh nghiệp công nghệ IT"),
+    ).toHaveCount(0);
+    await expect(
       page.getByRole("heading", { name: "VNG Corporation" }),
     ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "MB Bank" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Hidden 6th Corp" }),
+    ).toHaveCount(0);
     expect(pageErrors).toEqual([]);
   });
 

@@ -41,9 +41,18 @@ describe('CompanyService', () => {
         logoUrl: null,
         thanhPho: 'Hồ Chí Minh',
         slug: 'diamond-corp',
+        chuyenMon: 'React, TypeScript',
         nhaTuyenDungs: [
           {
             muaQuangCaos: [{ goiQuangCao: { capDoUuTien: 4 } }],
+            congViecs: [
+              {
+                congViecKyNangs: [
+                  { kyNang: { tenKyNang: 'NestJS' } },
+                  { kyNang: { tenKyNang: 'Next.js' } },
+                ],
+              },
+            ],
             _count: { congViecs: 2 },
           },
         ],
@@ -54,6 +63,8 @@ describe('CompanyService', () => {
     expect(result).toHaveLength(2);
     expect(result[0].slug).toBe('diamond-corp');
     expect(result[0].jobs).toBe(2);
+    expect(result[0].isTopHiring).toBe(true);
+    expect(result[0].skills).toEqual(['NestJS', 'Next.js']);
   });
 
   it('trả về getFeaturedBannerEmployers với tagline đã stripHtml tuyến tính', async () => {
