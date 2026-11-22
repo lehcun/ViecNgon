@@ -35,7 +35,7 @@ export default function JobDetailPreviewPane({ job }: JobDetailPreviewPaneProps)
   const company = job.company;
 
   return (
-    <div className="bg-surface-card rounded-xl border border-border-default p-6 shadow-xs max-h-[calc(100vh-6.5rem)] overflow-y-auto">
+    <div className="bg-surface-card rounded-xl border border-border-default p-6 shadow-xs max-h-[calc(100vh-6.5rem)] overflow-y-auto overscroll-contain">
       {/* 1. Header */}
       <div className="flex items-start gap-4 pb-5 border-b border-border-default">
         <CompanyLogo src={company?.logo} name={company?.name} size="lg" />

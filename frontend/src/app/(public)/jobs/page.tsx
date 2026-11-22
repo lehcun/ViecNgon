@@ -89,28 +89,32 @@ function JobsPageContent() {
             />
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start mt-6">
-            <div className="lg:col-span-5 space-y-4 lg:pr-2 overflow-visible">
-              {jobs.map((job) => (
-                <JobCard
-                  key={job.id}
-                  job={job}
-                  isSelected={activeJob?.id === job.id}
-                  onSelect={() => setSelectedJobId(job.id)}
-                />
-              ))}
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start mt-6">
+              <div className="lg:col-span-5 space-y-4 lg:pr-2">
+                {jobs.map((job) => (
+                  <JobCard
+                    key={job.id}
+                    job={job}
+                    isSelected={activeJob?.id === job.id}
+                    onSelect={() => setSelectedJobId(job.id)}
+                  />
+                ))}
+              </div>
 
+              <div className="hidden lg:block lg:col-span-7 lg:sticky lg:top-20 self-start z-30">
+                <JobDetailPreviewPane job={activeJob} />
+              </div>
+            </div>
+
+            <div className="mt-8">
               <JobPagination
                 currentPage={page}
                 totalPages={totalPages}
                 onPageChange={setPage}
               />
             </div>
-
-            <div className="hidden lg:block lg:col-span-7 sticky top-20 self-start z-30">
-              <JobDetailPreviewPane job={activeJob} />
-            </div>
-          </div>
+          </>
         )}
       </div>
     </div>
