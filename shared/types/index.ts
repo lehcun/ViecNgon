@@ -923,4 +923,5 @@ export type ImageCropShape = "circle" | "rounded-square";
 export * from "./company-profile.types";
 export * from "./employer-job.types";
 export * from "./admin-dashboard.types";
+export * from "./admin-users.types";
 export * from "./ai-cv.types";

@@ -161,8 +161,13 @@ export class AuthService {
       });
     }
 
-    if (user.trangThai === 'KHOA' || user.trangThai === 'INACTIVE') {
+    if (user.trangThai === 'KHOA') {
       throw new UnauthorizedException('Tài khoản của bạn đã bị khóa!');
+    }
+    if (user.trangThai === 'CHUAKICHHOAT') {
+      throw new UnauthorizedException(
+        'Tài khoản của bạn chưa được kích hoạt. Vui lòng liên hệ quản trị viên!',
+      );
     }
 
     const payload = {
@@ -221,6 +226,18 @@ export class AuthService {
       throw fieldUnauthorized({
         password: 'Mật khẩu không chính xác!',
       });
+    }
+
+    // Trường hợp 4: Tài khoản bị khóa hoặc chưa kích hoạt
+    if (user.trangThai === 'KHOA') {
+      throw new UnauthorizedException(
+        'Tài khoản của bạn đã bị khóa do vi phạm chính sách hệ thống.',
+      );
+    }
+    if (user.trangThai === 'CHUAKICHHOAT') {
+      throw new UnauthorizedException(
+        'Tài khoản của bạn chưa được kích hoạt. Vui lòng liên hệ quản trị viên!',
+      );
     }
 
     // 3. Tạo Payload cho JWT (Chỉ lưu thông tin cơ bản, không lưu mật khẩu)
@@ -483,7 +500,7 @@ export class AuthService {
     if (
       !account ||
       account.trangThai === 'KHOA' ||
-      account.trangThai === 'INACTIVE'
+      account.trangThai === 'CHUAKICHHOAT'
     ) {
       throw new UnauthorizedException(
         'Tài khoản không tồn tại hoặc phiên đăng nhập đã hết hiệu lực.',
@@ -603,7 +620,7 @@ export class AuthService {
       !account ||
       account.deletedAt ||
       account.trangThai === 'KHOA' ||
-      account.trangThai === 'INACTIVE' ||
+      account.trangThai === 'CHUAKICHHOAT' ||
       account.vaiTro === 'ADMIN'
     ) {
       return genericResponse;
@@ -697,7 +714,7 @@ export class AuthService {
       !resetRecord.taiKhoan ||
       resetRecord.taiKhoan.deletedAt ||
       resetRecord.taiKhoan.trangThai === 'KHOA' ||
-      resetRecord.taiKhoan.trangThai === 'INACTIVE'
+      resetRecord.taiKhoan.trangThai === 'CHUAKICHHOAT'
     ) {
       throw new BadRequestException(
         'Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Vui lòng gửi lại yêu cầu mới.',

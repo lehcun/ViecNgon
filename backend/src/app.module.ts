@@ -17,6 +17,7 @@ import { NotificationModule } from './notification/notification.module';
 import { CampaignModule } from './campaign/campaign.module';
 import { CompanyProfileModule } from './company-profile/company-profile.module';
 import { AdminDashboardModule } from './admin/dashboard/admin-dashboard.module';
+import { AdminUsersModule } from './admin/users/admin-users.module';
 import { AiModule } from './ai/ai.module';
 import { AiMatchModule } from './ai/ai-match.module';
 import { CvParserModule } from './cv-parser/cv-parser.module';
@@ -40,6 +41,7 @@ import { CvParserModule } from './cv-parser/cv-parser.module';
     ApplicationsModule,
     CompanyProfileModule,
     AdminDashboardModule,
+    AdminUsersModule,
     MailerModule.forRoot({
       transport: {
         host: process.env.MAIL_HOST,
