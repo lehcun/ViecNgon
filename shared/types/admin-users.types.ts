@@ -105,7 +105,16 @@ export interface UpdateAdminUserRolePayload {
   vaiTro: AdminUserRole;
 }
 
+export interface DeleteAdminUserPayload {
+  reason?: string;
+}
+
 export interface AdminUserActionResponse {
   message: string;
   user: AdminUserListItem;
+}
+
+export interface DeleteAdminUserResponse {
+  message: string;
+  deletedId: string;
 }

@@ -48,7 +48,8 @@ function createInitialUsers(): AdminUserListItem[] {
       trangThai: "CHUAKICHHOAT",
       ngayTao: "2026-03-15T10:30:00.000Z",
       ngayCapNhat: "2026-03-15T10:30:00.000Z",
-      avatarUrl: "https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-FPT.png",
+      avatarUrl:
+        "https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-FPT.png",
       companyName: "TechCorp Vietnam",
       companySlug: "techcorp-vietnam",
     },
@@ -80,14 +81,14 @@ async function setupAdminUsersMockApi(page: import("@playwright/test").Page) {
 
   const users = createInitialUsers();
 
-  const buildSummary = () => ({
-    total: users.length,
-    active: users.filter((u) => u.trangThai === "HOATDONG").length,
-    locked: users.filter((u) => u.trangThai === "KHOA").length,
-    unactivated: users.filter((u) => u.trangThai === "CHUAKICHHOAT").length,
-    admins: users.filter((u) => u.vaiTro === "ADMIN").length,
-    candidates: users.filter((u) => u.vaiTro === "UNGVIEN").length,
-    recruiters: users.filter((u) => u.vaiTro === "NHATUYENDUNG").length,
+  const buildSummary = (list: AdminUserListItem[]) => ({
+    total: list.length,
+    active: list.filter((u) => u.trangThai === "HOATDONG").length,
+    locked: list.filter((u) => u.trangThai === "KHOA").length,
+    unactivated: list.filter((u) => u.trangThai === "CHUAKICHHOAT").length,
+    admins: list.filter((u) => u.vaiTro === "ADMIN").length,
+    candidates: list.filter((u) => u.vaiTro === "UNGVIEN").length,
+    recruiters: list.filter((u) => u.vaiTro === "NHATUYENDUNG").length,
   });
 
   await page.route("http://localhost:3001/admin/users*", async (route) => {
@@ -104,7 +105,10 @@ async function setupAdminUsersMockApi(page: import("@playwright/test").Page) {
       };
       const target = users.find((u) => u.maTaiKhoan === id);
       if (!target) {
-        return route.fulfill({ status: 404, body: JSON.stringify({ message: "Không tìm thấy" }) });
+        return route.fulfill({
+          status: 404,
+          body: JSON.stringify({ message: "Không tìm thấy" }),
+        });
       }
       target.trangThai = body.trangThai;
       return route.fulfill({
@@ -128,7 +132,10 @@ async function setupAdminUsersMockApi(page: import("@playwright/test").Page) {
       };
       const target = users.find((u) => u.maTaiKhoan === id);
       if (!target) {
-        return route.fulfill({ status: 404, body: JSON.stringify({ message: "Không tìm thấy" }) });
+        return route.fulfill({
+          status: 404,
+          body: JSON.stringify({ message: "Không tìm thấy" }),
+        });
       }
       target.vaiTro = body.vaiTro;
       return route.fulfill({
@@ -141,13 +148,38 @@ async function setupAdminUsersMockApi(page: import("@playwright/test").Page) {
       });
     }
 
+    // DELETE /admin/users/:id
+    const deleteMatch = pathname.match(/^\/admin\/users\/([^/]+)$/);
+    if (req.method() === "DELETE" && deleteMatch) {
+      const id = deleteMatch[1];
+      const idx = users.findIndex((u) => u.maTaiKhoan === id);
+      if (idx === -1) {
+        return route.fulfill({
+          status: 404,
+          body: JSON.stringify({ message: "Không tìm thấy" }),
+        });
+      }
+      const [removed] = users.splice(idx, 1);
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          message: `Đã xóa tài khoản ${removed.email} khỏi hệ thống.`,
+          deletedId: removed.maTaiKhoan,
+        }),
+      });
+    }
+
     // GET /admin/users/:id
     const detailMatch = pathname.match(/^\/admin\/users\/([^/]+)$/);
     if (req.method() === "GET" && detailMatch) {
       const id = detailMatch[1];
       const target = users.find((u) => u.maTaiKhoan === id);
       if (!target) {
-        return route.fulfill({ status: 404, body: JSON.stringify({ message: "Không tìm thấy" }) });
+        return route.fulfill({
+          status: 404,
+          body: JSON.stringify({ message: "Không tìm thấy" }),
+        });
       }
       const detail: AdminUserDetailResponse = {
         ...target,
@@ -227,14 +259,14 @@ async function setupAdminUsersMockApi(page: import("@playwright/test").Page) {
           total: filtered.length,
           totalPages: 1,
         },
-        summary: buildSummary(),
+        summary: buildSummary(filtered),
       }),
     });
   });
 }
 
 test.describe("Admin - Quản lý tài khoản người dùng (/admin/users)", () => {
-  test("[Đơn giản] Tải trang /admin/users, hiển thị 4 KPI và 3 trạng thái tiếng Việt", async ({
+  test("[Đơn giản] Tải trang /admin/users, hiển thị bảng cố định, thống kê dưới bảng và 3 trạng thái tiếng Việt", async ({
     page,
   }) => {
     const pageErrors: string[] = [];
@@ -243,30 +275,32 @@ test.describe("Admin - Quản lý tài khoản người dùng (/admin/users)", (
     await setupAdminUsersMockApi(page);
     await page.goto("/admin/users");
 
-    await expect(
-      page.getByRole("heading", { name: "Quản lý tài khoản người dùng" }),
-    ).toBeVisible();
-
-    await expect(page.getByText("Tổng tài khoản")).toBeVisible();
-    await expect(page.getByText("Đang hoạt động")).toBeVisible();
-    await expect(page.getByText("Bị khóa / Chưa kích hoạt")).toBeVisible();
     await expect(page.getByText("Nguyễn Văn An")).toBeVisible();
     await expect(page.getByText("TechCorp Vietnam")).toBeVisible();
     await expect(page.getByText("Chưa kích hoạt").first()).toBeVisible();
     await expect(page.getByText("Đã khóa").first()).toBeVisible();
+    await expect(page.getByText(/Tổng cộng:.*4.*tài khoản/)).toBeVisible();
 
-    // Guardrail: Không thể tự khóa / tự phân quyền chính mình
+    // Nút Xóa bộ lọc luôn hiện sẵn ở trạng thái disabled khi chưa lọc
+    await expect(
+      page.getByRole("button", { name: "Xóa bộ lọc" }),
+    ).toBeDisabled();
+
+    // Guardrail: Không thể tự khóa / tự phân quyền / tự xóa chính mình
     await expect(
       page.getByRole("button", { name: "Khóa tài khoản admin@viecngon.vn" }),
     ).toBeDisabled();
     await expect(
       page.getByRole("button", { name: "Phân quyền admin@viecngon.vn" }),
     ).toBeDisabled();
+    await expect(
+      page.getByRole("button", { name: "Xóa tài khoản admin@viecngon.vn" }),
+    ).toBeDisabled();
 
     expect(pageErrors).toEqual([]);
   });
 
-  test("[Trung bình] Tìm kiếm, lọc theo trạng thái/vai trò và mở Drawer chi tiết", async ({
+  test("[Trung bình] Lọc theo trạng thái cập nhật số lượng thống kê dưới bảng và mở Drawer chi tiết", async ({
     page,
   }) => {
     await setupAdminUsersMockApi(page);
@@ -274,14 +308,16 @@ test.describe("Admin - Quản lý tài khoản người dùng (/admin/users)", (
 
     await expect(page.getByText("Nguyễn Văn An")).toBeVisible();
 
-    // Lọc theo trạng thái Chưa kích hoạt
+    // Lọc theo trạng thái Chưa kích hoạt -> footer đổi sang Kết quả lọc: 1 tài khoản
     await page.getByLabel("Lọc theo trạng thái").selectOption("CHUAKICHHOAT");
     await expect(page.getByText("Trần Thị HR")).toBeVisible();
     await expect(page.getByText("Nguyễn Văn An")).toBeHidden();
+    await expect(page.getByText(/Kết quả lọc:.*1.*tài khoản/)).toBeVisible();
 
     // Xóa bộ lọc
     await page.getByRole("button", { name: "Xóa bộ lọc" }).click();
     await expect(page.getByText("Nguyễn Văn An")).toBeVisible();
+    await expect(page.getByText(/Tổng cộng:.*4.*tài khoản/)).toBeVisible();
 
     // Mở Drawer chi tiết ứng viên
     await page
@@ -292,10 +328,9 @@ test.describe("Admin - Quản lý tài khoản người dùng (/admin/users)", (
     });
     await expect(drawer).toBeVisible();
     await expect(drawer.getByText("Senior Fullstack Engineer")).toBeVisible();
-    await expect(drawer.getByText("TP. Hồ Chí Minh")).toBeVisible();
   });
 
-  test("[Phức tạp] Khóa tài khoản vi phạm, kích hoạt tài khoản và phân quyền quản trị", async ({
+  test("[Phức tạp] Khóa, kích hoạt, phân quyền quản trị và xóa tài khoản vi phạm", async ({
     page,
   }) => {
     await setupAdminUsersMockApi(page);
@@ -343,5 +378,19 @@ test.describe("Admin - Quản lý tài khoản người dùng (/admin/users)", (
     await expect(
       page.getByText("Đã cập nhật vai trò của hr@techcorp.vn."),
     ).toBeVisible();
+
+    // 4. Xóa tài khoản vi phạm
+    await page
+      .getByRole("button", { name: "Xóa tài khoản spammer@viecngon.vn" })
+      .click();
+    const deleteDialog = page.getByRole("dialog", {
+      name: "Xóa tài khoản người dùng",
+    });
+    await expect(deleteDialog).toBeVisible();
+    await deleteDialog.getByRole("button", { name: "Xác nhận xóa" }).click();
+    await expect(
+      page.getByText("Đã xóa tài khoản spammer@viecngon.vn khỏi hệ thống."),
+    ).toBeVisible();
+    await expect(page.getByText("Tài Khoản Vi Phạm")).toBeHidden();
   });
 });

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { RefreshCw } from "lucide-react";
 import type {
   AdminUserListItem,
   AdminUserProvider,
@@ -11,10 +10,10 @@ import type {
 import { useAuthStore } from "@/store/authStore";
 import {
   useAdminUsers,
+  useDeleteAdminUser,
   useUpdateAdminUserRole,
   useUpdateAdminUserStatus,
 } from "@/hooks/admin/useAdminUsers";
-import AdminUserStatsBar from "@/components/admin/users/AdminUserStatsBar";
 import AdminUsersTable from "@/components/admin/users/AdminUsersTable";
 import AdminUserDetailDrawer from "@/components/admin/users/AdminUserDetailDrawer";
 import AdminUserActionModal, {
@@ -49,26 +48,21 @@ export default function AdminUsersPage() {
     return () => window.clearTimeout(timer);
   }, [searchInput]);
 
-  const {
-    data,
-    isLoading,
-    isFetching,
-    isError,
-    error,
-    refetch,
-  } = useAdminUsers({
-    q: debouncedSearch || undefined,
-    role: roleFilter,
-    status: statusFilter,
-    provider: providerFilter,
-    page,
-    limit: 12,
-    sortBy: "ngayTao",
-    sortOrder: "desc",
-  });
+  const { data, isLoading, isFetching, isError, error, refetch } =
+    useAdminUsers({
+      q: debouncedSearch || undefined,
+      role: roleFilter,
+      status: statusFilter,
+      provider: providerFilter,
+      page,
+      limit: 12,
+      sortBy: "ngayTao",
+      sortOrder: "desc",
+    });
 
   const updateStatusMutation = useUpdateAdminUserStatus();
   const updateRoleMutation = useUpdateAdminUserRole();
+  const deleteUserMutation = useDeleteAdminUser();
 
   const handleSearchChange = (value: string) => {
     setSearchInput(value);
@@ -141,40 +135,31 @@ export default function AdminUsersPage() {
     );
   };
 
+  const handleConfirmDelete = (reason: string) => {
+    if (!modalState) return;
+    const deletedId = modalState.user.maTaiKhoan;
+    deleteUserMutation.mutate(
+      {
+        userId: deletedId,
+        payload: reason ? { reason } : undefined,
+      },
+      {
+        onSuccess: () => {
+          setModalState(null);
+          if (selectedUserId === deletedId) {
+            setSelectedUserId(null);
+          }
+        },
+      },
+    );
+  };
+
   return (
-    <div className="space-y-6 pb-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-surface-card p-6 rounded-xl border border-border-default shadow-xs">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">
-            Quản trị hệ thống
-          </p>
-          <h1 className="text-2xl font-bold text-text-primary">
-            Quản lý tài khoản người dùng
-          </h1>
-          <p className="text-sm text-text-muted mt-1">
-            Tra cứu danh sách người dùng, xem chi tiết hồ sơ, kích hoạt tài
-            khoản, phân quyền quản trị hoặc khóa tài khoản vi phạm chính sách.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => refetch()}
-          disabled={isFetching}
-          className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-lg border border-border-default bg-surface-card hover:bg-surface-muted text-sm font-semibold text-text-primary shrink-0 transition-colors disabled:opacity-60"
-        >
-          <RefreshCw size={15} className={isFetching ? "animate-spin" : ""} />
-          Làm mới
-        </button>
-      </div>
-
-      {/* 4 Thẻ thống kê tổng quan */}
-      <AdminUserStatsBar summary={data?.summary} isLoading={isLoading} />
-
-      {/* Bảng danh sách & Bộ lọc */}
+    <div className="pb-8">
+      {/* Bảng danh sách & Bộ lọc (kèm thống kê gọn ở thanh dưới) */}
       <AdminUsersTable
         items={data?.items ?? []}
+        summary={data?.summary}
         pagination={data?.pagination}
         currentAdminId={currentAdminId}
         searchText={searchInput}
@@ -196,6 +181,7 @@ export default function AdminUsersPage() {
         onRequestLock={(user) => setModalState({ mode: "lock", user })}
         onRequestActivate={(user) => setModalState({ mode: "activate", user })}
         onRequestChangeRole={(user) => setModalState({ mode: "role", user })}
+        onRequestDelete={(user) => setModalState({ mode: "delete", user })}
       />
 
       {/* Ngăn trượt chi tiết tài khoản */}
@@ -206,21 +192,25 @@ export default function AdminUsersPage() {
         onRequestLock={(user) => setModalState({ mode: "lock", user })}
         onRequestActivate={(user) => setModalState({ mode: "activate", user })}
         onRequestChangeRole={(user) => setModalState({ mode: "role", user })}
+        onRequestDelete={(user) => setModalState({ mode: "delete", user })}
       />
 
-      {/* Modal xác nhận Khóa / Kích hoạt / Phân quyền */}
+      {/* Modal xác nhận Khóa / Kích hoạt / Phân quyền / Xóa */}
       {modalState && (
         <AdminUserActionModal
           key={`${modalState.mode}-${modalState.user.maTaiKhoan}`}
           mode={modalState.mode}
           user={modalState.user}
           isSubmitting={
-            updateStatusMutation.isPending || updateRoleMutation.isPending
+            updateStatusMutation.isPending ||
+            updateRoleMutation.isPending ||
+            deleteUserMutation.isPending
           }
           onClose={() => setModalState(null)}
           onConfirmLock={handleConfirmLock}
           onConfirmActivate={handleConfirmActivate}
           onConfirmRole={handleConfirmRole}
+          onConfirmDelete={handleConfirmDelete}
         />
       )}
     </div>

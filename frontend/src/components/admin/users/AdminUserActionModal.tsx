@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { Loader2, Lock, Shield, Unlock, X } from "lucide-react";
+import { Loader2, Lock, Shield, Trash2, Unlock, X } from "lucide-react";
 import type { AdminUserListItem, AdminUserRole } from "@viecngon/types";
 import { ROLE_META } from "./AdminUsersTable";
 
-export type AdminUserModalMode = "lock" | "activate" | "role";
+export type AdminUserModalMode = "lock" | "activate" | "role" | "delete";
 
 interface AdminUserActionModalProps {
   mode: AdminUserModalMode;
@@ -15,6 +15,7 @@ interface AdminUserActionModalProps {
   onConfirmLock: (reason: string) => void;
   onConfirmActivate: () => void;
   onConfirmRole: (nextRole: AdminUserRole) => void;
+  onConfirmDelete: (reason: string) => void;
 }
 
 export default function AdminUserActionModal({
@@ -25,6 +26,7 @@ export default function AdminUserActionModal({
   onConfirmLock,
   onConfirmActivate,
   onConfirmRole,
+  onConfirmDelete,
 }: AdminUserActionModalProps) {
   const [reason, setReason] = useState("");
   const [selectedRole, setSelectedRole] = useState<AdminUserRole>(user.vaiTro);
@@ -35,6 +37,8 @@ export default function AdminUserActionModal({
       onConfirmLock(reason.trim());
     } else if (mode === "activate") {
       onConfirmActivate();
+    } else if (mode === "delete") {
+      onConfirmDelete(reason.trim());
     } else {
       onConfirmRole(selectedRole);
     }
@@ -45,7 +49,9 @@ export default function AdminUserActionModal({
       ? "Khóa tài khoản vi phạm"
       : mode === "activate"
         ? "Kích hoạt tài khoản"
-        : "Phân quyền quản trị tài khoản";
+        : mode === "delete"
+          ? "Xóa tài khoản người dùng"
+          : "Phân quyền quản trị tài khoản";
 
   const roleUnchanged = mode === "role" && selectedRole === user.vaiTro;
 
@@ -79,6 +85,11 @@ export default function AdminUserActionModal({
                 <Shield size={16} />
               </span>
             )}
+            {mode === "delete" && (
+              <span className="w-8 h-8 rounded-lg bg-danger-light text-danger-text flex items-center justify-center">
+                <Trash2 size={16} />
+              </span>
+            )}
             <h3 className="text-base font-bold text-text-primary">{title}</h3>
           </div>
           <button
@@ -104,25 +115,32 @@ export default function AdminUserActionModal({
             </p>
           </div>
 
-          {mode === "lock" && (
+          {(mode === "lock" || mode === "delete") && (
             <div className="space-y-2">
               <p className="text-sm text-text-secondary">
-                Tài khoản bị khóa sẽ bị đăng xuất khỏi hệ thống và không thể
-                đăng nhập cho đến khi được kích hoạt lại.
+                {mode === "lock"
+                  ? "Tài khoản bị khóa sẽ bị đăng xuất khỏi hệ thống và không thể đăng nhập cho đến khi được kích hoạt lại."
+                  : "Tài khoản sẽ bị vô hiệu hóa vĩnh viễn và ẩn khỏi danh sách quản lý. Người dùng không thể đăng nhập lại."}
               </p>
               <label
-                htmlFor="lock-reason"
+                htmlFor="action-reason"
                 className="block text-xs font-semibold text-text-primary"
               >
-                Lý do khóa tài khoản (khuyến nghị)
+                {mode === "lock"
+                  ? "Lý do khóa tài khoản (khuyến nghị)"
+                  : "Lý do xóa tài khoản (khuyến nghị)"}
               </label>
               <textarea
-                id="lock-reason"
+                id="action-reason"
                 rows={3}
                 maxLength={300}
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="VD: Đăng tin tuyển dụng giả mạo / spam hồ sơ vi phạm chính sách..."
+                placeholder={
+                  mode === "lock"
+                    ? "VD: Đăng tin tuyển dụng giả mạo / spam hồ sơ vi phạm chính sách..."
+                    : "VD: Tài khoản ảo, lừa đảo hoặc theo yêu cầu xóa dữ liệu..."
+                }
                 className="w-full rounded-lg border border-border-default bg-surface-card p-3 text-sm text-text-primary placeholder:text-text-placeholder focus:outline-none focus:border-primary resize-none"
               />
               <p className="text-[11px] text-text-muted text-right">
@@ -186,7 +204,7 @@ export default function AdminUserActionModal({
             type="submit"
             disabled={isSubmitting || roleUnchanged}
             className={`inline-flex items-center gap-2 h-10 px-4 rounded-lg text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${
-              mode === "lock"
+              mode === "lock" || mode === "delete"
                 ? "bg-danger hover:bg-danger-hover"
                 : mode === "activate"
                   ? "bg-success hover:bg-success-hover"
@@ -198,7 +216,9 @@ export default function AdminUserActionModal({
               ? "Xác nhận khóa"
               : mode === "activate"
                 ? "Xác nhận kích hoạt"
-                : "Lưu phân quyền"}
+                : mode === "delete"
+                  ? "Xác nhận xóa"
+                  : "Lưu phân quyền"}
           </button>
         </div>
       </form>

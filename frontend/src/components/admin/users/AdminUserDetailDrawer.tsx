@@ -13,6 +13,7 @@ import {
   MapPin,
   Phone,
   Shield,
+  Trash2,
   Unlock,
   X,
 } from "lucide-react";
@@ -27,6 +28,7 @@ interface AdminUserDetailDrawerProps {
   onRequestLock: (user: AdminUserListItem) => void;
   onRequestActivate: (user: AdminUserListItem) => void;
   onRequestChangeRole: (user: AdminUserListItem) => void;
+  onRequestDelete: (user: AdminUserListItem) => void;
 }
 
 function formatDateTimeVi(iso?: string): string {
@@ -59,6 +61,7 @@ export default function AdminUserDetailDrawer({
   onRequestLock,
   onRequestActivate,
   onRequestChangeRole,
+  onRequestDelete,
 }: AdminUserDetailDrawerProps) {
   const { data: detail, isLoading, isError, refetch } =
     useAdminUserDetail(userId);
@@ -324,37 +327,49 @@ export default function AdminUserDetailDrawer({
 
         {/* Footer actions */}
         {detail && (
-          <div className="px-6 py-4 border-t border-border-default bg-surface-page flex flex-wrap items-center justify-end gap-2.5">
+          <div className="px-6 py-4 border-t border-border-default bg-surface-page flex flex-wrap items-center justify-between gap-2.5">
             <button
               type="button"
               disabled={isSelf}
-              onClick={() => onRequestChangeRole(detail)}
-              className="inline-flex items-center gap-1.5 h-10 px-4 rounded-lg border border-border-default bg-surface-card hover:bg-surface-muted text-sm font-semibold text-text-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              onClick={() => onRequestDelete(detail)}
+              className="inline-flex items-center gap-1.5 h-10 px-3.5 rounded-lg border border-danger-border bg-danger-soft hover:bg-danger-light text-sm font-semibold text-danger-text disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
-              <Shield size={15} className="text-ai" />
-              Phân quyền
+              <Trash2 size={15} />
+              Xóa
             </button>
 
-            {detail.trangThai === "HOATDONG" ? (
+            <div className="flex flex-wrap items-center gap-2.5">
               <button
                 type="button"
                 disabled={isSelf}
-                onClick={() => onRequestLock(detail)}
-                className="inline-flex items-center gap-1.5 h-10 px-4 rounded-lg bg-danger hover:bg-danger-hover text-white text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                onClick={() => onRequestChangeRole(detail)}
+                className="inline-flex items-center gap-1.5 h-10 px-4 rounded-lg border border-border-default bg-surface-card hover:bg-surface-muted text-sm font-semibold text-text-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
-                <Lock size={15} />
-                Khóa tài khoản
+                <Shield size={15} className="text-ai" />
+                Phân quyền
               </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => onRequestActivate(detail)}
-                className="inline-flex items-center gap-1.5 h-10 px-4 rounded-lg bg-success hover:bg-success-hover text-white text-sm font-semibold transition-colors"
-              >
-                <Unlock size={15} />
-                Kích hoạt tài khoản
-              </button>
-            )}
+
+              {detail.trangThai === "HOATDONG" ? (
+                <button
+                  type="button"
+                  disabled={isSelf}
+                  onClick={() => onRequestLock(detail)}
+                  className="inline-flex items-center gap-1.5 h-10 px-4 rounded-lg bg-danger hover:bg-danger-hover text-white text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Lock size={15} />
+                  Khóa tài khoản
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onRequestActivate(detail)}
+                  className="inline-flex items-center gap-1.5 h-10 px-4 rounded-lg bg-success hover:bg-success-hover text-white text-sm font-semibold transition-colors"
+                >
+                  <Unlock size={15} />
+                  Kích hoạt
+                </button>
+              )}
+            </div>
           </div>
         )}
       </aside>

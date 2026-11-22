@@ -11,6 +11,8 @@ import type {
   AdminUserDetailResponse,
   AdminUserQueryParams,
   AdminUsersListResponse,
+  DeleteAdminUserPayload,
+  DeleteAdminUserResponse,
   UpdateAdminUserRolePayload,
   UpdateAdminUserStatusPayload,
 } from "@viecngon/types";
@@ -153,6 +155,39 @@ export function useUpdateAdminUserRole() {
     },
     onError: (error) => {
       toast.error(error.message || "Không thể cập nhật phân quyền tài khoản.");
+    },
+  });
+}
+
+export function useDeleteAdminUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    DeleteAdminUserResponse,
+    Error,
+    { userId: string; payload?: DeleteAdminUserPayload }
+  >({
+    mutationFn: ({ userId, payload }) =>
+      requestAdminUsersApi<DeleteAdminUserResponse>(
+        `/admin/users/${userId}`,
+        {
+          method: "DELETE",
+          body: JSON.stringify(payload ?? {}),
+        },
+        "Không thể xóa tài khoản người dùng.",
+      ),
+    onSuccess: (data, variables) => {
+      toast.success(data.message);
+      queryClient.invalidateQueries({ queryKey: adminUserKeys.all });
+      queryClient.removeQueries({
+        queryKey: adminUserKeys.detail(variables.userId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: adminDashboardKeys.metrics(),
+      });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Không thể xóa tài khoản người dùng.");
     },
   });
 }

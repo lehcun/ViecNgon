@@ -12,6 +12,7 @@ import {
   RotateCcw,
   Search,
   Shield,
+  Trash2,
   Unlock,
   Users,
 } from "lucide-react";
@@ -20,6 +21,7 @@ import type {
   AdminUserProvider,
   AdminUserRole,
   AdminUserStatus,
+  AdminUserSummaryStats,
 } from "@viecngon/types";
 
 export const ROLE_META: Record<
@@ -36,7 +38,8 @@ export const ROLE_META: Record<
   },
   UNGVIEN: {
     label: "Ứng viên",
-    badgeClass: "bg-surface-muted text-text-secondary border border-border-default",
+    badgeClass:
+      "bg-surface-muted text-text-secondary border border-border-default",
   },
 };
 
@@ -47,7 +50,8 @@ export const STATUS_META: Record<
   HOATDONG: {
     label: "Hoạt động",
     dotClass: "bg-success",
-    badgeClass: "bg-success-soft text-success-text border border-success-border",
+    badgeClass:
+      "bg-success-soft text-success-text border border-success-border",
   },
   KHOA: {
     label: "Đã khóa",
@@ -57,12 +61,14 @@ export const STATUS_META: Record<
   CHUAKICHHOAT: {
     label: "Chưa kích hoạt",
     dotClass: "bg-warning",
-    badgeClass: "bg-warning-soft text-warning-text border border-warning-border",
+    badgeClass:
+      "bg-warning-soft text-warning-text border border-warning-border",
   },
 };
 
 interface AdminUsersTableProps {
   items: AdminUserListItem[];
+  summary?: AdminUserSummaryStats;
   pagination?: {
     page: number;
     limit: number;
@@ -89,6 +95,7 @@ interface AdminUsersTableProps {
   onRequestLock: (user: AdminUserListItem) => void;
   onRequestActivate: (user: AdminUserListItem) => void;
   onRequestChangeRole: (user: AdminUserListItem) => void;
+  onRequestDelete: (user: AdminUserListItem) => void;
 }
 
 function formatDateVi(isoDate: string): string {
@@ -120,8 +127,22 @@ function isValidImageSrc(url: string | null | undefined): url is string {
   );
 }
 
+function FixedTableColGroup() {
+  return (
+    <colgroup>
+      <col className="w-[34%]" />
+      <col className="w-[13%]" />
+      <col className="w-[14%]" />
+      <col className="w-[11%]" />
+      <col className="w-[10%]" />
+      <col className="w-[18%]" />
+    </colgroup>
+  );
+}
+
 export default function AdminUsersTable({
   items,
+  summary,
   pagination,
   currentAdminId,
   searchText,
@@ -143,6 +164,7 @@ export default function AdminUsersTable({
   onRequestLock,
   onRequestActivate,
   onRequestChangeRole,
+  onRequestDelete,
 }: AdminUsersTableProps) {
   const hasActiveFilters =
     Boolean(searchText.trim()) ||
@@ -156,9 +178,9 @@ export default function AdminUsersTable({
 
   return (
     <div className="bg-surface-card border border-border-default rounded-xl shadow-xs overflow-hidden">
-      {/* Toolbar tìm kiếm & bộ lọc */}
-      <div className="p-4 border-b border-border-default flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">
-        <div className="relative flex-1 max-w-md">
+      {/* Toolbar tìm kiếm & bộ lọc cố định vị trí để không bị nhảy layout */}
+      <div className="p-4 border-b border-border-default flex flex-col xl:flex-row gap-3 xl:items-center xl:justify-between">
+        <div className="relative w-full xl:w-80 shrink-0">
           <Search
             size={16}
             className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-placeholder pointer-events-none"
@@ -173,14 +195,26 @@ export default function AdminUsersTable({
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          {/* Nút làm mới bộ lọc cố định bên trái ô chọn vai trò để không làm nhảy giao diện */}
+          <button
+            type="button"
+            onClick={onResetFilters}
+            disabled={!hasActiveFilters}
+            title="Xóa toàn bộ bộ lọc hiện tại"
+            className="inline-flex items-center justify-center gap-1.5 h-10 w-[112px] rounded-lg border border-border-default bg-surface-muted hover:bg-surface-subtle text-xs font-semibold text-text-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+          >
+            <RotateCcw size={14} />
+            Xóa bộ lọc
+          </button>
+
           <select
             value={roleFilter}
             onChange={(e) =>
               onRoleFilterChange(e.target.value as AdminUserRole | "ALL")
             }
             aria-label="Lọc theo vai trò"
-            className="h-10 px-3 rounded-lg border border-border-default bg-surface-card text-sm text-text-primary focus:outline-none focus:border-primary"
+            className="h-10 w-40 px-3 rounded-lg border border-border-default bg-surface-card text-sm text-text-primary focus:outline-none focus:border-primary shrink-0"
           >
             <option value="ALL">Tất cả vai trò</option>
             <option value="UNGVIEN">Ứng viên</option>
@@ -194,7 +228,7 @@ export default function AdminUsersTable({
               onStatusFilterChange(e.target.value as AdminUserStatus | "ALL")
             }
             aria-label="Lọc theo trạng thái"
-            className="h-10 px-3 rounded-lg border border-border-default bg-surface-card text-sm text-text-primary focus:outline-none focus:border-primary"
+            className="h-10 w-44 px-3 rounded-lg border border-border-default bg-surface-card text-sm text-text-primary focus:outline-none focus:border-primary shrink-0"
           >
             <option value="ALL">Tất cả trạng thái</option>
             <option value="HOATDONG">Hoạt động</option>
@@ -210,23 +244,23 @@ export default function AdminUsersTable({
               )
             }
             aria-label="Lọc theo phương thức đăng nhập"
-            className="h-10 px-3 rounded-lg border border-border-default bg-surface-card text-sm text-text-primary focus:outline-none focus:border-primary"
+            className="h-10 w-40 px-3 rounded-lg border border-border-default bg-surface-card text-sm text-text-primary focus:outline-none focus:border-primary shrink-0"
           >
             <option value="ALL">Mọi phương thức</option>
             <option value="LOCAL">Email / Mật khẩu</option>
             <option value="GOOGLE">Google</option>
           </select>
 
-          {hasActiveFilters && (
-            <button
-              type="button"
-              onClick={onResetFilters}
-              className="inline-flex items-center gap-1.5 h-10 px-3 rounded-lg border border-border-default bg-surface-muted hover:bg-surface-subtle text-xs font-semibold text-text-secondary transition-colors"
-            >
-              <RotateCcw size={14} />
-              Xóa bộ lọc
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={onRetry}
+            disabled={isFetching}
+            title="Tải lại danh sách"
+            aria-label="Tải lại danh sách"
+            className="inline-flex items-center justify-center h-10 w-10 rounded-lg border border-border-default bg-surface-card hover:bg-surface-muted text-text-secondary hover:text-text-primary disabled:opacity-50 transition-colors shrink-0"
+          >
+            <RefreshCw size={15} className={isFetching ? "animate-spin" : ""} />
+          </button>
         </div>
       </div>
 
@@ -252,9 +286,10 @@ export default function AdminUsersTable({
           </button>
         </div>
       ) : isLoading ? (
-        /* Skeleton Loading đúng cấu trúc bảng */
+        /* Skeleton Loading cố định cột giống hệt bảng thật */
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full min-w-[960px] table-fixed text-left border-collapse">
+            <FixedTableColGroup />
             <thead>
               <tr className="bg-surface-page border-b border-border-default text-xs font-semibold uppercase tracking-wider text-text-muted">
                 <th className="py-3.5 px-4">Người dùng</th>
@@ -267,30 +302,31 @@ export default function AdminUsersTable({
             </thead>
             <tbody className="divide-y divide-border-default">
               {Array.from({ length: 6 }).map((_, idx) => (
-                <tr key={idx} className="animate-pulse">
-                  <td className="py-3.5 px-4">
+                <tr key={idx} className="h-[70px] animate-pulse">
+                  <td className="px-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-surface-subtle shrink-0" />
-                      <div className="space-y-2">
+                      <div className="space-y-2 min-w-0 flex-1">
                         <div className="h-4 w-36 bg-surface-subtle rounded" />
                         <div className="h-3 w-48 bg-surface-muted rounded" />
                       </div>
                     </div>
                   </td>
-                  <td className="py-3.5 px-4">
+                  <td className="px-4">
                     <div className="h-6 w-24 bg-surface-subtle rounded-full" />
                   </td>
-                  <td className="py-3.5 px-4">
+                  <td className="px-4">
                     <div className="h-6 w-24 bg-surface-subtle rounded-full" />
                   </td>
-                  <td className="py-3.5 px-4">
+                  <td className="px-4">
                     <div className="h-5 w-16 bg-surface-muted rounded" />
                   </td>
-                  <td className="py-3.5 px-4">
+                  <td className="px-4">
                     <div className="h-4 w-20 bg-surface-muted rounded" />
                   </td>
-                  <td className="py-3.5 px-4">
-                    <div className="flex justify-end gap-2">
+                  <td className="px-4">
+                    <div className="flex justify-end gap-1.5">
+                      <div className="h-8 w-8 bg-surface-muted rounded-lg" />
                       <div className="h-8 w-8 bg-surface-muted rounded-lg" />
                       <div className="h-8 w-8 bg-surface-muted rounded-lg" />
                       <div className="h-8 w-8 bg-surface-muted rounded-lg" />
@@ -326,12 +362,13 @@ export default function AdminUsersTable({
           )}
         </div>
       ) : (
-        /* Dữ liệu thực */
+        /* Bảng dữ liệu cố định cột (table-fixed) */
         <>
           <div
             className={`overflow-x-auto transition-opacity ${isFetching ? "opacity-75" : "opacity-100"}`}
           >
-            <table className="w-full text-left border-collapse">
+            <table className="w-full min-w-[960px] table-fixed text-left border-collapse">
+              <FixedTableColGroup />
               <thead>
                 <tr className="bg-surface-page border-b border-border-default text-xs font-semibold uppercase tracking-wider text-text-muted">
                   <th className="py-3.5 px-4">Người dùng</th>
@@ -351,10 +388,10 @@ export default function AdminUsersTable({
                   return (
                     <tr
                       key={user.maTaiKhoan}
-                      className="hover:bg-surface-page/80 transition-colors"
+                      className="h-[70px] hover:bg-surface-page/80 transition-colors"
                     >
-                      <td className="py-3.5 px-4">
-                        <div className="flex items-center gap-3 min-w-60">
+                      <td className="px-4">
+                        <div className="flex items-center gap-3 min-w-0">
                           {isValidImageSrc(user.avatarUrl) ? (
                             <div className="relative w-10 h-10 rounded-full overflow-hidden border border-border-default shrink-0 bg-surface-muted">
                               <Image
@@ -372,11 +409,12 @@ export default function AdminUsersTable({
                             </div>
                           )}
 
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 min-w-0">
                               <button
                                 type="button"
                                 onClick={() => onViewDetail(user)}
+                                title={user.tenNguoiDung}
                                 className="font-semibold text-text-primary hover:text-primary truncate transition-colors text-left"
                               >
                                 {user.tenNguoiDung}
@@ -387,11 +425,17 @@ export default function AdminUsersTable({
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs text-text-muted truncate">
+                            <p
+                              className="text-xs text-text-muted truncate"
+                              title={user.email}
+                            >
                               {user.email}
                             </p>
                             {user.companyName && (
-                              <p className="text-xs text-text-secondary truncate mt-0.5">
+                              <p
+                                className="text-xs text-text-secondary truncate"
+                                title={user.companyName}
+                              >
                                 {user.companyName}
                               </p>
                             )}
@@ -399,7 +443,7 @@ export default function AdminUsersTable({
                         </div>
                       </td>
 
-                      <td className="py-3.5 px-4 whitespace-nowrap">
+                      <td className="px-4 whitespace-nowrap">
                         <span
                           className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${roleInfo.badgeClass}`}
                         >
@@ -407,7 +451,7 @@ export default function AdminUsersTable({
                         </span>
                       </td>
 
-                      <td className="py-3.5 px-4 whitespace-nowrap">
+                      <td className="px-4 whitespace-nowrap">
                         <span
                           className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${statusInfo.badgeClass}`}
                         >
@@ -418,17 +462,17 @@ export default function AdminUsersTable({
                         </span>
                       </td>
 
-                      <td className="py-3.5 px-4 whitespace-nowrap">
+                      <td className="px-4 whitespace-nowrap">
                         <span className="text-xs font-medium text-text-secondary bg-surface-muted px-2 py-1 rounded-md">
                           {user.provider === "GOOGLE" ? "Google" : "Email"}
                         </span>
                       </td>
 
-                      <td className="py-3.5 px-4 whitespace-nowrap text-xs text-text-muted tabular-nums">
+                      <td className="px-4 whitespace-nowrap text-xs text-text-muted tabular-nums">
                         {formatDateVi(user.ngayTao)}
                       </td>
 
-                      <td className="py-3.5 px-4 whitespace-nowrap">
+                      <td className="px-4 whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             type="button"
@@ -481,6 +525,21 @@ export default function AdminUsersTable({
                               <Unlock size={15} />
                             </button>
                           )}
+
+                          <button
+                            type="button"
+                            onClick={() => onRequestDelete(user)}
+                            disabled={isSelf}
+                            title={
+                              isSelf
+                                ? "Không thể tự xóa tài khoản của bạn"
+                                : "Xóa tài khoản"
+                            }
+                            aria-label={`Xóa tài khoản ${user.email}`}
+                            className="p-2 rounded-lg border border-danger-border bg-surface-card hover:bg-danger-soft text-danger-text disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                          >
+                            <Trash2 size={15} />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -489,47 +548,64 @@ export default function AdminUsersTable({
               </tbody>
             </table>
           </div>
-
-          {/* Thanh phân trang */}
-          <div className="px-4 py-3.5 border-t border-border-default bg-surface-page/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-text-muted">
-            <p>
-              Hiển thị{" "}
-              <span className="font-semibold text-text-primary">
-                {items.length}
-              </span>{" "}
-              /{" "}
-              <span className="font-semibold text-text-primary">
-                {totalItems.toLocaleString("vi-VN")}
-              </span>{" "}
-              tài khoản
-            </p>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                disabled={currentPage <= 1}
-                onClick={() => onPageChange(currentPage - 1)}
-                className="inline-flex items-center gap-1 h-8 px-3 rounded-lg border border-border-default bg-surface-card hover:bg-surface-muted text-text-primary font-medium disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronLeft size={14} />
-                Trước
-              </button>
-              <span className="px-2 font-semibold text-text-primary tabular-nums">
-                Trang {currentPage} / {totalPages}
-              </span>
-              <button
-                type="button"
-                disabled={currentPage >= totalPages}
-                onClick={() => onPageChange(currentPage + 1)}
-                className="inline-flex items-center gap-1 h-8 px-3 rounded-lg border border-border-default bg-surface-card hover:bg-surface-muted text-text-primary font-medium disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                Sau
-                <ChevronRight size={14} />
-              </button>
-            </div>
-          </div>
         </>
       )}
+
+      {/* Thanh footer: Thống kê nhỏ gọn theo danh sách hiện tại + Phân trang */}
+      <div className="px-4 py-3 border-t border-border-default bg-surface-page/60 flex flex-col md:flex-row items-start md:items-center justify-between gap-2.5 text-xs text-text-muted">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span>
+            {hasActiveFilters ? "Kết quả lọc:" : "Tổng cộng:"}{" "}
+            <strong className="text-text-primary tabular-nums">
+              {totalItems.toLocaleString("vi-VN")}
+            </strong>{" "}
+            tài khoản
+          </span>
+          {summary && (
+            <>
+              <span className="text-border-strong">•</span>
+              <span className="tabular-nums">
+                Hoạt động:{" "}
+                <strong className="text-success-text">{summary.active}</strong>
+              </span>
+              <span className="tabular-nums">
+                Đã khóa:{" "}
+                <strong className="text-danger-text">{summary.locked}</strong>
+              </span>
+              <span className="tabular-nums">
+                Chưa kích hoạt:{" "}
+                <strong className="text-warning-text">
+                  {summary.unactivated}
+                </strong>
+              </span>
+            </>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            disabled={currentPage <= 1 || isLoading}
+            onClick={() => onPageChange(currentPage - 1)}
+            className="inline-flex items-center gap-1 h-8 px-3 rounded-lg border border-border-default bg-surface-card hover:bg-surface-muted text-text-primary font-medium disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            <ChevronLeft size={14} />
+            Trước
+          </button>
+          <span className="px-2 font-semibold text-text-primary tabular-nums">
+            Trang {currentPage} / {totalPages}
+          </span>
+          <button
+            type="button"
+            disabled={currentPage >= totalPages || isLoading}
+            onClick={() => onPageChange(currentPage + 1)}
+            className="inline-flex items-center gap-1 h-8 px-3 rounded-lg border border-border-default bg-surface-card hover:bg-surface-muted text-text-primary font-medium disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            Sau
+            <ChevronRight size={14} />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

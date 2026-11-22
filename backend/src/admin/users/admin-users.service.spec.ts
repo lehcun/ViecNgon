@@ -50,8 +50,8 @@ describe('AdminUsersService', () => {
       thongBao: {
         create: jest.fn(),
       },
-      $transaction: jest.fn(async (cb: (tx: typeof prismaMock) => unknown) =>
-        cb(prismaMock),
+      $transaction: jest.fn((cb: (tx: typeof prismaMock) => unknown) =>
+        Promise.resolve(cb(prismaMock)),
       ),
     };
 
@@ -68,8 +68,7 @@ describe('AdminUsersService', () => {
   it('trả về danh sách phân trang và summary đúng chuẩn 3 trạng thái tiếng Việt', async () => {
     prismaMock.taiKhoan.findMany.mockResolvedValue([sampleRow]);
     prismaMock.taiKhoan.count
-      .mockResolvedValueOnce(1) // filtered total
-      .mockResolvedValueOnce(10) // totalAll
+      .mockResolvedValueOnce(10) // total (filtered)
       .mockResolvedValueOnce(7) // HOATDONG
       .mockResolvedValueOnce(2) // KHOA
       .mockResolvedValueOnce(1) // CHUAKICHHOAT
@@ -146,14 +145,11 @@ describe('AdminUsersService', () => {
 
     expect(result.user.trangThai).toBe('KHOA');
     expect(prismaMock.passwordResetToken.updateMany).toHaveBeenCalledTimes(1);
-    expect(prismaMock.thongBao.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          maTaiKhoan: 'user-1',
-          trangThai: 'CHUA_DOC',
-        }),
-      }),
-    );
+    const thongBaoCall = prismaMock.thongBao.create.mock.calls[0] as [
+      { data: { maTaiKhoan: string; trangThai: string } },
+    ];
+    expect(thongBaoCall[0].data.maTaiKhoan).toBe('user-1');
+    expect(thongBaoCall[0].data.trangThai).toBe('CHUA_DOC');
   });
 
   it('kích hoạt tài khoản từ CHUAKICHHOAT sang HOATDONG', async () => {
@@ -206,6 +202,41 @@ describe('AdminUsersService', () => {
     );
 
     expect(result.user.vaiTro).toBe('ADMIN');
+    expect(prismaMock.thongBao.create).toHaveBeenCalledTimes(1);
+  });
+
+  it('chặn Admin tự xóa chính tài khoản của mình', async () => {
+    await expect(
+      service.softDelete('admin-1', { reason: 'test' }, 'admin-1'),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('xóa mềm tài khoản vi phạm: đặt deletedAt, chuyển KHOA và vô hiệu hóa token reset', async () => {
+    prismaMock.taiKhoan.findFirst.mockResolvedValue({
+      maTaiKhoan: 'user-1',
+      email: 'candidate@viecngon.vn',
+      vaiTro: 'UNGVIEN',
+      trangThai: 'HOATDONG',
+    });
+    prismaMock.taiKhoan.update.mockResolvedValue({});
+
+    const result = await service.softDelete(
+      'user-1',
+      { reason: 'Tài khoản giả mạo' },
+      'admin-1',
+    );
+
+    expect(result.deletedId).toBe('user-1');
+    const updateCall = prismaMock.taiKhoan.update.mock.calls[0] as [
+      {
+        where: { maTaiKhoan: string };
+        data: { trangThai: string; deletedAt: Date };
+      },
+    ];
+    expect(updateCall[0].where.maTaiKhoan).toBe('user-1');
+    expect(updateCall[0].data.trangThai).toBe('KHOA');
+    expect(updateCall[0].data.deletedAt).toBeInstanceOf(Date);
+    expect(prismaMock.passwordResetToken.updateMany).toHaveBeenCalledTimes(1);
     expect(prismaMock.thongBao.create).toHaveBeenCalledTimes(1);
   });
 });

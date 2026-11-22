@@ -14,8 +14,10 @@ import type {
   AdminUserRole,
   AdminUserStatus,
   AdminUsersListResponse,
+  DeleteAdminUserResponse,
 } from '@viecngon/types';
 import { PrismaService } from '../../prisma/prisma.service';
+import type { DeleteUserDto } from './dto/delete-user.dto';
 import type { QueryAdminUsersDto } from './dto/query-admin-users.dto';
 import type { UpdateUserRoleDto } from './dto/update-user-role.dto';
 import type { UpdateUserStatusDto } from './dto/update-user-status.dto';
@@ -48,9 +50,27 @@ const USER_LIST_SELECT = {
   },
 } satisfies Prisma.TaiKhoanSelect;
 
-type UserListRow = Prisma.TaiKhoanGetPayload<{
-  select: typeof USER_LIST_SELECT;
-}>;
+interface UserListRow {
+  maTaiKhoan: string;
+  email: string;
+  tenNguoiDung: string;
+  sdt: string | null;
+  provider: string;
+  vaiTro: string;
+  trangThai: string;
+  ngayTao: Date;
+  ngayCapNhat: Date;
+  ungVien: {
+    avatarUrl: string | null;
+  } | null;
+  nhaTuyenDung: {
+    congTy: {
+      tenCongTy: string;
+      slug: string;
+      logoUrl: string | null;
+    };
+  } | null;
+}
 
 const ROLE_LABELS: Record<AdminUserRole, string> = {
   ADMIN: 'Quản trị viên',
@@ -80,7 +100,11 @@ export class AdminUsersService {
   }
 
   private normalizeStatus(status: string): AdminUserStatus {
-    if (status === 'HOATDONG' || status === 'KHOA' || status === 'CHUAKICHHOAT') {
+    if (
+      status === 'HOATDONG' ||
+      status === 'KHOA' ||
+      status === 'CHUAKICHHOAT'
+    ) {
       return status;
     }
     return 'CHUAKICHHOAT';
@@ -153,7 +177,6 @@ export class AdminUsersService {
     const [
       rows,
       total,
-      totalAll,
       activeCount,
       lockedCount,
       unactivatedCount,
@@ -169,24 +192,23 @@ export class AdminUsersService {
         take: limit,
       }),
       this.prisma.taiKhoan.count({ where }),
-      this.prisma.taiKhoan.count({ where: { deletedAt: null } }),
       this.prisma.taiKhoan.count({
-        where: { deletedAt: null, trangThai: 'HOATDONG' },
+        where: { AND: [where, { trangThai: 'HOATDONG' }] },
       }),
       this.prisma.taiKhoan.count({
-        where: { deletedAt: null, trangThai: 'KHOA' },
+        where: { AND: [where, { trangThai: 'KHOA' }] },
       }),
       this.prisma.taiKhoan.count({
-        where: { deletedAt: null, trangThai: 'CHUAKICHHOAT' },
+        where: { AND: [where, { trangThai: 'CHUAKICHHOAT' }] },
       }),
       this.prisma.taiKhoan.count({
-        where: { deletedAt: null, vaiTro: 'ADMIN' },
+        where: { AND: [where, { vaiTro: 'ADMIN' }] },
       }),
       this.prisma.taiKhoan.count({
-        where: { deletedAt: null, vaiTro: 'UNGVIEN' },
+        where: { AND: [where, { vaiTro: 'UNGVIEN' }] },
       }),
       this.prisma.taiKhoan.count({
-        where: { deletedAt: null, vaiTro: 'NHATUYENDUNG' },
+        where: { AND: [where, { vaiTro: 'NHATUYENDUNG' }] },
       }),
     ]);
 
@@ -199,7 +221,7 @@ export class AdminUsersService {
         totalPages: Math.max(1, Math.ceil(total / limit)),
       },
       summary: {
-        total: totalAll,
+        total,
         active: activeCount,
         locked: lockedCount,
         unactivated: unactivatedCount,
@@ -491,6 +513,85 @@ export class AdminUsersService {
     return {
       message: `Đã cập nhật vai trò của ${updatedUser.email} thành ${ROLE_LABELS[dto.vaiTro]}.`,
       user: this.mapListItem(updatedUser),
+    };
+  }
+
+  async softDelete(
+    targetId: string,
+    dto: DeleteUserDto | undefined,
+    currentAdminId: string,
+  ): Promise<DeleteAdminUserResponse> {
+    if (targetId === currentAdminId) {
+      throw new BadRequestException(
+        'Không thể tự xóa tài khoản quản trị đang đăng nhập.',
+      );
+    }
+
+    const deletedAccount = await this.prisma.$transaction(async (tx) => {
+      const target = await tx.taiKhoan.findFirst({
+        where: { maTaiKhoan: targetId, deletedAt: null },
+        select: {
+          maTaiKhoan: true,
+          email: true,
+          vaiTro: true,
+          trangThai: true,
+        },
+      });
+
+      if (!target) {
+        throw new NotFoundException('Không tìm thấy tài khoản người dùng.');
+      }
+
+      if (target.vaiTro === 'ADMIN' && target.trangThai === 'HOATDONG') {
+        const activeAdmins = await tx.taiKhoan.count({
+          where: {
+            vaiTro: 'ADMIN',
+            trangThai: 'HOATDONG',
+            deletedAt: null,
+          },
+        });
+        if (activeAdmins <= 1) {
+          throw new BadRequestException(
+            'Không thể xóa tài khoản quản trị viên hoạt động cuối cùng của hệ thống.',
+          );
+        }
+      }
+
+      const now = new Date();
+      await tx.taiKhoan.update({
+        where: { maTaiKhoan: targetId },
+        data: {
+          trangThai: 'KHOA',
+          deletedAt: now,
+        },
+      });
+
+      await tx.passwordResetToken.updateMany({
+        where: { maTaiKhoan: targetId, usedAt: null },
+        data: { usedAt: now },
+      });
+
+      const reasonText = dto?.reason?.trim();
+      await tx.thongBao.create({
+        data: {
+          maTaiKhoan: targetId,
+          tieuDe: this.truncateText(
+            'Tài khoản của bạn đã bị xóa khỏi hệ thống bởi Quản trị viên',
+            255,
+          ),
+          noiDung: reasonText
+            ? `Tài khoản đã bị vô hiệu hóa và xóa khỏi hệ thống. Lý do: ${reasonText}`
+            : 'Tài khoản đã bị vô hiệu hóa và xóa khỏi hệ thống bởi Quản trị viên.',
+          trangThai: 'CHUA_DOC',
+        },
+      });
+
+      return target;
+    });
+
+    return {
+      message: `Đã xóa tài khoản ${deletedAccount.email} khỏi hệ thống.`,
+      deletedId: deletedAccount.maTaiKhoan,
     };
   }
 
