@@ -24,9 +24,10 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 export interface JwtPayload {
-  sub: number;
+  sub: string;
   email: string;
-  tenNguoiDung: string;
+  name?: string;
+  tenNguoiDung?: string;
   role?: string;
   iat?: number;
   exp?: number;
@@ -71,7 +72,10 @@ export class AuthController {
   ) {}
 
   @Get('me')
-  async getProfile(@Req() req: express.Request) {
+  async getProfile(
+    @Req() req: express.Request,
+    @Res({ passthrough: true }) res: express.Response,
+  ) {
     const cookies = req.cookies as Record<string, string> | undefined;
     const token = cookies?.['access_token'];
 
@@ -81,16 +85,17 @@ export class AuthController {
 
     try {
       const payload = await this.jwtService.verifyAsync<JwtPayload>(token);
+      if (!payload?.sub) {
+        throw new UnauthorizedException('Token không hợp lệ');
+      }
+      const user = await this.authService.getMeProfile(payload.sub);
       return {
-        id: payload.sub,
-        sub: payload.sub,
-        email: payload.email,
-        name: payload.tenNguoiDung,
-        role: payload.role,
+        ...user,
         exp: payload.exp,
         iat: payload.iat,
       };
     } catch {
+      res.clearCookie('access_token', getBaseCookieOptions());
       throw new UnauthorizedException('Token không hợp lệ hoặc đã hết hạn');
     }
   }

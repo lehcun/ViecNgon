@@ -2,15 +2,31 @@
 
 import React from "react";
 import Link from "next/link";
-import { Info, UploadCloud, Edit3, AlertCircle, FileText, ExternalLink } from "lucide-react";
+import {
+  Info,
+  UploadCloud,
+  Edit3,
+  AlertCircle,
+  FileText,
+  ExternalLink,
+  Lock,
+} from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { useCandidateProfile } from "@/hooks/candidate/useCandidateProfile";
+import {
+  calculateProfileCompletion,
+  MIN_PROFILE_COMPLETION_FOR_CV,
+} from "@/lib/candidate-completion";
 import { formatDateTimeVN } from "@/lib/formatters";
 import { ProfileHeaderSkeleton } from "@/components/ui/StateViews";
 
 const CandidatePersonCVContent = () => {
   const { candidateProfile, isLoading } = useCandidateProfile();
   const { user } = useAuthStore();
+
+  const profileCompletion = calculateProfileCompletion(candidateProfile);
+  const isEligibleForCv =
+    profileCompletion >= MIN_PROFILE_COMPLETION_FOR_CV;
 
   if (isLoading) {
     return (
@@ -48,39 +64,69 @@ const CandidatePersonCVContent = () => {
 
         <div className="border border-border-default rounded-xl p-6 bg-surface-subtle/60">
           {hasCv ? (
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-11 h-11 rounded-lg bg-danger-soft text-danger-text border border-danger-border flex items-center justify-center shrink-0">
-                  <FileText size={22} />
+            <div className="space-y-4">
+              {!isEligibleForCv && (
+                <div className="rounded-xl border border-warning-border bg-warning-light px-4 py-3 text-xs text-warning-text flex flex-wrap items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-2 font-medium">
+                    <Lock size={14} className="shrink-0" />
+                    Hồ sơ hiện đạt {profileCompletion}%. Bạn cần hoàn thiện tối
+                    thiểu {MIN_PROFILE_COMPLETION_FOR_CV}% hồ sơ để mở xem và
+                    dùng CV này ứng tuyển.
+                  </span>
+                  <Link
+                    href="/cv-profile"
+                    className="font-semibold text-primary hover:underline shrink-0"
+                  >
+                    Hoàn thiện hồ sơ
+                  </Link>
                 </div>
-                <div className="min-w-0">
-                  <p className="font-semibold text-text-main text-sm truncate">
-                    {cvName}
-                  </p>
-                  {defaultCv?.uploadedAt && (
-                    <p className="text-xs text-text-muted mt-0.5">
-                      Cập nhật: {formatDateTimeVN(defaultCv.uploadedAt)}
+              )}
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-11 h-11 rounded-lg bg-danger-soft text-danger-text border border-danger-border flex items-center justify-center shrink-0">
+                    <FileText size={22} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-text-main text-sm truncate">
+                      {cvName}
                     </p>
-                  )}
+                    {defaultCv?.uploadedAt && (
+                      <p className="text-xs text-text-muted mt-0.5">
+                        Cập nhật: {formatDateTimeVN(defaultCv.uploadedAt)}
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <a
-                  href={cvUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-border-default bg-surface-card text-sm font-semibold text-text-main hover:border-primary hover:text-primary transition-colors"
-                >
-                  <ExternalLink size={15} />
-                  Mở file
-                </a>
-                <Link
-                  href="/cv-profile"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-semibold transition-colors"
-                >
-                  <UploadCloud size={15} />
-                  Cập nhật bằng AI
-                </Link>
+                <div className="flex items-center gap-2 shrink-0">
+                  {isEligibleForCv ? (
+                    <a
+                      href={cvUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-border-default bg-surface-card text-sm font-semibold text-text-main hover:border-primary hover:text-primary transition-colors"
+                    >
+                      <ExternalLink size={15} />
+                      Mở file
+                    </a>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-border-default bg-surface-muted text-sm font-semibold text-text-muted opacity-60 cursor-not-allowed"
+                    >
+                      <Lock size={15} />
+                      Mở file
+                    </button>
+                  )}
+                  <Link
+                    href="/cv-profile"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-semibold transition-colors"
+                  >
+                    <UploadCloud size={15} />
+                    Cập nhật bằng AI
+                  </Link>
+                </div>
               </div>
             </div>
           ) : (

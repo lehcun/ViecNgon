@@ -50,4 +50,23 @@ describe("AuthProvider", () => {
       );
     });
   });
+
+  it("không đẩy về /login khi /auth/me lỗi mạng để tránh redirect loop với middleware", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValue(new TypeError("Failed to fetch")),
+    );
+
+    render(
+      <AuthProvider>
+        <div>Protected Content</div>
+      </AuthProvider>,
+    );
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledTimes(1);
+    });
+    expect(setUserMock).not.toHaveBeenCalled();
+    expect(replaceMock).not.toHaveBeenCalled();
+  });
 });

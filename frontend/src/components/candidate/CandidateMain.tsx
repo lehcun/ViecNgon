@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Briefcase,
   Mail,
@@ -9,37 +10,25 @@ import {
   Send,
   Sparkles,
   Layers,
+  Lock,
 } from "lucide-react";
-import { CandidateProfileResponse } from "@viecngon/types";
+import toast from "react-hot-toast";
 import { useAuthStore } from "@/store/authStore";
 import { useCandidateProfile } from "@/hooks/candidate/useCandidateProfile";
 import { useAppliedJobs } from "@/hooks/candidate/useAppliedJobs";
+import {
+  calculateProfileCompletion,
+  MIN_PROFILE_COMPLETION_FOR_CV,
+} from "@/lib/candidate-completion";
 import CandidateCVCard from "./CandidateCVCard";
+import ProfileCompletionGauge from "./ProfileCompletionGauge";
 import {
   ErrorState,
   MetricCardSkeleton,
   ProfileHeaderSkeleton,
 } from "@/components/ui/StateViews";
 
-export function calculateProfileCompletion(
-  profile?: CandidateProfileResponse | null,
-): number {
-  if (!profile) return 0;
-  const checks = [
-    Boolean(profile.candidateName || profile.account?.userName),
-    Boolean(profile.profession),
-    Boolean(profile.account?.phoneNumber),
-    Boolean(profile.dateOfBirth),
-    Boolean(profile.address),
-    Boolean(profile.aboutMe && profile.aboutMe.trim().length > 10),
-    Boolean(profile.experiences && profile.experiences.length > 0),
-    Boolean(profile.educations && profile.educations.length > 0),
-    Boolean(profile.skills && profile.skills.length > 0),
-    Boolean(profile.defaultCvFileId || profile.cvUrl),
-  ];
-  const passed = checks.filter(Boolean).length;
-  return Math.round((passed / checks.length) * 100);
-}
+export { calculateProfileCompletion };
 
 const CandidateMain = () => {
   const { candidateProfile, isLoading, isError } = useCandidateProfile();
@@ -47,7 +36,8 @@ const CandidateMain = () => {
   const { user } = useAuthStore();
 
   const profileCompletion = calculateProfileCompletion(candidateProfile);
-  const arcLength = 220;
+  const isEligibleForCv =
+    profileCompletion >= MIN_PROFILE_COMPLETION_FOR_CV;
 
   if (isLoading) {
     return (
@@ -91,9 +81,12 @@ const CandidateMain = () => {
       <div className="bg-surface-card rounded-xl border border-border-default p-6 sm:p-7 shadow-xs flex flex-col sm:flex-row items-center sm:items-start gap-6">
         <div className="shrink-0">
           {candidateProfile?.avatarUrl ? (
-            <img
+            <Image
               src={candidateProfile.avatarUrl}
               alt={displayName}
+              width={80}
+              height={80}
+              unoptimized
               className="w-20 h-20 rounded-full object-cover border border-border-default shadow-xs"
             />
           ) : (
@@ -128,47 +121,22 @@ const CandidateMain = () => {
       <CandidateCVCard />
 
       <div className="bg-surface-card rounded-xl border border-border-default p-6 sm:p-7 shadow-xs flex flex-col md:flex-row items-center gap-6 md:gap-8">
-        <div className="shrink-0 relative w-40 h-24 overflow-hidden">
-          <svg viewBox="0 0 200 100" className="w-full h-auto">
-            <path
-              d="M 20 90 A 70 70 0 0 1 180 90"
-              fill="none"
-              stroke="currentColor"
-              className="text-surface-subtle"
-              strokeWidth="18"
-              strokeLinecap="round"
-            />
-            <path
-              d="M 20 90 A 70 70 0 0 1 180 90"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="18"
-              strokeLinecap="round"
-              className="text-primary transition-all duration-700 ease-out"
-              strokeDasharray={arcLength}
-              strokeDashoffset={
-                arcLength - arcLength * (profileCompletion / 100)
-              }
-            />
-          </svg>
-          <div className="absolute bottom-2 left-0 right-0 flex flex-col items-center">
-            <span className="text-2xl font-bold text-text-main leading-none">
-              {profileCompletion}%
-            </span>
-            <span className="text-[11px] text-text-muted font-medium mt-1">
-              hoàn thành
-            </span>
-          </div>
-        </div>
+        <ProfileCompletionGauge
+          percentage={profileCompletion}
+          className="shrink-0"
+        />
 
         <div className="flex-1 text-center md:text-left">
           <h2 className="text-lg font-bold text-text-main mb-1.5">
             Hồ sơ ViecNgon
           </h2>
           <p className="text-text-secondary text-sm mb-3 max-w-md">
-            Hoàn thiện ít nhất{" "}
-            <span className="font-bold text-primary">70%</span> thông tin hồ sơ
-            để tăng độ chính xác khi AI chấm điểm tương thích công việc.
+            Hoàn thiện tối thiểu{" "}
+            <span className="font-bold text-primary">
+              {MIN_PROFILE_COMPLETION_FOR_CV}%
+            </span>{" "}
+            thông tin hồ sơ để mở khóa tạo CV, xem CV, dùng CV hệ thống ứng
+            tuyển và chấm điểm AI Match.
           </p>
           <Link
             href="/cv-profile"
@@ -179,17 +147,40 @@ const CandidateMain = () => {
         </div>
 
         <div className="hidden lg:flex items-center gap-3">
-          <Link
-            href="/cv-template"
-            className="w-28 h-32 border border-border-default rounded-xl flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-primary-light/40 transition-colors group bg-surface-subtle/50 p-3 text-center"
-          >
-            <div className="w-9 h-9 rounded-full border-2 border-primary text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
-              <ChevronRight size={16} className="ml-0.5" />
-            </div>
-            <span className="text-xs text-primary font-semibold leading-tight">
-              Xem &amp; tải mẫu CV
-            </span>
-          </Link>
+          {isEligibleForCv ? (
+            <Link
+              href="/cv-template"
+              className="w-28 h-32 border border-border-default rounded-xl flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-primary-light/40 transition-colors group bg-surface-subtle/50 p-3 text-center"
+            >
+              <div className="w-9 h-9 rounded-full border-2 border-primary text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+                <ChevronRight size={16} className="ml-0.5" />
+              </div>
+              <span className="text-xs text-primary font-semibold leading-tight">
+                Xem &amp; tải mẫu CV
+              </span>
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() =>
+                toast.error(
+                  `Hồ sơ hiện đạt ${profileCompletion}%. Cần tối thiểu ${MIN_PROFILE_COMPLETION_FOR_CV}% để tạo và xem CV.`,
+                )
+              }
+              title={`Cần tối thiểu ${MIN_PROFILE_COMPLETION_FOR_CV}% hồ sơ để tạo và xem CV`}
+              className="w-28 h-32 border border-border-default rounded-xl flex flex-col items-center justify-center gap-1.5 bg-surface-subtle/60 p-3 text-center opacity-70 cursor-not-allowed"
+            >
+              <div className="w-9 h-9 rounded-full border border-border-strong text-text-muted bg-surface-card flex items-center justify-center">
+                <Lock size={15} />
+              </div>
+              <span className="text-xs text-text-muted font-semibold leading-tight">
+                Xem &amp; tải mẫu CV
+              </span>
+              <span className="text-[10px] font-medium text-warning-text">
+                Cần ≥ {MIN_PROFILE_COMPLETION_FOR_CV}%
+              </span>
+            </button>
+          )}
         </div>
       </div>
 

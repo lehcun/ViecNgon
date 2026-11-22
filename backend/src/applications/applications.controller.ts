@@ -8,6 +8,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import * as jwtAuthGuard from 'src/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { Roles } from 'src/auth/decorators/roles.decorator';
 import { CreateDonXinViecDto } from '../applications/dto/create-don-xin-viec.dto';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { ApplicationsService } from './applications.service';
@@ -16,12 +18,13 @@ import { ScheduleInterviewDto } from './dto/schedule-interview.dto';
 
 @Controller(['applications', 'candidate/applications'])
 export class ApplicationsController {
-  constructor(private readonly applicationService: ApplicationsService) { }
+  constructor(private readonly applicationService: ApplicationsService) {}
 
   // =========================================================
   // 1. API DÀNH CHO ỨNG VIÊN (CANDIDATE)
   // =========================================================
-  @UseGuards(jwtAuthGuard.JwtAuthGuard)
+  @UseGuards(jwtAuthGuard.JwtAuthGuard, RolesGuard)
+  @Roles('UNGVIEN')
   @Post()
   async applyForJob(
     @CurrentUser() user: { id: string },

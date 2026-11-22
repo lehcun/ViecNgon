@@ -77,10 +77,21 @@ export default function LoginForm() {
         password: values.password,
       });
       toast.success("Đăng nhập thành công!");
+      const rawCallback =
+        typeof window !== "undefined"
+          ? new URLSearchParams(window.location.search).get("callbackUrl")
+          : null;
+      const safeCallback =
+        rawCallback &&
+        rawCallback.startsWith("/") &&
+        !rawCallback.startsWith("//")
+          ? rawCallback
+          : null;
+
       if (data?.user?.role === "NHATUYENDUNG") {
         router.push("/employer-dashboard");
       } else {
-        router.push("/dashboard");
+        router.push(safeCallback || "/dashboard");
       }
     } catch (err) {
       const { message } = parseApiError(err, "Đăng nhập thất bại!");

@@ -8,12 +8,17 @@ import {
   Edit3,
   CheckCircle,
   Link2,
+  Lock,
 } from "lucide-react";
 import Link from "next/link";
 import { useAuthStore } from "@/store/authStore";
 import { useParams, useRouter } from "next/navigation";
 import { useApplyJob, useJobDetail } from "@/hooks/job/useJobDetail";
 import { useCandidateProfile } from "@/hooks/candidate/useCandidateProfile";
+import {
+  calculateProfileCompletion,
+  MIN_PROFILE_COMPLETION_FOR_CV,
+} from "@/lib/candidate-completion";
 import toast from "react-hot-toast";
 import AiMatchBadge from "@/components/job/AiMatchBadge";
 import { formatDateVN } from "@/lib/formatters";
@@ -54,10 +59,16 @@ export default function ApplyJobPage() {
   const existingCvDate = formatDateVN(defaultCv?.uploadedAt);
   const hasExistingCv = Boolean(existingCvUrl);
 
+  const profileCompletion = calculateProfileCompletion(profile);
+  const isEligibleForCv =
+    profileCompletion >= MIN_PROFILE_COMPLETION_FOR_CV;
+  const canUseExistingCv = hasExistingCv && isEligibleForCv;
+
   const cvOption =
-    manualCvOption !== null
+    manualCvOption !== null &&
+    (manualCvOption !== "existing" || canUseExistingCv)
       ? manualCvOption
-      : hasExistingCv
+      : canUseExistingCv
         ? "existing"
         : "new";
 
@@ -103,6 +114,13 @@ export default function ApplyJobPage() {
     const finalCvUrl =
       cvOption === "existing" ? existingCvUrl : cvUrl.trim();
 
+    if (cvOption === "existing" && !isEligibleForCv) {
+      toast.error(
+        `Hồ sơ hiện đạt ${profileCompletion}%. Cần hoàn thiện tối thiểu ${MIN_PROFILE_COMPLETION_FOR_CV}% để ứng tuyển bằng CV hệ thống.`,
+      );
+      return;
+    }
+
     if (!finalCvUrl) {
       toast.error("Vui lòng cung cấp CV để ứng tuyển!");
       return;
@@ -127,6 +145,12 @@ export default function ApplyJobPage() {
 
   const handleOpenExistingCV = (e: React.MouseEvent) => {
     e.preventDefault();
+    if (!isEligibleForCv) {
+      toast.error(
+        `Hồ sơ hiện đạt ${profileCompletion}%. Cần hoàn thiện tối thiểu ${MIN_PROFILE_COMPLETION_FOR_CV}% để xem CV này.`,
+      );
+      return;
+    }
     if (existingCvUrl) {
       window.open(existingCvUrl, "_blank", "noopener,noreferrer");
     }
@@ -211,11 +235,11 @@ export default function ApplyJobPage() {
                 <div className="flex flex-col gap-3">
                   <label
                     className={`relative flex flex-col p-4 border rounded-xl transition-all ${
-                      !hasExistingCv
-                        ? "opacity-55 cursor-not-allowed bg-surface-subtle"
+                      !canUseExistingCv
+                        ? "opacity-65 cursor-not-allowed bg-surface-subtle"
                         : "cursor-pointer"
                     } ${
-                      cvOption === "existing" && hasExistingCv
+                      cvOption === "existing" && canUseExistingCv
                         ? "border-primary bg-primary-light/30 shadow-xs"
                         : "border-border-default hover:border-primary/50"
                     }`}
@@ -230,42 +254,83 @@ export default function ApplyJobPage() {
                           setManualCvOption("existing");
                           setCvUrlError("");
                         }}
-                        disabled={!hasExistingCv}
+                        disabled={!canUseExistingCv}
                         className="w-4 h-4 text-primary focus:ring-primary border-border-default"
                       />
                       <span className="font-semibold text-text-main text-sm inline-flex items-center gap-2">
                         Sử dụng CV hiện tại{" "}
-                        {hasExistingCv && (
+                        {canUseExistingCv ? (
                           <StatusBadge
                             type="custom"
                             tone="success"
                             label="Đề xuất"
                           />
+                        ) : (
+                          !isEligibleForCv && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-warning-light border border-warning-border px-2 py-0.5 text-[11px] font-semibold text-warning-text">
+                              <Lock size={11} />
+                              Cần ≥ {MIN_PROFILE_COMPLETION_FOR_CV}%
+                            </span>
+                          )
                         )}
                       </span>
                     </div>
 
                     {hasExistingCv ? (
-                      <div className="ml-7">
+                      <div className="ml-7 space-y-1.5">
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
                             onClick={handleOpenExistingCV}
-                            className="text-sm font-medium text-primary hover:underline text-left truncate max-w-xs"
+                            disabled={!isEligibleForCv}
+                            className="text-sm font-medium text-primary hover:underline text-left truncate max-w-xs disabled:text-text-muted disabled:no-underline disabled:cursor-not-allowed"
                           >
                             {existingCvName}
                           </button>
-                          <Eye size={14} className="text-primary shrink-0" />
+                          {isEligibleForCv ? (
+                            <Eye size={14} className="text-primary shrink-0" />
+                          ) : (
+                            <Lock
+                              size={14}
+                              className="text-warning-text shrink-0"
+                            />
+                          )}
                         </div>
-                        <p className="text-xs text-text-muted mt-1">
+                        <p className="text-xs text-text-muted">
                           Ngày cập nhật: {existingCvDate}
                         </p>
+                        {!isEligibleForCv && (
+                          <p className="text-xs text-warning-text font-medium">
+                            Hồ sơ hiện đạt {profileCompletion}% (cần tối thiểu{" "}
+                            {MIN_PROFILE_COMPLETION_FOR_CV}% để dùng CV hệ thống
+                            gửi đơn).{" "}
+                            <Link
+                              href="/cv-profile"
+                              className="text-primary font-semibold underline"
+                            >
+                              Hoàn thiện hồ sơ ngay
+                            </Link>
+                          </p>
+                        )}
                       </div>
                     ) : (
-                      <div className="ml-7">
+                      <div className="ml-7 space-y-1">
                         <p className="text-xs text-danger-text font-medium">
                           Bạn chưa lưu CV nào trên hệ thống.
                         </p>
+                        {!isEligibleForCv && (
+                          <p className="text-xs text-warning-text font-medium">
+                            Hồ sơ hiện đạt {profileCompletion}% (cần tối thiểu{" "}
+                            {MIN_PROFILE_COMPLETION_FOR_CV}% để tạo và dùng CV
+                            hệ thống).{" "}
+                            <Link
+                              href="/cv-profile"
+                              className="text-primary font-semibold underline"
+                            >
+                              Hoàn thiện hồ sơ
+                            </Link>
+                          </p>
+                        )}
                       </div>
                     )}
                   </label>
@@ -402,7 +467,7 @@ export default function ApplyJobPage() {
                   className="w-full"
                   isLoading={isPending}
                   loadingText="Đang gửi hồ sơ..."
-                  disabled={!hasExistingCv && cvOption === "existing"}
+                  disabled={!canUseExistingCv && cvOption === "existing"}
                 >
                   Nộp đơn ứng tuyển
                 </Button>

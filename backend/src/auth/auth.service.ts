@@ -31,7 +31,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private jwtService: JwtService,
-  ) { }
+  ) {}
 
   // Helper dùng chung: Lấy Profile Ứng viên từ Google bằng Access Token
   private async getGoogleUserInfo(accessToken: string) {
@@ -439,5 +439,63 @@ export class AuthService {
     });
 
     return { message: 'Đổi mật khẩu thành công!' };
+  }
+
+  /**
+   * Lấy thông tin phiên đăng nhập hiện tại từ DB theo maTaiKhoan trong JWT.
+   * Ngăn tình trạng cookie JWT cũ (sau khi re-seed DB hoặc tài khoản bị xóa/khóa) vẫn qua được /auth/me.
+   */
+  async getMeProfile(maTaiKhoan: string) {
+    const account = await this.prisma.taiKhoan.findUnique({
+      where: { maTaiKhoan },
+      select: {
+        maTaiKhoan: true,
+        email: true,
+        tenNguoiDung: true,
+        vaiTro: true,
+        trangThai: true,
+        ungVien: {
+          select: {
+            avatarUrl: true,
+            tenUngVien: true,
+          },
+        },
+        nhaTuyenDung: {
+          select: {
+            hoTen: true,
+            congTy: {
+              select: {
+                logoUrl: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (
+      !account ||
+      account.trangThai === 'KHOA' ||
+      account.trangThai === 'INACTIVE'
+    ) {
+      throw new UnauthorizedException(
+        'Tài khoản không tồn tại hoặc phiên đăng nhập đã hết hiệu lực.',
+      );
+    }
+
+    return {
+      id: account.maTaiKhoan,
+      sub: account.maTaiKhoan,
+      email: account.email,
+      name:
+        account.ungVien?.tenUngVien ||
+        account.nhaTuyenDung?.hoTen ||
+        account.tenNguoiDung,
+      role: account.vaiTro,
+      avatarUrl:
+        account.ungVien?.avatarUrl ??
+        account.nhaTuyenDung?.congTy?.logoUrl ??
+        undefined,
+    };
   }
 }

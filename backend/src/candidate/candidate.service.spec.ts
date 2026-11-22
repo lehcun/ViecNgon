@@ -181,10 +181,61 @@ describe('CandidateService', () => {
     expect(applied[1].job.company).toBeNull();
   });
 
-  it('ném BadRequestException nếu uploadGeneratedCv thiếu file', async () => {
+  it('ném BadRequestException nếu uploadGeneratedCv thiếu file hoặc hồ sơ dưới 70%', async () => {
     await expect(
       service.uploadGeneratedCv('tk-1', undefined as any),
     ).rejects.toThrow(BadRequestException);
+
+    const dummyPdf = {
+      originalname: 'cv.pdf',
+      buffer: Buffer.from('%PDF-1.4'),
+      mimetype: 'application/pdf',
+    };
+
+    prisma.ungVien.findUnique.mockResolvedValue({
+      maUngVien: 'uv-1',
+      tenUngVien: 'Nguyễn A',
+      chuyenMon: null,
+      ngaySinh: null,
+      diaChi: null,
+      gioiThieuBanThan: null,
+      maFileCvMacDinh: null,
+      cvUrl: null,
+      taiKhoan: { tenNguoiDung: 'Nguyễn A', sdt: null },
+      kinhNghiems: [],
+      hocVans: [],
+      kyNangs: [],
+    });
+
+    await expect(service.uploadGeneratedCv('tk-1', dummyPdf)).rejects.toThrow(
+      BadRequestException,
+    );
+    expect(cloudinaryService.uploadCvPdf).not.toHaveBeenCalled();
+
+    prisma.ungVien.findUnique.mockResolvedValue({
+      maUngVien: 'uv-1',
+      tenUngVien: 'Nguyễn A',
+      chuyenMon: 'Backend Developer',
+      ngaySinh: new Date('1999-01-01'),
+      diaChi: 'Đà Nẵng',
+      gioiThieuBanThan: '<p>Lập trình viên nhiều năm kinh nghiệm.</p>',
+      maFileCvMacDinh: null,
+      cvUrl: null,
+      taiKhoan: { tenNguoiDung: 'Nguyễn A', sdt: '0901234567' },
+      kinhNghiems: [{ maKinhNghiem: 'kn-1' }],
+      hocVans: [],
+      kyNangs: [],
+    });
+    cloudinaryService.uploadCvPdf.mockResolvedValue('https://cdn/cv-new.pdf');
+    prisma.fileCv.create.mockResolvedValue({
+      maFileCv: 'file-new',
+      fileUrl: 'https://cdn/cv-new.pdf',
+    });
+    prisma.ungVien.update.mockResolvedValue({ maUngVien: 'uv-1' });
+
+    const uploaded = await service.uploadGeneratedCv('tk-1', dummyPdf);
+    expect(uploaded.fileId).toBe('file-new');
+    expect(cloudinaryService.uploadCvPdf).toHaveBeenCalledWith(dummyPdf);
   });
 
   it('tạo và cập nhật kinh nghiệm làm việc có sanitize mô tả', async () => {

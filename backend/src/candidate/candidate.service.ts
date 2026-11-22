@@ -25,6 +25,10 @@ import {
 } from 'src/cloudinary/cloudinary.service';
 import { formatSalaryDisplay } from 'src/common/utils/format-salary';
 import { sanitizeRichText } from 'src/common/utils/sanitize-html.util';
+import {
+  MIN_PROFILE_COMPLETION_FOR_CV,
+  calculateCandidateProfileCompletion,
+} from './utils/profile-completion.util';
 
 interface MockMulterFile {
   originalname: string;
@@ -175,6 +179,8 @@ export class CandidateService {
         description: p.moTa,
         projectUrl: p.projectUrl,
       })),
+
+      profileCompletion: calculateCandidateProfileCompletion(profile),
     };
   }
 
@@ -628,6 +634,29 @@ export class CandidateService {
     });
   }
 
+  private async getCandidateWithCompletionRelations(maTaiKhoan: string) {
+    const ungVien = await this.prisma.ungVien.findUnique({
+      where: { maTaiKhoan },
+      include: {
+        taiKhoan: { select: { tenNguoiDung: true, sdt: true } },
+        kinhNghiems: { select: { maKinhNghiem: true } },
+        hocVans: { select: { maHocVan: true } },
+        kyNangs: { select: { maKyNang: true } },
+      },
+    });
+
+    if (!ungVien) {
+      throw new NotFoundException(
+        'Không tìm thấy hồ sơ ứng viên tương ứng với tài khoản này.',
+      );
+    }
+
+    return {
+      ungVien,
+      completion: calculateCandidateProfileCompletion(ungVien),
+    };
+  }
+
   // =========================================================================
   // 8. TẠO & UPLOAD CV TỪ MẪU WEB (PDF RENDERER)
   // =========================================================================
@@ -636,9 +665,17 @@ export class CandidateService {
       throw new BadRequestException('Không tìm thấy file CV.');
     }
 
+    const { ungVien, completion } =
+      await this.getCandidateWithCompletionRelations(maTaiKhoan);
+
+    if (completion < MIN_PROFILE_COMPLETION_FOR_CV) {
+      throw new BadRequestException(
+        `Hồ sơ của bạn hiện đạt ${completion}%. Cần hoàn thiện tối thiểu ${MIN_PROFILE_COMPLETION_FOR_CV}% hồ sơ để tạo và lưu CV.`,
+      );
+    }
+
     try {
       const fileUrl = await this.cloudinaryService.uploadCvPdf(file);
-      const ungVien = await this.getCandidateByUserId(maTaiKhoan);
 
       return await this.prisma.$transaction(async (tx) => {
         const newFileCv = await tx.fileCv.create({

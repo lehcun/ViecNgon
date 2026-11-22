@@ -207,6 +207,8 @@ export class CandidateController {
   // TIỆN ÍCH KHÁC (UPLOAD GENERATED CV & APPLIED JOBS)
   // ==========================================
   @Post('cv/upload-generated')
+  @UseGuards(RolesGuard)
+  @Roles('UNGVIEN')
   @UseInterceptors(
     FileInterceptor('file', {
       limits: { fileSize: 5 * 1024 * 1024 },

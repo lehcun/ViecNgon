@@ -38,71 +38,81 @@ export default function AuthProvider({
   children: React.ReactNode;
 }) {
   const isInitialized = useAuthStore((state) => state.isInitialized);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const setUser = useAuthStore((state) => state.setUser);
   const pathname = usePathname();
   const router = useRouter();
 
   useEffect(() => {
-    // Nếu đã lấy được trạng thái rồi thì không cần gọi lại API nữa
-    if (isInitialized) return;
+    const redirectIfProtected = () => {
+      const normalized =
+        pathname.length > 1 && pathname.endsWith("/")
+          ? pathname.slice(0, -1)
+          : pathname;
+
+      const isAuthPage = AUTH_PAGES.some(
+        (p) => normalized === p || normalized.startsWith(`${p}/`),
+      );
+      if (isAuthPage) {
+        return;
+      }
+
+      const isProtected = PROTECTED_PREFIXES.some((prefix) =>
+        normalized.startsWith(prefix),
+      );
+
+      if (isProtected) {
+        const isEmployerRoute =
+          normalized.startsWith("/employer") ||
+          normalized.startsWith("/post-job") ||
+          normalized.startsWith("/employer-jobs") ||
+          normalized.startsWith("/applications") ||
+          normalized.startsWith("/campaigns") ||
+          normalized.startsWith("/company-profile");
+
+        const loginUrl = isEmployerRoute ? "/employer/login" : "/login";
+        if (normalized !== loginUrl) {
+          router.replace(
+            `${loginUrl}?callbackUrl=${encodeURIComponent(pathname)}`,
+          );
+        }
+      }
+    };
+
+    if (isInitialized) {
+      if (!isAuthenticated) {
+        redirectIfProtected();
+      }
+      return;
+    }
 
     const fetchUser = async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/auth/me`, {
           method: "GET",
-          credentials: "include", // BẮT BUỘC: Gửi kèm HttpOnly Cookie
+          credentials: "include",
         });
 
+        if (res.status === 401 || res.status === 403) {
+          setUser(null);
+          redirectIfProtected();
+          return;
+        }
+
         if (!res.ok) {
-          throw new Error("Phiên đăng nhập đã hết hạn hoặc chưa đăng nhập");
+          // Lỗi tạm thời từ server (5xx): giữ nguyên trang hiện tại để tránh redirect loop /login <-> /dashboard
+          return;
         }
 
         const userData = await res.json();
         setUser(userData);
       } catch {
-        setUser(null);
-
-        // Chuẩn hóa path loại bỏ trailing slash
-        const normalized =
-          pathname.length > 1 && pathname.endsWith("/")
-            ? pathname.slice(0, -1)
-            : pathname;
-
-        // Nếu người dùng đang ở bất kỳ trang Auth/Login/Register nào, TUYỆT ĐỐI KHÔNG redirect
-        const isAuthPage = AUTH_PAGES.some(
-          (p) => normalized === p || normalized.startsWith(`${p}/`),
-        );
-        if (isAuthPage) {
-          return;
-        }
-
-        // Nếu người dùng đang cố truy cập trực tiếp các trang Dashboard bảo vệ
-        // mà token đã chết hoặc hết hạn -> Tự động chuyển hướng về trang đăng nhập
-        const isProtected = PROTECTED_PREFIXES.some((prefix) =>
-          normalized.startsWith(prefix),
-        );
-
-        if (isProtected) {
-          const isEmployerRoute =
-            normalized.startsWith("/employer") ||
-            normalized.startsWith("/post-job") ||
-            normalized.startsWith("/employer-jobs") ||
-            normalized.startsWith("/applications") ||
-            normalized.startsWith("/campaigns") ||
-            normalized.startsWith("/company-profile");
-
-          const loginUrl = isEmployerRoute ? "/employer/login" : "/login";
-          if (normalized !== loginUrl) {
-            router.replace(
-              `${loginUrl}?callbackUrl=${encodeURIComponent(pathname)}`,
-            );
-          }
-        }
+        // Lỗi mạng (ví dụ backend chưa bật hoặc mất kết nối tạm thời): không xóa session cookie hay đẩy về /login
       }
     };
 
     void fetchUser();
-  }, [setUser, isInitialized, pathname, router]);
+  }, [setUser, isInitialized, isAuthenticated, pathname, router]);
 
   return <>{children}</>;
 }

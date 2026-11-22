@@ -22,6 +22,7 @@ import {
   Award,
   FolderGit2,
   Sparkles,
+  Lock,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import PersonalInfoModal from "@/components/candidate/PersonalInfoModal";
@@ -32,7 +33,11 @@ import CertificateModal from "@/components/candidate/modals/CertificateModal";
 import PortfolioModal from "@/components/candidate/modals/PortfolioModal";
 import ConfirmDeleteModal from "@/components/candidate/modals/ConfirmDeleteModal";
 import AiCvUploadModal from "@/components/candidate/modals/AiCvUploadModal";
-import { calculateProfileCompletion } from "@/components/candidate/CandidateMain";
+import ProfileCompletionGauge from "@/components/candidate/ProfileCompletionGauge";
+import {
+  calculateProfileCompletion,
+  MIN_PROFILE_COMPLETION_FOR_CV,
+} from "@/lib/candidate-completion";
 import { useCandidateProfile } from "@/hooks/candidate/useCandidateProfile";
 import { useManageCandidateItems } from "@/hooks/candidate/useManageCandidateItems";
 import { useUploadCandidateAvatar } from "@/hooks/candidate/useUploadCandidateAvatar";
@@ -188,7 +193,8 @@ export default function CandidateProfilePage() {
   }
 
   const profileCompletion = calculateProfileCompletion(candidateProfile);
-  const arcLength = 220;
+  const isEligibleForCv =
+    profileCompletion >= MIN_PROFILE_COMPLETION_FOR_CV;
 
   const candidateDisplayName =
     candidateProfile.candidateName || candidateProfile.account.userName;
@@ -787,45 +793,14 @@ export default function CandidateProfilePage() {
           </h2>
 
           <div className="flex justify-center mb-5">
-            <div className="relative w-40 h-24 overflow-hidden">
-              <svg viewBox="0 0 200 100" className="w-full h-auto">
-                <path
-                  d="M 20 90 A 70 70 0 0 1 180 90"
-                  fill="none"
-                  stroke="currentColor"
-                  className="text-surface-subtle"
-                  strokeWidth="18"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M 20 90 A 70 70 0 0 1 180 90"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="18"
-                  strokeLinecap="round"
-                  className="text-primary transition-all duration-700 ease-out"
-                  strokeDasharray={arcLength}
-                  strokeDashoffset={
-                    arcLength - arcLength * (profileCompletion / 100)
-                  }
-                />
-              </svg>
-              <div className="absolute bottom-2 left-0 right-0 flex flex-col items-center">
-                <span className="text-2xl font-bold text-text-main leading-none">
-                  {profileCompletion}%
-                </span>
-                <span className="text-[11px] text-text-muted font-medium mt-1">
-                  hoàn thành
-                </span>
-              </div>
-            </div>
+            <ProfileCompletionGauge percentage={profileCompletion} />
           </div>
 
           <div className="flex items-end gap-3 mb-6">
             <div className="bg-surface-subtle border border-border-subtle rounded-2xl rounded-br-none p-3 text-xs text-text-secondary relative flex-1 leading-relaxed">
-              {profileCompletion >= 70
-                ? "Hồ sơ của bạn đã đủ điều kiện nổi bật với nhà tuyển dụng và chấm điểm AI Match!"
-                : "Hoàn thiện thêm kỹ năng và kinh nghiệm để tăng độ chính xác khi AI gợi ý việc làm."}
+              {isEligibleForCv
+                ? "Hồ sơ của bạn đã đạt mốc ≥ 70%, đủ điều kiện tạo CV, xem CV, dùng CV ứng tuyển và chấm điểm AI Match!"
+                : `Hoàn thiện hồ sơ đạt tối thiểu ${MIN_PROFILE_COMPLETION_FOR_CV}% (hiện tại ${profileCompletion}%) để mở khóa tạo CV, xem CV và dùng CV ứng tuyển.`}
             </div>
             <div className="w-10 h-10 bg-ai-light border border-ai-border rounded-full flex items-center justify-center shrink-0 text-ai">
               <Bot size={20} />
@@ -841,13 +816,31 @@ export default function CandidateProfilePage() {
             Tải lên CV để AI tự điền hồ sơ
           </button>
 
-          <Link
-            href="/cv-template"
-            className="inline-flex items-center justify-center gap-2 w-full px-5 py-2.5 bg-surface-card border border-border-default hover:border-primary hover:text-primary text-text-main rounded-lg font-semibold transition-colors text-sm"
-          >
-            <FileText size={17} />
-            Xem và tải CV mẫu
-          </Link>
+          {isEligibleForCv ? (
+            <Link
+              href="/cv-template"
+              className="inline-flex items-center justify-center gap-2 w-full px-5 py-2.5 bg-surface-card border border-border-default hover:border-primary hover:text-primary text-text-main rounded-lg font-semibold transition-colors text-sm"
+            >
+              <FileText size={17} />
+              Xem và tải CV mẫu
+            </Link>
+          ) : (
+            <div className="space-y-2">
+              <button
+                type="button"
+                disabled
+                aria-disabled="true"
+                className="inline-flex items-center justify-center gap-2 w-full px-5 py-2.5 bg-surface-muted border border-border-default text-text-muted rounded-lg font-semibold text-sm opacity-65 cursor-not-allowed"
+              >
+                <Lock size={16} />
+                Xem và tải CV mẫu
+              </button>
+              <p className="text-[11px] text-warning-text text-center font-medium">
+                Đạt tối thiểu {MIN_PROFILE_COMPLETION_FOR_CV}% để tạo, xem và
+                dùng CV ứng tuyển
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

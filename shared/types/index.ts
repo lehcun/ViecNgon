@@ -534,6 +534,7 @@ export interface CandidateProfileResponse {
   languages: LanguageItem[];
   uploadedCvs: UploadedCvItem[];
   portfolios: PortfolioItem[];
+  profileCompletion?: number;
 }
 
 export interface UpdateCandidatePayload {

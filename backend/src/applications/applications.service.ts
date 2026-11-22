@@ -10,6 +10,10 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { GoogleCalendarService } from 'src/calender/google-calendar.service';
 import { ScheduleInterviewDto } from './dto/schedule-interview.dto';
 import { AiMatchService } from 'src/ai/ai-match.service';
+import {
+  MIN_PROFILE_COMPLETION_FOR_CV,
+  calculateCandidateProfileCompletion,
+} from 'src/candidate/utils/profile-completion.util';
 
 @Injectable()
 export class ApplicationsService {
@@ -26,7 +30,13 @@ export class ApplicationsService {
     // 1. Kiểm tra hồ sơ Ứng viên từ userId (maTaiKhoan)
     const candidate = await this.prisma.ungVien.findUnique({
       where: { maTaiKhoan: userId },
-      include: { danhSachFileCv: true },
+      include: {
+        danhSachFileCv: true,
+        taiKhoan: { select: { tenNguoiDung: true, sdt: true } },
+        kinhNghiems: { select: { maKinhNghiem: true } },
+        hocVans: { select: { maHocVan: true } },
+        kyNangs: { select: { maKyNang: true } },
+      },
     });
 
     if (!candidate) {
@@ -60,8 +70,26 @@ export class ApplicationsService {
       throw new BadRequestException('Bạn đã nộp hồ sơ cho công việc này rồi.');
     }
 
-    // 4. Xác định URL file CV
-    let finalCvUrl = fileCvUrl;
+    // 4. Kiểm tra điều kiện >= 70% nếu dùng CV hệ thống & xác định URL file CV
+    const trimmedFileCvUrl = fileCvUrl?.trim();
+    const matchesSavedCvUrl = Boolean(
+      trimmedFileCvUrl &&
+      (trimmedFileCvUrl === candidate.cvUrl ||
+        candidate.danhSachFileCv?.some((f) => f.fileUrl === trimmedFileCvUrl)),
+    );
+    const isUsingSystemCv =
+      Boolean(maCvFile) || !trimmedFileCvUrl || matchesSavedCvUrl;
+
+    if (isUsingSystemCv) {
+      const completion = calculateCandidateProfileCompletion(candidate);
+      if (completion < MIN_PROFILE_COMPLETION_FOR_CV) {
+        throw new BadRequestException(
+          `Hồ sơ của bạn hiện đạt ${completion}%. Cần hoàn thiện tối thiểu ${MIN_PROFILE_COMPLETION_FOR_CV}% để ứng tuyển bằng CV hệ thống, hoặc vui lòng nhập liên kết CV ngoài.`,
+        );
+      }
+    }
+
+    let finalCvUrl = trimmedFileCvUrl;
     if (!finalCvUrl && maCvFile) {
       const selectedFile = candidate.danhSachFileCv?.find(
         (f) => f.maFileCv === maCvFile,
@@ -72,6 +100,9 @@ export class ApplicationsService {
     }
     if (!finalCvUrl) {
       finalCvUrl = candidate.cvUrl || undefined;
+    }
+    if (!finalCvUrl) {
+      throw new BadRequestException('Vui lòng cung cấp CV để ứng tuyển.');
     }
 
     // 5. Tiến hành lưu Đơn xin việc vào cơ sở dữ liệu

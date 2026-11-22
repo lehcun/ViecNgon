@@ -1,14 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/authStore";
 
+class AuthExpiredError extends Error {}
+
 // 1. Tách riêng Data Fetching (Không dính dáng đến React)
 const fetchAuthMe = async () => {
   const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
     credentials: "include",
   });
 
+  if (response.status === 401 || response.status === 403) {
+    throw new AuthExpiredError("Chưa đăng nhập hoặc phiên làm việc hết hạn");
+  }
+
   if (!response.ok) {
-    throw new Error("Chưa đăng nhập hoặc phiên làm việc hết hạn");
+    throw new Error("Không thể kiểm tra phiên làm việc lúc này");
   }
 
   return response.json();
@@ -29,9 +35,12 @@ export const useUser = () => {
         setUser(userData);
         return userData;
       } catch (error) {
-        // Nếu lỗi (401), dọn dẹp kho dữ liệu để Navbar hiện nút "Đăng nhập"
-        clearAuth();
-        return null; // Trả về null để tránh React Query coi đây là lỗi nghiêm trọng
+        // Chỉ clearAuth khi backend xác nhận token hết hạn / không hợp lệ (401/403)
+        // Tránh đánh dấu unauthenticated khi backend tạm tắt hoặc lỗi mạng khiến AuthProvider redirect vòng
+        if (error instanceof AuthExpiredError) {
+          clearAuth();
+        }
+        return null;
       }
     },
     retry: false, // Chỉ check 1 lần lúc tải trang

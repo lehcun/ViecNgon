@@ -11,8 +11,13 @@ import {
   Download,
   Trash2,
   CheckCircle2,
+  Lock,
 } from "lucide-react";
 import { useCandidateProfile } from "@/hooks/candidate/useCandidateProfile";
+import {
+  calculateProfileCompletion,
+  MIN_PROFILE_COMPLETION_FOR_CV,
+} from "@/lib/candidate-completion";
 import { formatDateTimeVN } from "@/lib/formatters";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
@@ -20,6 +25,10 @@ import { Button } from "@/components/ui/Button";
 export default function CandidateCVCard() {
   const { candidateProfile: profile, isLoading } = useCandidateProfile();
   const [isHovered, setIsHovered] = useState(false);
+
+  const profileCompletion = calculateProfileCompletion(profile);
+  const isEligibleForCv =
+    profileCompletion >= MIN_PROFILE_COMPLETION_FOR_CV;
 
   if (isLoading) {
     return (
@@ -75,6 +84,12 @@ export default function CandidateCVCard() {
     profile?.defaultCvType === "ONLINE" ? "Tạo từ Website" : "Tải lên từ máy";
 
   const handleOpenCV = () => {
+    if (!isEligibleForCv) {
+      toast.error(
+        `Hồ sơ hiện đạt ${profileCompletion}%. Cần hoàn thiện tối thiểu ${MIN_PROFILE_COMPLETION_FOR_CV}% để xem hoặc tải CV.`,
+      );
+      return;
+    }
     if (fileUrl && fileUrl !== "#") {
       window.open(fileUrl, "_blank", "noopener,noreferrer");
     } else {
@@ -96,6 +111,23 @@ export default function CandidateCVCard() {
         </Link>
       </div>
 
+      {!isEligibleForCv && (
+        <div className="mb-4 rounded-xl border border-warning-border bg-warning-light px-4 py-3 text-xs text-warning-text flex flex-wrap items-center justify-between gap-2">
+          <span className="inline-flex items-center gap-2 font-medium">
+            <Lock size={14} className="shrink-0" />
+            Hồ sơ hiện đạt {profileCompletion}%. Hoàn thiện tối thiểu{" "}
+            {MIN_PROFILE_COMPLETION_FOR_CV}% để xem, tải xuống hoặc dùng CV này
+            ứng tuyển.
+          </span>
+          <Link
+            href="/cv-profile"
+            className="font-semibold text-primary hover:underline shrink-0"
+          >
+            Hoàn thiện hồ sơ
+          </Link>
+        </div>
+      )}
+
       <div
         className={`relative border rounded-xl transition-all duration-200 ${
           isHovered
@@ -116,8 +148,9 @@ export default function CandidateCVCard() {
               <button
                 type="button"
                 onClick={handleOpenCV}
+                disabled={!isEligibleForCv}
                 title={cvName}
-                className="font-bold text-text-main text-base truncate hover:text-primary transition-colors text-left"
+                className="font-bold text-text-main text-base truncate hover:text-primary transition-colors text-left disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:text-text-main"
               >
                 {cvName}
               </button>
@@ -146,21 +179,33 @@ export default function CandidateCVCard() {
             variant="ghost"
             size="sm"
             onClick={handleOpenCV}
+            disabled={!isEligibleForCv}
           >
-            <Eye size={15} />
+            {isEligibleForCv ? <Eye size={15} /> : <Lock size={15} />}
             Xem CV
           </Button>
 
-          <a
-            href={fileUrl}
-            download={cvName}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-text-secondary hover:bg-surface-card border border-transparent hover:border-border-default transition-colors"
-          >
-            <Download size={15} />
-            Tải xuống
-          </a>
+          {isEligibleForCv ? (
+            <a
+              href={fileUrl}
+              download={cvName}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-text-secondary hover:bg-surface-card border border-transparent hover:border-border-default transition-colors"
+            >
+              <Download size={15} />
+              Tải xuống
+            </a>
+          ) : (
+            <button
+              type="button"
+              disabled
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-text-muted opacity-55 cursor-not-allowed"
+            >
+              <Lock size={14} />
+              Tải xuống
+            </button>
+          )}
 
           <button
             type="button"

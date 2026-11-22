@@ -27,6 +27,17 @@ export default function GoogleButton({
     onSuccess: (tokenResponse) => {
       const accessToken = tokenResponse.access_token;
 
+      const rawCallback =
+        typeof window !== "undefined"
+          ? new URLSearchParams(window.location.search).get("callbackUrl")
+          : null;
+      const safeCallback =
+        rawCallback &&
+        rawCallback.startsWith("/") &&
+        !rawCallback.startsWith("//")
+          ? rawCallback
+          : null;
+
       if (mode === "register") {
         googleRegister(
           { accessToken },
@@ -44,7 +55,7 @@ export default function GoogleButton({
           {
             onSuccess: () => {
               toast.success("Đăng nhập bằng Google thành công!");
-              router.push("/dashboard");
+              router.push(safeCallback || "/dashboard");
             },
             onError: (err) => toast.error(err.message),
           },

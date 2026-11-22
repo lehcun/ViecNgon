@@ -405,4 +405,129 @@ test.describe("Sprint 1 - Module Quản lý hồ sơ ứng viên (HSUV)", () => 
     await page.getByRole("button", { name: /Hoặc dán URL ảnh/i }).click();
     await expect(page.locator("#avatarUrl")).toBeVisible();
   });
+
+  test("[FUNC-HSUV08] Kiểm tra gauge tràn 100% và khóa Tạo/Xem/Ứng tuyển CV hệ thống khi hồ sơ dưới 70%", async ({
+    page,
+  }) => {
+    // 1. Hồ sơ 100%: Gauge phải tràn kín 100% (stroke-dashoffset = 0)
+    await setupCandidateSessionWithBaseMocks(page);
+    await page.goto("/cv-profile");
+
+    const fullGauge = page.getByTestId("profile-completion-progress");
+    await expect(fullGauge).toBeVisible();
+    const dashOffset = await fullGauge.getAttribute("stroke-dashoffset");
+    expect(Number(dashOffset)).toBeCloseTo(0, 2);
+
+    // 2. Hồ sơ dưới 70% (40%) nhưng vẫn có CV cũ: khóa Tạo/Xem/Nộp CV hệ thống
+    const lowProfile = createMockCandidateProfile({
+      profession: "",
+      dateOfBirth: null,
+      address: null,
+      aboutMe: "",
+      skills: [],
+      experiences: [],
+      educations: [],
+      account: {
+        email: "quangy.dev@viecngon.vn",
+        userName: "Nguyễn Quang Ý",
+        phoneNumber: null,
+      },
+    });
+    // Lúc này chỉ đạt: candidateName + defaultCvFileId = 20% (< 70%)
+    await setupCandidateSessionWithBaseMocks(page, { profile: lowProfile });
+
+    await page.route("**/job/nextjs-developer", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          id: "job-201",
+          title: "NEXTJS DEVELOPER",
+          slug: "nextjs-developer",
+          isApplied: false,
+          company: { name: "MoMo" },
+        }),
+      }),
+    );
+    await page.route("**/ai/**", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ matchScore: 75 }),
+      }),
+    );
+
+    let capturedApplyBody: Record<string, unknown> | null = null;
+    await page.route("**/candidate/applications", async (route) => {
+      if (route.request().method() === "POST") {
+        capturedApplyBody = route.request().postDataJSON() as Record<
+          string,
+          unknown
+        >;
+        return route.fulfill({
+          status: 201,
+          contentType: "application/json",
+          body: JSON.stringify({
+            message: "Nộp đơn xin việc thành công!",
+            data: { maDon: "don-ext-1" },
+          }),
+        });
+      }
+      return route.fallback();
+    });
+
+    // Kiểm tra /cv-profile
+    await page.goto("/cv-profile");
+    const lockedTemplateBtn = page.getByRole("button", {
+      name: /Xem và tải CV mẫu/i,
+    });
+    await expect(lockedTemplateBtn).toBeDisabled();
+
+    // Kiểm tra /cv-template
+    await page.goto("/cv-template");
+    await expect(
+      page.getByRole("heading", {
+        name: /Cần hoàn thiện tối thiểu 70% hồ sơ để tạo và xem CV/i,
+      }),
+    ).toBeVisible();
+    await expect(page.locator('iframe[title="CV Preview"]')).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: /Chọn mẫu này/i }),
+    ).toBeDisabled();
+    await expect(
+      page.getByRole("button", { name: /Phóng to/i }),
+    ).toBeDisabled();
+    await expect(
+      page.getByRole("button", { name: /Tải xuống/i }),
+    ).toBeDisabled();
+
+    // Kiểm tra /cv/personalCV
+    await page.goto("/cv/personalCV");
+    await expect(
+      page.getByText(/Hoàn thiện tối thiểu 70% hồ sơ để mở xem/i),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /Mở file/i }),
+    ).toBeDisabled();
+
+    // Kiểm tra /job-it/nextjs-developer/job_applications
+    await page.goto("/job-it/nextjs-developer/job_applications");
+    const existingRadio = page.locator(
+      'input[name="cvOption"][value="existing"]',
+    );
+    const newRadio = page.locator('input[name="cvOption"][value="new"]');
+    await expect(existingRadio).toBeDisabled();
+    await expect(newRadio).toBeChecked();
+
+    await page
+      .locator("#cvUrl")
+      .fill("https://drive.google.com/file/d/external-resume/view");
+    await page.getByRole("button", { name: /Nộp đơn ứng tuyển/i }).click();
+
+    await expect.poll(() => capturedApplyBody).not.toBeNull();
+    expect(capturedApplyBody?.["fileCvUrl"]).toBe(
+      "https://drive.google.com/file/d/external-resume/view",
+    );
+    expect(capturedApplyBody?.["maCvFile"]).toBeUndefined();
+  });
 });
