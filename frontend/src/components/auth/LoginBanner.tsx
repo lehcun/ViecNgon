@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { FiChevronRight } from "react-icons/fi";
 
 export default function LoginBanner() {
@@ -19,13 +18,6 @@ export default function LoginBanner() {
       </div>
 
       <div className="relative z-10 text-center md:text-left">
-        <div className="mb-10 inline-block">
-          <Link href="/">
-            <span className="text-4xl font-extrabold text-white tracking-tight">
-              ViecNgon
-            </span>
-          </Link>
-        </div>
         <h2 className="text-4xl md:text-5xl font-extrabold text-white leading-tight mb-6">
           Tiếp lợi thế <br /> Nối thành công
         </h2>

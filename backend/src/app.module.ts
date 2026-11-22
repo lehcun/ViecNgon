@@ -43,7 +43,10 @@ import { CvParserModule } from './cv-parser/cv-parser.module';
     MailerModule.forRoot({
       transport: {
         host: process.env.MAIL_HOST,
-        secure: false, // true cho port 465, false cho các port khác
+        ...(process.env.MAIL_PORT
+          ? { port: Number(process.env.MAIL_PORT) }
+          : {}),
+        secure: process.env.MAIL_SECURE === 'true', // true cho port 465, false cho các port khác
         auth: {
           user: process.env.MAIL_USER,
           pass: process.env.MAIL_PASS,

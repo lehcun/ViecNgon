@@ -13,7 +13,7 @@ import PublicEmployerDropdown from "./employer/PublicEmployerDropdown";
 import { cn } from "@/lib/utils";
 
 interface NavbarProps {
-  variant?: "public" | "app";
+  variant?: "public" | "app" | "dark";
 }
 
 const NAV_LINKS = [
@@ -37,14 +37,17 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const isSolidTheme = variant === "app" || isScrolled;
-  const navBackground = isSolidTheme
-    ? "bg-surface-card/95 backdrop-blur-md shadow-xs border-b border-border-default"
-    : "bg-transparent border-b border-transparent";
+  const isLightHeader = variant === "app" || (variant === "public" && isScrolled);
+  const navBackground =
+    variant === "dark"
+      ? "bg-primary-dark border-b border-white/10 shadow-xs"
+      : isLightHeader
+        ? "bg-surface-card/95 backdrop-blur-md shadow-xs border-b border-border-default"
+        : "bg-transparent border-b border-transparent";
 
-  const textColor = isSolidTheme ? "text-text-secondary" : "text-slate-200";
-  const hoverColor = isSolidTheme ? "hover:text-primary" : "hover:text-white";
-  const logoTextColor = isSolidTheme ? "text-text-primary" : "text-white";
+  const textColor = isLightHeader ? "text-text-secondary" : "text-slate-200";
+  const hoverColor = isLightHeader ? "hover:text-primary" : "hover:text-white";
+  const logoTextColor = isLightHeader ? "text-text-primary" : "text-white";
   const isEmployer = user?.role === "NHATUYENDUNG";
 
   return (
@@ -72,7 +75,7 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
                   className={cn(
                     "transition-colors whitespace-nowrap py-1",
                     active
-                      ? isSolidTheme
+                      ? isLightHeader
                         ? "text-primary font-semibold"
                         : "text-white font-semibold"
                       : cn(textColor, hoverColor),
@@ -92,7 +95,7 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
               href="/employer/login"
               className={cn(
                 "hidden sm:inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors whitespace-nowrap",
-                isSolidTheme
+                isLightHeader
                   ? "border-border-default text-text-secondary hover:text-primary hover:border-primary/40 hover:bg-primary-light/50"
                   : "border-white/25 text-slate-100 hover:bg-white/10",
               )}
@@ -122,7 +125,7 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
                 href="/login"
                 className={cn(
                   "inline-flex items-center justify-center h-9 px-4 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap",
-                  isSolidTheme
+                  isLightHeader
                     ? "bg-primary text-white hover:bg-primary-hover"
                     : "bg-white text-primary hover:bg-primary-light",
                 )}

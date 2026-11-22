@@ -25,12 +25,27 @@ model TaiKhoan {
   deletedAt    DateTime?
 
   // Quan hệ
-  ungVien      UngVien? // 1 tài khoản có 1 ứng viên
-  nhaTuyenDung NhaTuyenDung? // 1 tài khoản có 1 nhà tuyển dụng
-  danhGias     DanhGia[]
-  thongBaos    ThongBao[]
+  ungVien             UngVien? // 1 tài khoản có 1 ứng viên
+  nhaTuyenDung        NhaTuyenDung? // 1 tài khoản có 1 nhà tuyển dụng
+  danhGias            DanhGia[]
+  thongBaos           ThongBao[]
+  passwordResetTokens PasswordResetToken[]
 
   @@map("TAIKHOAN")
+}
+
+model PasswordResetToken {
+  maToken   String    @id @default(uuid()) @db.VarChar(50)
+  tokenHash String    @unique @db.VarChar(128)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  maTaiKhoan String   @db.VarChar(50)
+  taiKhoan   TaiKhoan @relation(fields: [maTaiKhoan], references: [maTaiKhoan], onDelete: Cascade)
+
+  @@index([maTaiKhoan])
+  @@map("PASSWORD_RESET_TOKEN")
 }
 
 // ---------------------------------------------------------

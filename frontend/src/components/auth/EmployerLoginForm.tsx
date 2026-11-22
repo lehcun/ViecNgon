@@ -85,26 +85,8 @@ export default function EmployerLoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto px-6 py-12 flex flex-col justify-center min-h-screen">
+    <div className="w-full max-w-md mx-auto px-6 py-12 flex flex-col justify-center">
       <div className="mb-8 text-center sm:text-left">
-        <Link
-          href="/"
-          className="inline-flex items-center justify-center sm:justify-start gap-3 mb-7"
-        >
-          <div className="flex items-center gap-1">
-            <div className="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center font-bold text-lg">
-              V
-            </div>
-            <span className="text-2xl font-extrabold text-primary tracking-tight">
-              iecNgon
-            </span>
-          </div>
-          <div className="h-4 w-px bg-border-default" />
-          <span className="text-xs font-bold tracking-widest text-text-secondary uppercase">
-            Employer Portal
-          </span>
-        </Link>
-
         <h1 className="text-2xl font-bold text-text-primary">
           Đăng nhập Nhà tuyển dụng
         </h1>

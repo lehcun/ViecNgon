@@ -1,9 +1,12 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { createHash, randomBytes } from 'crypto';
+import { MailerService } from '@nestjs-modules/mailer';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -13,6 +16,8 @@ import { RegisterCandidateDto } from './dto/register-candidate.dto';
 import { RegisterEmployerDto } from './dto/register-employer.dto';
 import { GoogleAuthDto } from './dto/google-auth.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import {
   fieldBadRequest,
   fieldUnauthorized,
@@ -27,10 +32,12 @@ interface GoogleJwtPayload {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   private googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
   constructor(
     private readonly prisma: PrismaService,
     private jwtService: JwtService,
+    private readonly mailerService: MailerService,
   ) {}
 
   // Helper dùng chung: Lấy Profile Ứng viên từ Google bằng Access Token
@@ -496,6 +503,231 @@ export class AuthService {
         account.ungVien?.avatarUrl ??
         account.nhaTuyenDung?.congTy?.logoUrl ??
         undefined,
+    };
+  }
+
+  private hashResetToken(rawToken: string): string {
+    return createHash('sha256').update(rawToken).digest('hex');
+  }
+
+  private getFrontendBaseUrl(): string {
+    return (process.env.FRONTEND_URL || 'http://localhost:3000').replace(
+      /\/+$/,
+      '',
+    );
+  }
+
+  private buildResetPasswordEmailHtml(params: {
+    displayName: string;
+    resetUrl: string;
+    isEmployer: boolean;
+  }): string {
+    const portalLabel = params.isEmployer
+      ? 'Nhà tuyển dụng ViecNgon'
+      : 'Ứng viên ViecNgon';
+    return `
+      <div style="font-family: Arial, Helvetica, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; color: #0f172a;">
+        <div style="margin-bottom: 20px;">
+          <span style="display: inline-block; padding: 6px 12px; border-radius: 8px; background: #eff6ff; color: #2563eb; font-weight: 700; font-size: 14px;">ViecNgon • ${portalLabel}</span>
+        </div>
+        <h2 style="margin: 0 0 12px; font-size: 20px; color: #0f172a;">Đặt lại mật khẩu tài khoản</h2>
+        <p style="margin: 0 0 12px; font-size: 14px; line-height: 1.6; color: #334155;">
+          Xin chào <strong>${params.displayName}</strong>,
+        </p>
+        <p style="margin: 0 0 20px; font-size: 14px; line-height: 1.6; color: #334155;">
+          Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn. Vui lòng nhấn nút bên dưới để tạo mật khẩu mới (liên kết có hiệu lực trong <strong>15 phút</strong> và chỉ sử dụng được một lần):
+        </p>
+        <div style="margin: 24px 0; text-align: center;">
+          <a href="${params.resetUrl}" style="display: inline-block; padding: 12px 24px; background: #2563eb; color: #ffffff; text-decoration: none; font-weight: 700; font-size: 14px; border-radius: 8px;">Đặt lại mật khẩu</a>
+        </div>
+        <p style="margin: 0 0 8px; font-size: 12px; color: #64748b;">Nếu nút không hoạt động, hãy sao chép đường dẫn sau vào trình duyệt:</p>
+        <p style="margin: 0 0 20px; font-size: 12px; color: #2563eb; word-break: break-all;">${params.resetUrl}</p>
+        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+        <p style="margin: 0; font-size: 12px; color: #64748b; line-height: 1.5;">
+          Nếu bạn không gửi yêu cầu này, hãy bỏ qua email và không chia sẻ liên kết này với bất kỳ ai.
+        </p>
+      </div>
+    `;
+  }
+
+  private buildGoogleReminderEmailHtml(params: {
+    displayName: string;
+    loginUrl: string;
+  }): string {
+    return `
+      <div style="font-family: Arial, Helvetica, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; color: #0f172a;">
+        <div style="margin-bottom: 20px;">
+          <span style="display: inline-block; padding: 6px 12px; border-radius: 8px; background: #eff6ff; color: #2563eb; font-weight: 700; font-size: 14px;">ViecNgon</span>
+        </div>
+        <h2 style="margin: 0 0 12px; font-size: 20px; color: #0f172a;">Tài khoản liên kết với Google</h2>
+        <p style="margin: 0 0 12px; font-size: 14px; line-height: 1.6; color: #334155;">
+          Xin chào <strong>${params.displayName}</strong>,
+        </p>
+        <p style="margin: 0 0 20px; font-size: 14px; line-height: 1.6; color: #334155;">
+          Tài khoản ViecNgon của bạn được đăng ký thông qua Google nên không sử dụng mật khẩu riêng. Vui lòng quay lại trang đăng nhập và chọn nút <strong>Đăng nhập với Google</strong>.
+        </p>
+        <div style="margin: 24px 0; text-align: center;">
+          <a href="${params.loginUrl}" style="display: inline-block; padding: 12px 24px; background: #2563eb; color: #ffffff; text-decoration: none; font-weight: 700; font-size: 14px; border-radius: 8px;">Quay lại đăng nhập</a>
+        </div>
+        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+        <p style="margin: 0; font-size: 12px; color: #64748b;">Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email.</p>
+      </div>
+    `;
+  }
+
+  // -------------------------------------------------------------
+  // QUÊN MẬT KHẨU - GỬI LINK KHÔI PHỤC QUA EMAIL (PHƯƠNG ÁN 1)
+  // -------------------------------------------------------------
+  async forgotPassword(dto: ForgotPasswordDto) {
+    const genericResponse = {
+      message:
+        'Nếu email tồn tại trên hệ thống, hướng dẫn đặt lại mật khẩu đã được gửi tới hộp thư của bạn.',
+    };
+
+    const emailNormalized = dto.email.trim().toLowerCase();
+    const account = await this.prisma.taiKhoan.findUnique({
+      where: { email: emailNormalized },
+      select: {
+        maTaiKhoan: true,
+        email: true,
+        tenNguoiDung: true,
+        matKhau: true,
+        provider: true,
+        vaiTro: true,
+        trangThai: true,
+        deletedAt: true,
+      },
+    });
+
+    if (
+      !account ||
+      account.deletedAt ||
+      account.trangThai === 'KHOA' ||
+      account.trangThai === 'INACTIVE' ||
+      account.vaiTro === 'ADMIN'
+    ) {
+      return genericResponse;
+    }
+
+    const frontendUrl = this.getFrontendBaseUrl();
+    const isEmployer =
+      account.vaiTro === 'NHATUYENDUNG' || dto.portal === 'employer';
+    const displayName = account.tenNguoiDung || account.email;
+
+    // Tài khoản Google thuần (Phương án a): gửi email nhắc đăng nhập bằng Google
+    if (account.provider === 'GOOGLE' && !account.matKhau) {
+      const loginUrl = `${frontendUrl}${account.vaiTro === 'NHATUYENDUNG' ? '/employer/login' : '/login'}`;
+      try {
+        await this.mailerService.sendMail({
+          to: account.email,
+          subject: '[ViecNgon] Hướng dẫn đăng nhập tài khoản Google',
+          html: this.buildGoogleReminderEmailHtml({ displayName, loginUrl }),
+        });
+      } catch (error) {
+        this.logger.error('Không thể gửi email nhắc đăng nhập Google', error);
+      }
+      return genericResponse;
+    }
+
+    const rawToken = randomBytes(32).toString('hex');
+    const tokenHash = this.hashResetToken(rawToken);
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.passwordResetToken.updateMany({
+        where: { maTaiKhoan: account.maTaiKhoan, usedAt: null },
+        data: { usedAt: new Date() },
+      });
+
+      await tx.passwordResetToken.create({
+        data: {
+          tokenHash,
+          expiresAt,
+          maTaiKhoan: account.maTaiKhoan,
+        },
+      });
+    });
+
+    const resetPath =
+      account.vaiTro === 'NHATUYENDUNG'
+        ? '/employer/reset-password'
+        : '/reset-password';
+    const resetUrl = `${frontendUrl}${resetPath}?token=${encodeURIComponent(rawToken)}`;
+
+    try {
+      await this.mailerService.sendMail({
+        to: account.email,
+        subject: '[ViecNgon] Đặt lại mật khẩu tài khoản',
+        html: this.buildResetPasswordEmailHtml({
+          displayName,
+          resetUrl,
+          isEmployer,
+        }),
+      });
+    } catch (error) {
+      this.logger.error('Không thể gửi email đặt lại mật khẩu', error);
+    }
+
+    return genericResponse;
+  }
+
+  // -------------------------------------------------------------
+  // ĐẶT LẠI MẬT KHẨU BẰNG TOKEN
+  // -------------------------------------------------------------
+  async resetPassword(dto: ResetPasswordDto) {
+    const tokenHash = this.hashResetToken(dto.token.trim());
+    const resetRecord = await this.prisma.passwordResetToken.findUnique({
+      where: { tokenHash },
+      include: {
+        taiKhoan: {
+          select: {
+            maTaiKhoan: true,
+            vaiTro: true,
+            trangThai: true,
+            deletedAt: true,
+          },
+        },
+      },
+    });
+
+    if (
+      !resetRecord ||
+      resetRecord.usedAt ||
+      resetRecord.expiresAt < new Date() ||
+      !resetRecord.taiKhoan ||
+      resetRecord.taiKhoan.deletedAt ||
+      resetRecord.taiKhoan.trangThai === 'KHOA' ||
+      resetRecord.taiKhoan.trangThai === 'INACTIVE'
+    ) {
+      throw new BadRequestException(
+        'Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Vui lòng gửi lại yêu cầu mới.',
+      );
+    }
+
+    const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
+
+    await this.prisma.$transaction(async (tx) => {
+      const claimed = await tx.passwordResetToken.updateMany({
+        where: { maToken: resetRecord.maToken, usedAt: null },
+        data: { usedAt: new Date() },
+      });
+
+      if (claimed.count !== 1) {
+        throw new BadRequestException(
+          'Liên kết đặt lại mật khẩu đã được sử dụng.',
+        );
+      }
+
+      await tx.taiKhoan.update({
+        where: { maTaiKhoan: resetRecord.maTaiKhoan },
+        data: { matKhau: hashedPassword },
+      });
+    });
+
+    return {
+      message:
+        'Đặt lại mật khẩu thành công! Bạn có thể đăng nhập bằng mật khẩu mới.',
+      role: resetRecord.taiKhoan.vaiTro,
     };
   }
 }

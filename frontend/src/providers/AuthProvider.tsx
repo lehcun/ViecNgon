@@ -26,9 +26,11 @@ const AUTH_PAGES = [
   "/login",
   "/register",
   "/forgot-password",
+  "/reset-password",
   "/employer",
   "/employer/login",
   "/employer/forgot-password",
+  "/employer/reset-password",
   "/admin/login",
 ];
 

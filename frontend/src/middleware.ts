@@ -54,9 +54,11 @@ const authRoutes = [
   "/login",
   "/register",
   "/forgot-password",
+  "/reset-password",
   "/employer", // Trang giới thiệu & đăng ký tuyển dụng của NTD
   "/employer/login",
   "/employer/forgot-password",
+  "/employer/reset-password",
   "/admin/login",
 ];
 

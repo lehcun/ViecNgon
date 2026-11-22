@@ -22,6 +22,7 @@ export function createPrismaMock(
 
   const base: Record<string, any> = {
     taiKhoan: modelProxy(),
+    passwordResetToken: modelProxy(),
     ungVien: modelProxy(),
     fileCv: modelProxy(),
     kinhNghiem: modelProxy(),

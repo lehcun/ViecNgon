@@ -211,4 +211,73 @@ test.describe("Xác thực & Phân quyền RBAC Middleware", () => {
     await page.goto("/pricing");
     await expect(page).toHaveURL(/\/pricing/);
   });
+
+  test("[Phức tạp] Luồng Quên mật khẩu & Đặt lại mật khẩu qua Email cho Ứng viên và Nhà tuyển dụng", async ({
+    page,
+  }) => {
+    await page.route("**/auth/me", (route) =>
+      route.fulfill({ status: 401, body: "{}" }),
+    );
+
+    let forgotPayload: Record<string, unknown> | null = null;
+    await page.route("**/auth/forgot-password", async (route) => {
+      forgotPayload = route.request().postDataJSON() as Record<
+        string,
+        unknown
+      >;
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          message:
+            "Nếu email tồn tại trên hệ thống, hướng dẫn đặt lại mật khẩu đã được gửi tới hộp thư của bạn.",
+        }),
+      });
+    });
+
+    // 1. Ứng viên gửi yêu cầu quên mật khẩu tại /forgot-password
+    await page.goto("/forgot-password");
+    await page.locator("#email").fill("uv@viecngon.vn");
+    await page
+      .getByRole("button", { name: /Gửi liên kết khôi phục/i })
+      .click();
+    await expect.poll(() => forgotPayload).toEqual({
+      email: "uv@viecngon.vn",
+      portal: "candidate",
+    });
+    await expect(page.getByTestId("forgot-password-success")).toBeVisible();
+
+    // 2. Mở /reset-password khi thiếu token -> hiện thông báo liên kết không hợp lệ
+    await page.goto("/reset-password");
+    await expect(
+      page.getByTestId("reset-password-missing-token"),
+    ).toBeVisible();
+
+    // 3. Nhà tuyển dụng đặt lại mật khẩu với token hợp lệ tại /employer/reset-password
+    let resetPayload: Record<string, unknown> | null = null;
+    await page.route("**/auth/reset-password", async (route) => {
+      resetPayload = route.request().postDataJSON() as Record<string, unknown>;
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          message: "Đặt lại mật khẩu thành công!",
+          role: "NHATUYENDUNG",
+        }),
+      });
+    });
+
+    await page.goto("/employer/reset-password?token=valid-reset-token-123");
+    await page.locator("#newPassword").fill("StrongPass@2026");
+    await page.locator("#confirmPassword").fill("StrongPass@2026");
+    await page
+      .getByRole("button", { name: /Xác nhận đặt lại mật khẩu/i })
+      .click();
+
+    await expect.poll(() => resetPayload).toEqual({
+      token: "valid-reset-token-123",
+      newPassword: "StrongPass@2026",
+    });
+    await expect(page.getByTestId("reset-password-success")).toBeVisible();
+  });
 });
