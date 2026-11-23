@@ -980,6 +980,30 @@ async function main(): Promise<void> {
     skills: ['PHP', 'Next.js', 'MySQL', 'Redis', 'Git'],
   });
 
+  // --- 1 JOB CHỜ KIỂM DUYỆT (CHO_DUYET) để test luồng Admin duyệt tin ---
+  await createJobWithSkills({
+    tenCongViec: 'Middle Frontend Engineer (Next.js / TypeScript) - Chờ duyệt',
+    slug: 'middle-frontend-engineer-nextjs-typescript-fpt-pending',
+    moTa: '<p>Tham gia phát triển nền tảng <strong>FPT Digital Workspace</strong> phục vụ hàng chục nghìn nhân sự và khách hàng doanh nghiệp.</p><ul><li>Xây dựng giao diện web chuẩn thiết kế bằng <strong>ReactJS, Next.js và TypeScript</strong>.</li><li>Phối hợp với đội ngũ Backend và QA để đảm bảo chất lượng sản phẩm trước khi phát hành.</li></ul>',
+    yeuCauCongViec:
+      '<ul><li>Từ <strong>2 năm kinh nghiệm</strong> làm việc với ReactJS / Next.js và TypeScript.</li><li>Hiểu rõ RESTful API, Git và tối ưu hiệu năng trình duyệt.</li></ul>',
+    phucLoi:
+      '<ul><li>Mức lương <strong>22 - 35 triệu VNĐ</strong> + Lương tháng 13 và thưởng hiệu suất.</li><li>Bảo hiểm sức khỏe FPT Care cho bản thân và gia đình.</li></ul>',
+    mucLuongToiThieu: 22000000,
+    mucLuongToiDa: 35000000,
+    yeuCauKinhNghiem: 2,
+    capBac: 'Middle',
+    thanhPho: 'Hồ Chí Minh',
+    loaiHinh: 'Full-time',
+    hinhThucLamViec: 'Hybrid',
+    ngayDang: daysAgo(1),
+    luotXem: 0,
+    trangThai: 'CHO_DUYET',
+    maNTD: hrFPT.maNTD,
+    maChiNhanh: ctyFPT.chiNhanhs[0].maChiNhanh,
+    skills: ['ReactJS', 'Next.js', 'TypeScript', 'Git'],
+  });
+
   // =====================================================================
   // E. ỨNG VIÊN & HỒ SƠ HYBRID CV (5 Ứng viên giàu dữ liệu thực tế)
   // =====================================================================

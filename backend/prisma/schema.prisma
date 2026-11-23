@@ -456,6 +456,7 @@ model GoiQuangCao {
   loaiHuyHieu     String?  @db.VarChar(30) // BASIC | HOT | SUPER_HOT | DIAMOND
   moTaNgan        String?  @db.NVarChar(255)
   quyenLoiJson    String?  @db.NVarChar(Max)
+  trangThai       String   @default("HOATDONG") @db.VarChar(20) // HOATDONG | DA_AN
   ngayTao         DateTime
 
   // Quan hệ

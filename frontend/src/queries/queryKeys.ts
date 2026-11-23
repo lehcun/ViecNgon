@@ -1,5 +1,7 @@
 import type {
   AdminJobQueryParams,
+  AdminPackageQueryParams,
+  AdminTransactionQueryParams,
   AdminUserQueryParams,
   JobFilterParams,
 } from "@viecngon/types";
@@ -83,6 +85,17 @@ export const adminJobKeys = {
     [...adminJobKeys.lists(), params] as const,
   details: () => [...adminJobKeys.all, "detail"] as const,
   detail: (id: string) => [...adminJobKeys.details(), id] as const,
+};
+
+// --- QUẢN LÝ GÓI DỊCH VỤ & GIAO DỊCH (ADMIN) ---
+export const adminPackageKeys = {
+  all: ["admin", "packages"] as const,
+  lists: () => [...adminPackageKeys.all, "list"] as const,
+  list: (params: AdminPackageQueryParams) =>
+    [...adminPackageKeys.lists(), params] as const,
+  transactions: () => [...adminPackageKeys.all, "transactions"] as const,
+  transactionList: (params: AdminTransactionQueryParams) =>
+    [...adminPackageKeys.transactions(), params] as const,
 };
 
 // --- QUẢN LÝ GÓI DỊCH VỤ TUYỂN DỤNG ---

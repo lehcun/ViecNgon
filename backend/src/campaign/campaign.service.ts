@@ -30,9 +30,10 @@ export class CampaignService {
     return fallbackFeatures;
   }
 
-  // 1. API lấy danh sách Gói quảng cáo 4 cấp (Hiển thị ở trang Pricing)
+  // 1. API lấy danh sách Gói quảng cáo đang mở bán (Hiển thị ở trang Pricing)
   async getPackages(): Promise<PackageResponse[]> {
     const packages = await this.prisma.goiQuangCao.findMany({
+      where: { trangThai: 'HOATDONG' },
       orderBy: [{ capDoUuTien: 'asc' }, { gia: 'asc' }],
     });
 

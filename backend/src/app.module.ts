@@ -19,6 +19,7 @@ import { CompanyProfileModule } from './company-profile/company-profile.module';
 import { AdminDashboardModule } from './admin/dashboard/admin-dashboard.module';
 import { AdminUsersModule } from './admin/users/admin-users.module';
 import { AdminJobsModule } from './admin/jobs/admin-jobs.module';
+import { AdminPackagesModule } from './admin/packages/admin-packages.module';
 import { AiModule } from './ai/ai.module';
 import { AiMatchModule } from './ai/ai-match.module';
 import { CvParserModule } from './cv-parser/cv-parser.module';
@@ -44,6 +45,7 @@ import { CvParserModule } from './cv-parser/cv-parser.module';
     AdminDashboardModule,
     AdminUsersModule,
     AdminJobsModule,
+    AdminPackagesModule,
     MailerModule.forRoot({
       transport: {
         host: process.env.MAIL_HOST,
