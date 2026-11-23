@@ -8,6 +8,7 @@ import { AuthGuard } from '@nestjs/passport';
 export interface AuthUser {
   id: string;
   role: string;
+  status?: string;
   name?: string;
   email?: string;
   avatarUrl?: string;

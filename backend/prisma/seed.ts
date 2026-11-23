@@ -432,7 +432,7 @@ async function main(): Promise<void> {
       matKhau: hashedPassword,
       sdt: '0901000001',
       vaiTro: 'ADMIN',
-      trangThai: 'Active',
+      trangThai: 'HOATDONG',
     },
   });
 
@@ -444,7 +444,7 @@ async function main(): Promise<void> {
       matKhau: hashedPassword,
       sdt: '0815114200',
       vaiTro: 'NHATUYENDUNG',
-      trangThai: 'Active',
+      trangThai: 'CHUAKICHHOAT',
     },
   });
   const hrMomoCuong = await prisma.nhaTuyenDung.create({
@@ -464,7 +464,7 @@ async function main(): Promise<void> {
       matKhau: hashedPassword,
       sdt: '0912000111',
       vaiTro: 'NHATUYENDUNG',
-      trangThai: 'Active',
+      trangThai: 'HOATDONG',
     },
   });
   const hrFPT = await prisma.nhaTuyenDung.create({
@@ -484,7 +484,7 @@ async function main(): Promise<void> {
       matKhau: hashedPassword,
       sdt: '0923000222',
       vaiTro: 'NHATUYENDUNG',
-      trangThai: 'Active',
+      trangThai: 'HOATDONG',
     },
   });
   const hrVNG = await prisma.nhaTuyenDung.create({
@@ -504,7 +504,7 @@ async function main(): Promise<void> {
       matKhau: hashedPassword,
       sdt: '0934000333',
       vaiTro: 'NHATUYENDUNG',
-      trangThai: 'Active',
+      trangThai: 'HOATDONG',
     },
   });
   const hrShopee = await prisma.nhaTuyenDung.create({
@@ -524,7 +524,7 @@ async function main(): Promise<void> {
       matKhau: hashedPassword,
       sdt: '0945000444',
       vaiTro: 'NHATUYENDUNG',
-      trangThai: 'Active',
+      trangThai: 'HOATDONG',
     },
   });
   const hrNAB = await prisma.nhaTuyenDung.create({
@@ -544,7 +544,7 @@ async function main(): Promise<void> {
       matKhau: hashedPassword,
       sdt: '0956000555',
       vaiTro: 'NHATUYENDUNG',
-      trangThai: 'Active',
+      trangThai: 'HOATDONG',
     },
   });
   const hrViettel = await prisma.nhaTuyenDung.create({
@@ -993,7 +993,7 @@ async function main(): Promise<void> {
       matKhau: hashedPassword,
       sdt: '0981100201',
       vaiTro: 'UNGVIEN',
-      trangThai: 'Active',
+      trangThai: 'HOATDONG',
     },
   });
 
@@ -1004,7 +1004,7 @@ async function main(): Promise<void> {
       matKhau: hashedPassword,
       sdt: '0982200302',
       vaiTro: 'UNGVIEN',
-      trangThai: 'Active',
+      trangThai: 'HOATDONG',
     },
   });
 
@@ -1015,7 +1015,7 @@ async function main(): Promise<void> {
       matKhau: hashedPassword,
       sdt: '0983300403',
       vaiTro: 'UNGVIEN',
-      trangThai: 'Active',
+      trangThai: 'HOATDONG',
     },
   });
 
@@ -1026,7 +1026,7 @@ async function main(): Promise<void> {
       matKhau: hashedPassword,
       sdt: '0984400504',
       vaiTro: 'UNGVIEN',
-      trangThai: 'Active',
+      trangThai: 'HOATDONG',
     },
   });
 
@@ -1037,7 +1037,7 @@ async function main(): Promise<void> {
       matKhau: hashedPassword,
       sdt: '0985500605',
       vaiTro: 'UNGVIEN',
-      trangThai: 'Active',
+      trangThai: 'HOATDONG',
     },
   });
 

@@ -2,11 +2,13 @@
 
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
   Bell,
   Briefcase,
   Building2,
   Calendar,
+  ExternalLink,
   FileText,
   Lock,
   Mail,
@@ -231,6 +233,31 @@ export default function AdminUserDetailDrawer({
                         ? `${detail.candidateProfile.soNamKinhNghiem} năm`
                         : "Chưa cập nhật"}
                     </p>
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-text-muted">Trạng thái CV:</span>
+                        {detail.candidateProfile.cvUrl ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-success-soft text-success-text border border-success-border">
+                            Đã tải CV PDF
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-surface-muted text-text-muted border border-border-default">
+                            Chưa có CV
+                          </span>
+                        )}
+                      </div>
+                      {detail.candidateProfile.cvUrl && (
+                        <a
+                          href={detail.candidateProfile.cvUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                        >
+                          Xem CV kiểm duyệt
+                          <ExternalLink size={12} />
+                        </a>
+                      )}
+                    </div>
                   </div>
                   <div className="grid grid-cols-3 gap-2 pt-2">
                     <div className="bg-surface-page rounded-lg p-2.5 text-center border border-border-default">
@@ -263,9 +290,17 @@ export default function AdminUserDetailDrawer({
                     <span>Thông tin Doanh nghiệp</span>
                   </div>
                   <div className="space-y-1.5 text-sm text-text-secondary">
-                    <p className="font-semibold text-text-primary">
-                      {detail.recruiterProfile.tenCongTy}
-                    </p>
+                    <div className="flex items-center justify-between gap-2">
+                      <Link
+                        href={`/company/${detail.recruiterProfile.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 font-semibold text-text-primary hover:text-primary transition-colors"
+                      >
+                        <span>{detail.recruiterProfile.tenCongTy}</span>
+                        <ExternalLink size={13} className="shrink-0 text-primary" />
+                      </Link>
+                    </div>
                     <p>
                       <span className="text-text-muted">Chức vụ:</span>{" "}
                       {detail.recruiterProfile.chucVu ||

@@ -148,7 +148,10 @@ export class AdminUsersService {
     }
 
     if (query.status && query.status !== 'ALL') {
-      where.trangThai = query.status;
+      where.trangThai =
+        query.status === 'CHUAKICHHOAT'
+          ? { in: ['CHUAKICHHOAT', 'CHODUYET'] }
+          : query.status;
     }
 
     if (query.provider && query.provider !== 'ALL') {
@@ -199,7 +202,9 @@ export class AdminUsersService {
         where: { AND: [where, { trangThai: 'KHOA' }] },
       }),
       this.prisma.taiKhoan.count({
-        where: { AND: [where, { trangThai: 'CHUAKICHHOAT' }] },
+        where: {
+          AND: [where, { trangThai: { in: ['CHUAKICHHOAT', 'CHODUYET'] } }],
+        },
       }),
       this.prisma.taiKhoan.count({
         where: { AND: [where, { vaiTro: 'ADMIN' }] },

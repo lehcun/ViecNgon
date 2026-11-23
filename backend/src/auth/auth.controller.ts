@@ -31,6 +31,7 @@ export interface JwtPayload {
   name?: string;
   tenNguoiDung?: string;
   role?: string;
+  status?: string;
   iat?: number;
   exp?: number;
 }
@@ -91,6 +92,19 @@ export class AuthController {
         throw new UnauthorizedException('Token không hợp lệ');
       }
       const user = await this.authService.getMeProfile(payload.sub);
+
+      // Đồng bộ lại cookie JWT nếu Admin vừa kích hoạt tài khoản hoặc thay đổi vai trò
+      if (user.status !== payload.status || user.role !== payload.role) {
+        const refreshedToken = await this.jwtService.signAsync({
+          sub: user.id,
+          role: user.role,
+          status: user.status,
+          name: user.name,
+          email: user.email,
+        });
+        res.cookie('access_token', refreshedToken, getAuthCookieOptions());
+      }
+
       return {
         ...user,
         exp: payload.exp,

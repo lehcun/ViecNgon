@@ -52,7 +52,35 @@ describe('AuthService', () => {
       email: 'uv@viecngon.vn',
       name: 'Nguyễn Quang Ý',
       role: 'UNGVIEN',
+      status: 'HOATDONG',
       avatarUrl: 'https://res.cloudinary.com/demo/avatar.png',
+    });
+  });
+
+  it('getMeProfile cho phép Nhà tuyển dụng CHUAKICHHOAT giữ phiên và trả status CHUAKICHHOAT', async () => {
+    prisma.taiKhoan.findUnique.mockResolvedValue({
+      maTaiKhoan: 'tk-hr-pending',
+      email: 'pending@company.vn',
+      tenNguoiDung: 'HR Pending',
+      vaiTro: 'NHATUYENDUNG',
+      trangThai: 'CHUAKICHHOAT',
+      deletedAt: null,
+      ungVien: null,
+      nhaTuyenDung: {
+        hoTen: 'HR Pending',
+        congTy: { logoUrl: null },
+      },
+    });
+
+    const result = await service.getMeProfile('tk-hr-pending');
+    expect(result).toEqual({
+      id: 'tk-hr-pending',
+      sub: 'tk-hr-pending',
+      email: 'pending@company.vn',
+      name: 'HR Pending',
+      role: 'NHATUYENDUNG',
+      status: 'CHUAKICHHOAT',
+      avatarUrl: undefined,
     });
   });
 

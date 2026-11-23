@@ -7,6 +7,7 @@ import { getJwtSecret } from './jwt-secret.util';
 interface payloadType {
   sub: string;
   role: string;
+  status?: string;
   name?: string;
   email?: string;
   avatarUrl?: string;
@@ -36,6 +37,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     return {
       id: payload.sub,
       role: payload.role,
+      status: payload.status,
       name: payload.name,
       email: payload.email,
       avatarUrl: payload.avatarUrl,

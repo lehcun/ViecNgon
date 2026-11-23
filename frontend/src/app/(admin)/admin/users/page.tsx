@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import type {
   AdminUserListItem,
   AdminUserProvider,
@@ -20,7 +21,17 @@ import AdminUserActionModal, {
   type AdminUserModalMode,
 } from "@/components/admin/users/AdminUserActionModal";
 
-export default function AdminUsersPage() {
+function parseInitialStatus(raw: string | null): AdminUserStatus | "ALL" {
+  if (raw === "HOATDONG" || raw === "KHOA" || raw === "CHUAKICHHOAT") {
+    return raw;
+  }
+  return "ALL";
+}
+
+function AdminUsersWorkspace() {
+  const searchParams = useSearchParams();
+  const initialStatus = parseInitialStatus(searchParams.get("status"));
+
   const currentUser = useAuthStore((state) => state.user);
   const currentAdminId = currentUser?.id ?? currentUser?.sub;
 
@@ -28,7 +39,7 @@ export default function AdminUsersPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<AdminUserRole | "ALL">("ALL");
   const [statusFilter, setStatusFilter] = useState<AdminUserStatus | "ALL">(
-    "ALL",
+    initialStatus,
   );
   const [providerFilter, setProviderFilter] = useState<
     AdminUserProvider | "ALL"
@@ -156,7 +167,6 @@ export default function AdminUsersPage() {
 
   return (
     <div className="pb-8">
-      {/* Bảng danh sách & Bộ lọc (kèm thống kê gọn ở thanh dưới) */}
       <AdminUsersTable
         items={data?.items ?? []}
         summary={data?.summary}
@@ -184,7 +194,6 @@ export default function AdminUsersPage() {
         onRequestDelete={(user) => setModalState({ mode: "delete", user })}
       />
 
-      {/* Ngăn trượt chi tiết tài khoản */}
       <AdminUserDetailDrawer
         userId={selectedUserId}
         currentAdminId={currentAdminId}
@@ -195,7 +204,6 @@ export default function AdminUsersPage() {
         onRequestDelete={(user) => setModalState({ mode: "delete", user })}
       />
 
-      {/* Modal xác nhận Khóa / Kích hoạt / Phân quyền / Xóa */}
       {modalState && (
         <AdminUserActionModal
           key={`${modalState.mode}-${modalState.user.maTaiKhoan}`}
@@ -214,5 +222,17 @@ export default function AdminUsersPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function AdminUsersPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="bg-surface-card border border-border-default rounded-xl p-6 animate-pulse h-96" />
+      }
+    >
+      <AdminUsersWorkspace />
+    </Suspense>
   );
 }

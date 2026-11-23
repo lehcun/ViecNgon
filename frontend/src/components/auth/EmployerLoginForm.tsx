@@ -77,6 +77,15 @@ export default function EmployerLoginForm() {
         return;
       }
 
+      if (data.user.status === "CHUAKICHHOAT") {
+        toast(
+          "Tài khoản Nhà tuyển dụng của bạn đang chờ Quản trị viên kích hoạt.",
+          { icon: "⏳", duration: 5000 },
+        );
+        router.push("/");
+        return;
+      }
+
       toast.success("Đăng nhập Nhà tuyển dụng thành công!");
       router.push("/employer-dashboard");
     } catch (err) {

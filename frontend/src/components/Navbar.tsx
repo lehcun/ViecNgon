@@ -8,6 +8,7 @@ import { useAuthStore } from "@/store/authStore";
 import { useUser } from "@/hooks/auth/useUser";
 import { useLogout } from "@/hooks/auth/useLogout";
 import NotificationDropdown from "./NotificationDropdown";
+import { Clock, Headphones, LogOut } from "lucide-react";
 import LogoViecNgon from "./LogoViecNgon";
 import PublicEmployerDropdown from "./employer/PublicEmployerDropdown";
 import PublicAdminDropdown from "./admin/PublicAdminDropdown";
@@ -29,6 +30,8 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
   const { isAuthenticated, user } = useAuthStore();
   const { isCheckingAuth } = useUser();
   const { mutate: logout, isPending: isLoggingOut } = useLogout();
+  const { mutate: logoutPendingEmployer, isPending: isLoggingOutPending } =
+    useLogout({ redirectTo: "/", replace: true });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -50,16 +53,17 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
   const hoverColor = isLightHeader ? "hover:text-primary" : "hover:text-white";
   const logoTextColor = isLightHeader ? "text-text-primary" : "text-white";
   const isEmployer = user?.role === "NHATUYENDUNG";
+  const isPendingEmployer = isEmployer && user?.status === "CHUAKICHHOAT";
   const isAdmin = user?.role === "ADMIN";
 
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 w-full z-50 h-16 transition-all duration-200",
+        "fixed top-0 left-0 right-0 w-full z-50 transition-all duration-200",
         navBackground,
       )}
     >
-      <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
         {/* Trái: Logo + Menu điều hướng */}
         <div className="flex items-center gap-8 min-w-0">
           <LogoViecNgon logoTextColor={logoTextColor} />
@@ -115,6 +119,24 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
               {!isEmployer && !isAdmin && <NotificationDropdown />}
               {isAdmin ? (
                 <PublicAdminDropdown />
+              ) : isPendingEmployer ? (
+                <div className="flex items-center gap-2">
+                  <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-warning-light text-warning-text border border-warning-border">
+                    <Clock size={13} />
+                    Chờ Admin kích hoạt
+                  </span>
+                  <button
+                    type="button"
+                    disabled={isLoggingOutPending}
+                    onClick={() => logoutPendingEmployer()}
+                    className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-xs font-semibold bg-danger-soft text-danger-text border border-danger-border hover:bg-danger-light transition-colors disabled:opacity-50"
+                  >
+                    <LogOut size={14} />
+                    <span>
+                      {isLoggingOutPending ? "Đang thoát..." : "Đăng xuất"}
+                    </span>
+                  </button>
+                </div>
               ) : isEmployer ? (
                 <PublicEmployerDropdown />
               ) : (
@@ -142,6 +164,33 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
           )}
         </div>
       </div>
+
+      {/* Thanh thông báo trạng thái chờ Admin kích hoạt + Hỗ trợ dành riêng cho NTD chưa kích hoạt */}
+      {isPendingEmployer && (
+        <div className="bg-warning-soft border-t border-b border-warning-border text-warning-text">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div className="flex items-center gap-2 min-w-0">
+              <Clock size={14} className="shrink-0" />
+              <span>
+                Tài khoản Nhà tuyển dụng{" "}
+                <strong className="font-semibold">{user.email}</strong> đang chờ
+                Quản trị viên kích hoạt. Trong thời gian chờ, bạn chỉ có thể
+                duyệt trang như khách vãng lai.
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3 shrink-0">
+              <a
+                href="mailto:love@viecngon.vn?subject=H%E1%BB%97%20tr%E1%BB%A3%20k%C3%ADch%20ho%E1%BA%A1t%20t%C3%A0i%20kho%E1%BA%A3n%20Nh%C3%A0%20tuy%E1%BB%83n%20d%E1%BB%A5ng"
+                className="inline-flex items-center gap-1.5 font-semibold text-warning-text hover:underline"
+              >
+                <Headphones size={13} />
+                <span>Hỗ trợ: love@viecngon.vn · 1900 6868</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

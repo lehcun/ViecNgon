@@ -1,11 +1,20 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { Search, Bell } from "lucide-react";
 import AdminUserDropdown from "./AdminUserDropdown";
+import { useAdminUsers } from "@/hooks/admin/useAdminUsers";
 
 export default function AdminHeader() {
   const [searchQuery, setSearchQuery] = useState("");
+  const { data: pendingEmployers } = useAdminUsers({
+    role: "NHATUYENDUNG",
+    status: "CHUAKICHHOAT",
+    limit: 1,
+  });
+
+  const pendingCount = pendingEmployers?.pagination?.total ?? 0;
 
   return (
     <header className="h-16 bg-surface-card border-b border-border-default px-4 sm:px-6 flex items-center justify-between gap-4 shrink-0">
@@ -32,13 +41,27 @@ export default function AdminHeader() {
           <span>Hệ thống hoạt động ổn định</span>
         </div>
 
-        <button
-          type="button"
+        <Link
+          href={
+            pendingCount > 0
+              ? "/admin/users?status=CHUAKICHHOAT"
+              : "/admin/users"
+          }
+          title={
+            pendingCount > 0
+              ? `Có ${pendingCount} tài khoản Nhà tuyển dụng đang chờ kích hoạt`
+              : "Thông báo quản trị"
+          }
           aria-label="Thông báo quản trị"
-          className="w-10 h-10 rounded-lg border border-border-default bg-surface-card hover:bg-surface-muted text-text-secondary flex items-center justify-center transition-colors"
+          className="relative w-10 h-10 rounded-lg border border-border-default bg-surface-card hover:bg-surface-muted text-text-secondary flex items-center justify-center transition-colors"
         >
           <Bell size={18} />
-        </button>
+          {pendingCount > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-danger text-white text-[10px] font-bold flex items-center justify-center shadow-xs">
+              {pendingCount > 99 ? "99+" : pendingCount}
+            </span>
+          )}
+        </Link>
 
         <AdminUserDropdown />
       </div>

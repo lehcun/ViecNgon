@@ -40,6 +40,20 @@ export class AuthService {
     private readonly mailerService: MailerService,
   ) {}
 
+  private normalizeAccountStatus(
+    status: string,
+  ): 'HOATDONG' | 'KHOA' | 'CHUAKICHHOAT' {
+    if (status === 'HOATDONG' || status === 'KHOA') {
+      return status;
+    }
+    return 'CHUAKICHHOAT';
+  }
+
+  private truncateText(value: string, maxLength: number): string {
+    if (value.length <= maxLength) return value;
+    return `${value.slice(0, Math.max(0, maxLength - 1))}…`;
+  }
+
   // Helper dùng chung: Lấy Profile Ứng viên từ Google bằng Access Token
   private async getGoogleUserInfo(accessToken: string) {
     try {
@@ -118,6 +132,7 @@ export class AuthService {
     const payload = {
       sub: newUser.maTaiKhoan,
       role: newUser.vaiTro,
+      status: this.normalizeAccountStatus(newUser.trangThai),
       name: newUser.tenNguoiDung,
       email: email,
     };
@@ -173,6 +188,7 @@ export class AuthService {
     const payload = {
       sub: user.maTaiKhoan,
       role: user.vaiTro,
+      status: this.normalizeAccountStatus(user.trangThai),
       name: user.tenNguoiDung,
       email: email,
     };
@@ -229,12 +245,17 @@ export class AuthService {
     }
 
     // Trường hợp 4: Tài khoản bị khóa hoặc chưa kích hoạt
-    if (user.trangThai === 'KHOA') {
+    const normalizedStatus = this.normalizeAccountStatus(user.trangThai);
+    if (user.deletedAt || normalizedStatus === 'KHOA') {
       throw new UnauthorizedException(
         'Tài khoản của bạn đã bị khóa do vi phạm chính sách hệ thống.',
       );
     }
-    if (user.trangThai === 'CHUAKICHHOAT') {
+    // Nhà tuyển dụng chưa kích hoạt vẫn được đăng nhập để duyệt web như khách vãng lai (kèm banner chờ duyệt)
+    if (
+      normalizedStatus === 'CHUAKICHHOAT' &&
+      user.vaiTro !== 'NHATUYENDUNG'
+    ) {
       throw new UnauthorizedException(
         'Tài khoản của bạn chưa được kích hoạt. Vui lòng liên hệ quản trị viên!',
       );
@@ -244,6 +265,7 @@ export class AuthService {
     const payload = {
       sub: user.maTaiKhoan,
       role: user.vaiTro,
+      status: normalizedStatus,
       name: user.tenNguoiDung,
       email: user.email,
     };
@@ -259,7 +281,7 @@ export class AuthService {
         email: userInfo.email,
         name: userInfo.tenNguoiDung,
         role: userInfo.vaiTro,
-        status: userInfo.trangThai,
+        status: normalizedStatus,
       },
     };
   }
@@ -311,6 +333,7 @@ export class AuthService {
     const payload = {
       sub: newUser.maTaiKhoan,
       role: newUser.vaiTro,
+      status: this.normalizeAccountStatus(newUser.trangThai),
       name: newUser.tenNguoiDung,
       email: newUser.email,
     };
@@ -353,14 +376,14 @@ export class AuthService {
 
     // Tạo tài khoản, Công ty (nếu mới) VÀ Profile NTD bằng \$transaction
     const newUser = await this.prisma.$transaction(async (tx) => {
-      // B1: Tạo bản ghi trong bảng TaiKhoan
+      // B1: Tạo bản ghi trong bảng TaiKhoan (mặc định CHUAKICHHOAT để chờ Admin duyệt)
       const account = await tx.taiKhoan.create({
         data: {
           email,
           matKhau: hashedPassword,
           tenNguoiDung: name,
           vaiTro: 'NHATUYENDUNG',
-          trangThai: 'CHODUYET',
+          trangThai: 'CHUAKICHHOAT',
         },
       });
 
@@ -403,12 +426,41 @@ export class AuthService {
         },
       });
 
+      // B4: Gửi thông báo cho toàn bộ Quản trị viên đang hoạt động để duyệt kích hoạt
+      const activeAdmins = await tx.taiKhoan.findMany({
+        where: {
+          vaiTro: 'ADMIN',
+          trangThai: 'HOATDONG',
+          deletedAt: null,
+        },
+        select: { maTaiKhoan: true },
+      });
+
+      if (activeAdmins.length > 0) {
+        const companyLabel = companyName || 'Doanh nghiệp mới';
+        const tieuDe = this.truncateText(
+          `Nhà tuyển dụng mới chờ kích hoạt: ${companyLabel}`,
+          255,
+        );
+        const noiDung = `Tài khoản Nhà tuyển dụng ${name} (${email}) - ${companyLabel} vừa đăng ký và đang chờ Quản trị viên duyệt kích hoạt tại trang Quản lý người dùng.`;
+
+        await tx.thongBao.createMany({
+          data: activeAdmins.map((admin) => ({
+            maTaiKhoan: admin.maTaiKhoan,
+            tieuDe,
+            noiDung,
+            trangThai: 'CHUA_DOC',
+          })),
+        });
+      }
+
       return account;
     });
 
     const payload = {
       sub: newUser.maTaiKhoan,
       role: newUser.vaiTro,
+      status: this.normalizeAccountStatus(newUser.trangThai),
       name: newUser.tenNguoiDung,
       email: newUser.email,
     };
@@ -478,6 +530,7 @@ export class AuthService {
         tenNguoiDung: true,
         vaiTro: true,
         trangThai: true,
+        deletedAt: true,
         ungVien: {
           select: {
             avatarUrl: true,
@@ -497,10 +550,17 @@ export class AuthService {
       },
     });
 
+    if (!account || account.deletedAt) {
+      throw new UnauthorizedException(
+        'Tài khoản không tồn tại hoặc phiên đăng nhập đã hết hiệu lực.',
+      );
+    }
+
+    const normalizedStatus = this.normalizeAccountStatus(account.trangThai);
     if (
-      !account ||
-      account.trangThai === 'KHOA' ||
-      account.trangThai === 'CHUAKICHHOAT'
+      normalizedStatus === 'KHOA' ||
+      (normalizedStatus === 'CHUAKICHHOAT' &&
+        account.vaiTro !== 'NHATUYENDUNG')
     ) {
       throw new UnauthorizedException(
         'Tài khoản không tồn tại hoặc phiên đăng nhập đã hết hiệu lực.',
@@ -516,6 +576,7 @@ export class AuthService {
         account.nhaTuyenDung?.hoTen ||
         account.tenNguoiDung,
       role: account.vaiTro,
+      status: normalizedStatus,
       avatarUrl:
         account.ungVien?.avatarUrl ??
         account.nhaTuyenDung?.congTy?.logoUrl ??

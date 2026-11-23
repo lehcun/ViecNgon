@@ -28,6 +28,8 @@ export interface PaginationMeta {
 
 export type UserRole = "ADMIN" | "UNGVIEN" | "NHATUYENDUNG";
 
+export type AccountStatus = "HOATDONG" | "KHOA" | "CHUAKICHHOAT";
+
 export interface User {
   id?: string;
   sub?: string;
@@ -37,6 +39,7 @@ export interface User {
   avatar?: string;
   avatarUrl?: string;
   role: UserRole;
+  status?: AccountStatus;
   exp?: number;
   iat?: number;
 }

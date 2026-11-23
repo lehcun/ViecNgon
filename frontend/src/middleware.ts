@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 
 interface DecodedToken {
   role: string;
+  status?: string;
   isExpired: boolean;
 }
 
@@ -39,6 +40,7 @@ function decodeToken(token: string): DecodedToken | null {
 
     return {
       role: parsed.role,
+      status: typeof parsed.status === "string" ? parsed.status : undefined,
       isExpired,
     };
   } catch (error) {
@@ -130,6 +132,10 @@ export function middleware(request: NextRequest) {
   const decoded = token ? decodeToken(token) : null;
   const isTokenValid = Boolean(decoded && !decoded.isExpired);
   const userRole = isTokenValid && decoded ? decoded.role : null;
+  const userStatus = isTokenValid && decoded ? decoded.status : null;
+  const isPendingEmployer =
+    userRole === "NHATUYENDUNG" &&
+    (userStatus === "CHUAKICHHOAT" || userStatus === "CHODUYET");
 
   // 0. NẾU TRUY CẬP VÀO /admin GỐC VỚI ROLE ADMIN -> CHUYỂN HƯỚNG VÀO /admin/dashboard
   if (normalizedPath === "/admin" && isTokenValid && userRole === "ADMIN") {
@@ -144,8 +150,11 @@ export function middleware(request: NextRequest) {
 
   if (isAuthPage) {
     // 1.1. Nếu người dùng ĐÃ ĐĂNG NHẬP VỚI TOKEN HỢP LỆ -> Chuyển hướng về Dashboard tương ứng
+    // (Riêng NTD chưa kích hoạt chỉ duyệt web như khách vãng lai nên đưa về trang chủ '/')
     if (isTokenValid && userRole) {
-      const redirectTo = ROLE_DASHBOARD_MAP[userRole] || "/";
+      const redirectTo = isPendingEmployer
+        ? "/"
+        : ROLE_DASHBOARD_MAP[userRole] || "/";
       return NextResponse.redirect(new URL(redirectTo, request.url));
     }
 
@@ -197,6 +206,11 @@ export function middleware(request: NextRequest) {
           response.cookies.delete("access_token");
         }
         return response;
+      }
+
+      // 3.1b. Nhà tuyển dụng chưa được Admin kích hoạt chỉ được xem trang công khai như khách vãng lai
+      if (isPendingEmployer) {
+        return NextResponse.redirect(new URL("/", request.url));
       }
 
       // 3.2. Nếu có token nhưng ROLE KHÔNG ĐƯỢC PHÉP truy cập trang này
