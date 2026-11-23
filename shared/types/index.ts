@@ -909,6 +909,11 @@ export interface UnreadCountResponse {
   count: number;
 }
 
+export interface DeleteNotificationResponse {
+  message: string;
+  deletedCount: number;
+}
+
 // =====================================================================
 // 9. MEDIA & CROPPER SHARED TYPES
 // =====================================================================

@@ -21,6 +21,7 @@ import AdminPackagesTable from "@/components/admin/packages/AdminPackagesTable";
 import AdminPackageFormModal from "@/components/admin/packages/AdminPackageFormModal";
 import AdminTransactionsTable from "@/components/admin/packages/AdminTransactionsTable";
 import AdminTransactionDetailDrawer from "@/components/admin/packages/AdminTransactionDetailDrawer";
+import AdminConfirmModal from "@/components/admin/AdminConfirmModal";
 
 type ActiveTab = "packages" | "transactions";
 
@@ -47,6 +48,11 @@ export default function AdminPackagesPage() {
   const [selectedTx, setSelectedTx] = useState<AdminTransactionItem | null>(
     null,
   );
+  const [confirmAction, setConfirmAction] = useState<
+    | { type: "togglePackage"; pkg: AdminPackageItem }
+    | { type: "confirmTx"; tx: AdminTransactionItem }
+    | null
+  >(null);
 
   useEffect(() => {
     const t = window.setTimeout(
@@ -98,20 +104,35 @@ export default function AdminPackagesPage() {
   };
 
   const handleToggleStatus = (pkg: AdminPackageItem) => {
-    const nextStatus: AdminPackageStatus =
-      pkg.trangThai === "HOATDONG" ? "DA_AN" : "HOATDONG";
-    toggleStatusMutation.mutate({
-      packageId: pkg.maGoi,
-      payload: { trangThai: nextStatus },
-    });
+    setConfirmAction({ type: "togglePackage", pkg });
   };
 
   const handleConfirmPayment = (tx: AdminTransactionItem) => {
+    setConfirmAction({ type: "confirmTx", tx });
+  };
+
+  const executeConfirmAction = () => {
+    if (!confirmAction) return;
+    if (confirmAction.type === "togglePackage") {
+      const nextStatus: AdminPackageStatus =
+        confirmAction.pkg.trangThai === "HOATDONG" ? "DA_AN" : "HOATDONG";
+      toggleStatusMutation.mutate(
+        {
+          packageId: confirmAction.pkg.maGoi,
+          payload: { trangThai: nextStatus },
+        },
+        { onSuccess: () => setConfirmAction(null) },
+      );
+      return;
+    }
+
+    const tx = confirmAction.tx;
     confirmTxMutation.mutate(tx.maThanhToan, {
       onSuccess: (res) => {
         if (selectedTx?.maThanhToan === tx.maThanhToan) {
           setSelectedTx(res.transaction);
         }
+        setConfirmAction(null);
       },
     });
   };
@@ -237,6 +258,70 @@ export default function AdminPackagesPage() {
         isConfirming={confirmTxMutation.isPending}
         onClose={() => setSelectedTx(null)}
         onConfirmPayment={handleConfirmPayment}
+      />
+
+      <AdminConfirmModal
+        open={Boolean(confirmAction)}
+        variant={
+          confirmAction?.type === "togglePackage"
+            ? confirmAction.pkg.trangThai === "HOATDONG"
+              ? "warning"
+              : "success"
+            : "success"
+        }
+        title={
+          confirmAction?.type === "togglePackage"
+            ? confirmAction.pkg.trangThai === "HOATDONG"
+              ? "Ẩn gói dịch vụ"
+              : "Hiển thị lại gói dịch vụ"
+            : "Xác nhận thanh toán giao dịch"
+        }
+        description={
+          confirmAction?.type === "togglePackage" ? (
+            confirmAction.pkg.trangThai === "HOATDONG" ? (
+              <p>
+                Bạn có chắc chắn muốn ẩn gói{" "}
+                <strong className="text-text-primary">
+                  {confirmAction.pkg.tieuDe}
+                </strong>{" "}
+                khỏi trang bảng giá? Các doanh nghiệp đã mua trước đó vẫn giữ
+                nguyên quyền lợi.
+              </p>
+            ) : (
+              <p>
+                Bạn có chắc chắn muốn mở bán lại gói{" "}
+                <strong className="text-text-primary">
+                  {confirmAction.pkg.tieuDe}
+                </strong>{" "}
+                trên trang bảng giá cho Nhà tuyển dụng?
+              </p>
+            )
+          ) : confirmAction?.type === "confirmTx" ? (
+            <p>
+              Xác nhận giao dịch{" "}
+              <strong className="font-mono text-text-primary">
+                {confirmAction.tx.maGiaoDichDoiTac}
+              </strong>{" "}
+              đã thanh toán thành công và kích hoạt ngay gói{" "}
+              <strong className="text-text-primary">
+                {confirmAction.tx.package.tieuDe}
+              </strong>{" "}
+              cho doanh nghiệp?
+            </p>
+          ) : null
+        }
+        confirmLabel={
+          confirmAction?.type === "togglePackage"
+            ? confirmAction.pkg.trangThai === "HOATDONG"
+              ? "Xác nhận ẩn gói"
+              : "Xác nhận mở bán"
+            : "Xác nhận thanh toán"
+        }
+        isSubmitting={
+          toggleStatusMutation.isPending || confirmTxMutation.isPending
+        }
+        onClose={() => setConfirmAction(null)}
+        onConfirm={executeConfirmAction}
       />
     </div>
   );

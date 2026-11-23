@@ -188,6 +188,34 @@ export class CampaignService {
         },
       });
 
+      // 3.5 Gửi thông báo giao dịch gói mới cho toàn bộ Quản trị viên đang hoạt động
+      const activeAdmins = await tx.taiKhoan.findMany({
+        where: {
+          vaiTro: 'ADMIN',
+          trangThai: 'HOATDONG',
+          deletedAt: null,
+        },
+        select: { maTaiKhoan: true },
+      });
+
+      if (activeAdmins.length > 0) {
+        const amountDisplay = `${Number(pkg.gia).toLocaleString('vi-VN')} VNĐ`;
+        const adminTitle = `Đơn mua gói dịch vụ mới: ${pkg.tieuDe}`.slice(
+          0,
+          255,
+        );
+        const adminContent = `Doanh nghiệp vừa thanh toán gói "${pkg.tieuDe}" (${amountDisplay}, +${postCredits} lượt đăng tin). Kiểm tra chi tiết tại mục Gói dịch vụ & Giao dịch.`;
+
+        await tx.thongBao.createMany({
+          data: activeAdmins.map((admin) => ({
+            maTaiKhoan: admin.maTaiKhoan,
+            tieuDe: adminTitle,
+            noiDung: adminContent,
+            trangThai: 'CHUA_DOC',
+          })),
+        });
+      }
+
       return {
         message: 'Thanh toán và kích hoạt gói thành công!',
         campaignId: newCampaign.maMua,

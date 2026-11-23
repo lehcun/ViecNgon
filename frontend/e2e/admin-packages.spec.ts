@@ -222,6 +222,9 @@ test.describe("Admin - Quản lý Gói dịch vụ & Giao dịch (/admin/package
     await page
       .getByRole("button", { name: "Ẩn gói Gói VIP Đẩy Tin" })
       .click();
+    const hideModal = page.getByRole("dialog", { name: "Ẩn gói dịch vụ" });
+    await expect(hideModal).toBeVisible();
+    await hideModal.getByRole("button", { name: "Xác nhận ẩn gói" }).click();
     await expect(
       page.getByText('Đã ẩn gói "Gói VIP Đẩy Tin" khỏi trang bảng giá.'),
     ).toBeVisible();
@@ -244,6 +247,14 @@ test.describe("Admin - Quản lý Gói dịch vụ & Giao dịch (/admin/package
     await expect(drawer).toBeVisible();
     await drawer
       .getByRole("button", { name: /Xác nhận đã thanh toán/i })
+      .click();
+
+    const confirmModal = page.getByRole("dialog", {
+      name: "Xác nhận thanh toán giao dịch",
+    });
+    await expect(confirmModal).toBeVisible();
+    await confirmModal
+      .getByRole("button", { name: "Xác nhận thanh toán" })
       .click();
 
     await expect(

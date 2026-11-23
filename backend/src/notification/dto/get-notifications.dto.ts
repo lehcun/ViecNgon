@@ -1,5 +1,12 @@
-import { IsEnum, IsInt, IsOptional, Min } from 'class-validator';
-import { Type } from 'class-transformer';
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+} from 'class-validator';
+import { Transform, Type } from 'class-transformer';
 
 export enum NotificationFilter {
   ALL = 'ALL',
@@ -13,6 +20,14 @@ export class GetNotificationsDto {
   filter?: NotificationFilter = NotificationFilter.ALL;
 
   @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim() : undefined,
+  )
+  q?: string;
+
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
@@ -24,4 +39,3 @@ export class GetNotificationsDto {
   @Min(1)
   limit?: number = 20;
 }
-

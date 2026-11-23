@@ -1,5 +1,6 @@
 import {
   Controller,
+  Delete,
   Get,
   Patch,
   Param,
@@ -14,7 +15,7 @@ import { GetNotificationsDto } from './dto/get-notifications.dto';
 @Controller('notifications')
 @UseGuards(jwtAuthGuard.JwtAuthGuard)
 export class NotificationController {
-  constructor(private readonly notificationService: NotificationService) { }
+  constructor(private readonly notificationService: NotificationService) {}
 
   @Get()
   async getNotifications(
@@ -40,5 +41,18 @@ export class NotificationController {
     @CurrentUser() user: jwtAuthGuard.AuthUser,
   ) {
     return this.notificationService.markAsRead(id, user.id);
+  }
+
+  @Delete('read')
+  async deleteReadNotifications(@CurrentUser() user: jwtAuthGuard.AuthUser) {
+    return this.notificationService.deleteReadNotifications(user.id);
+  }
+
+  @Delete(':id')
+  async deleteNotification(
+    @Param('id') id: string,
+    @CurrentUser() user: jwtAuthGuard.AuthUser,
+  ) {
+    return this.notificationService.deleteNotification(id, user.id);
   }
 }

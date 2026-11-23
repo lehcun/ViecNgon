@@ -2134,6 +2134,20 @@ async function main(): Promise<void> {
         maTaiKhoan: tkUVQuan.maTaiKhoan,
       },
       {
+        tieuDe: 'Nhà tuyển dụng mới chờ kích hoạt: MoMo',
+        noiDung: `Tài khoản ${tkHRCuong.tenNguoiDung} (${tkHRCuong.email}) - MoMo đang ở trạng thái chưa kích hoạt và chờ Quản trị viên xét duyệt.`,
+        trangThai: 'CHUA_DOC',
+        maTaiKhoan: tkAdmin.maTaiKhoan,
+      },
+      {
+        tieuDe:
+          'Tin tuyển dụng mới chờ duyệt: Middle Frontend Engineer (Next.js / TypeScript) - Chờ duyệt',
+        noiDung:
+          'FPT Software vừa đăng tin tuyển dụng mới đang chờ Quản trị viên kiểm duyệt trước khi hiển thị công khai.',
+        trangThai: 'CHUA_DOC',
+        maTaiKhoan: tkAdmin.maTaiKhoan,
+      },
+      {
         tieuDe: '🛡️ Chào mừng Quản trị viên',
         noiDung: `Hệ thống đã khởi tạo hoàn chỉnh dữ liệu cho ${tkAdmin.email}.`,
         trangThai: 'DA_DOC',

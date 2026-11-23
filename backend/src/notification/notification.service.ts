@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import {
+import type {
+  DeleteNotificationResponse,
   NotificationItemResponse,
   NotificationListResponse,
   UnreadCountResponse,
@@ -26,6 +27,7 @@ export class NotificationService {
     const limit = Math.max(1, Number(query.limit) || 20);
     const skip = (page - 1) * limit;
 
+    const keyword = query.q?.trim();
     const whereCondition: Prisma.ThongBaoWhereInput = {
       maTaiKhoan,
     };
@@ -34,6 +36,13 @@ export class NotificationService {
       whereCondition.trangThai = 'CHUA_DOC';
     } else if (query.filter === NotificationFilter.READ) {
       whereCondition.trangThai = 'DA_DOC';
+    }
+
+    if (keyword) {
+      whereCondition.OR = [
+        { tieuDe: { contains: keyword } },
+        { noiDung: { contains: keyword } },
+      ];
     }
 
     const [items, totalFiltered, unreadCount, readCount] = await Promise.all([
@@ -132,6 +141,59 @@ export class NotificationService {
     return {
       message: 'Đã đánh dấu tất cả thông báo là đã đọc',
       updatedCount: result.count,
+    };
+  }
+
+  // =========================================================================
+  // 5. XÓA 1 THÔNG BÁO (KIỂM TRA QUYỀN SỞ HỮU CHỐNG IDOR)
+  // =========================================================================
+  async deleteNotification(
+    maThongBao: string,
+    maTaiKhoan: string,
+  ): Promise<DeleteNotificationResponse> {
+    const existing = await this.prisma.thongBao.findFirst({
+      where: {
+        maThongBao,
+        maTaiKhoan,
+      },
+      select: { maThongBao: true },
+    });
+
+    if (!existing) {
+      throw new NotFoundException(
+        'Không tìm thấy thông báo hoặc bạn không có quyền xóa.',
+      );
+    }
+
+    await this.prisma.thongBao.delete({
+      where: { maThongBao },
+    });
+
+    return {
+      message: 'Đã xóa thông báo.',
+      deletedCount: 1,
+    };
+  }
+
+  // =========================================================================
+  // 6. XÓA TẤT CẢ THÔNG BÁO ĐÃ ĐỌC CỦA NGƯỜI DÙNG HIỆN TẠI
+  // =========================================================================
+  async deleteReadNotifications(
+    maTaiKhoan: string,
+  ): Promise<DeleteNotificationResponse> {
+    const result = await this.prisma.thongBao.deleteMany({
+      where: {
+        maTaiKhoan,
+        trangThai: 'DA_DOC',
+      },
+    });
+
+    return {
+      message:
+        result.count > 0
+          ? `Đã dọn ${result.count} thông báo đã đọc.`
+          : 'Không có thông báo đã đọc nào để xóa.',
+      deletedCount: result.count,
     };
   }
 

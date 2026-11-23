@@ -107,6 +107,19 @@ export const adminSkillKeys = {
     [...adminSkillKeys.lists(), params] as const,
 };
 
+// --- THÔNG BÁO QUẢN TRỊ VIÊN (ADMIN) ---
+export const adminNotificationKeys = {
+  all: ["admin", "notifications"] as const,
+  lists: () => [...adminNotificationKeys.all, "list"] as const,
+  list: (params: {
+    filter?: string;
+    q?: string;
+    page?: number;
+    limit?: number;
+  }) => [...adminNotificationKeys.lists(), params] as const,
+  unreadCount: () => [...adminNotificationKeys.all, "unread-count"] as const,
+};
+
 // --- QUẢN LÝ GÓI DỊCH VỤ TUYỂN DỤNG ---
 export const packageKeys = {
   all: ["packages"] as const,

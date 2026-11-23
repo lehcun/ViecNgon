@@ -9,12 +9,14 @@ import {
   Briefcase,
   Package,
   Code2,
+  Bell,
   ShieldAlert,
   Settings,
   HelpCircle,
 } from "lucide-react";
 import LogoViecNgon from "@/components/LogoViecNgon";
 import { useAdminMetrics } from "@/hooks/admin/useAdminDashboard";
+import { useAdminUnreadNotificationCount } from "@/hooks/admin/useAdminNotifications";
 
 interface NavItem {
   label: string;
@@ -52,6 +54,12 @@ const NAV_ITEMS: NavItem[] = [
     icon: Code2,
   },
   {
+    label: "Thông báo",
+    href: "/admin/notifications",
+    icon: Bell,
+    badgeVariant: "danger",
+  },
+  {
     label: "Báo cáo & Vi phạm",
     href: "/admin/reports",
     icon: ShieldAlert,
@@ -66,6 +74,7 @@ const NAV_ITEMS: NavItem[] = [
 export default function AdminSidebar() {
   const pathname = usePathname();
   const { data: metrics } = useAdminMetrics();
+  const { data: unreadData } = useAdminUnreadNotificationCount();
 
   const getDynamicBadge = (item: NavItem): string | number | undefined => {
     if (item.href === "/admin/users") {
@@ -76,6 +85,13 @@ export default function AdminSidebar() {
     if (item.href === "/admin/jobs") {
       return metrics?.pendingJobs?.count && metrics.pendingJobs.count > 0
         ? metrics.pendingJobs.count
+        : undefined;
+    }
+    if (item.href === "/admin/notifications") {
+      return unreadData?.count && unreadData.count > 0
+        ? unreadData.count > 99
+          ? "99+"
+          : unreadData.count
         : undefined;
     }
     return undefined;
