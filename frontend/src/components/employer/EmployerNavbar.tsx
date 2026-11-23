@@ -18,44 +18,46 @@ export default function EmployerNavbar() {
   ];
 
   return (
-    <header className="bg-primary-dark border-b border-slate-800 sticky top-0 z-50 w-full shadow-sm">
-      <div className="w-full px-6 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-10">
+    <header className="h-16 bg-surface-card border-b border-border-default px-4 sm:px-6 flex items-center justify-between gap-4 shrink-0 z-30">
+      <div className="flex items-center gap-6 min-w-0">
+        {/* Hiện logo trên mobile/tablet khi sidebar bị ẩn */}
+        <div className="lg:hidden shrink-0">
           <LogoViecNgon
-            logoTextColor="text-white"
+            role="employer"
+            logoTextColor="text-text-primary"
             href="/employer-dashboard"
           />
-
-          <nav className="hidden lg:flex items-center gap-7">
-            {navLinks.map((link) => {
-              const isActive =
-                pathname === link.path || pathname.startsWith(`${link.path}/`);
-              return (
-                <Link
-                  key={link.path}
-                  href={link.path}
-                  className={`text-sm font-medium transition-colors ${
-                    isActive
-                      ? "text-white font-semibold"
-                      : "text-slate-300 hover:text-white"
-                  }`}
-                >
-                  {link.name}
-                </Link>
-              );
-            })}
-          </nav>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="text-slate-300 hover:text-white transition-colors">
-            <EmployerNotificationDropdown />
-          </div>
+        <nav className="hidden lg:flex items-center gap-6">
+          {navLinks.map((link) => {
+            const isActive =
+              pathname === link.path || pathname.startsWith(`${link.path}/`);
+            return (
+              <Link
+                key={link.path}
+                href={link.path}
+                className={`text-sm transition-colors whitespace-nowrap ${
+                  isActive
+                    ? "text-primary font-semibold"
+                    : "text-text-secondary hover:text-primary font-medium"
+                }`}
+              >
+                {link.name}
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
 
-          <div className="h-6 w-px bg-slate-700 hidden md:block" />
-
-          <EmployerDashboardDropdown />
+      <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+        <div className="text-text-secondary hover:text-primary transition-colors">
+          <EmployerNotificationDropdown />
         </div>
+
+        <div className="h-6 w-px bg-border-default hidden md:block" />
+
+        <EmployerDashboardDropdown />
       </div>
     </header>
   );

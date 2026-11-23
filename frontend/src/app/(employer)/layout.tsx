@@ -8,15 +8,13 @@ export default function EmployerLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-surface-page flex flex-col font-sans">
-      <EmployerNavbar />
+    <div className="h-screen overflow-hidden bg-surface-page flex font-sans">
+      <EmployerSidebar />
 
-      <div className="flex flex-1 w-full">
-        <aside className="w-64 bg-surface-card border-r border-border-default hidden lg:block sticky top-16 h-[calc(100vh-64px)] overflow-y-auto z-10">
-          <EmployerSidebar />
-        </aside>
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+        <EmployerNavbar />
 
-        <main className="flex-1 w-full overflow-x-hidden min-w-0">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
           {children}
         </main>
       </div>

@@ -10,6 +10,7 @@ import { useLogout } from "@/hooks/auth/useLogout";
 import NotificationDropdown from "./NotificationDropdown";
 import LogoViecNgon from "./LogoViecNgon";
 import PublicEmployerDropdown from "./employer/PublicEmployerDropdown";
+import PublicAdminDropdown from "./admin/PublicAdminDropdown";
 import { cn } from "@/lib/utils";
 
 interface NavbarProps {
@@ -49,6 +50,7 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
   const hoverColor = isLightHeader ? "hover:text-primary" : "hover:text-white";
   const logoTextColor = isLightHeader ? "text-text-primary" : "text-white";
   const isEmployer = user?.role === "NHATUYENDUNG";
+  const isAdmin = user?.role === "ADMIN";
 
   return (
     <header
@@ -90,9 +92,11 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
 
         {/* Phải: Nhà tuyển dụng + Thông báo + Tài khoản */}
         <div className="flex items-center gap-3 sm:gap-4">
-          {!isEmployer && (
+          {!isEmployer && !isAdmin && (
             <Link
               href="/employer/login"
+              target="_blank"
+              rel="noopener noreferrer"
               className={cn(
                 "hidden sm:inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors whitespace-nowrap",
                 isLightHeader
@@ -108,8 +112,10 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
             <div className="h-9 w-28 bg-surface-subtle animate-pulse rounded-lg" />
           ) : isAuthenticated && user ? (
             <div className="flex items-center gap-3">
-              {!isEmployer && <NotificationDropdown />}
-              {isEmployer ? (
+              {!isEmployer && !isAdmin && <NotificationDropdown />}
+              {isAdmin ? (
+                <PublicAdminDropdown />
+              ) : isEmployer ? (
                 <PublicEmployerDropdown />
               ) : (
                 <ProfileDropdown

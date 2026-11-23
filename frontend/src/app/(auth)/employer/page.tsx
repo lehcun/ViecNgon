@@ -1,9 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Mail, ChevronDown, CheckCircle, ArrowLeft } from "lucide-react";
-import Link from "next/link";
-import LogoViecNgon from "@/components/LogoViecNgon";
+import { ChevronDown, CheckCircle, ArrowLeft } from "lucide-react";
 import Image from "next/image";
 import toast from "react-hot-toast";
 import {
@@ -176,37 +174,7 @@ export default function EmployerRegistrationPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white font-sans">
-      <nav className="bg-primary-dark text-white flex justify-between items-center px-4 md:px-8 py-4 sticky top-0 z-50">
-        <div className="flex items-center gap-6">
-          <LogoViecNgon logoTextColor="text-white" role={"NHATUYENDUNG"} />
-
-          <div className="hidden md:flex gap-6 text-sm font-semibold text-slate-300 ml-6">
-            <a
-              href="#"
-              className="text-white hover:text-primary-light transition-colors"
-            >
-              Tổng quan
-            </a>
-            <a href="#" className="hover:text-white transition-colors">
-              AI Match
-            </a>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4 text-sm font-semibold">
-          <button className="hidden md:flex items-center gap-2 border border-slate-600 rounded px-4 py-2 hover:bg-slate-800 transition-colors">
-            <Mail size={16} /> Liên hệ với chúng tôi
-          </button>
-          <Link href="/employer/login" className="hover:text-white transition-colors">
-            Đăng nhập
-          </Link>
-          <span className="border-l border-slate-600 pl-4 text-slate-400">
-            EN | VI
-          </span>
-        </div>
-      </nav>
-
+    <div className="min-h-screen bg-white font-sans flex items-center">
       <main className="flex flex-col lg:flex-row max-w-7xl mx-auto px-4 sm:px-8 py-12 gap-12 items-center relative overflow-hidden">
         <div className="absolute right-0 bottom-0 w-200 h-125 bg-blue-50 rounded-full blur-3xl -z-10 translate-x-1/4 translate-y-1/4"></div>
         <div className="absolute top-0 left-[-10%] w-150 h-150 bg-primary-light/50 rounded-full blur-3xl -z-10"></div>

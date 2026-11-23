@@ -18,7 +18,7 @@ import { useLogout } from "@/hooks/auth/useLogout";
 
 export default function PublicEmployerDropdown() {
   const { user } = useAuthStore();
-  const { mutate: logout } = useLogout();
+  const { mutate: logout } = useLogout({ redirectTo: "/", replace: true });
 
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);

@@ -5,16 +5,27 @@ import { useRouter } from "next/navigation";
 // Interface định nghĩa các tùy chọn
 interface LogoutOptions {
   redirectTo?: string | false; // Có thể truyền link ('/login') hoặc truyền false để đứng im
+  replace?: boolean; // Thay thế history hiện tại để không lưu lại trang trước đó
 }
 
 export const useLogout = (options?: LogoutOptions) => {
   const redirectTo =
     options?.redirectTo === undefined ? "/login" : options.redirectTo;
+  const shouldReplace = options?.replace === true;
   const router = useRouter();
   const queryClient = useQueryClient();
   // Lấy hàm xóa dữ liệu từ Zustand store
 
   const { clearAuth } = useAuthStore();
+
+  const navigateAfterLogout = () => {
+    if (!redirectTo) return;
+    if (shouldReplace && typeof window !== "undefined") {
+      window.location.replace(redirectTo);
+      return;
+    }
+    router.push(redirectTo);
+  };
 
   return useMutation({
     mutationFn: async () => {
@@ -33,27 +44,17 @@ export const useLogout = (options?: LogoutOptions) => {
       return response.json();
     },
     onSuccess: () => {
-      // Xóa thông tin người dùng trong kho lưu trữ toàn cục (Zustand)
       clearAuth();
-
-      // Xóa sạch bộ nhớ đệm (cache) của React Query
       queryClient.clear();
-
-      // 3. Đưa người dùng về trang đăng nhập hoặc trang chủ
-      // KIỂM TRA ĐIỀU KIỆN TRƯỚC KHI CHUYỂN TRANG
-      if (redirectTo) {
-        router.push(redirectTo);
-      }
-
-      // toast.success("Đã đăng xuất thành công");
+      navigateAfterLogout();
     },
     onError: (error) => {
       console.error("Lỗi khi đăng xuất:", error);
 
-      // Ngay cả khi API đăng xuất gặp lỗi (mạng yếu...), ta vẫn nên xóa trạng thái ở Frontend để đảm bảo an toàn cho người dùng.
+      // Ngay cả khi API đăng xuất gặp lỗi (mạng yếu...), ta vẫn xóa trạng thái ở Frontend để đảm bảo an toàn.
       clearAuth();
       queryClient.clear();
-      router.push("/login");
+      navigateAfterLogout();
     },
   });
 };

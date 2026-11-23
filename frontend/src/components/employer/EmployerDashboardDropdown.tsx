@@ -20,7 +20,7 @@ import { useLogout } from "@/hooks/auth/useLogout";
 
 export default function EmployerDashboardDropdown() {
   const { user } = useAuthStore();
-  const { mutate: logout } = useLogout({ redirectTo: "/employer/login" });
+  const { mutate: logout } = useLogout({ redirectTo: "/", replace: true });
 
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -75,11 +75,11 @@ export default function EmployerDashboardDropdown() {
 
         {/* Thông tin HR & Icon Chevron */}
         <div className="hidden sm:flex flex-col">
-          <div className="flex items-center gap-1.5 text-sm font-bold text-primary-light group-hover:text-primary transition-colors leading-tight">
+          <div className="flex items-center gap-1.5 text-sm font-bold text-text-primary group-hover:text-primary transition-colors leading-tight">
             <span className="line-clamp-1 max-w-30">{displayName}</span>
             <ChevronDown
               size={16}
-              className={`text-slate-400 transition-transform duration-300 ${isOpen ? "rotate-180 text-primary" : "group-hover:text-primary"}`}
+              className={`text-text-muted transition-transform duration-300 ${isOpen ? "rotate-180 text-primary" : "group-hover:text-primary"}`}
             />
           </div>
           <div className="flex items-center gap-1 mt-0.5">
