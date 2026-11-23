@@ -1,6 +1,7 @@
 import type {
   AdminJobQueryParams,
   AdminPackageQueryParams,
+  AdminSkillQueryParams,
   AdminTransactionQueryParams,
   AdminUserQueryParams,
   JobFilterParams,
@@ -96,6 +97,14 @@ export const adminPackageKeys = {
   transactions: () => [...adminPackageKeys.all, "transactions"] as const,
   transactionList: (params: AdminTransactionQueryParams) =>
     [...adminPackageKeys.transactions(), params] as const,
+};
+
+// --- QUẢN LÝ TỪ ĐIỂN KỸ NĂNG (ADMIN) ---
+export const adminSkillKeys = {
+  all: ["admin", "skills"] as const,
+  lists: () => [...adminSkillKeys.all, "list"] as const,
+  list: (params: AdminSkillQueryParams) =>
+    [...adminSkillKeys.lists(), params] as const,
 };
 
 // --- QUẢN LÝ GÓI DỊCH VỤ TUYỂN DỤNG ---

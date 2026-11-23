@@ -929,4 +929,5 @@ export * from "./admin-dashboard.types";
 export * from "./admin-users.types";
 export * from "./admin-jobs.types";
 export * from "./admin-packages.types";
+export * from "./admin-skills.types";
 export * from "./ai-cv.types";
