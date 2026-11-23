@@ -1,4 +1,8 @@
-import type { AdminUserQueryParams, JobFilterParams } from "@viecngon/types";
+import type {
+  AdminJobQueryParams,
+  AdminUserQueryParams,
+  JobFilterParams,
+} from "@viecngon/types";
 
 // --- QUẢN LÝ JOBS ---
 export const jobKeys = {
@@ -69,6 +73,16 @@ export const adminUserKeys = {
     [...adminUserKeys.lists(), params] as const,
   details: () => [...adminUserKeys.all, "detail"] as const,
   detail: (id: string) => [...adminUserKeys.details(), id] as const,
+};
+
+// --- KIỂM DUYỆT TIN TUYỂN DỤNG (ADMIN) ---
+export const adminJobKeys = {
+  all: ["admin", "jobs"] as const,
+  lists: () => [...adminJobKeys.all, "list"] as const,
+  list: (params: AdminJobQueryParams) =>
+    [...adminJobKeys.lists(), params] as const,
+  details: () => [...adminJobKeys.all, "detail"] as const,
+  detail: (id: string) => [...adminJobKeys.details(), id] as const,
 };
 
 // --- QUẢN LÝ GÓI DỊCH VỤ TUYỂN DỤNG ---

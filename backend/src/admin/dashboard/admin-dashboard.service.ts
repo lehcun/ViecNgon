@@ -36,7 +36,12 @@ export class AdminDashboardService {
     ] = await Promise.all([
       this.prisma.taiKhoan.count({ where: { vaiTro: 'UNGVIEN' } }),
       this.prisma.taiKhoan.count({ where: { vaiTro: 'NHATUYENDUNG' } }),
-      this.prisma.congViec.count({ where: { trangThai: 'CHO_DUYET' } }),
+      this.prisma.congViec.count({
+        where: {
+          deletedAt: null,
+          trangThai: { in: ['CHO_DUYET', 'Chờ duyệt'] },
+        },
+      }),
       this.prisma.donXinViec.count(),
       this.prisma.donXinViec.count({
         where: { ngayNop: { gte: startOfThisMonth } },

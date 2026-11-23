@@ -127,9 +127,15 @@ export class JobService {
         });
       }
 
-      return tx.congViec.create({
+      const rawRequestedStatus = (jobData.trangThai || '').trim();
+      const isDraft =
+        rawRequestedStatus === 'NHAP' || rawRequestedStatus === 'Nháp';
+      const enforcedStatus = isDraft ? 'NHAP' : 'CHO_DUYET';
+
+      const createdJob = await tx.congViec.create({
         data: {
           ...jobData,
+          trangThai: enforcedStatus,
           ngayHetHan: computedDeadline,
           lastRefreshedAt: now,
           doUuTien: priorityLevel,
@@ -147,6 +153,34 @@ export class JobService {
           },
         },
       });
+
+      if (!isDraft) {
+        const activeAdmins = await tx.taiKhoan.findMany({
+          where: {
+            vaiTro: 'ADMIN',
+            trangThai: 'HOATDONG',
+            deletedAt: null,
+          },
+          select: { maTaiKhoan: true },
+        });
+
+        if (activeAdmins.length > 0) {
+          const rawTitle = `Tin tuyển dụng mới chờ duyệt: ${createdJob.tenCongViec}`;
+          const tieuDe =
+            rawTitle.length <= 255 ? rawTitle : `${rawTitle.slice(0, 254)}…`;
+
+          await tx.thongBao.createMany({
+            data: activeAdmins.map((admin) => ({
+              maTaiKhoan: admin.maTaiKhoan,
+              tieuDe,
+              noiDung: `Doanh nghiệp vừa đăng tin tuyển dụng "${createdJob.tenCongViec}" đang chờ Quản trị viên kiểm duyệt trước khi hiển thị công khai.`,
+              trangThai: 'CHUA_DOC',
+            })),
+          });
+        }
+      }
+
+      return createdJob;
     });
   }
 
@@ -792,7 +826,7 @@ export class JobService {
       } else if (upperStatus === 'DA_AN') {
         whereCondition.trangThai = { in: ['DA_AN', 'Đã ẩn', 'Đã đóng'] };
       } else if (upperStatus === 'TU_CHUOI') {
-        whereCondition.trangThai = { in: ['TU_CHUOI', 'Từ chối'] };
+        whereCondition.trangThai = { in: ['TU_CHOI', 'TU_CHUOI', 'Từ chối'] };
       } else if (upperStatus === 'NHAP') {
         whereCondition.trangThai = { in: ['NHAP', 'Nháp'] };
       }
