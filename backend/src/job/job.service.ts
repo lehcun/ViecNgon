@@ -20,12 +20,15 @@ import {
   EmployerJobDetailResponse,
   CongViecKyNangData,
   JobWithRelations,
+  RecommendedJobItem,
+  RecommendedJobsResponse,
 } from '@viecngon/types';
 import { formatSalaryDisplay } from 'src/common/utils/format-salary';
 import {
   extractJobHighlights,
   normalizePromotionBadge,
 } from 'src/common/utils/package-tiers.util';
+import { computeJobRecommendationScore } from './utils/job-recommendation.util';
 
 @Injectable()
 export class JobService {
@@ -1300,5 +1303,191 @@ export class JobService {
     ]);
 
     return { message: 'Xóa tin tuyển dụng thành công.' };
+  }
+
+  /**
+   * 7. Gợi ý việc làm phù hợp cho Ứng viên đang đăng nhập (Trang chủ)
+   * Chấm điểm tương thích đa tiêu chí theo trọng số: 50% kỹ năng, 20% chuyên môn,
+   * 15% kinh nghiệm, 10% địa điểm/Remote, 5% công ty theo dõi/việc đã lưu.
+   */
+  async getRecommendedJobs(
+    maTaiKhoan: string,
+    rawLimit = 12,
+  ): Promise<RecommendedJobsResponse> {
+    const limit = Math.min(20, Math.max(1, Number(rawLimit) || 12));
+    const now = new Date();
+
+    const ungVien = await this.prisma.ungVien.findUnique({
+      where: { maTaiKhoan },
+      select: {
+        maUngVien: true,
+        tenUngVien: true,
+        chuyenMon: true,
+        soNamKinhNghiem: true,
+        diaChi: true,
+        taiKhoan: {
+          select: { tenNguoiDung: true },
+        },
+        kyNangs: {
+          select: { maKyNang: true },
+        },
+        donXinViecs: {
+          select: { maCongViec: true },
+        },
+        congTyTheoDois: {
+          select: { maCongTy: true },
+        },
+        congViecDaLuus: {
+          select: {
+            congViec: {
+              select: {
+                congViecKyNangs: {
+                  select: { maKyNang: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const candidateName =
+      ungVien?.tenUngVien || ungVien?.taiKhoan?.tenNguoiDung || 'bạn';
+    const candidateSkillIds = new Set(
+      (ungVien?.kyNangs ?? []).map((item) => item.maKyNang),
+    );
+    const appliedJobIds = (ungVien?.donXinViecs ?? []).map(
+      (item) => item.maCongViec,
+    );
+    const followedCompanyIds = new Set(
+      (ungVien?.congTyTheoDois ?? []).map((item) => item.maCongTy),
+    );
+    const savedJobSkillIds = new Set<string>();
+    for (const saved of ungVien?.congViecDaLuus ?? []) {
+      for (const link of saved.congViec?.congViecKyNangs ?? []) {
+        savedJobSkillIds.add(link.maKyNang);
+      }
+    }
+
+    const normalizedProfession = (ungVien?.chuyenMon || '').trim();
+    const needsProfileSetup =
+      candidateSkillIds.size === 0 &&
+      (!normalizedProfession ||
+        normalizedProfession.toLowerCase() === 'chưa cập nhật');
+
+    const candidateJobs = await this.prisma.congViec.findMany({
+      where: {
+        deletedAt: null,
+        trangThai: { in: ['DA_DUYET', 'Đang tuyển', 'ACTIVE'] },
+        AND: [
+          {
+            OR: [{ ngayHetHan: null }, { ngayHetHan: { gte: now } }],
+          },
+          ...(appliedJobIds.length > 0
+            ? [{ maCongViec: { notIn: appliedJobIds } }]
+            : []),
+        ],
+      },
+      select: {
+        maCongViec: true,
+        tenCongViec: true,
+        slug: true,
+        mucLuongToiThieu: true,
+        mucLuongToiDa: true,
+        yeuCauKinhNghiem: true,
+        capBac: true,
+        thanhPho: true,
+        hinhThucLamViec: true,
+        ngayDang: true,
+        doUuTien: true,
+        nhanQuangCao: true,
+        nhaTuyenDung: {
+          select: {
+            congTy: {
+              select: {
+                maCongTy: true,
+                tenCongTy: true,
+                slug: true,
+                logoUrl: true,
+              },
+            },
+          },
+        },
+        congViecKyNangs: {
+          select: {
+            maKyNang: true,
+            kyNang: {
+              select: { tenKyNang: true },
+            },
+          },
+        },
+      },
+      orderBy: [{ doUuTien: 'desc' }, { ngayDang: 'desc' }],
+      take: 100,
+    });
+
+    const scored = candidateJobs.map((job) => {
+      const score = needsProfileSetup
+        ? 0
+        : computeJobRecommendationScore(
+            {
+              skillIds: candidateSkillIds,
+              savedJobSkillIds,
+              followedCompanyIds,
+              profession: normalizedProfession || null,
+              yearsOfExperience: ungVien?.soNamKinhNghiem ?? null,
+              address: ungVien?.diaChi ?? null,
+            },
+            {
+              title: job.tenCongViec,
+              level: job.capBac,
+              requiredYears: job.yeuCauKinhNghiem,
+              city: job.thanhPho,
+              workModel: job.hinhThucLamViec,
+              companyId: job.nhaTuyenDung.congTy.maCongTy,
+              skillIds: job.congViecKyNangs.map((item) => item.maKyNang),
+            },
+          );
+
+      return { job, score };
+    });
+
+    scored.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      if ((b.job.doUuTien ?? 0) !== (a.job.doUuTien ?? 0)) {
+        return (b.job.doUuTien ?? 0) - (a.job.doUuTien ?? 0);
+      }
+      return b.job.ngayDang.getTime() - a.job.ngayDang.getTime();
+    });
+
+    const items: RecommendedJobItem[] = scored.slice(0, limit).map(({ job }) => ({
+      id: job.maCongViec,
+      title: job.tenCongViec,
+      slug: job.slug,
+      salaryDisplay: formatSalaryDisplay(
+        job.mucLuongToiThieu !== null ? Number(job.mucLuongToiThieu) : null,
+        job.mucLuongToiDa !== null ? Number(job.mucLuongToiDa) : null,
+      ),
+      location: job.thanhPho,
+      workModel: job.hinhThucLamViec,
+      level: job.capBac,
+      postedAt: job.ngayDang.toISOString(),
+      skills: job.congViecKyNangs.map((item) => item.kyNang.tenKyNang),
+      promotionBadge: normalizePromotionBadge(job.nhanQuangCao),
+      priorityLevel: job.doUuTien ?? 0,
+      company: {
+        id: job.nhaTuyenDung.congTy.maCongTy,
+        name: job.nhaTuyenDung.congTy.tenCongTy,
+        logo: job.nhaTuyenDung.congTy.logoUrl,
+        slug: job.nhaTuyenDung.congTy.slug,
+      },
+    }));
+
+    return {
+      candidateName,
+      totalMatched: scored.length,
+      needsProfileSetup,
+      items,
+    };
   }
 }

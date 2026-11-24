@@ -24,6 +24,7 @@ export const jobKeys = {
   // (Tính năng mở rộng) Việc làm đã lưu, đã ứng tuyển của ứng viên
   saved: () => [...jobKeys.all, "saved"],
   applied: () => [...jobKeys.all, "applied"],
+  recommended: (limit = 12) => [...jobKeys.all, "recommended", limit] as const,
   matchPreview: (jobId: string) => [...jobKeys.all, "match-preview", jobId],
 };
 

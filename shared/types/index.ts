@@ -326,6 +326,33 @@ export interface JobDetailResponse {
   company: JobCompanySummary;
 }
 
+export interface RecommendedJobItem {
+  id: string;
+  title: string;
+  slug: string;
+  salaryDisplay: string;
+  location: string | null;
+  workModel: string | null;
+  level: string | null;
+  postedAt: string;
+  skills: string[];
+  promotionBadge: JobPromotionBadge | null;
+  priorityLevel: number;
+  company: {
+    id: string;
+    name: string;
+    logo: string | null;
+    slug: string;
+  };
+}
+
+export interface RecommendedJobsResponse {
+  candidateName: string;
+  totalMatched: number;
+  needsProfileSetup: boolean;
+  items: RecommendedJobItem[];
+}
+
 /** Form state khi tạo/sửa công việc trên UI */
 export interface JobFormState {
   tenCongViec: string;

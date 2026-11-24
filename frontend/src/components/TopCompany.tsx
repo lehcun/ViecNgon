@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
-import { ChevronRight } from "lucide-react";
 import Marquee from "react-fast-marquee";
 import EmployerCard from "./EmployerCard";
 import { useTopCompanies } from "@/hooks/company/useTopCompanies";
@@ -42,25 +40,15 @@ export default function TopEmployers() {
       className="w-full bg-surface-page py-16 overflow-x-hidden"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Tiêu đề khu vực */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-text-primary tracking-tight">
-              Nhà tuyển dụng hàng đầu
-            </h2>
-            <p className="text-sm text-text-muted mt-1.5">
-              Các doanh nghiệp công nghệ uy tín đang mở tuyển kỹ sư IT trên
-              ViecNgon
-            </p>
-          </div>
-
-          <Link
-            href="/jobs"
-            className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:text-primary-hover transition-colors shrink-0"
-          >
-            <span>Khám phá tất cả việc làm</span>
-            <ChevronRight size={16} />
-          </Link>
+        {/* Tiêu đề khu vực căn giữa */}
+        <div className="text-center mb-10">
+          <h2 className="text-2xl sm:text-3xl font-bold text-text-primary tracking-tight">
+            Nhà tuyển dụng hàng đầu
+          </h2>
+          <p className="text-sm text-text-muted mt-1.5">
+            Các doanh nghiệp công nghệ uy tín đang mở tuyển kỹ sư IT trên
+            ViecNgon
+          </p>
         </div>
 
         {/* Trạng thái Loading Skeleton (bố cục 3 + 2 cân đều) */}

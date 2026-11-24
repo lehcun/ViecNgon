@@ -64,6 +64,23 @@ export class JobController {
   }
 
   /**
+   * Candidate API: Gợi ý danh sách việc làm phù hợp cho Ứng viên đang đăng nhập
+   * Endpoint: GET /jobs/recommended?limit=12
+   */
+  @Get('recommended')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('UNGVIEN')
+  async getRecommendedJobs(
+    @CurrentUser('userId') userId: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.jobService.getRecommendedJobs(
+      userId,
+      limit ? Number(limit) : 12,
+    );
+  }
+
+  /**
    * Public API 2: Lấy danh sách 4-5 công việc tương tự theo slug
    */
   @Get('by-slug/:slug/related')
