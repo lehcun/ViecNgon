@@ -76,7 +76,7 @@ export class AuthService {
       }
 
       return payload;
-    } catch (error) {
+    } catch {
       throw new UnauthorizedException('Xác thực Google Token thất bại!');
     }
   }
@@ -193,8 +193,6 @@ export class AuthService {
       email: email,
     };
 
-    console.log(payload);
-
     return {
       access_token: await this.jwtService.signAsync(payload),
       user: {
@@ -252,10 +250,7 @@ export class AuthService {
       );
     }
     // Nhà tuyển dụng chưa kích hoạt vẫn được đăng nhập để duyệt web như khách vãng lai (kèm banner chờ duyệt)
-    if (
-      normalizedStatus === 'CHUAKICHHOAT' &&
-      user.vaiTro !== 'NHATUYENDUNG'
-    ) {
+    if (normalizedStatus === 'CHUAKICHHOAT' && user.vaiTro !== 'NHATUYENDUNG') {
       throw new UnauthorizedException(
         'Tài khoản của bạn chưa được kích hoạt. Vui lòng liên hệ quản trị viên!',
       );
@@ -271,16 +266,14 @@ export class AuthService {
     };
 
     // 4. Trả về Token và thông tin user (loại bỏ mật khẩu)
-    const { matKhau, ...userInfo } = user;
-
     return {
       access_token: await this.jwtService.signAsync(payload),
       user: {
-        id: userInfo.maTaiKhoan,
-        sub: userInfo.maTaiKhoan,
-        email: userInfo.email,
-        name: userInfo.tenNguoiDung,
-        role: userInfo.vaiTro,
+        id: user.maTaiKhoan,
+        sub: user.maTaiKhoan,
+        email: user.email,
+        name: user.tenNguoiDung,
+        role: user.vaiTro,
         status: normalizedStatus,
       },
     };
@@ -338,17 +331,15 @@ export class AuthService {
       email: newUser.email,
     };
 
-    const { matKhau, ...userInfo } = newUser;
-
     return {
       access_token: await this.jwtService.signAsync(payload),
       user: {
-        id: userInfo.maTaiKhoan,
-        sub: userInfo.maTaiKhoan,
-        email: userInfo.email,
-        name: userInfo.tenNguoiDung,
-        role: userInfo.vaiTro,
-        status: userInfo.trangThai,
+        id: newUser.maTaiKhoan,
+        sub: newUser.maTaiKhoan,
+        email: newUser.email,
+        name: newUser.tenNguoiDung,
+        role: newUser.vaiTro,
+        status: newUser.trangThai,
       },
     };
   }
@@ -465,17 +456,15 @@ export class AuthService {
       email: newUser.email,
     };
 
-    const { matKhau, ...userInfo } = newUser;
-
     return {
       access_token: await this.jwtService.signAsync(payload),
       user: {
-        id: userInfo.maTaiKhoan,
-        sub: userInfo.maTaiKhoan,
-        email: userInfo.email,
-        name: userInfo.tenNguoiDung,
-        role: userInfo.vaiTro,
-        status: userInfo.trangThai,
+        id: newUser.maTaiKhoan,
+        sub: newUser.maTaiKhoan,
+        email: newUser.email,
+        name: newUser.tenNguoiDung,
+        role: newUser.vaiTro,
+        status: newUser.trangThai,
       },
     };
   }
@@ -559,8 +548,7 @@ export class AuthService {
     const normalizedStatus = this.normalizeAccountStatus(account.trangThai);
     if (
       normalizedStatus === 'KHOA' ||
-      (normalizedStatus === 'CHUAKICHHOAT' &&
-        account.vaiTro !== 'NHATUYENDUNG')
+      (normalizedStatus === 'CHUAKICHHOAT' && account.vaiTro !== 'NHATUYENDUNG')
     ) {
       throw new UnauthorizedException(
         'Tài khoản không tồn tại hoặc phiên đăng nhập đã hết hiệu lực.',
