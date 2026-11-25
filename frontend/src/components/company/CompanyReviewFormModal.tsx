@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, ShieldCheck, ThumbsUp, Clock, EyeOff } from "lucide-react";
+import { X, ShieldCheck, ThumbsUp, Clock } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
 import StarRatingInput from "@/components/reviews/StarRatingInput";
@@ -14,6 +14,7 @@ interface CompanyReviewFormModalProps {
   isOpen: boolean;
   companyName: string;
   authorName?: string;
+  initialRating?: number;
   onClose: () => void;
   onSubmitMock: (review: CompanyReviewItem) => void;
 }
@@ -24,15 +25,17 @@ export default function CompanyReviewFormModal({
   isOpen,
   companyName,
   authorName = "Ứng viên ViecNgon",
+  initialRating = 5,
   onClose,
   onSubmitMock,
 }: CompanyReviewFormModalProps) {
+  const safeInitial = Math.min(5, Math.max(1, Math.round(initialRating)));
   const [criteria, setCriteria] = useState<Record<CriteriaKey, number>>({
-    diemLuongPhucLoi: 5,
-    diemDaoTao: 4,
-    diemQuanLy: 4,
-    diemVanHoa: 5,
-    diemVanPhong: 4,
+    diemLuongPhucLoi: safeInitial,
+    diemDaoTao: safeInitial,
+    diemQuanLy: safeInitial,
+    diemVanHoa: safeInitial,
+    diemVanPhong: safeInitial,
   });
   const [tieuDe, setTieuDe] = useState("");
   const [noiDung, setNoiDung] = useState("");
@@ -40,7 +43,6 @@ export default function CompanyReviewFormModal({
   const [noiDungCaiThien, setNoiDungCaiThien] = useState("");
   const [khuyenLamViec, setKhuyenLamViec] = useState(true);
   const [coOtTot, setCoOtTot] = useState(true);
-  const [anDanh, setAnDanh] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
 
   if (!isOpen) return null;
@@ -68,7 +70,7 @@ export default function CompanyReviewFormModal({
       companyName,
       authorName,
       authorRole: "Kỹ sư IT",
-      anDanh,
+      anDanh: true,
       daXacThuc: true,
       nguonXacThuc: "TUYEN_DUNG_VIECNGON",
       trangThai: "CHO_DUYET",
@@ -251,7 +253,7 @@ export default function CompanyReviewFormModal({
           </div>
 
           {/* Tùy chọn nhanh */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <label className="flex items-center gap-2 p-3 rounded-lg border border-border-default bg-surface-page cursor-pointer hover:border-primary/40 transition-colors">
               <input
                 type="checkbox"
@@ -277,19 +279,6 @@ export default function CompanyReviewFormModal({
                 Chính sách OT tốt
               </span>
             </label>
-
-            <label className="flex items-center gap-2 p-3 rounded-lg border border-border-default bg-surface-page cursor-pointer hover:border-primary/40 transition-colors">
-              <input
-                type="checkbox"
-                checked={anDanh}
-                onChange={(e) => setAnDanh(e.target.checked)}
-                className="rounded border-border-strong text-primary focus:ring-primary"
-              />
-              <EyeOff size={14} className="text-text-muted shrink-0" />
-              <span className="text-xs font-medium text-text-primary">
-                Đăng ẩn danh
-              </span>
-            </label>
           </div>
 
           {errorMsg && (
@@ -302,7 +291,7 @@ export default function CompanyReviewFormModal({
           <div className="pt-3 border-t border-border-default flex flex-wrap items-center justify-between gap-3">
             <span className="inline-flex items-center gap-1.5 text-xs text-text-muted">
               <ShieldCheck size={14} className="text-success-text" />
-              Đánh giá tạm lưu trên giao diện (chế độ Mock UI)
+              Mọi đánh giá đều được đăng ẩn danh hoàn toàn để bảo vệ danh tính
             </span>
             <div className="flex items-center gap-2.5 ml-auto">
               <Button type="button" variant="secondary" size="md" onClick={onClose}>

@@ -1097,7 +1097,7 @@ export default function CompanyDetailModel() {
                 jobs={company.activeJobs}
               />
             )}
-            {renderLatestReviewCard()}
+            {activeTab !== "reviews" && renderLatestReviewCard()}
             {renderFollowNotificationCard()}
           </div>
         </div>

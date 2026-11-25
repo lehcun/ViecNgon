@@ -1,59 +1,145 @@
 "use client";
 
 import React from "react";
+import { ThumbsUp, Clock, Flag, Star, ChevronDown } from "lucide-react";
 import {
-  ThumbsUp,
-  Clock,
-  ShieldCheck,
-  MessageSquareReply,
-  Flag,
-  Building2,
-} from "lucide-react";
-import StarRatingInput from "@/components/reviews/StarRatingInput";
-import {
-  VERIFICATION_SOURCE_LABEL,
+  COMPANY_CRITERIA_META,
   type CompanyReviewItem,
 } from "@/data/reviews.mock";
 import { formatDateVN } from "@/lib/formatters";
+import { cn } from "@/lib/utils";
 
 interface CompanyReviewCardProps {
   review: CompanyReviewItem;
-  companyName: string;
   isEmployer: boolean;
-  onReply: (review: CompanyReviewItem) => void;
   onReport: (review: CompanyReviewItem) => void;
+}
+
+const CRITERIA_LABELS = {
+  diemLuongPhucLoi: "Lương thưởng & phúc lợi",
+  diemDaoTao: "Đào tạo & học hỏi",
+  diemQuanLy: "Sự quan tâm đến nhân viên",
+  diemVanHoa: "Văn hóa công ty",
+  diemVanPhong: "Văn phòng làm việc",
+} as const;
+
+function AmberStars({ value, size = 14 }: { value: number; size?: number }) {
+  return (
+    <span className="inline-flex items-center gap-0.5">
+      {Array.from({ length: 5 }).map((_, idx) => {
+        const filled = idx + 1 <= Math.round(value);
+        return (
+          <Star
+            key={idx}
+            size={size}
+            fill={filled ? "currentColor" : "none"}
+            className={cn(
+              "shrink-0",
+              filled ? "text-amber-500" : "text-amber-200",
+            )}
+          />
+        );
+      })}
+    </span>
+  );
 }
 
 export default function CompanyReviewCard({
   review,
-  companyName,
   isEmployer,
-  onReply,
   onReport,
 }: CompanyReviewCardProps) {
   return (
     <article className="rounded-xl border border-border-default bg-surface-page p-5 space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="font-bold text-text-primary">
-            {review.anDanh ? "Nhân viên ẩn danh" : review.authorName}
-          </span>
-          <span className="text-text-muted">· {review.authorRole}</span>
-          <span className="text-text-muted">
-            · {formatDateVN(review.createdAt)}
-          </span>
-          {review.daXacThuc && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-success-soft text-success-text border border-success-border font-medium">
-              <ShieldCheck size={12} />
-              {VERIFICATION_SOURCE_LABEL[review.nguonXacThuc]}
-            </span>
-          )}
-        </div>
+      {/* Hàng trên cùng: Ngày đăng + nút Báo cáo (chỉ dành cho NTD) */}
+      <div className="flex items-center justify-between gap-2 text-xs">
+        <span className="text-text-muted font-medium tabular-nums">
+          {formatDateVN(review.createdAt)}
+        </span>
 
-        <StarRatingInput value={review.rating} readOnly size="sm" showValue />
+        {isEmployer && (
+          <div>
+            {review.biBaoCao ? (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-warning-soft text-warning-text border border-warning-border font-semibold">
+                <Flag size={12} />
+                Đã báo cáo Admin
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onReport(review)}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-danger-border bg-danger-soft text-danger-text hover:bg-danger-light font-semibold transition-colors"
+              >
+                <Flag size={12} />
+                Báo cáo vi phạm
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
-      <h3 className="text-base font-bold text-text-primary">{review.tieuDe}</h3>
+      {/* Tiêu đề bài đánh giá */}
+      <h3 className="text-base font-bold text-text-primary leading-snug">
+        {review.tieuDe}
+      </h3>
+
+      {/* Hàng sao (hover xổ bảng 5 tiêu chí) ngang hàng với Khuyên làm việc & Chính sách OT */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
+        <div className="relative group inline-flex items-center">
+          <div className="inline-flex items-center gap-1.5 cursor-pointer py-0.5 select-none">
+            <AmberStars value={review.rating} size={15} />
+            <span className="font-bold text-text-primary tabular-nums text-sm">
+              {review.rating.toFixed(1)}
+            </span>
+            <ChevronDown
+              size={14}
+              className="text-text-muted transition-transform duration-200 group-hover:rotate-180 group-hover:text-text-primary"
+            />
+          </div>
+
+          {/* Popover chi tiết 5 tiêu chí khi di chuột vào */}
+          <div
+            role="tooltip"
+            className="absolute left-0 top-full pt-1.5 z-30 w-80 sm:w-96 opacity-0 invisible translate-y-1 pointer-events-none group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-150"
+          >
+            <div className="rounded-xl bg-surface-card border border-border-default shadow-lg px-4 py-2 divide-y divide-dashed divide-border-default">
+              {COMPANY_CRITERIA_META.map((crit) => {
+                const score = review[crit.key];
+                return (
+                  <div
+                    key={crit.key}
+                    className="py-2.5 flex items-center justify-between gap-3"
+                  >
+                    <span className="text-xs sm:text-sm font-medium text-text-primary">
+                      {CRITERIA_LABELS[crit.key]}
+                    </span>
+                    <div className="inline-flex items-center gap-2 shrink-0">
+                      <AmberStars value={score} size={14} />
+                      <span className="text-xs sm:text-sm font-bold text-text-primary tabular-nums w-4 text-right">
+                        {score}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {review.khuyenLamViec && (
+          <span className="inline-flex items-center gap-1 font-semibold text-success-text">
+            <ThumbsUp size={13} />
+            Khuyên làm việc
+          </span>
+        )}
+
+        {review.coOtTot && (
+          <span className="inline-flex items-center gap-1 font-semibold text-info-text">
+            <Clock size={13} />
+            Chính sách OT hợp lý
+          </span>
+        )}
+      </div>
 
       {review.noiDung && (
         <p className="text-sm text-text-secondary leading-relaxed">
@@ -75,72 +161,6 @@ export default function CompanyReviewCard({
           </div>
         )}
       </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-border-default/80 text-xs">
-        <div className="flex flex-wrap items-center gap-3">
-          {review.khuyenLamViec && (
-            <span className="inline-flex items-center gap-1 font-medium text-success-text">
-              <ThumbsUp size={13} />
-              Khuyên làm việc tại đây
-            </span>
-          )}
-          {review.coOtTot && (
-            <span className="inline-flex items-center gap-1 font-medium text-info-text">
-              <Clock size={13} />
-              Chính sách OT hợp lý
-            </span>
-          )}
-        </div>
-
-        {isEmployer && (
-          <div className="flex items-center gap-2 ml-auto">
-            <button
-              type="button"
-              onClick={() => onReply(review)}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-border-default bg-surface-card text-text-secondary hover:text-primary hover:border-primary/40 font-semibold transition-colors"
-            >
-              <MessageSquareReply size={13} />
-              {review.phanHoiCongTy ? "Sửa phản hồi" : "Phản hồi chính thức"}
-            </button>
-
-            {review.biBaoCao ? (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-warning-soft text-warning-text border border-warning-border font-semibold">
-                <Flag size={12} />
-                Đã báo cáo Admin
-              </span>
-            ) : (
-              <button
-                type="button"
-                onClick={() => onReport(review)}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-danger-border bg-danger-soft text-danger-text hover:bg-danger-light font-semibold transition-colors"
-              >
-                <Flag size={12} />
-                Báo cáo vi phạm
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Phản hồi chính thức từ Nhà tuyển dụng */}
-      {review.phanHoiCongTy && (
-        <div className="rounded-lg bg-primary-light/50 border border-primary-subtle p-3.5 space-y-1.5">
-          <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-            <span className="inline-flex items-center gap-1.5 font-bold text-primary">
-              <Building2 size={13} />
-              Phản hồi chính thức từ {companyName}
-            </span>
-            {review.ngayPhanHoiCongTy && (
-              <span className="text-text-muted">
-                {formatDateVN(review.ngayPhanHoiCongTy)}
-              </span>
-            )}
-          </div>
-          <p className="text-xs sm:text-sm text-text-secondary leading-relaxed">
-            {review.phanHoiCongTy}
-          </p>
-        </div>
-      )}
     </article>
   );
 }

@@ -29,7 +29,13 @@ import { CompanyLogo } from "@/components/ui/CompanyLogo";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
 import { DetailPaneSkeleton, ErrorState } from "@/components/ui/StateViews";
-import { formatDateVN } from "@/lib/formatters";
+import { formatDateVN, sanitizeRichHtml } from "@/lib/formatters";
+
+const EVALUABLE_APPLICATION_STATUSES = new Set([
+  "PHONG_VAN",
+  "DUOC_NHAN",
+  "BI_LOAI",
+]);
 
 export default function ApplicationDetailPage() {
   const params = useParams();
@@ -210,12 +216,14 @@ export default function ApplicationDetailPage() {
       {/* AI Screening Block */}
       <AiCandidateScreeningCard applicationId={application.applicationId} />
 
-      {/* Đánh giá ứng viên sau phỏng vấn (UI + Mock Data) */}
-      <CandidateEvaluationCard
-        candidateName={application.candidateName}
-        jobTitle={application.jobTitle}
-        evaluatorName={user?.name || undefined}
-      />
+      {/* Chỉ mở khóa Đánh giá ứng viên khi đã đạt trạng thái Phỏng vấn / Trúng tuyển / Chưa phù hợp */}
+      {EVALUABLE_APPLICATION_STATUSES.has(application.status) && (
+        <CandidateEvaluationCard
+          candidateName={application.candidateName}
+          jobTitle={application.jobTitle}
+          evaluatorName={user?.name || undefined}
+        />
+      )}
 
       {/* Chi tiết hồ sơ 2 cột */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -305,9 +313,12 @@ export default function ApplicationDetailPage() {
                   <h2 className="text-base font-bold text-text-primary mb-2">
                     Giới thiệu bản thân
                   </h2>
-                  <p className="text-sm text-text-secondary whitespace-pre-line leading-relaxed">
-                    {application.aboutMe}
-                  </p>
+                  <div
+                    className="prose prose-sm prose-slate max-w-none text-text-secondary leading-relaxed prose-p:my-1.5 prose-ul:my-1.5 prose-li:my-0.5 prose-strong:text-text-primary"
+                    dangerouslySetInnerHTML={{
+                      __html: sanitizeRichHtml(application.aboutMe),
+                    }}
+                  />
                 </div>
               )}
             </div>
@@ -344,9 +355,12 @@ export default function ApplicationDetailPage() {
                       {exp.companyName}
                     </p>
                     {exp.description && (
-                      <p className="text-sm text-text-secondary whitespace-pre-line leading-relaxed pt-1">
-                        {exp.description}
-                      </p>
+                      <div
+                        className="prose prose-sm prose-slate max-w-none text-text-secondary leading-relaxed pt-1 prose-p:my-1 prose-ul:my-1 prose-li:my-0.5 prose-strong:text-text-primary"
+                        dangerouslySetInnerHTML={{
+                          __html: sanitizeRichHtml(exp.description),
+                        }}
+                      />
                     )}
                   </div>
                 ))}
