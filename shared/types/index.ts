@@ -635,11 +635,14 @@ export interface ApplyJobPayload {
   fileCvUrl?: string;
 }
 
+import type { SharedCandidateEvaluationDto } from "./reviews.types";
+
 export interface AppliedJobItem {
   applicationId: string;
   appliedDate: string;
   applicationStatus: string; // 'CHO_DUYET' | 'DA_XEM' | 'PHU_HOP' | 'PHONG_VAN' | 'TRUNG_TUYEN' | 'KHONG_PHU_HOP'
   cvUrl: string | null;
+  sharedEvaluations?: SharedCandidateEvaluationDto[];
   job: {
     id: string;
     title: string;
@@ -963,3 +966,4 @@ export * from "./admin-jobs.types";
 export * from "./admin-packages.types";
 export * from "./admin-skills.types";
 export * from "./ai-cv.types";
+export * from "./reviews.types";

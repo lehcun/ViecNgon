@@ -1,6 +1,7 @@
 import type {
   AdminJobQueryParams,
   AdminPackageQueryParams,
+  AdminReviewsQueryParams,
   AdminSkillQueryParams,
   AdminTransactionQueryParams,
   AdminUserQueryParams,
@@ -136,5 +137,21 @@ export const recruiterKeys = {
 export const candidateKeys = {
   all: ["candidate"] as const,
   profile: () => ["candidateProfile"] as const,
+};
+
+// --- HỆ THỐNG ĐÁNH GIÁ (CÔNG TY & ỨNG VIÊN) ---
+export const reviewKeys = {
+  all: ["reviews"] as const,
+  company: (companyId: string) => [...reviewKeys.all, "company", companyId] as const,
+  application: (maDon: string) =>
+    [...reviewKeys.all, "application", maDon] as const,
+};
+
+// --- KIỂM DUYỆT ĐÁNH GIÁ (ADMIN) ---
+export const adminReviewKeys = {
+  all: ["admin", "reviews"] as const,
+  lists: () => [...adminReviewKeys.all, "list"] as const,
+  list: (params: AdminReviewsQueryParams) =>
+    [...adminReviewKeys.lists(), params] as const,
 };
 

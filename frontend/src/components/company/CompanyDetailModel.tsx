@@ -402,30 +402,51 @@ export default function CompanyDetailModel() {
             </div>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-xs rounded-xl p-4 flex gap-6 border border-white/15 shrink-0">
-            <div className="text-center">
-              <div className="flex items-end gap-1.5 justify-center">
-                <span className="text-2xl font-bold text-white tabular-nums">
-                  {averageRating}
-                </span>
-                <div className="flex text-amber-400 pb-1">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} size={13} fill="currentColor" />
-                  ))}
-                </div>
-              </div>
-              <p className="text-xs text-slate-300 mt-1">Đánh giá tích cực</p>
-            </div>
-            <div className="w-px bg-white/15" />
-            <div className="text-center flex flex-col justify-center">
-              <span className="text-2xl font-bold text-emerald-400 tabular-nums">
-                {recommendPercent}%
+          <button
+            type="button"
+            onClick={() => setActiveTab("reviews")}
+            className="bg-white/10 hover:bg-white/15 backdrop-blur-xs rounded-xl px-5 py-4 flex items-center gap-6 border border-white/15 shrink-0 text-left transition-colors cursor-pointer"
+          >
+            {/* Cụm trái: Điểm lớn + (5 sao / X đánh giá) */}
+            <div className="flex items-center gap-3">
+              <span className="text-3xl font-extrabold text-white tabular-nums leading-none">
+                {Number(averageRating || 0).toFixed(1)}
               </span>
-              <p className="text-xs text-slate-300 mt-1">
-                Khuyên làm việc tại đây
-              </p>
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-0.5">
+                  {Array.from({ length: 5 }).map((_, i) => {
+                    const filled = i + 1 <= Math.round(Number(averageRating || 0));
+                    return (
+                      <Star
+                        key={i}
+                        size={14}
+                        fill={filled ? "currentColor" : "none"}
+                        className={
+                          filled ? "text-amber-500" : "text-white/30"
+                        }
+                      />
+                    );
+                  })}
+                </div>
+                <span className="text-xs font-medium text-slate-200 tabular-nums">
+                  {totalReviews} đánh giá
+                </span>
+              </div>
             </div>
-          </div>
+
+            <div className="w-px h-9 bg-white/15" />
+
+            {/* Cụm phải: XX% + Khuyến khích làm việc tại đây */}
+            <div className="flex items-center gap-2.5">
+              <span className="text-3xl font-extrabold text-white tabular-nums leading-none">
+                {recommendPercent}
+                <span className="text-base font-bold ml-0.5">%</span>
+              </span>
+              <span className="text-xs font-medium text-slate-200 leading-snug max-w-28">
+                Khuyến khích làm việc tại đây
+              </span>
+            </div>
+          </button>
         </div>
       </section>
 
@@ -1027,8 +1048,8 @@ export default function CompanyDetailModel() {
 
           {activeTab === "reviews" && (
             <CompanyReviewsSection
+              companyId={company.id}
               companyName={company.name}
-              currentUserName={user?.name || undefined}
             />
           )}
 
@@ -1097,7 +1118,7 @@ export default function CompanyDetailModel() {
                 jobs={company.activeJobs}
               />
             )}
-            {renderLatestReviewCard()}
+            {activeTab !== "reviews" && renderLatestReviewCard()}
             {renderFollowNotificationCard()}
           </div>
         </div>

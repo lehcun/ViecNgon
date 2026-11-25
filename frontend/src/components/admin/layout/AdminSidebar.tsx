@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Users,
   Briefcase,
+  MessageSquareQuote,
   Package,
   Code2,
   Bell,
@@ -17,6 +18,7 @@ import {
 import LogoViecNgon from "@/components/LogoViecNgon";
 import { useAdminMetrics } from "@/hooks/admin/useAdminDashboard";
 import { useAdminUnreadNotificationCount } from "@/hooks/admin/useAdminNotifications";
+import { useAdminReviews } from "@/hooks/admin/useAdminReviews";
 
 interface NavItem {
   label: string;
@@ -41,6 +43,12 @@ const NAV_ITEMS: NavItem[] = [
     label: "Kiểm duyệt tin đăng",
     href: "/admin/jobs",
     icon: Briefcase,
+    badgeVariant: "danger",
+  },
+  {
+    label: "Kiểm duyệt đánh giá",
+    href: "/admin/reviews",
+    icon: MessageSquareQuote,
     badgeVariant: "danger",
   },
   {
@@ -75,6 +83,7 @@ export default function AdminSidebar() {
   const pathname = usePathname();
   const { data: metrics } = useAdminMetrics();
   const { data: unreadData } = useAdminUnreadNotificationCount();
+  const { data: reviewsSummary } = useAdminReviews({ tab: "CHO_DUYET" });
 
   const getDynamicBadge = (item: NavItem): string | number | undefined => {
     if (item.href === "/admin/users") {
@@ -86,6 +95,10 @@ export default function AdminSidebar() {
       return metrics?.pendingJobs?.count && metrics.pendingJobs.count > 0
         ? metrics.pendingJobs.count
         : undefined;
+    }
+    if (item.href === "/admin/reviews") {
+      const pendingCount = reviewsSummary?.counts?.pending ?? 0;
+      return pendingCount > 0 ? pendingCount : undefined;
     }
     if (item.href === "/admin/notifications") {
       return unreadData?.count && unreadData.count > 0

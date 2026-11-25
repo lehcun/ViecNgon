@@ -622,6 +622,7 @@ export class CompanyProfileService {
     const reviewWhere = {
       maDoiTuongDuocDanhGia: congTy.maCongTy,
       loaiDoiTuong: COMPANY_PROFILE_CONSTANTS.REVIEW_TARGET_COMPANY,
+      trangThai: 'DA_DUYET',
       deletedAt: null,
     };
 

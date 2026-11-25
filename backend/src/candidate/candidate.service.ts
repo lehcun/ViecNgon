@@ -961,6 +961,26 @@ export class CandidateService {
       where: { maUngVien: candidate.maUngVien },
       orderBy: { ngayNop: 'desc' },
       include: {
+        danhGias: {
+          where: {
+            loaiDoiTuong: 'UNGVIEN',
+            chiaSeUngVien: true,
+            deletedAt: null,
+          },
+          orderBy: { ngayDanhGia: 'desc' },
+          select: {
+            maDanhGia: true,
+            rating: true,
+            diemChuyenMon: true,
+            diemThaiDo: true,
+            diemGiaiQuyetVanDe: true,
+            diemPhuHopVanHoa: true,
+            ketQuaDanhGia: true,
+            tieuDe: true,
+            noiDung: true,
+            ngayDanhGia: true,
+          },
+        },
         congViec: {
           include: {
             nhaTuyenDung: {
@@ -988,6 +1008,18 @@ export class CandidateService {
         appliedDate: app.ngayNop,
         applicationStatus: app.trangThai,
         cvUrl: app.fileCvUrl,
+        sharedEvaluations: (app.danhGias ?? []).map((ev) => ({
+          id: ev.maDanhGia,
+          rating: Number(ev.rating ?? 0),
+          diemChuyenMon: ev.diemChuyenMon ?? 0,
+          diemThaiDo: ev.diemThaiDo ?? 0,
+          diemGiaiQuyetVanDe: ev.diemGiaiQuyetVanDe ?? 0,
+          diemPhuHopVanHoa: ev.diemPhuHopVanHoa ?? 0,
+          ketQuaDanhGia: ev.ketQuaDanhGia || 'CAN_NHAC',
+          tieuDe: ev.tieuDe ?? '',
+          noiDung: ev.noiDung ?? '',
+          createdAt: ev.ngayDanhGia.toISOString(),
+        })),
         job: {
           id: job.maCongViec,
           title: job.tenCongViec,

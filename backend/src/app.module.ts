@@ -21,6 +21,8 @@ import { AdminUsersModule } from './admin/users/admin-users.module';
 import { AdminJobsModule } from './admin/jobs/admin-jobs.module';
 import { AdminPackagesModule } from './admin/packages/admin-packages.module';
 import { AdminSkillsModule } from './admin/skills/admin-skills.module';
+import { AdminReviewsModule } from './admin/reviews/admin-reviews.module';
+import { ReviewsModule } from './reviews/reviews.module';
 import { AiModule } from './ai/ai.module';
 import { AiMatchModule } from './ai/ai-match.module';
 import { CvParserModule } from './cv-parser/cv-parser.module';
@@ -48,6 +50,8 @@ import { CvParserModule } from './cv-parser/cv-parser.module';
     AdminJobsModule,
     AdminPackagesModule,
     AdminSkillsModule,
+    AdminReviewsModule,
+    ReviewsModule,
     MailerModule.forRoot({
       transport: {
         host: process.env.MAIL_HOST,

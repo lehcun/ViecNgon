@@ -415,12 +415,20 @@ model DanhGia {
   ketQuaDanhGia      String? @db.VarChar(20) // DAT | CAN_NHAC | CHUA_PHU_HOP
   chiaSeUngVien      Boolean @default(false)
 
+  // Kiểm duyệt Admin & Báo cáo vi phạm từ Doanh nghiệp
+  trangThai  String    @default("DA_DUYET") @db.VarChar(20) // CHO_DUYET | DA_DUYET | TU_CHOI | DA_AN
+  lyDoTuChoi String?   @db.NVarChar(500)
+  biBaoCao   Boolean   @default(false)
+  lyDoBaoCao String?   @db.NVarChar(500)
+  ngayBaoCao DateTime?
+
   // Khóa ngoại
   maNguoiDanhGia String   @db.VarChar(50)
   nguoiDanhGia   TaiKhoan @relation(fields: [maNguoiDanhGia], references: [maTaiKhoan])
 
   @@index([maNguoiDanhGia, maDonThamChieu, loaiDoiTuong])
   @@index([maDoiTuongDuocDanhGia, loaiDoiTuong, ngayDanhGia])
+  @@index([loaiDoiTuong, trangThai, ngayDanhGia])
   @@map("DANHGIA")
 }
 

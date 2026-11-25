@@ -116,3 +116,12 @@ export function stripHtmlTags(
 
   return result.replace(/\s+/g, " ").trim();
 }
+
+export function sanitizeRichHtml(html: string | null | undefined): string {
+  if (!html) return "";
+  return html
+    .replace(/<(script|style|iframe|object|embed)[^>]*>[\s\S]*?<\/\1>/gi, "")
+    .replace(/<(script|style|iframe|object|embed)[^>]*\/?>/gi, "")
+    .replace(/\son[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, "")
+    .replace(/javascript:/gi, "");
+}

@@ -3,13 +3,28 @@ export type ReviewVerificationSource =
   | "KINH_NGHIEM_CV"
   | "EMAIL_CONG_TY";
 
+export type ReviewModerationStatus =
+  | "CHO_DUYET"
+  | "DA_DUYET"
+  | "TU_CHOI"
+  | "DA_AN";
+
 export interface CompanyReviewItem {
   id: string;
+  companyName?: string;
+  companyLogo?: string;
   authorName: string;
   authorRole: string;
   anDanh: boolean;
   daXacThuc: boolean;
   nguonXacThuc: ReviewVerificationSource;
+  trangThai: ReviewModerationStatus;
+  lyDoTuChoi?: string;
+  phanHoiCongTy?: string;
+  ngayPhanHoiCongTy?: string;
+  biBaoCao?: boolean;
+  lyDoBaoCao?: string;
+  ngayBaoCao?: string;
   rating: number;
   diemLuongPhucLoi: number;
   diemDaoTao: number;
@@ -96,11 +111,16 @@ export const EVAL_RESULT_META: Record<
 export const MOCK_COMPANY_REVIEWS: CompanyReviewItem[] = [
   {
     id: "mock-comp-rev-1",
+    companyName: "FPT Software",
     authorName: "Nguyễn Minh Tuấn",
     authorRole: "Senior Backend Engineer",
     anDanh: true,
     daXacThuc: true,
     nguonXacThuc: "TUYEN_DUNG_VIECNGON",
+    trangThai: "DA_DUYET",
+    phanHoiCongTy:
+      "Cảm ơn bạn đã chia sẻ những nhận xét tích cực! Ban quản lý dự án cũng đã ghi nhận góp ý về việc tinh gọn các buổi họp cuối quý để tối ưu thời gian tập trung cho đội ngũ kỹ sư.",
+    ngayPhanHoiCongTy: "2026-11-19T08:00:00.000Z",
     rating: 4.8,
     diemLuongPhucLoi: 5,
     diemDaoTao: 5,
@@ -120,11 +140,13 @@ export const MOCK_COMPANY_REVIEWS: CompanyReviewItem[] = [
   },
   {
     id: "mock-comp-rev-2",
+    companyName: "FPT Software",
     authorName: "Trần Thảo Vy",
     authorRole: "Middle Frontend Engineer",
     anDanh: false,
     daXacThuc: true,
     nguonXacThuc: "EMAIL_CONG_TY",
+    trangThai: "DA_DUYET",
     rating: 4.4,
     diemLuongPhucLoi: 4,
     diemDaoTao: 5,
@@ -144,11 +166,13 @@ export const MOCK_COMPANY_REVIEWS: CompanyReviewItem[] = [
   },
   {
     id: "mock-comp-rev-3",
+    companyName: "FPT Software",
     authorName: "Lê Hoàng Anh",
     authorRole: "QA Automation Engineer",
     anDanh: true,
     daXacThuc: true,
     nguonXacThuc: "KINH_NGHIEM_CV",
+    trangThai: "DA_DUYET",
     rating: 3.6,
     diemLuongPhucLoi: 4,
     diemDaoTao: 3,
