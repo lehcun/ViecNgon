@@ -621,12 +621,13 @@ export class CompanyService {
       throw new NotFoundException('Không tìm thấy thông tin công ty này');
     }
 
-    // Bước 2: Truy vấn đánh giá của công ty (bảng DANHGIA)
+    // Bước 2: Truy vấn đánh giá công khai đã duyệt của công ty (bảng DANHGIA)
     const rawReviews =
       (await this.prisma.danhGia.findMany({
         where: {
           maDoiTuongDuocDanhGia: company.maCongTy,
           loaiDoiTuong: 'CONGTY',
+          trangThai: 'DA_DUYET',
           deletedAt: null,
         },
         orderBy: { ngayDanhGia: 'desc' },
