@@ -9,22 +9,21 @@ import {
   Eye,
   Clock,
   Sparkles,
-  BadgeCheck,
 } from "lucide-react";
+import type {
+  AdminReviewListItem,
+  ReviewModerationStatus,
+} from "@viecngon/types";
 import { CompanyLogo } from "@/components/ui/CompanyLogo";
 import StarRatingInput from "@/components/reviews/StarRatingInput";
 import { REVIEW_STATUS_META } from "@/data/admin-reviews.mock";
-import type {
-  CompanyReviewItem,
-  ReviewModerationStatus,
-} from "@/data/reviews.mock";
 import { cn } from "@/lib/utils";
 
 interface AdminReviewCardProps {
-  review: CompanyReviewItem;
-  onViewDetail: (review: CompanyReviewItem) => void;
-  onApprove: (review: CompanyReviewItem) => void;
-  onRejectOrHide: (review: CompanyReviewItem, mode: "TU_CHOI" | "DA_AN") => void;
+  review: AdminReviewListItem;
+  onViewDetail: (review: AdminReviewListItem) => void;
+  onApprove: (review: AdminReviewListItem) => void;
+  onRejectOrHide: (review: AdminReviewListItem, mode: "TU_CHOI" | "DA_AN") => void;
 }
 
 const STATUS_ACCENT_BORDER: Record<ReviewModerationStatus, string> = {
@@ -89,23 +88,12 @@ export default function AdminReviewCard({
               </span>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2.5">
-              <StarRatingInput
-                value={review.rating}
-                readOnly
-                size="sm"
-                showValue
-              />
-              {review.daXacThuc && (
-                <span
-                  title="Đánh giá đã được xác thực nguồn gốc"
-                  className="inline-flex items-center gap-1 text-[11px] font-medium text-text-muted"
-                >
-                  <BadgeCheck size={14} className="text-primary shrink-0" />
-                  <span>Xác thực</span>
-                </span>
-              )}
-            </div>
+            <StarRatingInput
+              value={review.rating}
+              readOnly
+              size="sm"
+              showValue
+            />
           </div>
         </div>
 

@@ -3,31 +3,28 @@
 import React, { useState } from "react";
 import {
   X,
-  Building2,
-  ShieldCheck,
   Flag,
   ThumbsUp,
   Clock,
   CheckCircle2,
   XCircle,
   EyeOff,
+  Loader2,
 } from "lucide-react";
+import type { AdminReviewListItem } from "@viecngon/types";
 import { Button } from "@/components/ui/Button";
+import { CompanyLogo } from "@/components/ui/CompanyLogo";
 import StarRatingInput from "@/components/reviews/StarRatingInput";
-import {
-  COMPANY_CRITERIA_META,
-  VERIFICATION_SOURCE_LABEL,
-  type CompanyReviewItem,
-} from "@/data/reviews.mock";
+import { COMPANY_CRITERIA_META } from "@/data/reviews.mock";
 import { REVIEW_STATUS_META } from "@/data/admin-reviews.mock";
 import { formatDateVN } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 
 interface AdminReviewDetailModalProps {
-  review: CompanyReviewItem | null;
+  review: AdminReviewListItem | null;
   onClose: () => void;
-  onApprove: (review: CompanyReviewItem) => void;
-  onReject: (review: CompanyReviewItem, mode: "TU_CHOI" | "DA_AN") => void;
+  onApprove: (review: AdminReviewListItem) => void;
+  onReject: (review: AdminReviewListItem, mode: "TU_CHOI" | "DA_AN") => void;
 }
 
 export function AdminReviewDetailModal({
@@ -49,31 +46,31 @@ export function AdminReviewDetailModal({
     >
       <div className="bg-surface-card border border-border-default rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
         <div className="px-6 py-4 border-b border-border-default flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 text-sm font-bold text-primary">
-                <Building2 size={15} />
-                {review.companyName || "Doanh nghiệp"}
-              </span>
-              <span
-                className={cn(
-                  "px-2.5 py-0.5 rounded-full text-xs font-semibold",
-                  statusMeta.badgeClass,
-                )}
-              >
-                {statusMeta.label}
-              </span>
-              {review.biBaoCao && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-danger-light text-danger-text border border-danger-border">
-                  <Flag size={11} />
-                  Bị công ty báo cáo
+          <div className="flex items-center gap-3 min-w-0">
+            <CompanyLogo
+              src={review.companyLogo}
+              name={review.companyName}
+              size="sm"
+              className="p-1 bg-white"
+            />
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-bold text-text-primary truncate">
+                  {review.companyName}
                 </span>
-              )}
+                <span
+                  className={cn(
+                    "px-2.5 py-0.5 rounded-full text-xs font-semibold",
+                    statusMeta.badgeClass,
+                  )}
+                >
+                  {statusMeta.label}
+                </span>
+              </div>
+              <p className="text-xs text-text-muted mt-0.5">
+                Gửi ngày {formatDateVN(review.createdAt)} · Đánh giá ẩn danh
+              </p>
             </div>
-            <p className="text-xs text-text-muted mt-1">
-              Tác giả: {review.anDanh ? `${review.authorName} (Ẩn danh công khai)` : review.authorName} ·{" "}
-              {review.authorRole} · {formatDateVN(review.createdAt)}
-            </p>
           </div>
           <button
             type="button"
@@ -86,7 +83,6 @@ export function AdminReviewDetailModal({
         </div>
 
         <div className="p-6 overflow-y-auto space-y-4">
-          {/* Cảnh báo nếu bị công ty báo cáo */}
           {review.biBaoCao && review.lyDoBaoCao && (
             <div className="rounded-xl bg-danger-soft border border-danger-border p-4 space-y-1">
               <p className="text-xs font-bold text-danger-text flex items-center gap-1.5">
@@ -99,7 +95,6 @@ export function AdminReviewDetailModal({
             </div>
           )}
 
-          {/* Lý do từ chối / ẩn nếu có */}
           {review.lyDoTuChoi && (
             <div className="rounded-xl bg-warning-soft border border-warning-border p-4 space-y-1">
               <p className="text-xs font-bold text-warning-text">
@@ -109,19 +104,22 @@ export function AdminReviewDetailModal({
             </div>
           )}
 
-          {/* Tiêu đề + Sao + Nguồn xác thực */}
           <div className="space-y-2">
-            <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-3">
               <StarRatingInput
                 value={review.rating}
                 readOnly
                 size="md"
                 showValue
               />
-              {review.daXacThuc && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-success-soft text-success-text border border-success-border">
-                  <ShieldCheck size={13} />
-                  {VERIFICATION_SOURCE_LABEL[review.nguonXacThuc]}
+              {review.khuyenLamViec && (
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-success-text">
+                  <ThumbsUp size={13} /> Khuyên làm việc
+                </span>
+              )}
+              {review.coOtTot && (
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-info-text">
+                  <Clock size={13} /> Chính sách OT hợp lý
                 </span>
               )}
             </div>
@@ -135,7 +133,6 @@ export function AdminReviewDetailModal({
             )}
           </div>
 
-          {/* 5 tiêu chí chi tiết */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 rounded-xl bg-surface-page border border-border-default p-4">
             {COMPANY_CRITERIA_META.map((crit) => (
               <div
@@ -152,7 +149,6 @@ export function AdminReviewDetailModal({
             ))}
           </div>
 
-          {/* Điểm cộng / Cần cải thiện */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {review.noiDungUuDiem && (
               <div className="rounded-lg bg-success-soft/60 border border-success-border/70 p-3.5 text-xs text-text-secondary space-y-1">
@@ -167,28 +163,6 @@ export function AdminReviewDetailModal({
               </div>
             )}
           </div>
-
-          <div className="flex flex-wrap items-center gap-4 text-xs pt-1">
-            {review.khuyenLamViec && (
-              <span className="inline-flex items-center gap-1 font-medium text-success-text">
-                <ThumbsUp size={13} /> Khuyên làm việc
-              </span>
-            )}
-            {review.coOtTot && (
-              <span className="inline-flex items-center gap-1 font-medium text-info-text">
-                <Clock size={13} /> Chính sách OT hợp lý
-              </span>
-            )}
-          </div>
-
-          {review.phanHoiCongTy && (
-            <div className="rounded-lg bg-primary-light/50 border border-primary-subtle p-3.5 space-y-1 text-xs">
-              <p className="font-bold text-primary">
-                Phản hồi chính thức từ doanh nghiệp
-              </p>
-              <p className="text-text-secondary">{review.phanHoiCongTy}</p>
-            </div>
-          )}
         </div>
 
         <div className="px-6 py-4 border-t border-border-default bg-surface-page flex flex-wrap items-center justify-end gap-2.5">
@@ -235,6 +209,7 @@ interface AdminReviewRejectModalProps {
   open: boolean;
   mode: "TU_CHOI" | "DA_AN";
   reviewTitle: string;
+  isSubmitting?: boolean;
   onClose: () => void;
   onConfirm: (reason: string) => void;
 }
@@ -243,6 +218,7 @@ export function AdminReviewRejectModal({
   open,
   mode,
   reviewTitle,
+  isSubmitting = false,
   onClose,
   onConfirm,
 }: AdminReviewRejectModalProps) {
@@ -260,7 +236,6 @@ export function AdminReviewRejectModal({
       return;
     }
     onConfirm(reason.trim());
-    onClose();
   };
 
   return (
@@ -277,6 +252,7 @@ export function AdminReviewRejectModal({
           </h3>
           <button
             type="button"
+            disabled={isSubmitting}
             onClick={onClose}
             aria-label="Đóng hộp thoại"
             className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-muted"
@@ -313,10 +289,22 @@ export function AdminReviewRejectModal({
             <p className="text-xs font-medium text-danger-text">{errorMsg}</p>
           )}
           <div className="flex items-center justify-end gap-2.5 pt-2">
-            <Button type="button" variant="secondary" size="sm" onClick={onClose}>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={isSubmitting}
+              onClick={onClose}
+            >
               Hủy
             </Button>
-            <Button type="submit" variant="danger" size="sm">
+            <Button
+              type="submit"
+              variant="danger"
+              size="sm"
+              disabled={isSubmitting}
+            >
+              {isSubmitting && <Loader2 size={14} className="animate-spin" />}
               {isHide ? "Xác nhận ẩn bài" : "Xác nhận từ chối"}
             </Button>
           </div>

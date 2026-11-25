@@ -8,10 +8,10 @@ import {
   TrendingUp,
   MessageSquareQuote,
 } from "lucide-react";
-import {
-  ADMIN_REVIEWS_GROWTH_MOCK,
-  type AdminKpiPeriod,
-} from "@/data/admin-reviews.mock";
+import type {
+  AdminReviewGrowthBucket,
+  AdminReviewKpiPeriod,
+} from "@viecngon/types";
 import { cn } from "@/lib/utils";
 
 interface AdminReviewsKpiBarProps {
@@ -21,16 +21,18 @@ interface AdminReviewsKpiBarProps {
     reported: number;
     approved: number;
   };
-  period: AdminKpiPeriod;
-  onPeriodChange: (period: AdminKpiPeriod) => void;
+  growth: Record<AdminReviewKpiPeriod, AdminReviewGrowthBucket>;
+  period: AdminReviewKpiPeriod;
+  onPeriodChange: (period: AdminReviewKpiPeriod) => void;
 }
 
 export default function AdminReviewsKpiBar({
   counts,
+  growth,
   period,
   onPeriodChange,
 }: AdminReviewsKpiBarProps) {
-  const growth = ADMIN_REVIEWS_GROWTH_MOCK[period];
+  const activeGrowth = growth[period];
   const periodLabel =
     period === "today"
       ? "hôm nay"
@@ -42,7 +44,7 @@ export default function AdminReviewsKpiBar({
     {
       label: "Tổng đánh giá",
       value: counts.total,
-      delta: growth.total,
+      delta: activeGrowth.total,
       border: "border-border-default",
       titleClass: "text-text-muted",
       valueClass: "text-text-primary",
@@ -52,7 +54,7 @@ export default function AdminReviewsKpiBar({
     {
       label: "Chờ duyệt",
       value: counts.pending,
-      delta: growth.pending,
+      delta: activeGrowth.pending,
       border: "border-warning-border",
       titleClass: "text-warning-text",
       valueClass: "text-warning-text",
@@ -62,7 +64,7 @@ export default function AdminReviewsKpiBar({
     {
       label: "Bị công ty báo cáo",
       value: counts.reported,
-      delta: growth.reported,
+      delta: activeGrowth.reported,
       border: "border-danger-border",
       titleClass: "text-danger-text",
       valueClass: "text-danger-text",
@@ -72,7 +74,7 @@ export default function AdminReviewsKpiBar({
     {
       label: "Đang hiển thị",
       value: counts.approved,
-      delta: growth.approved,
+      delta: activeGrowth.approved,
       border: "border-success-border",
       titleClass: "text-success-text",
       valueClass: "text-success-text",

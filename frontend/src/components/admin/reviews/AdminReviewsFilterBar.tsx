@@ -5,7 +5,6 @@ import {
   Search,
   Star,
   Calendar,
-  ShieldCheck,
   RotateCcw,
   Clock,
   Flag,
@@ -13,30 +12,18 @@ import {
   XCircle,
   LayoutList,
 } from "lucide-react";
+import type {
+  AdminReviewDatePreset,
+  AdminReviewFilterTab,
+} from "@viecngon/types";
 import { cn } from "@/lib/utils";
-
-export type AdminReviewFilterTab =
-  | "ALL"
-  | "CHO_DUYET"
-  | "REPORTED"
-  | "DA_DUYET"
-  | "REJECTED";
-
-export type DatePresetFilter =
-  | "ALL"
-  | "TODAY"
-  | "LAST_7_DAYS"
-  | "LAST_30_DAYS"
-  | "THIS_MONTH"
-  | "CUSTOM";
 
 export interface AdminReviewsFiltersState {
   searchQuery: string;
   starFilter: string;
-  datePreset: DatePresetFilter;
+  datePreset: AdminReviewDatePreset;
   dateFrom: string;
   dateTo: string;
-  verifiedFilter: "ALL" | "VERIFIED" | "UNVERIFIED";
 }
 
 interface AdminReviewsFilterBarProps {
@@ -162,9 +149,9 @@ export default function AdminReviewsFilterBar({
         })}
       </div>
 
-      {/* Hàng 2: Bộ lọc chi tiết (Tìm kiếm, Số sao, Ngày, Xác thực) */}
+      {/* Hàng 2: Bộ lọc chi tiết (Tìm kiếm, Số sao, Ngày) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2.5 items-center">
-        <div className="relative lg:col-span-4">
+        <div className="relative lg:col-span-5">
           <Search
             size={15}
             className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
@@ -178,7 +165,7 @@ export default function AdminReviewsFilterBar({
           />
         </div>
 
-        <div className="relative lg:col-span-2">
+        <div className="relative lg:col-span-3">
           <Star
             size={14}
             className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-400 pointer-events-none"
@@ -198,52 +185,28 @@ export default function AdminReviewsFilterBar({
           </select>
         </div>
 
-        <div className="relative lg:col-span-3">
-          <Calendar
-            size={14}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
-          />
-          <select
-            aria-label="Lọc theo thời gian"
-            value={filters.datePreset}
-            onChange={(e) =>
-              onFilterChange({
-                datePreset: e.target.value as DatePresetFilter,
-              })
-            }
-            className="w-full h-9 pl-8 pr-3 rounded-lg border border-border-default bg-surface-page text-xs font-medium text-text-primary focus:outline-none focus:bg-surface-card focus:border-primary cursor-pointer"
-          >
-            <option value="ALL">Tất cả thời gian</option>
-            <option value="TODAY">Hôm nay</option>
-            <option value="LAST_7_DAYS">7 ngày gần đây</option>
-            <option value="LAST_30_DAYS">30 ngày gần đây</option>
-            <option value="THIS_MONTH">Trong tháng này</option>
-            <option value="CUSTOM">Chọn khoảng ngày...</option>
-          </select>
-        </div>
-
-        <div className="relative lg:col-span-3 flex items-center gap-2">
+        <div className="relative lg:col-span-4 flex items-center gap-2">
           <div className="relative flex-1">
-            <ShieldCheck
+            <Calendar
               size={14}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-success-text pointer-events-none"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
             />
             <select
-              aria-label="Lọc theo trạng thái xác thực"
-              value={filters.verifiedFilter}
+              aria-label="Lọc theo thời gian"
+              value={filters.datePreset}
               onChange={(e) =>
                 onFilterChange({
-                  verifiedFilter: e.target.value as
-                    | "ALL"
-                    | "VERIFIED"
-                    | "UNVERIFIED",
+                  datePreset: e.target.value as AdminReviewDatePreset,
                 })
               }
               className="w-full h-9 pl-8 pr-3 rounded-lg border border-border-default bg-surface-page text-xs font-medium text-text-primary focus:outline-none focus:bg-surface-card focus:border-primary cursor-pointer"
             >
-              <option value="ALL">Mọi mức xác thực</option>
-              <option value="VERIFIED">Đã xác thực</option>
-              <option value="UNVERIFIED">Chưa xác thực</option>
+              <option value="ALL">Tất cả thời gian</option>
+              <option value="TODAY">Hôm nay</option>
+              <option value="LAST_7_DAYS">7 ngày gần đây</option>
+              <option value="LAST_30_DAYS">30 ngày gần đây</option>
+              <option value="THIS_MONTH">Trong tháng này</option>
+              <option value="CUSTOM">Chọn khoảng ngày...</option>
             </select>
           </div>
 
