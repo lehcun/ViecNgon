@@ -59,7 +59,7 @@ export default function EmployerPricingPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-7xl mx-auto py-8 space-y-10">
+      <div className="max-w-7xl mx-auto p-6 md:p-8 space-y-10">
         <div className="max-w-xl mx-auto text-center space-y-3 animate-pulse">
           <div className="h-6 w-48 bg-surface-subtle rounded-full mx-auto" />
           <div className="h-9 w-3/4 bg-surface-subtle rounded mx-auto" />
@@ -88,7 +88,7 @@ export default function EmployerPricingPage() {
   }
 
   return (
-    <div className="py-8 px-2 sm:px-4">
+    <div className="max-w-7xl mx-auto p-6 md:p-8">
       {/* Header Page */}
       <div className="max-w-4xl mx-auto text-center mb-12">
         <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-semibold bg-primary-light text-primary border border-primary/20 mb-3">

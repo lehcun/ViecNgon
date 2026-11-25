@@ -94,9 +94,9 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
           </nav>
         </div>
 
-        {/* Phải: Nhà tuyển dụng + Thông báo + Tài khoản */}
+        {/* Phải: Nhà tuyển dụng (chỉ hiện với khách vãng lai) + Thông báo + Tài khoản */}
         <div className="flex items-center gap-3 sm:gap-4">
-          {!isEmployer && !isAdmin && (
+          {!isCheckingAuth && !isAuthenticated && (
             <Link
               href="/employer/login"
               target="_blank"

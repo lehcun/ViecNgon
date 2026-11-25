@@ -359,7 +359,7 @@ export class ApplicationsService {
       throw new NotFoundException('Không tìm thấy đơn xin việc');
     const candidateEmail = application.ungVien.taiKhoan.email;
 
-    // 2. Gọi Google Calendar API để sinh link Meet
+    // 2. Gọi Google Calendar API để sinh link Meet (có fallback an toàn nếu token hết hạn)
     const googleEvent = await this.googleCalendarService.createInterviewEvent(
       dto.tieuDe,
       dto.moTa || '',
@@ -372,7 +372,7 @@ export class ApplicationsService {
     const meetLink = googleEvent.hangoutLink || null;
 
     // 3. Lưu vào Database (Sử dụng Transaction để toàn vẹn dữ liệu)
-    return await this.prisma.$transaction(async (tx) => {
+    const newInterview = await this.prisma.$transaction(async (tx) => {
       // Cập nhật trạng thái đơn thành "Phỏng vấn"
       await tx.donXinViec.update({
         where: { maDon },
@@ -380,7 +380,7 @@ export class ApplicationsService {
       });
 
       // Tạo lịch vào bảng LICHPHONGVAN
-      const newInterview = await tx.lichPhongVan.create({
+      const createdInterview = await tx.lichPhongVan.create({
         data: {
           maDon: maDon,
           thoiGian: new Date(dto.thoiGian),
@@ -393,13 +393,21 @@ export class ApplicationsService {
       await tx.thongBao.create({
         data: {
           tieuDe: `Lịch phỏng vấn mới: ${dto.tieuDe}`,
-          noiDung: `Bạn có một lịch phỏng vấn vào lúc ${new Date(dto.thoiGian).toLocaleString()}. Vui lòng kiểm tra email để lấy link tham gia.`,
+          noiDung: meetLink
+            ? `Bạn có một lịch phỏng vấn vào lúc ${new Date(dto.thoiGian).toLocaleString('vi-VN')}. Vui lòng kiểm tra email để lấy link tham gia.`
+            : `Bạn có một lịch phỏng vấn vào lúc ${new Date(dto.thoiGian).toLocaleString('vi-VN')}. Nhà tuyển dụng sẽ gửi thông tin chi tiết phòng họp tới bạn.`,
           trangThai: 'CHUA_DOC',
           maTaiKhoan: application.ungVien.maTaiKhoan,
         },
       });
 
-      return newInterview;
+      return createdInterview;
     });
+
+    return {
+      ...newInterview,
+      calendarSynced: googleEvent.calendarSynced,
+      ...(googleEvent.warning ? { warning: googleEvent.warning } : {}),
+    };
   }
 }

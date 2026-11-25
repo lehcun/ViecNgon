@@ -49,7 +49,7 @@ export default function ApplicationDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-6xl mx-auto pb-12 space-y-6">
+      <div className="max-w-6xl mx-auto p-6 md:p-8 pb-12 space-y-6">
         <div className="h-5 w-48 bg-surface-subtle rounded animate-pulse" />
         <DetailPaneSkeleton />
       </div>
@@ -58,7 +58,7 @@ export default function ApplicationDetailPage() {
 
   if (isError || !application) {
     return (
-      <div className="max-w-6xl mx-auto py-8">
+      <div className="max-w-6xl mx-auto p-6 md:p-8">
         <div className="bg-surface-card border border-border-default rounded-xl p-6">
           <ErrorState
             title="Không tìm thấy hồ sơ ứng tuyển"
@@ -83,7 +83,7 @@ export default function ApplicationDetailPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto pb-14 space-y-6">
+    <div className="max-w-6xl mx-auto p-6 md:p-8 pb-14 space-y-6">
       {/* Breadcrumb Back */}
       <div>
         <Link

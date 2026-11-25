@@ -134,7 +134,7 @@ export default function JobCard({
           {/* Mũi tên tam giác chỉ sang pane chi tiết bên phải */}
           <span
             aria-hidden="true"
-            className="hidden lg:block absolute -right-2.5 top-1/2 -translate-y-1/2 w-0 h-0 border-y-[10px] border-y-transparent border-l-[10px] border-l-primary z-20"
+            className="hidden lg:block absolute -right-2.5 top-1/2 -translate-y-1/2 w-0 h-0 border-y-10 border-y-transparent border-l-10px border-l-primary z-20"
           />
         </>
       )}

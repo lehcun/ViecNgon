@@ -75,7 +75,7 @@ export default function PostJobPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto pb-12 pt-4">
+    <div className="max-w-5xl mx-auto p-6 md:p-8 pb-12">
       <div className="mb-6">
         <Link
           href="/employer-dashboard"
