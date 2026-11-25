@@ -2,14 +2,12 @@
 
 import React, { useMemo, useState } from "react";
 import { Star, ChevronDown, ChevronUp } from "lucide-react";
-import {
-  COMPANY_CRITERIA_META,
-  type CompanyReviewItem,
-} from "@/data/reviews.mock";
+import type { PublicCompanyReviewItem } from "@viecngon/types";
+import { COMPANY_CRITERIA_META } from "@/data/reviews.mock";
 import { cn } from "@/lib/utils";
 
 interface CompanyReviewsSummaryCardProps {
-  reviews: CompanyReviewItem[];
+  reviews: PublicCompanyReviewItem[];
 }
 
 type CriteriaKey = (typeof COMPANY_CRITERIA_META)[number]["key"];

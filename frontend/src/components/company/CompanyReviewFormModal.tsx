@@ -1,22 +1,19 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, ShieldCheck, ThumbsUp, Clock } from "lucide-react";
-import toast from "react-hot-toast";
+import { X, ShieldCheck, ThumbsUp, Clock, Loader2 } from "lucide-react";
+import type { CreateCompanyReviewPayload } from "@viecngon/types";
 import { Button } from "@/components/ui/Button";
 import StarRatingInput from "@/components/reviews/StarRatingInput";
-import {
-  COMPANY_CRITERIA_META,
-  type CompanyReviewItem,
-} from "@/data/reviews.mock";
+import { COMPANY_CRITERIA_META } from "@/data/reviews.mock";
 
 interface CompanyReviewFormModalProps {
   isOpen: boolean;
   companyName: string;
-  authorName?: string;
   initialRating?: number;
+  isSubmitting?: boolean;
   onClose: () => void;
-  onSubmitMock: (review: CompanyReviewItem) => void;
+  onSubmitReview: (payload: CreateCompanyReviewPayload) => void;
 }
 
 type CriteriaKey = (typeof COMPANY_CRITERIA_META)[number]["key"];
@@ -24,10 +21,10 @@ type CriteriaKey = (typeof COMPANY_CRITERIA_META)[number]["key"];
 export default function CompanyReviewFormModal({
   isOpen,
   companyName,
-  authorName = "Ứng viên ViecNgon",
   initialRating = 5,
+  isSubmitting = false,
   onClose,
-  onSubmitMock,
+  onSubmitReview,
 }: CompanyReviewFormModalProps) {
   const safeInitial = Math.min(5, Math.max(1, Math.round(initialRating)));
   const [criteria, setCriteria] = useState<Record<CriteriaKey, number>>({
@@ -65,31 +62,15 @@ export default function CompanyReviewFormModal({
       return;
     }
 
-    const newReview: CompanyReviewItem = {
-      id: `mock-comp-rev-${Date.now()}`,
-      companyName,
-      authorName,
-      authorRole: "Kỹ sư IT",
-      anDanh: true,
-      daXacThuc: true,
-      nguonXacThuc: "TUYEN_DUNG_VIECNGON",
-      trangThai: "CHO_DUYET",
-      rating: avgRating,
+    onSubmitReview({
       ...criteria,
       khuyenLamViec,
       coOtTot,
       tieuDe: tieuDe.trim(),
-      noiDung: noiDung.trim(),
-      noiDungUuDiem: noiDungUuDiem.trim(),
-      noiDungCaiThien: noiDungCaiThien.trim(),
-      createdAt: new Date().toISOString(),
-    };
-
-    onSubmitMock(newReview);
-    toast.success(
-      "Đã gửi đánh giá! Bài viết đang chờ Quản trị viên kiểm duyệt trước khi hiển thị công khai.",
-    );
-    onClose();
+      noiDung: noiDung.trim() || undefined,
+      noiDungUuDiem: noiDungUuDiem.trim() || undefined,
+      noiDungCaiThien: noiDungCaiThien.trim() || undefined,
+    });
   };
 
   return (
@@ -294,10 +275,22 @@ export default function CompanyReviewFormModal({
               Mọi đánh giá đều được đăng ẩn danh hoàn toàn để bảo vệ danh tính
             </span>
             <div className="flex items-center gap-2.5 ml-auto">
-              <Button type="button" variant="secondary" size="md" onClick={onClose}>
+              <Button
+                type="button"
+                variant="secondary"
+                size="md"
+                disabled={isSubmitting}
+                onClick={onClose}
+              >
                 Hủy
               </Button>
-              <Button type="submit" variant="primary" size="md">
+              <Button
+                type="submit"
+                variant="primary"
+                size="md"
+                disabled={isSubmitting}
+              >
+                {isSubmitting && <Loader2 size={15} className="animate-spin" />}
                 Gửi đánh giá
               </Button>
             </div>

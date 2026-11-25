@@ -10,23 +10,21 @@ import {
   MessageSquareText,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { EmptyState } from "@/components/ui/StateViews";
+import { EmptyState, ErrorState } from "@/components/ui/StateViews";
 import StarRatingInput from "@/components/reviews/StarRatingInput";
 import CandidateEvaluationModal from "./CandidateEvaluationModal";
+import { CANDIDATE_CRITERIA_META, EVAL_RESULT_META } from "@/data/reviews.mock";
 import {
-  CANDIDATE_CRITERIA_META,
-  EVAL_RESULT_META,
-  MOCK_CANDIDATE_EVALUATIONS,
-  type CandidateEvaluationItem,
-} from "@/data/reviews.mock";
+  useCandidateEvaluations,
+  useCreateCandidateEvaluation,
+} from "@/hooks/reviews/useCandidateEvaluations";
 import { formatDateVN } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 
 interface CandidateEvaluationCardProps {
+  applicationId: string;
   candidateName: string;
   jobTitle: string;
-  evaluatorName?: string;
-  isLoading?: boolean;
 }
 
 export function CandidateEvaluationSkeleton() {
@@ -47,14 +45,19 @@ export function CandidateEvaluationSkeleton() {
 }
 
 export default function CandidateEvaluationCard({
+  applicationId,
   candidateName,
   jobTitle,
-  evaluatorName,
-  isLoading = false,
 }: CandidateEvaluationCardProps) {
-  const [evaluations, setEvaluations] = useState<CandidateEvaluationItem[]>(
-    MOCK_CANDIDATE_EVALUATIONS,
-  );
+  const {
+    data: evaluations = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useCandidateEvaluations(applicationId);
+  const createMutation = useCreateCandidateEvaluation(applicationId);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalKey, setModalKey] = useState(0);
 
@@ -72,40 +75,34 @@ export default function CandidateEvaluationCard({
       };
     }
 
+    const avgOf = (
+      getter: (item: (typeof evaluations)[number]) => number,
+    ) => Number((evaluations.reduce((s, i) => s + getter(i), 0) / count).toFixed(1));
+
     return {
-      avg: Number(
-        (evaluations.reduce((s, item) => s + item.rating, 0) / count).toFixed(
-          1,
-        ),
-      ),
+      avg: avgOf((i) => i.rating),
       criteriaAvg: {
-        diemChuyenMon: Number(
-          (
-            evaluations.reduce((s, item) => s + item.diemChuyenMon, 0) / count
-          ).toFixed(1),
-        ),
-        diemThaiDo: Number(
-          (
-            evaluations.reduce((s, item) => s + item.diemThaiDo, 0) / count
-          ).toFixed(1),
-        ),
-        diemGiaiQuyetVanDe: Number(
-          (
-            evaluations.reduce((s, item) => s + item.diemGiaiQuyetVanDe, 0) /
-            count
-          ).toFixed(1),
-        ),
-        diemPhuHopVanHoa: Number(
-          (
-            evaluations.reduce((s, item) => s + item.diemPhuHopVanHoa, 0) /
-            count
-          ).toFixed(1),
-        ),
+        diemChuyenMon: avgOf((i) => i.diemChuyenMon),
+        diemThaiDo: avgOf((i) => i.diemThaiDo),
+        diemGiaiQuyetVanDe: avgOf((i) => i.diemGiaiQuyetVanDe),
+        diemPhuHopVanHoa: avgOf((i) => i.diemPhuHopVanHoa),
       },
     };
   }, [evaluations]);
 
   if (isLoading) return <CandidateEvaluationSkeleton />;
+
+  if (isError) {
+    return (
+      <section className="bg-surface-card border border-border-default rounded-xl p-6">
+        <ErrorState
+          title="Không thể tải phiếu đánh giá ứng viên"
+          message={error?.message || "Vui lòng thử lại."}
+          onRetry={() => void refetch()}
+        />
+      </section>
+    );
+  }
 
   const handleOpenModal = () => {
     setModalKey((prev) => prev + 1);
@@ -128,8 +125,8 @@ export default function CandidateEvaluationCard({
             )}
           </h2>
           <p className="text-xs text-text-muted mt-1">
-            Tổng hợp điểm phỏng vấn theo 4 tiêu chí và ghi chú nội bộ của hội
-            đồng tuyển dụng.
+            Tổng hợp điểm phỏng vấn theo 4 tiêu chí và ghi chú của hội đồng
+            tuyển dụng.
           </p>
         </div>
 
@@ -282,9 +279,13 @@ export default function CandidateEvaluationCard({
         isOpen={isModalOpen}
         candidateName={candidateName}
         jobTitle={jobTitle}
-        evaluatorName={evaluatorName}
+        isSubmitting={createMutation.isPending}
         onClose={() => setIsModalOpen(false)}
-        onSubmitMock={(newEval) => setEvaluations((prev) => [newEval, ...prev])}
+        onSubmitEvaluation={(payload) => {
+          createMutation.mutate(payload, {
+            onSuccess: () => setIsModalOpen(false),
+          });
+        }}
       />
     </section>
   );

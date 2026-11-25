@@ -1,15 +1,16 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, Eye, Lock, ClipboardCheck } from "lucide-react";
-import toast from "react-hot-toast";
+import { X, Eye, Lock, ClipboardCheck, Loader2 } from "lucide-react";
+import type {
+  CandidateEvalResult,
+  CreateCandidateEvaluationPayload,
+} from "@viecngon/types";
 import { Button } from "@/components/ui/Button";
 import StarRatingInput from "@/components/reviews/StarRatingInput";
 import {
   CANDIDATE_CRITERIA_META,
   EVAL_RESULT_META,
-  type CandidateEvalResult,
-  type CandidateEvaluationItem,
 } from "@/data/reviews.mock";
 import { cn } from "@/lib/utils";
 
@@ -17,9 +18,9 @@ interface CandidateEvaluationModalProps {
   isOpen: boolean;
   candidateName: string;
   jobTitle: string;
-  evaluatorName?: string;
+  isSubmitting?: boolean;
   onClose: () => void;
-  onSubmitMock: (evaluation: CandidateEvaluationItem) => void;
+  onSubmitEvaluation: (payload: CreateCandidateEvaluationPayload) => void;
 }
 
 type EvalCriteriaKey = (typeof CANDIDATE_CRITERIA_META)[number]["key"];
@@ -28,9 +29,9 @@ export default function CandidateEvaluationModal({
   isOpen,
   candidateName,
   jobTitle,
-  evaluatorName = "Nhà tuyển dụng",
+  isSubmitting = false,
   onClose,
-  onSubmitMock,
+  onSubmitEvaluation,
 }: CandidateEvaluationModalProps) {
   const [criteria, setCriteria] = useState<Record<EvalCriteriaKey, number>>({
     diemChuyenMon: 4,
@@ -65,22 +66,13 @@ export default function CandidateEvaluationModal({
       return;
     }
 
-    const newEval: CandidateEvaluationItem = {
-      id: `mock-cand-eval-${Date.now()}`,
-      evaluatorName,
-      evaluatorRole: "Người phỏng vấn (HR / Hiring Manager)",
-      rating: avgRating,
+    onSubmitEvaluation({
       ...criteria,
       ketQuaDanhGia,
       tieuDe: tieuDe.trim(),
       noiDung: noiDung.trim(),
       chiaSeUngVien,
-      createdAt: new Date().toISOString(),
-    };
-
-    onSubmitMock(newEval);
-    toast.success("Đã lưu phiếu đánh giá ứng viên (dữ liệu mock tạm thời)!");
-    onClose();
+    });
   };
 
   return (
@@ -269,10 +261,22 @@ export default function CandidateEvaluationModal({
 
           {/* Footer */}
           <div className="pt-3 border-t border-border-default flex items-center justify-end gap-2.5">
-            <Button type="button" variant="secondary" size="md" onClick={onClose}>
+            <Button
+              type="button"
+              variant="secondary"
+              size="md"
+              disabled={isSubmitting}
+              onClick={onClose}
+            >
               Hủy
             </Button>
-            <Button type="submit" variant="primary" size="md">
+            <Button
+              type="submit"
+              variant="primary"
+              size="md"
+              disabled={isSubmitting}
+            >
+              {isSubmitting && <Loader2 size={15} className="animate-spin" />}
               Lưu đánh giá
             </Button>
           </div>

@@ -219,9 +219,9 @@ export default function ApplicationDetailPage() {
       {/* Chỉ mở khóa Đánh giá ứng viên khi đã đạt trạng thái Phỏng vấn / Trúng tuyển / Chưa phù hợp */}
       {EVALUABLE_APPLICATION_STATUSES.has(application.status) && (
         <CandidateEvaluationCard
+          applicationId={application.applicationId}
           candidateName={application.candidateName}
           jobTitle={application.jobTitle}
-          evaluatorName={user?.name || undefined}
         />
       )}
 

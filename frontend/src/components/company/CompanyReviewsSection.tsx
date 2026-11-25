@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { Clock, MessageSquareText, Filter } from "lucide-react";
-import { EmptyState } from "@/components/ui/StateViews";
+import { Clock, MessageSquareText, Filter, CheckCircle2 } from "lucide-react";
+import toast from "react-hot-toast";
+import type { PublicCompanyReviewItem } from "@viecngon/types";
+import { EmptyState, ErrorState } from "@/components/ui/StateViews";
 import CompanyReviewsSummaryCard from "./CompanyReviewsSummaryCard";
 import CompanyReviewCtaCard from "./CompanyReviewCtaCard";
 import CompanyReviewFormModal from "./CompanyReviewFormModal";
@@ -10,15 +12,15 @@ import { ReportReviewModal } from "./CompanyReviewModals";
 import CompanyReviewCard from "./CompanyReviewCard";
 import { useAuthStore } from "@/store/authStore";
 import {
-  MOCK_COMPANY_REVIEWS,
-  type CompanyReviewItem,
-} from "@/data/reviews.mock";
+  useCompanyReviews,
+  useCreateCompanyReview,
+  useReportCompanyReview,
+} from "@/hooks/reviews/useCompanyReviews";
 import { cn } from "@/lib/utils";
 
 interface CompanyReviewsSectionProps {
+  companyId: string;
   companyName: string;
-  currentUserName?: string;
-  isLoading?: boolean;
 }
 
 export function CompanyReviewsSkeleton() {
@@ -38,32 +40,28 @@ export function CompanyReviewsSkeleton() {
 }
 
 export default function CompanyReviewsSection({
+  companyId,
   companyName,
-  currentUserName,
-  isLoading = false,
 }: CompanyReviewsSectionProps) {
-  const { user } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
   const isEmployer = user?.role === "NHATUYENDUNG";
+  const isCandidate = user?.role === "UNGVIEN";
 
-  const [reviews, setReviews] = useState<CompanyReviewItem[]>(
-    MOCK_COMPANY_REVIEWS,
-  );
+  const { data, isLoading, isError, error, refetch } =
+    useCompanyReviews(companyId);
+  const createMutation = useCreateCompanyReview(companyId);
+  const reportMutation = useReportCompanyReview(companyId);
+
   const [starFilter, setStarFilter] = useState<number | "ALL">("ALL");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalInitialRating, setModalInitialRating] = useState(5);
   const [modalKey, setModalKey] = useState(0);
-  const [reportTarget, setReportTarget] = useState<CompanyReviewItem | null>(
-    null,
-  );
+  const [reportTarget, setReportTarget] =
+    useState<PublicCompanyReviewItem | null>(null);
 
-  const publishedReviews = useMemo(
-    () => reviews.filter((r) => r.trangThai === "DA_DUYET"),
-    [reviews],
-  );
-  const pendingUserReviews = useMemo(
-    () => reviews.filter((r) => r.trangThai === "CHO_DUYET"),
-    [reviews],
-  );
+  const publishedReviews = useMemo(() => data?.reviews ?? [], [data?.reviews]);
+  const myPendingReview = data?.myPendingReview ?? null;
+  const hasReviewed = Boolean(data?.hasReviewed);
 
   const filteredReviews = useMemo(() => {
     return publishedReviews.filter(
@@ -73,7 +71,29 @@ export default function CompanyReviewsSection({
 
   if (isLoading) return <CompanyReviewsSkeleton />;
 
+  if (isError) {
+    return (
+      <div className="bg-surface-card rounded-xl border border-border-default p-6">
+        <ErrorState
+          title="Không thể tải đánh giá công ty"
+          message={error?.message || "Vui lòng thử lại sau."}
+          onRetry={() => void refetch()}
+        />
+      </div>
+    );
+  }
+
   const handleStartReview = (rating: number) => {
+    if (!isAuthenticated || !isCandidate) {
+      toast.error(
+        "Vui lòng đăng nhập tài khoản Ứng viên để gửi đánh giá công ty.",
+      );
+      return;
+    }
+    if (hasReviewed) {
+      toast("Bạn đã gửi đánh giá cho công ty này rồi.");
+      return;
+    }
     setModalInitialRating(rating);
     setModalKey((prev) => prev + 1);
     setIsModalOpen(true);
@@ -81,14 +101,24 @@ export default function CompanyReviewsSection({
 
   return (
     <div className="space-y-5">
-      {/* 1. Khối Đánh giá chung (tông vàng + Xem thêm đổ xuống 5 tiêu chí) */}
+      {/* 1. Khối Đánh giá chung */}
       <CompanyReviewsSummaryCard reviews={publishedReviews} />
 
-      {/* 2. Section mời viết đánh giá (5 sao rỗng tương tác) */}
-      <CompanyReviewCtaCard
-        companyName={companyName}
-        onStartReview={handleStartReview}
-      />
+      {/* 2. Section mời viết đánh giá hoặc thông báo đã đánh giá */}
+      {hasReviewed ? (
+        <div className="bg-surface-card rounded-xl border border-success-border p-4 flex items-center gap-3 text-sm text-success-text">
+          <CheckCircle2 size={18} className="shrink-0" />
+          <span className="font-medium">
+            Bạn đã gửi đánh giá ẩn danh cho {companyName}. Cảm ơn đóng góp của
+            bạn cho cộng đồng kỹ sư IT!
+          </span>
+        </div>
+      ) : (
+        <CompanyReviewCtaCard
+          companyName={companyName}
+          onStartReview={handleStartReview}
+        />
+      )}
 
       {/* 3. Danh sách bài đánh giá */}
       <section className="bg-surface-card rounded-xl border border-border-default p-6 shadow-xs space-y-5">
@@ -97,7 +127,6 @@ export default function CompanyReviewsSection({
             {publishedReviews.length} đánh giá về {companyName}
           </h2>
 
-          {/* Bộ lọc số sao */}
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="inline-flex items-center gap-1 text-xs font-semibold text-text-muted mr-1">
               <Filter size={13} />
@@ -125,36 +154,44 @@ export default function CompanyReviewsSection({
         </div>
 
         {/* Bài đánh giá ứng viên vừa gửi — Đang chờ Admin duyệt */}
-        {pendingUserReviews.length > 0 && (
+        {myPendingReview && (
           <div className="rounded-xl border border-warning-border bg-warning-soft p-4 space-y-2">
             <p className="text-xs font-bold text-warning-text flex items-center gap-1.5">
               <Clock size={14} />
-              Đánh giá bạn vừa gửi đang chờ Quản trị viên kiểm duyệt (
-              {pendingUserReviews.length})
+              Đánh giá bạn vừa gửi đang chờ Quản trị viên kiểm duyệt
             </p>
-            {pendingUserReviews.map((item) => (
-              <div
-                key={item.id}
-                className="rounded-lg bg-surface-card border border-warning-border/70 px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs"
-              >
-                <span className="font-semibold text-text-primary">
-                  {item.tieuDe}
-                </span>
-                <span className="px-2 py-0.5 rounded-full font-semibold bg-warning-light text-warning-text border border-warning-border">
-                  Chờ duyệt
-                </span>
-              </div>
-            ))}
+            <div className="rounded-lg bg-surface-card border border-warning-border/70 px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+              <span className="font-semibold text-text-primary">
+                {myPendingReview.tieuDe}
+              </span>
+              <span className="px-2 py-0.5 rounded-full font-semibold bg-warning-light text-warning-text border border-warning-border">
+                Chờ duyệt
+              </span>
+            </div>
           </div>
         )}
 
         {filteredReviews.length === 0 ? (
           <EmptyState
             icon={<MessageSquareText size={22} />}
-            title="Không có đánh giá phù hợp bộ lọc"
-            description={`Chưa có bài đánh giá nào khớp số sao bạn chọn cho ${companyName}.`}
-            actionLabel="Xem tất cả đánh giá"
-            onAction={() => setStarFilter("ALL")}
+            title={
+              publishedReviews.length === 0
+                ? "Chưa có đánh giá nào"
+                : "Không có đánh giá phù hợp bộ lọc"
+            }
+            description={
+              publishedReviews.length === 0
+                ? `Hãy là người đầu tiên chia sẻ trải nghiệm làm việc ẩn danh tại ${companyName}.`
+                : `Chưa có bài đánh giá nào khớp số sao bạn chọn cho ${companyName}.`
+            }
+            actionLabel={
+              publishedReviews.length > 0 ? "Xem tất cả đánh giá" : undefined
+            }
+            onAction={
+              publishedReviews.length > 0
+                ? () => setStarFilter("ALL")
+                : undefined
+            }
           />
         ) : (
           <div className="space-y-4">
@@ -174,30 +211,32 @@ export default function CompanyReviewsSection({
         key={modalKey}
         isOpen={isModalOpen}
         companyName={companyName}
-        authorName={currentUserName}
         initialRating={modalInitialRating}
+        isSubmitting={createMutation.isPending}
         onClose={() => setIsModalOpen(false)}
-        onSubmitMock={(newReview) => setReviews((prev) => [newReview, ...prev])}
+        onSubmitReview={(payload) => {
+          createMutation.mutate(payload, {
+            onSuccess: () => setIsModalOpen(false),
+          });
+        }}
       />
 
       <ReportReviewModal
         key={reportTarget?.id || "report-closed"}
         isOpen={Boolean(reportTarget)}
         reviewTitle={reportTarget?.tieuDe || ""}
+        isSubmitting={reportMutation.isPending}
         onClose={() => setReportTarget(null)}
         onSubmitReport={(reason) => {
           if (!reportTarget) return;
-          setReviews((prev) =>
-            prev.map((item) =>
-              item.id === reportTarget.id
-                ? {
-                    ...item,
-                    biBaoCao: true,
-                    lyDoBaoCao: reason,
-                    ngayBaoCao: new Date().toISOString(),
-                  }
-                : item,
-            ),
+          reportMutation.mutate(
+            {
+              reviewId: reportTarget.id,
+              payload: { lyDoBaoCao: reason },
+            },
+            {
+              onSuccess: () => setReportTarget(null),
+            },
           );
         }}
       />

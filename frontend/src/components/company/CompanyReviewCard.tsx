@@ -2,17 +2,15 @@
 
 import React from "react";
 import { ThumbsUp, Clock, Flag, Star, ChevronDown } from "lucide-react";
-import {
-  COMPANY_CRITERIA_META,
-  type CompanyReviewItem,
-} from "@/data/reviews.mock";
+import type { PublicCompanyReviewItem } from "@viecngon/types";
+import { COMPANY_CRITERIA_META } from "@/data/reviews.mock";
 import { formatDateVN } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 
 interface CompanyReviewCardProps {
-  review: CompanyReviewItem;
+  review: PublicCompanyReviewItem;
   isEmployer: boolean;
-  onReport: (review: CompanyReviewItem) => void;
+  onReport: (review: PublicCompanyReviewItem) => void;
 }
 
 const CRITERIA_LABELS = {

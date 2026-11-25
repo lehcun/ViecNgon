@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, MessageSquareReply, Flag, ShieldAlert } from "lucide-react";
+import { X, MessageSquareReply, Flag, ShieldAlert, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
 import { REVIEW_REPORT_REASONS } from "@/data/admin-reviews.mock";
@@ -121,6 +121,7 @@ export function CompanyReplyModal({
 interface ReportReviewModalProps {
   isOpen: boolean;
   reviewTitle: string;
+  isSubmitting?: boolean;
   onClose: () => void;
   onSubmitReport: (reason: string) => void;
 }
@@ -128,6 +129,7 @@ interface ReportReviewModalProps {
 export function ReportReviewModal({
   isOpen,
   reviewTitle,
+  isSubmitting = false,
   onClose,
   onSubmitReport,
 }: ReportReviewModalProps) {
@@ -144,10 +146,6 @@ export function ReportReviewModal({
       ? `${selectedReason} — ${extraNote.trim()}`
       : selectedReason;
     onSubmitReport(combined);
-    toast.success(
-      "Đã gửi báo cáo vi phạm lên Quản trị viên để xem xét (mock UI)!",
-    );
-    onClose();
   };
 
   return (
@@ -233,10 +231,22 @@ export function ReportReviewModal({
           </div>
 
           <div className="pt-2 flex items-center justify-end gap-2.5">
-            <Button type="button" variant="secondary" size="md" onClick={onClose}>
+            <Button
+              type="button"
+              variant="secondary"
+              size="md"
+              disabled={isSubmitting}
+              onClick={onClose}
+            >
               Hủy
             </Button>
-            <Button type="submit" variant="danger" size="md">
+            <Button
+              type="submit"
+              variant="danger"
+              size="md"
+              disabled={isSubmitting}
+            >
+              {isSubmitting && <Loader2 size={15} className="animate-spin" />}
               Gửi báo cáo lên Admin
             </Button>
           </div>

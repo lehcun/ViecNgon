@@ -1027,8 +1027,8 @@ export default function CompanyDetailModel() {
 
           {activeTab === "reviews" && (
             <CompanyReviewsSection
+              companyId={company.id}
               companyName={company.name}
-              currentUserName={user?.name || undefined}
             />
           )}
 
