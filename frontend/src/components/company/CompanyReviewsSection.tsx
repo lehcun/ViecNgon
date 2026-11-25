@@ -5,7 +5,6 @@ import {
   Star,
   ThumbsUp,
   Clock,
-  ShieldCheck,
   PenLine,
   MessageSquareText,
   Filter,
@@ -14,14 +13,15 @@ import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/StateViews";
 import StarRatingInput from "@/components/reviews/StarRatingInput";
 import CompanyReviewFormModal from "./CompanyReviewFormModal";
+import { CompanyReplyModal, ReportReviewModal } from "./CompanyReviewModals";
+import CompanyReviewCard from "./CompanyReviewCard";
+import { useAuthStore } from "@/store/authStore";
 import {
   COMPANY_CRITERIA_META,
   MOCK_COMPANY_REVIEWS,
-  VERIFICATION_SOURCE_LABEL,
   computeCompanyReviewStats,
   type CompanyReviewItem,
 } from "@/data/reviews.mock";
-import { formatDateVN } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 
 interface CompanyReviewsSectionProps {
@@ -52,6 +52,9 @@ export default function CompanyReviewsSection({
   currentUserName,
   isLoading = false,
 }: CompanyReviewsSectionProps) {
+  const { user } = useAuthStore();
+  const isEmployer = user?.role === "NHATUYENDUNG";
+
   const [reviews, setReviews] = useState<CompanyReviewItem[]>(
     MOCK_COMPANY_REVIEWS,
   );
@@ -59,17 +62,35 @@ export default function CompanyReviewsSection({
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalKey, setModalKey] = useState(0);
+  const [replyTarget, setReplyTarget] = useState<CompanyReviewItem | null>(
+    null,
+  );
+  const [reportTarget, setReportTarget] = useState<CompanyReviewItem | null>(
+    null,
+  );
 
-  const stats = useMemo(() => computeCompanyReviewStats(reviews), [reviews]);
+  const publishedReviews = useMemo(
+    () => reviews.filter((r) => r.trangThai === "DA_DUYET"),
+    [reviews],
+  );
+  const pendingUserReviews = useMemo(
+    () => reviews.filter((r) => r.trangThai === "CHO_DUYET"),
+    [reviews],
+  );
+
+  const stats = useMemo(
+    () => computeCompanyReviewStats(publishedReviews),
+    [publishedReviews],
+  );
 
   const filteredReviews = useMemo(() => {
-    return reviews.filter((r) => {
+    return publishedReviews.filter((r) => {
       const matchStar =
         starFilter === "ALL" || Math.round(r.rating) === starFilter;
       const matchVerified = !verifiedOnly || r.daXacThuc;
       return matchStar && matchVerified;
     });
-  }, [reviews, starFilter, verifiedOnly]);
+  }, [publishedReviews, starFilter, verifiedOnly]);
 
   if (isLoading) return <CompanyReviewsSkeleton />;
 
@@ -83,7 +104,7 @@ export default function CompanyReviewsSection({
       {/* Header + CTA */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-dashed border-border-default">
         <h2 className="flex-1 min-w-0 border-l-4 border-primary pl-3.5 pr-6 py-1.5 rounded-r-lg bg-linear-to-r from-primary-light via-primary-light/35 to-transparent text-lg sm:text-xl font-bold text-text-primary">
-          Đánh giá công ty ({reviews.length})
+          Đánh giá công ty ({publishedReviews.length})
         </h2>
         <Button variant="primary" size="md" onClick={handleOpenModal}>
           <PenLine size={16} />
@@ -104,7 +125,7 @@ export default function CompanyReviewsSection({
                 <StarRatingInput value={stats.avg} readOnly size="sm" />
               </div>
               <p className="text-xs text-text-muted mt-1">
-                {reviews.length} lượt đánh giá
+                {publishedReviews.length} lượt đánh giá
               </p>
             </div>
 
@@ -225,6 +246,30 @@ export default function CompanyReviewsSection({
         </label>
       </div>
 
+      {/* Bài đánh giá ứng viên vừa gửi — Đang chờ Admin duyệt */}
+      {pendingUserReviews.length > 0 && (
+        <div className="rounded-xl border border-warning-border bg-warning-soft p-4 space-y-2">
+          <p className="text-xs font-bold text-warning-text flex items-center gap-1.5">
+            <Clock size={14} />
+            Đánh giá bạn vừa gửi đang chờ Quản trị viên kiểm duyệt (
+            {pendingUserReviews.length})
+          </p>
+          {pendingUserReviews.map((item) => (
+            <div
+              key={item.id}
+              className="rounded-lg bg-surface-card border border-warning-border/70 px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs"
+            >
+              <span className="font-semibold text-text-primary">
+                {item.tieuDe}
+              </span>
+              <span className="px-2 py-0.5 rounded-full font-semibold bg-warning-light text-warning-text border border-warning-border">
+                Chờ duyệt
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Danh sách đánh giá */}
       {filteredReviews.length === 0 ? (
         <EmptyState
@@ -240,79 +285,14 @@ export default function CompanyReviewsSection({
       ) : (
         <div className="space-y-4">
           {filteredReviews.map((review) => (
-            <article
+            <CompanyReviewCard
               key={review.id}
-              className="rounded-xl border border-border-default bg-surface-page p-5 space-y-3"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex flex-wrap items-center gap-2 text-xs">
-                  <span className="font-bold text-text-primary">
-                    {review.anDanh ? "Nhân viên ẩn danh" : review.authorName}
-                  </span>
-                  <span className="text-text-muted">· {review.authorRole}</span>
-                  <span className="text-text-muted">
-                    · {formatDateVN(review.createdAt)}
-                  </span>
-                  {review.daXacThuc && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-success-soft text-success-text border border-success-border font-medium">
-                      <ShieldCheck size={12} />
-                      {VERIFICATION_SOURCE_LABEL[review.nguonXacThuc]}
-                    </span>
-                  )}
-                </div>
-
-                <StarRatingInput
-                  value={review.rating}
-                  readOnly
-                  size="sm"
-                  showValue
-                />
-              </div>
-
-              <h3 className="text-base font-bold text-text-primary">
-                {review.tieuDe}
-              </h3>
-
-              {review.noiDung && (
-                <p className="text-sm text-text-secondary leading-relaxed">
-                  {review.noiDung}
-                </p>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-                {review.noiDungUuDiem && (
-                  <div className="rounded-lg bg-success-soft/60 border border-success-border/70 p-3 text-xs text-text-secondary leading-relaxed">
-                    <p className="font-bold text-success-text mb-1">
-                      Điểm cộng
-                    </p>
-                    <p>{review.noiDungUuDiem}</p>
-                  </div>
-                )}
-                {review.noiDungCaiThien && (
-                  <div className="rounded-lg bg-warning-soft/60 border border-warning-border/70 p-3 text-xs text-text-secondary leading-relaxed">
-                    <p className="font-bold text-warning-text mb-1">
-                      Cần cải thiện
-                    </p>
-                    <p>{review.noiDungCaiThien}</p>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-border-default/80 text-xs">
-                {review.khuyenLamViec && (
-                  <span className="inline-flex items-center gap-1 font-medium text-success-text">
-                    <ThumbsUp size={13} />
-                    Khuyên làm việc tại đây
-                  </span>
-                )}
-                {review.coOtTot && (
-                  <span className="inline-flex items-center gap-1 font-medium text-info-text">
-                    <Clock size={13} />
-                    Chính sách OT hợp lý
-                  </span>
-                )}
-              </div>
-            </article>
+              review={review}
+              companyName={companyName}
+              isEmployer={isEmployer}
+              onReply={setReplyTarget}
+              onReport={setReportTarget}
+            />
           ))}
         </div>
       )}
@@ -324,6 +304,51 @@ export default function CompanyReviewsSection({
         authorName={currentUserName}
         onClose={() => setIsModalOpen(false)}
         onSubmitMock={(newReview) => setReviews((prev) => [newReview, ...prev])}
+      />
+
+      <CompanyReplyModal
+        key={replyTarget?.id || "reply-closed"}
+        isOpen={Boolean(replyTarget)}
+        companyName={companyName}
+        reviewTitle={replyTarget?.tieuDe || ""}
+        initialReply={replyTarget?.phanHoiCongTy || ""}
+        onClose={() => setReplyTarget(null)}
+        onSubmitReply={(replyText) => {
+          if (!replyTarget) return;
+          setReviews((prev) =>
+            prev.map((item) =>
+              item.id === replyTarget.id
+                ? {
+                    ...item,
+                    phanHoiCongTy: replyText,
+                    ngayPhanHoiCongTy: new Date().toISOString(),
+                  }
+                : item,
+            ),
+          );
+        }}
+      />
+
+      <ReportReviewModal
+        key={reportTarget?.id || "report-closed"}
+        isOpen={Boolean(reportTarget)}
+        reviewTitle={reportTarget?.tieuDe || ""}
+        onClose={() => setReportTarget(null)}
+        onSubmitReport={(reason) => {
+          if (!reportTarget) return;
+          setReviews((prev) =>
+            prev.map((item) =>
+              item.id === reportTarget.id
+                ? {
+                    ...item,
+                    biBaoCao: true,
+                    lyDoBaoCao: reason,
+                    ngayBaoCao: new Date().toISOString(),
+                  }
+                : item,
+            ),
+          );
+        }}
       />
     </div>
   );

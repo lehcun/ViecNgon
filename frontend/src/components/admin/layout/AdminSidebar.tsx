@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Users,
   Briefcase,
+  MessageSquareQuote,
   Package,
   Code2,
   Bell,
@@ -41,6 +42,12 @@ const NAV_ITEMS: NavItem[] = [
     label: "Kiểm duyệt tin đăng",
     href: "/admin/jobs",
     icon: Briefcase,
+    badgeVariant: "danger",
+  },
+  {
+    label: "Kiểm duyệt đánh giá",
+    href: "/admin/reviews",
+    icon: MessageSquareQuote,
     badgeVariant: "danger",
   },
   {

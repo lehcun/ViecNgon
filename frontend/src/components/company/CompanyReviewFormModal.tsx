@@ -65,11 +65,13 @@ export default function CompanyReviewFormModal({
 
     const newReview: CompanyReviewItem = {
       id: `mock-comp-rev-${Date.now()}`,
+      companyName,
       authorName,
       authorRole: "Kỹ sư IT",
       anDanh,
       daXacThuc: true,
       nguonXacThuc: "TUYEN_DUNG_VIECNGON",
+      trangThai: "CHO_DUYET",
       rating: avgRating,
       ...criteria,
       khuyenLamViec,
@@ -82,7 +84,9 @@ export default function CompanyReviewFormModal({
     };
 
     onSubmitMock(newReview);
-    toast.success("Đã gửi đánh giá công ty (dữ liệu mock tạm thời)!");
+    toast.success(
+      "Đã gửi đánh giá! Bài viết đang chờ Quản trị viên kiểm duyệt trước khi hiển thị công khai.",
+    );
     onClose();
   };
 
