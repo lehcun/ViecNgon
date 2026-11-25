@@ -45,7 +45,7 @@ export default function HeroSection() {
   };
 
   return (
-    <section className="bg-linear-to-br from-primary-dark via-[#13294b] to-primary-dark pt-28 pb-16 px-4 sm:px-6 lg:px-8">
+    <section className="bg-linear-to-br from-primary-dark from-60% via-primary-active via-85% to-primary pt-28 pb-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-blue-100 text-xs font-medium mb-4">
           <Sparkles size={14} className="text-primary-disabled" />
@@ -56,7 +56,8 @@ export default function HeroSection() {
           Tìm kiếm việc làm IT chất lượng tại Việt Nam
         </h1>
         <p className="text-slate-300 text-sm sm:text-base mb-8 max-w-2xl leading-relaxed">
-          Khám phá cơ hội nghề nghiệp minh bạch về mức lương, công nghệ sử dụng và đánh giá độ phù hợp bằng AI ngay trước khi ứng tuyển.
+          Khám phá cơ hội nghề nghiệp minh bạch về mức lương, công nghệ sử dụng
+          và đánh giá độ phù hợp bằng AI ngay trước khi ứng tuyển.
         </p>
 
         {/* Thanh tìm kiếm hợp nhất */}

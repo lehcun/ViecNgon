@@ -109,7 +109,7 @@ export default function SpotlightBannerModal({
                 Tùy chỉnh Banner Nhà Tuyển Dụng Nổi Bật
               </h3>
               <p className="text-xs text-text-muted">
-                Đặc quyền Gói Kim Cương — Hiển thị tại đầu trang Tìm việc làm
+                Đặc quyền Gói Diamond — Hiển thị tại đầu trang Tìm việc làm
                 (/jobs)
               </p>
             </div>
@@ -143,7 +143,7 @@ export default function SpotlightBannerModal({
               title="Không thể tải cấu hình Banner"
               message={
                 error?.message ||
-                "Vui lòng thử lại sau hoặc kiểm tra gói Kim Cương."
+                "Vui lòng thử lại sau hoặc kiểm tra gói Diamond."
               }
               onRetry={() => void refetch()}
             />
@@ -151,10 +151,10 @@ export default function SpotlightBannerModal({
         ) : !config.hasDiamondAccess ? (
           <div className="p-8 text-center space-y-3">
             <p className="text-base font-bold text-text-primary">
-              Doanh nghiệp hiện chưa có Gói Kim Cương đang hoạt động
+              Doanh nghiệp hiện chưa có Gói Diamond đang hoạt động
             </p>
             <p className="text-sm text-text-muted max-w-md mx-auto">
-              Vui lòng kích hoạt hoặc gia hạn Gói Kim Cương / Doanh nghiệp để mở
+              Vui lòng kích hoạt hoặc gia hạn Gói Diamond / Doanh nghiệp để mở
               khóa quyền tùy chỉnh Banner Spotlight trên trang chủ tìm việc.
             </p>
           </div>

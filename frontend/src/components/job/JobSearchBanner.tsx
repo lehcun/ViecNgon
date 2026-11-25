@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Search, MapPin, ChevronDown } from "lucide-react";
 
 interface JobSearchBannerProps {
@@ -35,14 +35,6 @@ export default function JobSearchBanner({
   const [keyword, setKeyword] = useState(initialKeyword);
   const [location, setLocation] = useState(initialLocation);
 
-  useEffect(() => {
-    setKeyword(initialKeyword);
-  }, [initialKeyword]);
-
-  useEffect(() => {
-    setLocation(initialLocation);
-  }, [initialLocation]);
-
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     onSearch(keyword, location);
@@ -54,7 +46,7 @@ export default function JobSearchBanner({
   };
 
   return (
-    <section className="bg-linear-to-br from-primary-dark via-[#13294b] to-primary-dark pt-24 pb-16 px-4 sm:px-6 lg:px-8">
+    <section className="bg-linear-to-br from-primary-dark from-60% via-primary-active via-85% to-primary pt-24 pb-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto text-center">
         {/* Thanh tìm kiếm */}
         <form
@@ -110,7 +102,7 @@ export default function JobSearchBanner({
               key={tag}
               type="button"
               onClick={() => handleTagClick(tag)}
-              className="border border-white/15 bg-white/5 text-slate-200 px-3 py-1 rounded-full hover:bg-primary hover:text-white hover:border-primary transition-colors text-xs font-medium"
+              className="border border-white/20 bg-white/10 text-white/90 px-3 py-1 rounded-full hover:bg-white hover:text-primary hover:border-white transition-colors text-xs font-medium"
             >
               {tag}
             </button>

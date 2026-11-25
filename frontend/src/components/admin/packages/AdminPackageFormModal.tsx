@@ -165,7 +165,7 @@ export default function AdminPackageFormModal({
                 maxLength={50}
                 value={loaiQuangCao}
                 onChange={(e) => setLoaiQuangCao(e.target.value)}
-                placeholder="VD: VIP / Kim Cương"
+                placeholder="VD: VIP / Diamond"
                 className="w-full h-10 px-3 rounded-lg border border-border-default bg-surface-card text-sm text-text-primary focus:outline-none focus:border-primary"
               />
             </div>
@@ -244,7 +244,7 @@ export default function AdminPackageFormModal({
                 <option value="1">1 - Cơ Bản</option>
                 <option value="2">2 - Tiêu Chuẩn</option>
                 <option value="3">3 - VIP Đẩy Tin</option>
-                <option value="4">4 - Kim Cương</option>
+                <option value="4">4 - Diamond</option>
               </select>
             </div>
 

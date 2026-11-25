@@ -60,8 +60,7 @@ export default function ApplyJobPage() {
   const hasExistingCv = Boolean(existingCvUrl);
 
   const profileCompletion = calculateProfileCompletion(profile);
-  const isEligibleForCv =
-    profileCompletion >= MIN_PROFILE_COMPLETION_FOR_CV;
+  const isEligibleForCv = profileCompletion >= MIN_PROFILE_COMPLETION_FOR_CV;
   const canUseExistingCv = hasExistingCv && isEligibleForCv;
 
   const cvOption =
@@ -111,8 +110,7 @@ export default function ApplyJobPage() {
       }
     }
 
-    const finalCvUrl =
-      cvOption === "existing" ? existingCvUrl : cvUrl.trim();
+    const finalCvUrl = cvOption === "existing" ? existingCvUrl : cvUrl.trim();
 
     if (cvOption === "existing" && !isEligibleForCv) {
       toast.error(
@@ -158,7 +156,18 @@ export default function ApplyJobPage() {
 
   return (
     <div className="min-h-screen bg-surface-page relative">
-      <div className="absolute top-0 left-0 w-full h-72 bg-primary-dark overflow-hidden z-0" />
+      <div className="absolute top-0 left-0 w-full h-80 bg-linear-to-br from-primary-dark from-60% via-primary-active via-85% to-primary overflow-hidden z-0">
+        <svg
+          className="absolute bottom-0 w-full"
+          viewBox="0 0 1440 120"
+          fill="none"
+        >
+          <path
+            d="M0,0 C480,160 960,160 1440,0 L1440,120 L0,120 Z"
+            fill="#f8fafc"
+          />
+        </svg>
+      </div>
 
       <div className="relative z-10 max-w-4xl mx-auto px-4 md:px-8 pt-6 pb-6 flex items-center justify-between">
         <button
@@ -352,7 +361,8 @@ export default function ApplyJobPage() {
                         className="w-4 h-4 text-primary focus:ring-primary border-border-default"
                       />
                       <span className="font-semibold text-text-main text-sm">
-                        Nhập liên kết CV khác (Google Drive / Notion / Portfolio)
+                        Nhập liên kết CV khác (Google Drive / Notion /
+                        Portfolio)
                       </span>
                     </div>
 

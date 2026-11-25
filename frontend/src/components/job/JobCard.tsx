@@ -45,7 +45,7 @@ function getRibbonConfig(
 
   if (resolvedBadge === "DIAMOND") {
     return {
-      label: "KIM CƯƠNG",
+      label: "DIAMOND",
       bgClass: "bg-ai text-white",
       foldClass: "border-t-indigo-900",
       icon: <Crown size={11} className="shrink-0" />,

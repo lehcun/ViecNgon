@@ -875,7 +875,7 @@ export default function CompanyDetailModel() {
                           {badge === "HOT" && <Flame size={11} />}
                           <span>
                             {badge === "DIAMOND"
-                              ? "KIM CƯƠNG"
+                              ? "DIAMOND"
                               : badge === "SUPER_HOT"
                                 ? "SUPER HOT"
                                 : badge === "HOT"

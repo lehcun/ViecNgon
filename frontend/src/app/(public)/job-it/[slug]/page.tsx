@@ -14,9 +14,9 @@ export default function JobDetailPage() {
   const { job, isLoading } = useJobDetail(slug);
 
   return (
-    <div className="relative min-h-screen bg-slate-50">
+    <div className="relative min-h-screen bg-surface-page">
       {/* Background Banner (Curve Pattern) */}
-      <div className="absolute top-0 left-0 w-full h-80 bg-primary-dark overflow-hidden z-0">
+      <div className="absolute top-0 left-0 w-full h-80 bg-linear-to-br from-primary-dark from-60% via-primary-active via-85% to-primary overflow-hidden z-0">
         <svg
           className="absolute bottom-0 w-full"
           viewBox="0 0 1440 120"

@@ -47,6 +47,7 @@ function JobsPageContent() {
   return (
     <div className="w-full flex-1 flex flex-col bg-surface-page pb-16">
       <JobSearchBanner
+        key={`${currentFilters.keyword || ""}|${currentFilters.thanhPho || ""}`}
         initialKeyword={currentFilters.keyword || ""}
         initialLocation={currentFilters.thanhPho || ""}
         onSearch={handleSearchBanner}

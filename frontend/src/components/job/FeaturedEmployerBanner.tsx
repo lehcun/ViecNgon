@@ -242,7 +242,7 @@ export default function FeaturedEmployerBanner() {
             {companies.length > 1 && (
               <div
                 className="flex items-center gap-1.5"
-                title="Tự động luân phiên nhà tuyển dụng Kim Cương mỗi lần tải lại trang"
+                title="Tự động luân phiên nhà tuyển dụng Diamond mỗi lần tải lại trang"
               >
                 {companies.map((c, idx) => (
                   <button
