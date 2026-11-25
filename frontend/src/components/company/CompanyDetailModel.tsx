@@ -38,6 +38,7 @@ import {
 import { useAuthStore } from "@/store/authStore";
 import CompanyJobLists from "./CompanyJobLists";
 import CompanyBranchesMap from "./CompanyBranchesMap";
+import CompanyReviewsSection from "./CompanyReviewsSection";
 import { CompanyLogo } from "@/components/ui/CompanyLogo";
 import {
   DetailPaneSkeleton,
@@ -180,7 +181,6 @@ export default function CompanyDetailModel() {
 
   const handleWriteReview = () => {
     setActiveTab("reviews");
-    toast("Chuyển đến mục Đánh giá — tính năng gửi đánh giá mới sẽ sớm mở!");
   };
 
   if (isLoading) {
@@ -1026,105 +1026,10 @@ export default function CompanyDetailModel() {
           )}
 
           {activeTab === "reviews" && (
-            <div className="bg-surface-card rounded-xl border border-border-default p-6 space-y-5">
-              <div className="flex flex-wrap items-center justify-between gap-3 pb-3.5 border-b border-dashed border-border-default">
-                <h2 className="flex-1 min-w-0 border-l-4 border-primary pl-3.5 pr-6 py-1.5 rounded-r-lg bg-linear-to-r from-primary-light via-primary-light/35 to-transparent text-lg sm:text-xl font-bold text-text-primary">
-                  Đánh giá từ nhân viên ({totalReviews})
-                </h2>
-                <div className="flex items-center gap-4 text-sm">
-                  <span className="inline-flex items-center gap-1 font-bold text-text-primary tabular-nums">
-                    <Star
-                      size={16}
-                      className="text-amber-400"
-                      fill="currentColor"
-                    />
-                    {averageRating}/5
-                  </span>
-                  <span className="text-success-text font-semibold tabular-nums">
-                    {recommendPercent}% Khuyên làm việc
-                  </span>
-                </div>
-              </div>
-
-              {(company.reviews?.length ?? 0) === 0 ? (
-                <EmptyState
-                  icon={<MessageSquareText size={22} />}
-                  title="Chưa có đánh giá nào"
-                  description={`Hiện chưa có bài đánh giá công khai cho ${company.name}.`}
-                  actionLabel="Xem thông tin công ty"
-                  onAction={() => setActiveTab("about")}
-                />
-              ) : (
-                <div className="space-y-4">
-                  {company.reviews?.map((review) => (
-                    <div
-                      key={review.id}
-                      className="rounded-xl border border-border-default bg-surface-page p-5 space-y-2.5"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-xs text-text-muted">
-                          {formatMonthYearVN(review.createdAt)} ·{" "}
-                          {formatDateVN(review.createdAt)}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <div className="flex text-amber-400">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                              <Star
-                                key={i}
-                                size={13}
-                                fill={
-                                  i < Math.round(review.rating)
-                                    ? "currentColor"
-                                    : "none"
-                                }
-                                className={
-                                  i < Math.round(review.rating)
-                                    ? "text-amber-400"
-                                    : "text-border-strong"
-                                }
-                              />
-                            ))}
-                          </div>
-                          <span className="text-xs font-bold tabular-nums text-text-primary">
-                            {review.rating}
-                          </span>
-                        </div>
-                      </div>
-                      <h3 className="text-sm font-bold text-text-primary">
-                        {review.title}
-                      </h3>
-                      {review.content && (
-                        <p className="text-sm text-text-secondary leading-relaxed">
-                          {review.content}
-                        </p>
-                      )}
-                      {review.pros && (
-                        <p className="text-xs text-text-secondary">
-                          <strong className="text-success-text">
-                            Điểm cộng:
-                          </strong>{" "}
-                          {review.pros}
-                        </p>
-                      )}
-                      {review.cons && (
-                        <p className="text-xs text-text-secondary">
-                          <strong className="text-warning-text">
-                            Cần cải thiện:
-                          </strong>{" "}
-                          {review.cons}
-                        </p>
-                      )}
-                      {review.recommend && (
-                        <div className="inline-flex items-center gap-1.5 text-xs font-medium text-success-text pt-1">
-                          <ThumbsUp size={13} />
-                          <span>Khuyên làm việc tại đây</span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <CompanyReviewsSection
+              companyName={company.name}
+              currentUserName={user?.name || undefined}
+            />
           )}
 
           {activeTab === "posts" && (

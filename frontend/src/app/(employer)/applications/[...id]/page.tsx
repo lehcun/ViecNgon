@@ -23,6 +23,8 @@ import { useUpdateApplicationStatus } from "@/hooks/recruiter/useUpdateApplicati
 import SendEmailModal from "@/components/employer/SendEmailModel";
 import ScheduleInterviewModal from "@/components/employer/ScheduleInterviewModal";
 import AiCandidateScreeningCard from "@/components/employer/AiCandidateScreeningCard";
+import CandidateEvaluationCard from "@/components/employer/CandidateEvaluationCard";
+import { useAuthStore } from "@/store/authStore";
 import { CompanyLogo } from "@/components/ui/CompanyLogo";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
@@ -44,6 +46,7 @@ export default function ApplicationDetailPage() {
   const { mutate: updateStatus, isPending: isUpdatingStatus } =
     useUpdateApplicationStatus();
 
+  const { user } = useAuthStore();
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
 
@@ -206,6 +209,13 @@ export default function ApplicationDetailPage() {
 
       {/* AI Screening Block */}
       <AiCandidateScreeningCard applicationId={application.applicationId} />
+
+      {/* Đánh giá ứng viên sau phỏng vấn (UI + Mock Data) */}
+      <CandidateEvaluationCard
+        candidateName={application.candidateName}
+        jobTitle={application.jobTitle}
+        evaluatorName={user?.name || undefined}
+      />
 
       {/* Chi tiết hồ sơ 2 cột */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
