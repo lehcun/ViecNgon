@@ -176,6 +176,12 @@ export class AuthService {
       });
     }
 
+    if (user.vaiTro !== 'UNGVIEN') {
+      throw new UnauthorizedException(
+        'Đăng nhập bằng Google chỉ dành cho tài khoản Ứng viên. Vui lòng sử dụng cổng đăng nhập đúng vai trò!',
+      );
+    }
+
     if (user.trangThai === 'KHOA') {
       throw new UnauthorizedException('Tài khoản của bạn đã bị khóa!');
     }
@@ -240,6 +246,20 @@ export class AuthService {
       throw fieldUnauthorized({
         password: 'Mật khẩu không chính xác!',
       });
+    }
+
+    // Trường hợp 3.5: Sai cổng đăng nhập theo vai trò
+    if (loginDto.expectedRole && user.vaiTro !== loginDto.expectedRole) {
+      const roleMessages: Record<'UNGVIEN' | 'NHATUYENDUNG' | 'ADMIN', string> =
+        {
+          UNGVIEN:
+            'Tài khoản này không phải Ứng viên. Vui lòng đăng nhập tại cổng Nhà tuyển dụng hoặc Quản trị viên!',
+          NHATUYENDUNG:
+            'Tài khoản này không có quyền truy cập cổng Nhà tuyển dụng!',
+          ADMIN:
+            'Tài khoản này không có quyền truy cập cổng Quản trị viên (ADMIN)!',
+        };
+      throw new UnauthorizedException(roleMessages[loginDto.expectedRole]);
     }
 
     // Trường hợp 4: Tài khoản bị khóa hoặc chưa kích hoạt

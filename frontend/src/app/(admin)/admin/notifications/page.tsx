@@ -13,6 +13,7 @@ import {
   CreditCard,
   ExternalLink,
   Info,
+  MessageSquareQuote,
   RefreshCw,
   Search,
   Trash2,
@@ -46,6 +47,14 @@ function CategoryBadge({ category }: { category: AdminNotificationCategory }) {
       <span className={`${baseClass} bg-primary-light text-primary`}>
         <Briefcase size={14} className="shrink-0" />
         Tin tuyển dụng
+      </span>
+    );
+  }
+  if (category === "review") {
+    return (
+      <span className={`${baseClass} bg-ai-light text-ai`}>
+        <MessageSquareQuote size={14} className="shrink-0" />
+        Đánh giá
       </span>
     );
   }

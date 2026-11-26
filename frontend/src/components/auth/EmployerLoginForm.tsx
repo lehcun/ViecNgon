@@ -67,6 +67,7 @@ export default function EmployerLoginForm() {
       const data = await login({
         email: values.email.trim(),
         password: values.password,
+        expectedRole: "NHATUYENDUNG",
       });
 
       if (data.user.role !== "NHATUYENDUNG") {

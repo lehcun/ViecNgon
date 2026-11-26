@@ -484,20 +484,17 @@ export default function AdminUsersTable({
                             <Eye size={15} />
                           </button>
 
-                          <button
-                            type="button"
-                            onClick={() => onRequestChangeRole(user)}
-                            disabled={isSelf}
-                            title={
-                              isSelf
-                                ? "Không thể tự thay đổi quyền của chính bạn"
-                                : "Phân quyền quản trị"
-                            }
-                            aria-label={`Phân quyền ${user.email}`}
-                            className="p-2 rounded-lg border border-border-default bg-surface-card hover:bg-ai-light text-text-secondary hover:text-ai disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                          >
-                            <Shield size={15} />
-                          </button>
+                          {user.vaiTro === "NHATUYENDUNG" && (
+                            <button
+                              type="button"
+                              onClick={() => onRequestChangeRole(user)}
+                              title="Đổi chức vụ trong công ty (Owner / HR)"
+                              aria-label={`Đổi chức vụ công ty ${user.email}`}
+                              className="p-2 rounded-lg border border-border-default bg-surface-card hover:bg-ai-light text-text-secondary hover:text-ai transition-colors"
+                            >
+                              <Shield size={15} />
+                            </button>
+                          )}
 
                           {user.trangThai === "HOATDONG" ? (
                             <button

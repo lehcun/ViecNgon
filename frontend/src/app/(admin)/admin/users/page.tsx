@@ -7,6 +7,7 @@ import type {
   AdminUserProvider,
   AdminUserRole,
   AdminUserStatus,
+  EmployerCompanyRole,
 } from "@viecngon/types";
 import { useAuthStore } from "@/store/authStore";
 import {
@@ -28,8 +29,16 @@ function parseInitialStatus(raw: string | null): AdminUserStatus | "ALL" {
   return "ALL";
 }
 
+function parseInitialRole(raw: string | null): AdminUserRole | "ALL" {
+  if (raw === "ADMIN" || raw === "NHATUYENDUNG" || raw === "UNGVIEN") {
+    return raw;
+  }
+  return "ALL";
+}
+
 function AdminUsersWorkspace() {
   const searchParams = useSearchParams();
+  const initialRole = parseInitialRole(searchParams.get("role"));
   const initialStatus = parseInitialStatus(searchParams.get("status"));
 
   const currentUser = useAuthStore((state) => state.user);
@@ -37,7 +46,9 @@ function AdminUsersWorkspace() {
 
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState<AdminUserRole | "ALL">("ALL");
+  const [roleFilter, setRoleFilter] = useState<AdminUserRole | "ALL">(
+    initialRole,
+  );
   const [statusFilter, setStatusFilter] = useState<AdminUserStatus | "ALL">(
     initialStatus,
   );
@@ -133,12 +144,12 @@ function AdminUsersWorkspace() {
     );
   };
 
-  const handleConfirmRole = (nextRole: AdminUserRole) => {
+  const handleConfirmRole = (nextCompanyRole: EmployerCompanyRole) => {
     if (!modalState) return;
     updateRoleMutation.mutate(
       {
         userId: modalState.user.maTaiKhoan,
-        payload: { vaiTro: nextRole },
+        payload: { vaiTroTrongCongTy: nextCompanyRole },
       },
       {
         onSuccess: () => setModalState(null),

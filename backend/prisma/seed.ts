@@ -329,7 +329,7 @@ async function main(): Promise<void> {
       tenPhapLy: 'Công ty TNHH NAB Innovation Centre Vietnam',
       slug: 'nab-innovation-centre',
       logoUrl:
-        'https://res.cloudinary.com/dbvlsf9bi/image/upload/v1795318961/viettel_gdaetb.png',
+        'https://res.cloudinary.com/dbvlsf9bi/image/upload/v1795318962/NAB_Logo_RGB_1x1_o21s8d.png',
       website: 'https://nab.com.au',
       thanhPho: 'TP.HCM',
       diaChi: 'Etown Central, 11 Đoàn Văn Bơ, Phường 13, Quận 4, TP.HCM',
@@ -378,7 +378,7 @@ async function main(): Promise<void> {
       tenPhapLy: 'Tổng Công ty Giải pháp Doanh nghiệp Viettel',
       slug: 'viettel-solutions',
       logoUrl:
-        'https://res.cloudinary.com/dbvlsf9bi/image/upload/v1795318962/NAB_Logo_RGB_1x1_o21s8d.png',
+        'https://res.cloudinary.com/dbvlsf9bi/image/upload/v1795318961/viettel_gdaetb.png',
       website: 'https://solutions.viettel.vn',
       thanhPho: 'Hà Nội',
       diaChi: 'Số 1 Trần Hữu Dực, Mỹ Đình 2, Nam Từ Liêm, Hà Nội',
@@ -1603,12 +1603,12 @@ async function main(): Promise<void> {
     },
   });
 
-  // 2. [MoMo - HR Cường] Ứng viên Vy -> Middle Fullstack Engineer (PHU_HOP)
+  // 2. [MoMo - HR Cường] Ứng viên Vy -> Middle Fullstack Engineer (DANG_XEM_XET)
   await prisma.donXinViec.create({
     data: {
       maCongViec: jobMomoFullstack.maCongViec,
       maUngVien: uvVy.maUngVien,
-      trangThai: 'PHU_HOP',
+      trangThai: 'DANG_XEM_XET',
       ngayNop: daysAgo(2),
       fileCvUrl: uvVy.cvUrl,
       chiTiet:
@@ -1637,12 +1637,12 @@ async function main(): Promise<void> {
     },
   });
 
-  // 3. [MoMo - HR Cường] Ứng viên Kiệt -> Lead Cloud & DevOps Engineer (DA_XEM)
+  // 3. [MoMo - HR Cường] Ứng viên Kiệt -> Lead Cloud & DevOps Engineer (DANG_XEM_XET)
   await prisma.donXinViec.create({
     data: {
       maCongViec: jobMomoDevOps.maCongViec,
       maUngVien: uvKiet.maUngVien,
-      trangThai: 'DA_XEM',
+      trangThai: 'DANG_XEM_XET',
       ngayNop: daysAgo(1),
       fileCvUrl: uvKiet.cvUrl,
       chiTiet:
@@ -1791,12 +1791,12 @@ async function main(): Promise<void> {
     },
   });
 
-  // 7. [NAB] Ứng viên Vy -> Senior Fullstack React/Node/AWS (PHU_HOP)
+  // 7. [NAB] Ứng viên Vy -> Senior Fullstack React/Node/AWS (DUOC_NHAN)
   await prisma.donXinViec.create({
     data: {
       maCongViec: jobNABFullstack.maCongViec,
       maUngVien: uvVy.maUngVien,
-      trangThai: 'PHU_HOP',
+      trangThai: 'DUOC_NHAN',
       ngayNop: daysAgo(2),
       fileCvUrl: uvVy.cvUrl,
       chiTiet:
@@ -1804,12 +1804,12 @@ async function main(): Promise<void> {
     },
   });
 
-  // 8. [VNG] Ứng viên Quân -> Intern Frontend ReactJS (TU_CHOI - đã quá cấp bậc Senior)
+  // 8. [VNG] Ứng viên Bảo -> Junior Node.js Developer (BI_LOAI)
   await prisma.donXinViec.create({
     data: {
       maCongViec: jobVNGNode.maCongViec,
       maUngVien: uvBao.maUngVien,
-      trangThai: 'TU_CHOI',
+      trangThai: 'BI_LOAI',
       ngayNop: daysAgo(5),
       fileCvUrl: uvBao.cvUrl,
       chiTiet:
@@ -1817,12 +1817,12 @@ async function main(): Promise<void> {
     },
   });
 
-  // 9. [Shopee] Ứng viên Quân -> Middle Frontend Engineer (DA_XEM)
+  // 9. [Shopee] Ứng viên Quân -> Middle Frontend Engineer (DANG_XEM_XET)
   await prisma.donXinViec.create({
     data: {
       maCongViec: jobShopeeVue.maCongViec,
       maUngVien: uvQuan.maUngVien,
-      trangThai: 'DA_XEM',
+      trangThai: 'DANG_XEM_XET',
       ngayNop: daysAgo(2),
       fileCvUrl: uvQuan.cvUrl,
       chiTiet:
@@ -1830,12 +1830,12 @@ async function main(): Promise<void> {
     },
   });
 
-  // 10. [Viettel Solutions] Ứng viên Kiệt -> Middle Java Spring Boot (TU_CHOI - sai chuyên môn)
+  // 10. [Viettel Solutions] Ứng viên Kiệt -> Middle Java Spring Boot (BI_LOAI)
   await prisma.donXinViec.create({
     data: {
       maCongViec: jobViettelJava.maCongViec,
       maUngVien: uvKiet.maUngVien,
-      trangThai: 'TU_CHOI',
+      trangThai: 'BI_LOAI',
       ngayNop: daysAgo(6),
       fileCvUrl: uvKiet.cvUrl,
       chiTiet:
@@ -1913,7 +1913,7 @@ async function main(): Promise<void> {
 
   const pkgDiamond = await prisma.goiQuangCao.create({
     data: {
-      tieuDe: 'Gói Kim Cương / Doanh nghiệp',
+      tieuDe: 'Gói Diamond / Doanh nghiệp',
       loaiQuangCao: 'DIAMOND',
       gia: 8000000,
       thoiGianHieuLuc: 60,
@@ -1958,7 +1958,7 @@ async function main(): Promise<void> {
       soTienThanhToan: pkgDiamond.gia,
       phuongThucTT: 'VNPay QR Doanh nghiệp',
       trangThaiTT: 'Thành công',
-      ghiChu: 'Thanh toán Gói Kim Cương / Doanh nghiệp - FPT Software',
+      ghiChu: 'Thanh toán Gói Diamond / Doanh nghiệp - FPT Software',
       maGiaoDichDoiTac: 'VNPAY_FPT_20260401',
       maMua: buyFPT.maMua,
     },
@@ -2058,40 +2058,407 @@ async function main(): Promise<void> {
     ],
   });
 
+  await prisma.congViecDaLuu.createMany({
+    data: [
+      { maUngVien: uvQuan.maUngVien, maCongViec: jobNABFullstack.maCongViec },
+      { maUngVien: uvQuan.maUngVien, maCongViec: jobFPTJava.maCongViec },
+      { maUngVien: uvVy.maUngVien, maCongViec: jobMomoFrontend.maCongViec },
+      { maUngVien: uvNam.maUngVien, maCongViec: jobVNGGolang.maCongViec },
+      { maUngVien: uvKiet.maUngVien, maCongViec: jobFPTJava.maCongViec },
+    ],
+  });
+
+  // --- ĐÁNH GIÁ CÔNG TY (14 bài đủ 6 công ty & đủ trạng thái kiểm duyệt) + ĐÁNH GIÁ ỨNG VIÊN (4 phiếu) ---
   await prisma.danhGia.createMany({
     data: [
+      // === FPT Software (2 DA_DUYET + 1 CHO_DUYET) ===
+      {
+        rating: 4.6,
+        diemLuongPhucLoi: 4,
+        diemDaoTao: 5,
+        diemQuanLy: 5,
+        diemVanHoa: 5,
+        diemVanPhong: 4,
+        khuyenLamViec: true,
+        coOtTot: true,
+        anDanh: true,
+        trangThai: 'DA_DUYET',
+        tieuDe: 'Dự án Global lớn, tài trợ thi chứng chỉ Cloud rất tốt',
+        noiDung:
+          'Môi trường làm việc bài bản, quy trình CI/CD rõ ràng. Đội ngũ Tech Lead sẵn sàng review code kỹ và chia sẻ kinh nghiệm thực chiến với khách hàng Nhật/Singapore.',
+        noiDungUuDiem:
+          'Tài trợ 100% lệ phí thi AWS/Azure, bảo hiểm FPT Care cho người thân, cơ hội onsite quốc tế.',
+        noiDungCaiThien:
+          'Một số dự án cuối quý họp báo cáo hơi dày, cần tối ưu thời gian họp.',
+        ngayDanhGia: daysAgo(12),
+        maDoiTuongDuocDanhGia: ctyFPT.maCongTy,
+        loaiDoiTuong: 'CONGTY',
+        maNguoiDanhGia: tkUVNam.maTaiKhoan,
+      },
+      {
+        rating: 4.2,
+        diemLuongPhucLoi: 4,
+        diemDaoTao: 5,
+        diemQuanLy: 4,
+        diemVanHoa: 4,
+        diemVanPhong: 4,
+        khuyenLamViec: true,
+        coOtTot: true,
+        anDanh: true,
+        trangThai: 'DA_DUYET',
+        tieuDe: 'Nơi rất tốt cho Fresher & Junior QA phát triển bài bản',
+        noiDung:
+          'Campus Đà Nẵng rộng đẹp, có xe đưa đón nhân viên. Các anh chị Senior QA hướng dẫn rất tận tình từ Manual lên Automation Test.',
+        noiDungUuDiem:
+          'Lộ trình review lương 6 tháng/lần minh bạch, đồng nghiệp hòa đồng.',
+        noiDungCaiThien:
+          'Giai đoạn trước release đôi khi hơi gấp deadline kiểm thử.',
+        ngayDanhGia: daysAgo(5),
+        maDoiTuongDuocDanhGia: ctyFPT.maCongTy,
+        loaiDoiTuong: 'CONGTY',
+        maNguoiDanhGia: tkUVBao.maTaiKhoan,
+      },
+      {
+        rating: 4.4,
+        diemLuongPhucLoi: 4,
+        diemDaoTao: 5,
+        diemQuanLy: 4,
+        diemVanHoa: 5,
+        diemVanPhong: 4,
+        khuyenLamViec: true,
+        coOtTot: true,
+        anDanh: true,
+        trangThai: 'CHO_DUYET',
+        tieuDe: 'Quy trình phỏng vấn chuyên nghiệp, phản hồi nhanh',
+        noiDung:
+          'Phỏng vấn kỹ thuật hỏi sâu về thiết kế Microservices và thực tế xử lý sự cố production. HR hỗ trợ nhiệt tình và thông báo kết quả trong 3 ngày.',
+        noiDungUuDiem:
+          'Chế độ Hybrid linh hoạt, nhiều dự án ngân hàng nước ngoài để học hỏi.',
+        noiDungCaiThien:
+          'Một số dự án yêu cầu onsite tại tòa nhà khách hàng hơi xa trung tâm.',
+        ngayDanhGia: daysAgo(0),
+        maDoiTuongDuocDanhGia: ctyFPT.maCongTy,
+        loaiDoiTuong: 'CONGTY',
+        maNguoiDanhGia: tkUVKiet.maTaiKhoan,
+      },
+
+      // === MoMo (2 DA_DUYET) ===
       {
         rating: 4.8,
+        diemLuongPhucLoi: 5,
+        diemDaoTao: 5,
+        diemQuanLy: 5,
+        diemVanHoa: 5,
+        diemVanPhong: 4,
+        khuyenLamViec: true,
+        coOtTot: true,
+        anDanh: true,
+        trangThai: 'DA_DUYET',
         tieuDe: 'Môi trường FinTech cực kỳ năng động và học hỏi nhiều',
         noiDung:
-          'Đội ngũ Tech giỏi, sẵn sàng chia sẻ kiến thức về Microservices và hiệu năng Web. Chính sách Hybrid rất thoải mái.',
-        khuyenLamViec: true,
-        ngayDanhGia: daysAgo(12),
+          'Đội ngũ Tech giỏi, sẵn sàng chia sẻ kiến thức về Microservices và hiệu năng Web phục vụ hàng chục triệu người dùng. Chính sách Hybrid rất thoải mái.',
+        noiDungUuDiem:
+          'Thưởng Performance cao, cấp MacBook Pro M3, sếp cởi mở lắng nghe kỹ sư.',
+        noiDungCaiThien: 'Khu vực gửi xe tầng hầm giờ cao điểm sáng hơi đông.',
+        ngayDanhGia: daysAgo(10),
         maDoiTuongDuocDanhGia: ctyMomo.maCongTy,
         loaiDoiTuong: 'CONGTY',
         maNguoiDanhGia: tkUVQuan.maTaiKhoan,
       },
       {
-        rating: 4.9,
-        tieuDe: 'Văn hóa Engineering chuẩn quốc tế, ít OT',
-        noiDung:
-          'Quy trình Agile bài bản, làm việc trực tiếp với chuyên gia Úc giúp nâng trình tiếng Anh và kỹ năng kiến trúc hệ thống.',
+        rating: 4.4,
+        diemLuongPhucLoi: 4,
+        diemDaoTao: 5,
+        diemQuanLy: 4,
+        diemVanHoa: 5,
+        diemVanPhong: 4,
         khuyenLamViec: true,
+        coOtTot: true,
+        anDanh: true,
+        trangThai: 'DA_DUYET',
+        tieuDe: 'Phù hợp cho kỹ sư muốn làm sâu về sản phẩm Super App',
+        noiDung:
+          'Kỹ sư được tham gia thảo luận kiến trúc trực tiếp cùng Product và Designer, không bị gò bó theo kiểu chỉ nhận task code sẵn.',
+        noiDungUuDiem:
+          'Văn hóa minh bạch, có ngân sách đào tạo và bảo hiểm sức khỏe cao cấp.',
+        noiDungCaiThien:
+          'Tốc độ phát triển tính năng mới nhanh nên đôi khi tài liệu cập nhật chưa kịp.',
+        ngayDanhGia: daysAgo(4),
+        maDoiTuongDuocDanhGia: ctyMomo.maCongTy,
+        loaiDoiTuong: 'CONGTY',
+        maNguoiDanhGia: tkUVVy.maTaiKhoan,
+      },
+
+      // === NAB Innovation Centre (2 DA_DUYET + 1 TU_CHOI) ===
+      {
+        rating: 4.9,
+        diemLuongPhucLoi: 5,
+        diemDaoTao: 5,
+        diemQuanLy: 5,
+        diemVanHoa: 5,
+        diemVanPhong: 5,
+        khuyenLamViec: true,
+        coOtTot: true,
+        anDanh: true,
+        trangThai: 'DA_DUYET',
+        tieuDe: 'Văn hóa Engineering chuẩn quốc tế, cân bằng công việc tốt',
+        noiDung:
+          'Quy trình Agile bài bản, hầu như không OT, làm việc trực tiếp với chuyên gia Úc giúp nâng trình tiếng Anh và kỹ năng kiến trúc Cloud AWS rất nhanh.',
+        noiDungUuDiem:
+          '20 ngày phép năm, Hybrid linh hoạt, chương trình NAB Cloud Guild cực chất lượng.',
+        noiDungCaiThien:
+          'Quy trình bảo mật nội bộ ngân hàng khá chặt nên cấp quyền ban đầu hơi lâu.',
         ngayDanhGia: daysAgo(9),
         maDoiTuongDuocDanhGia: ctyNAB.maCongTy,
         loaiDoiTuong: 'CONGTY',
         maNguoiDanhGia: tkUVVy.maTaiKhoan,
       },
       {
-        rating: 4.7,
-        tieuDe: 'Campus đẹp, đồng nghiệp thân thiện',
-        noiDung:
-          'Nhiều dự án lớn để thử sức, đặc biệt phù hợp với các bạn thích bài toán High Traffic.',
+        rating: 4.6,
+        diemLuongPhucLoi: 5,
+        diemDaoTao: 5,
+        diemQuanLy: 4,
+        diemVanHoa: 5,
+        diemVanPhong: 4,
         khuyenLamViec: true,
+        coOtTot: true,
+        anDanh: true,
+        trangThai: 'DA_DUYET',
+        tieuDe: 'Thu nhập thuộc top thị trường, môi trường tiếng Anh 100%',
+        noiDung:
+          'Rất tôn trọng thời gian cá nhân của nhân viên. Các buổi tech sharing hàng tuần mang lại nhiều góc nhìn thực tế về hệ thống ngân hàng số.',
+        noiDungUuDiem:
+          'Lương Gross cao, đồng nghiệp chuyên nghiệp, ít họp thừa.',
+        noiDungCaiThien:
+          'Áp lực chất lượng code & test coverage cao với người mới.',
+        ngayDanhGia: daysAgo(3),
+        maDoiTuongDuocDanhGia: ctyNAB.maCongTy,
+        loaiDoiTuong: 'CONGTY',
+        maNguoiDanhGia: tkUVQuan.maTaiKhoan,
+      },
+      {
+        rating: 1.0,
+        diemLuongPhucLoi: 1,
+        diemDaoTao: 1,
+        diemQuanLy: 1,
+        diemVanHoa: 1,
+        diemVanPhong: 1,
+        khuyenLamViec: false,
+        coOtTot: false,
+        anDanh: true,
+        trangThai: 'TU_CHOI',
+        lyDoTuChoi:
+          'Nội dung đánh giá chung chung, mang tính công kích không có dẫn chứng cụ thể theo quy chuẩn cộng đồng ViecNgon.',
+        tieuDe: 'Đánh giá spam không có nội dung cụ thể',
+        noiDung: 'Không nên làm ở đây, toàn làm màu...',
+        noiDungUuDiem: 'Không có',
+        noiDungCaiThien: 'Đổi hết quy trình',
+        ngayDanhGia: daysAgo(6),
+        maDoiTuongDuocDanhGia: ctyNAB.maCongTy,
+        loaiDoiTuong: 'CONGTY',
+        maNguoiDanhGia: tkUVBao.maTaiKhoan,
+      },
+
+      // === VNG Corporation (1 DA_DUYET + 1 CHO_DUYET) ===
+      {
+        rating: 4.7,
+        diemLuongPhucLoi: 5,
+        diemDaoTao: 4,
+        diemQuanLy: 5,
+        diemVanHoa: 5,
+        diemVanPhong: 5,
+        khuyenLamViec: true,
+        coOtTot: true,
+        anDanh: true,
+        trangThai: 'DA_DUYET',
+        tieuDe: 'Campus đẹp hàng đầu Việt Nam, bài toán High Traffic cực đã',
+        noiDung:
+          'Được làm việc trên hệ thống chịu tải hàng triệu kết nối đồng thời. VNG Campus Quận 7 có phòng Gym, hồ bơi và canteen tiện nghi.',
+        noiDungUuDiem:
+          'Gói thu nhập up to 17 tháng lương, đồng nghiệp kỹ thuật cực giỏi.',
+        noiDungCaiThien:
+          'Vị trí Quận 7 hơi xa nếu nhà ở khu vực phía Bắc TP.HCM.',
         ngayDanhGia: daysAgo(7),
         maDoiTuongDuocDanhGia: ctyVNG.maCongTy,
         loaiDoiTuong: 'CONGTY',
         maNguoiDanhGia: tkUVKiet.maTaiKhoan,
+      },
+      {
+        rating: 4.5,
+        diemLuongPhucLoi: 5,
+        diemDaoTao: 4,
+        diemQuanLy: 5,
+        diemVanHoa: 4,
+        diemVanPhong: 5,
+        khuyenLamViec: true,
+        coOtTot: true,
+        anDanh: true,
+        trangThai: 'CHO_DUYET',
+        tieuDe: 'Hạ tầng Cloud quy mô lớn, đội ngũ mentor tận tâm',
+        noiDung:
+          'Tham gia team VNG Cloud giúp mình nâng cao rất nhiều kỹ năng về Distributed Systems, Golang và Kubernetes.',
+        noiDungUuDiem:
+          'Cấp MacBook Pro đời mới, phúc lợi thể thao và khám sức khỏe tốt.',
+        noiDungCaiThien:
+          'Lịch trực on-call cuối tuần nên phân bổ thêm người để giãn ca.',
+        ngayDanhGia: daysAgo(1),
+        maDoiTuongDuocDanhGia: ctyVNG.maCongTy,
+        loaiDoiTuong: 'CONGTY',
+        maNguoiDanhGia: tkUVNam.maTaiKhoan,
+      },
+
+      // === Shopee Vietnam (1 DA_DUYET + 1 DA_DUYET bị báo cáo vi phạm) ===
+      {
+        rating: 4.2,
+        diemLuongPhucLoi: 5,
+        diemDaoTao: 4,
+        diemQuanLy: 4,
+        diemVanHoa: 4,
+        diemVanPhong: 4,
+        khuyenLamViec: true,
+        coOtTot: false,
+        anDanh: true,
+        trangThai: 'DA_DUYET',
+        tieuDe: 'Đãi ngộ tốt, học được tư duy scale hệ thống Mega Campaign',
+        noiDung:
+          'Làm việc trực tiếp cùng team khu vực Singapore, pantry miễn phí đồ ăn vặt và cà phê mỗi ngày. Tốc độ học hỏi rất nhanh.',
+        noiDungUuDiem:
+          'Lương thưởng cạnh tranh, văn phòng trung tâm Quận 1 hiện đại.',
+        noiDungCaiThien:
+          'Các đợt sale lớn 11.11, 12.12 khối lượng công việc tăng cao cần tăng ca.',
+        ngayDanhGia: daysAgo(4),
+        maDoiTuongDuocDanhGia: ctyShopee.maCongTy,
+        loaiDoiTuong: 'CONGTY',
+        maNguoiDanhGia: tkUVQuan.maTaiKhoan,
+      },
+      {
+        rating: 2.0,
+        diemLuongPhucLoi: 3,
+        diemDaoTao: 2,
+        diemQuanLy: 1,
+        diemVanHoa: 2,
+        diemVanPhong: 2,
+        khuyenLamViec: false,
+        coOtTot: false,
+        anDanh: true,
+        trangThai: 'DA_DUYET',
+        biBaoCao: true,
+        lyDoBaoCao:
+          'Thông tin sai sự thật, vu khống gây ảnh hưởng uy tín doanh nghiệp — Bài viết nêu thông tin chưa kiểm chứng về chính sách nội bộ dự án.',
+        ngayBaoCao: daysAgo(1),
+        tieuDe: 'Áp lực release cuối tháng cao, yêu cầu thay đổi liên tục',
+        noiDung:
+          'Timeline một số sprint thay đổi khá sát ngày go-live khiến đội ngũ kỹ thuật và kiểm thử thường xuyên phải tăng ca cuối tuần.',
+        noiDungUuDiem: 'Lương cứng tốt so với mặt bằng chung thị trường.',
+        noiDungCaiThien:
+          'Cần khóa scope sớm hơn và cải thiện quy trình bàn giao tài liệu.',
+        ngayDanhGia: daysAgo(2),
+        maDoiTuongDuocDanhGia: ctyShopee.maCongTy,
+        loaiDoiTuong: 'CONGTY',
+        maNguoiDanhGia: tkUVBao.maTaiKhoan,
+      },
+
+      // === Viettel Solutions (1 DA_DUYET) ===
+      {
+        rating: 4.3,
+        diemLuongPhucLoi: 4,
+        diemDaoTao: 4,
+        diemQuanLy: 4,
+        diemVanHoa: 5,
+        diemVanPhong: 4,
+        khuyenLamViec: true,
+        coOtTot: true,
+        anDanh: true,
+        trangThai: 'DA_DUYET',
+        tieuDe: 'Bài toán dữ liệu quy mô quốc gia, chế độ ổn định',
+        noiDung:
+          'Được tiếp cận các dự án Smart City và Chính phủ số quy mô lớn. Đồng nghiệp thân thiện, chế độ phúc lợi tập đoàn đầy đủ.',
+        noiDungUuDiem: 'Thưởng các dịp lễ lớn tốt, công việc ổn định lâu dài.',
+        noiDungCaiThien:
+          'Thủ tục phê duyệt nội bộ đôi khi cần nhiều bước giấy tờ.',
+        ngayDanhGia: daysAgo(8),
+        maDoiTuongDuocDanhGia: ctyViettel.maCongTy,
+        loaiDoiTuong: 'CONGTY',
+        maNguoiDanhGia: tkUVNam.maTaiKhoan,
+      },
+
+      // === ĐÁNH GIÁ ỨNG VIÊN CỦA NHÀ TUYỂN DỤNG (4 phiếu — demo nhiều vòng + chia sẻ feedback) ===
+      {
+        rating: 4.8,
+        diemChuyenMon: 5,
+        diemThaiDo: 5,
+        diemGiaiQuyetVanDe: 5,
+        diemPhuHopVanHoa: 4,
+        ketQuaDanhGia: 'DAT',
+        chiaSeUngVien: true,
+        anDanh: false,
+        trangThai: 'DA_DUYET',
+        tieuDe: 'Vòng 2 Kỹ thuật: Kiến trúc Java & Core Banking rất vững',
+        noiDung:
+          'Ứng viên phân tích rõ bài toán xử lý giao dịch phân tán, nắm chắc Spring Boot, PostgreSQL và AWS. Phong thái tự tin, giao tiếp mạch lạc.',
+        ngayDanhGia: daysAgo(1),
+        maDoiTuongDuocDanhGia: uvNam.maUngVien,
+        maDonThamChieu: donFPTJava.maDon,
+        loaiDoiTuong: 'UNGVIEN',
+        maNguoiDanhGia: tkHRFPT.maTaiKhoan,
+      },
+      {
+        rating: 4.3,
+        diemChuyenMon: 4,
+        diemThaiDo: 5,
+        diemGiaiQuyetVanDe: 4,
+        diemPhuHopVanHoa: 4,
+        ketQuaDanhGia: 'CAN_NHAC',
+        chiaSeUngVien: false,
+        anDanh: false,
+        trangThai: 'DA_DUYET',
+        tieuDe: 'Vòng 1 HR: Phù hợp văn hóa, cần thương lượng thêm mức offer',
+        noiDung:
+          'Ghi chú nội bộ HR: Ứng viên kỳ vọng 58 triệu Gross, nằm trong khung Senior nhưng cần duyệt thêm từ Delivery Manager trước khi gửi offer.',
+        ngayDanhGia: daysAgo(2),
+        maDoiTuongDuocDanhGia: uvNam.maUngVien,
+        maDonThamChieu: donFPTJava.maDon,
+        loaiDoiTuong: 'UNGVIEN',
+        maNguoiDanhGia: tkHRFPT.maTaiKhoan,
+      },
+      {
+        rating: 4.5,
+        diemChuyenMon: 4,
+        diemThaiDo: 5,
+        diemGiaiQuyetVanDe: 4,
+        diemPhuHopVanHoa: 5,
+        ketQuaDanhGia: 'DAT',
+        chiaSeUngVien: true,
+        anDanh: false,
+        trangThai: 'DA_DUYET',
+        tieuDe:
+          'Tư duy kiểm thử sắc bén, có nền tảng Playwright Automation tốt',
+        noiDung:
+          'Ứng viên có chứng chỉ ISTQB, trình bày cách thiết kế test case rõ ràng và đã tự xây dựng bộ E2E test bằng Playwright. Rất phù hợp định hướng QA team Đà Nẵng.',
+        ngayDanhGia: daysAgo(1),
+        maDoiTuongDuocDanhGia: uvBao.maUngVien,
+        maDonThamChieu: donFPTTester.maDon,
+        loaiDoiTuong: 'UNGVIEN',
+        maNguoiDanhGia: tkHRFPT.maTaiKhoan,
+      },
+      {
+        rating: 4.8,
+        diemChuyenMon: 5,
+        diemThaiDo: 5,
+        diemGiaiQuyetVanDe: 5,
+        diemPhuHopVanHoa: 4,
+        ketQuaDanhGia: 'DAT',
+        chiaSeUngVien: true,
+        anDanh: false,
+        trangThai: 'DA_DUYET',
+        tieuDe: 'Nắm vững Next.js App Router và tối ưu Core Web Vitals',
+        noiDung:
+          'Ứng viên giải quyết tốt bài toán tối ưu hiệu năng render danh sách lớn và chia sẻ kinh nghiệm thực chiến rõ ràng với React Query & TypeScript.',
+        ngayDanhGia: daysAgo(1),
+        maDoiTuongDuocDanhGia: uvQuan.maUngVien,
+        maDonThamChieu: donMomo1.maDon,
+        loaiDoiTuong: 'UNGVIEN',
+        maNguoiDanhGia: tkHRCuong.maTaiKhoan,
       },
     ],
   });
@@ -2146,6 +2513,27 @@ async function main(): Promise<void> {
           'FPT Software vừa đăng tin tuyển dụng mới đang chờ Quản trị viên kiểm duyệt trước khi hiển thị công khai.',
         trangThai: 'CHUA_DOC',
         maTaiKhoan: tkAdmin.maTaiKhoan,
+      },
+      {
+        tieuDe: 'Đánh giá công ty mới chờ duyệt: FPT Software',
+        noiDung:
+          'Có bài đánh giá mới (4.4/5 sao) dành cho FPT Software đang chờ Quản trị viên kiểm duyệt tại mục Kiểm duyệt đánh giá.',
+        trangThai: 'CHUA_DOC',
+        maTaiKhoan: tkAdmin.maTaiKhoan,
+      },
+      {
+        tieuDe: 'Báo cáo vi phạm đánh giá từ Shopee Vietnam',
+        noiDung:
+          'Shopee Vietnam vừa báo cáo vi phạm bài đánh giá "Áp lực release cuối tháng cao, yêu cầu thay đổi liên tục". Vui lòng kiểm tra tại mục Kiểm duyệt đánh giá.',
+        trangThai: 'CHUA_DOC',
+        maTaiKhoan: tkAdmin.maTaiKhoan,
+      },
+      {
+        tieuDe: 'Nhận xét phỏng vấn từ FPT Software',
+        noiDung:
+          'FPT Software vừa chia sẻ nhận xét đánh giá (4.8/5 sao) cho hồ sơ vị trí Senior Java Backend Engineer. Bạn có thể xem chi tiết tại mục Việc làm đã ứng tuyển.',
+        trangThai: 'CHUA_DOC',
+        maTaiKhoan: tkUVNam.maTaiKhoan,
       },
       {
         tieuDe: '🛡️ Chào mừng Quản trị viên',

@@ -9,7 +9,11 @@ describe('AdminUsersService', () => {
     taiKhoan: {
       findMany: jest.Mock;
       findFirst: jest.Mock;
+      findUniqueOrThrow: jest.Mock;
       count: jest.Mock;
+      update: jest.Mock;
+    };
+    nhaTuyenDung: {
       update: jest.Mock;
     };
     passwordResetToken: {
@@ -41,7 +45,11 @@ describe('AdminUsersService', () => {
       taiKhoan: {
         findMany: jest.fn(),
         findFirst: jest.fn(),
+        findUniqueOrThrow: jest.fn(),
         count: jest.fn(),
+        update: jest.fn(),
+      },
+      nhaTuyenDung: {
         update: jest.fn(),
       },
       passwordResetToken: {
@@ -177,31 +185,70 @@ describe('AdminUsersService', () => {
     expect(prismaMock.passwordResetToken.updateMany).not.toHaveBeenCalled();
   });
 
-  it('chặn Admin tự hạ quyền của chính mình', async () => {
+  it('chặn Admin tự thay đổi chức vụ của chính mình', async () => {
     await expect(
-      service.updateRole('admin-1', { vaiTro: 'UNGVIEN' }, 'admin-1'),
+      service.updateRole(
+        'admin-1',
+        { vaiTroTrongCongTy: 'RECRUITER' },
+        'admin-1',
+      ),
     ).rejects.toThrow(BadRequestException);
   });
 
-  it('phân quyền ADMIN thành công cho người dùng hợp lệ', async () => {
+  it('chặn đổi chức vụ cho tài khoản Ứng viên (không phải Nhà tuyển dụng)', async () => {
     prismaMock.taiKhoan.findFirst.mockResolvedValue({
       maTaiKhoan: 'user-1',
       email: 'candidate@viecngon.vn',
       vaiTro: 'UNGVIEN',
       trangThai: 'HOATDONG',
+      nhaTuyenDung: null,
     });
-    prismaMock.taiKhoan.update.mockResolvedValue({
+
+    await expect(
+      service.updateRole('user-1', { vaiTroTrongCongTy: 'OWNER' }, 'admin-1'),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('đổi chức vụ Nhà tuyển dụng từ RECRUITER lên OWNER thành công', async () => {
+    prismaMock.taiKhoan.findFirst.mockResolvedValue({
+      maTaiKhoan: 'hr-1',
+      email: 'hr@fpt.com',
+      vaiTro: 'NHATUYENDUNG',
+      trangThai: 'HOATDONG',
+      nhaTuyenDung: {
+        maNTD: 'ntd-1',
+        vaiTroTrongCongTy: 'RECRUITER',
+        congTy: { tenCongTy: 'FPT Software' },
+      },
+    });
+    prismaMock.nhaTuyenDung.update.mockResolvedValue({});
+    prismaMock.taiKhoan.findUniqueOrThrow.mockResolvedValue({
       ...sampleRow,
-      vaiTro: 'ADMIN',
+      maTaiKhoan: 'hr-1',
+      email: 'hr@fpt.com',
+      vaiTro: 'NHATUYENDUNG',
+      nhaTuyenDung: {
+        vaiTroTrongCongTy: 'OWNER',
+        congTy: {
+          tenCongTy: 'FPT Software',
+          slug: 'fpt-software',
+          logoUrl: null,
+        },
+      },
     });
 
     const result = await service.updateRole(
-      'user-1',
-      { vaiTro: 'ADMIN' },
+      'hr-1',
+      { vaiTroTrongCongTy: 'OWNER' },
       'admin-1',
     );
 
-    expect(result.user.vaiTro).toBe('ADMIN');
+    expect(result.user.vaiTro).toBe('NHATUYENDUNG');
+    expect(result.user.companyRole).toBe('OWNER');
+    expect(prismaMock.nhaTuyenDung.update).toHaveBeenCalledWith({
+      where: { maNTD: 'ntd-1' },
+      data: { vaiTroTrongCongTy: 'OWNER' },
+    });
     expect(prismaMock.thongBao.create).toHaveBeenCalledTimes(1);
   });
 

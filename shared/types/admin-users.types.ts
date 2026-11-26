@@ -9,6 +9,8 @@
 
 export type AdminUserRole = 'UNGVIEN' | 'NHATUYENDUNG' | 'ADMIN';
 
+export type EmployerCompanyRole = 'OWNER' | 'RECRUITER';
+
 export type AdminUserStatus = 'HOATDONG' | 'KHOA' | 'CHUAKICHHOAT';
 
 export type AdminUserProvider = 'LOCAL' | 'GOOGLE';
@@ -51,6 +53,7 @@ export interface AdminUserListItem {
   avatarUrl: string | null;
   companyName: string | null;
   companySlug: string | null;
+  companyRole?: EmployerCompanyRole | null;
 }
 
 export interface AdminUsersListResponse {
@@ -107,7 +110,7 @@ export interface UpdateAdminUserStatusPayload {
 }
 
 export interface UpdateAdminUserRolePayload {
-  vaiTro: AdminUserRole;
+  vaiTroTrongCongTy: EmployerCompanyRole;
 }
 
 export interface DeleteAdminUserPayload {

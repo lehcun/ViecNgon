@@ -411,15 +411,16 @@ export default function AdminUserDetailDrawer({
             </button>
 
             <div className="flex flex-wrap items-center gap-2.5">
-              <button
-                type="button"
-                disabled={isSelf}
-                onClick={() => onRequestChangeRole(detail)}
-                className="inline-flex items-center gap-1.5 h-10 px-4 rounded-lg border border-border-default bg-surface-card hover:bg-surface-muted text-sm font-semibold text-text-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                <Shield size={15} className="text-ai" />
-                Phân quyền
-              </button>
+              {detail.vaiTro === "NHATUYENDUNG" && (
+                <button
+                  type="button"
+                  onClick={() => onRequestChangeRole(detail)}
+                  className="inline-flex items-center gap-1.5 h-10 px-4 rounded-lg border border-border-default bg-surface-card hover:bg-surface-muted text-sm font-semibold text-text-primary transition-colors"
+                >
+                  <Shield size={15} className="text-ai" />
+                  Đổi Owner / HR
+                </button>
+              )}
 
               {detail.trangThai === "HOATDONG" ? (
                 <button

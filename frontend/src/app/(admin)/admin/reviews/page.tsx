@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { Suspense, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { MessageSquareQuote } from "lucide-react";
 import type {
   AdminReviewFilterTab,
@@ -47,9 +48,25 @@ const EMPTY_GROWTH = {
   month: { total: 0, pending: 0, reported: 0, approved: 0 },
 };
 
-export default function AdminReviewsPage() {
+function parseInitialReviewTab(raw: string | null): AdminReviewFilterTab {
+  if (
+    raw === "CHO_DUYET" ||
+    raw === "REPORTED" ||
+    raw === "DA_DUYET" ||
+    raw === "REJECTED" ||
+    raw === "ALL"
+  ) {
+    return raw;
+  }
+  return "ALL";
+}
+
+function AdminReviewsWorkspace() {
+  const searchParams = useSearchParams();
+  const initialTab = parseInitialReviewTab(searchParams.get("tab"));
+
   const [kpiPeriod, setKpiPeriod] = useState<AdminReviewKpiPeriod>("today");
-  const [activeTab, setActiveTab] = useState<AdminReviewFilterTab>("ALL");
+  const [activeTab, setActiveTab] = useState<AdminReviewFilterTab>(initialTab);
   const [filters, setFilters] =
     useState<AdminReviewsFiltersState>(DEFAULT_FILTERS);
   const [detailTarget, setDetailTarget] = useState<AdminReviewListItem | null>(
@@ -256,5 +273,13 @@ export default function AdminReviewsPage() {
         onConfirm={handleConfirmRejectOrHide}
       />
     </div>
+  );
+}
+
+export default function AdminReviewsPage() {
+  return (
+    <Suspense fallback={<div className="h-96 animate-pulse rounded-2xl bg-surface-card border border-border-default" />}>
+      <AdminReviewsWorkspace />
+    </Suspense>
   );
 }

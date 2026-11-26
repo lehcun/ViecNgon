@@ -75,7 +75,16 @@ export default function LoginForm() {
       const data = await login({
         email: values.email.trim(),
         password: values.password,
+        expectedRole: "UNGVIEN",
       });
+
+      if (data?.user?.role !== "UNGVIEN") {
+        toast.error(
+          "Tài khoản này không phải Ứng viên. Vui lòng đăng nhập tại cổng đúng vai trò!",
+        );
+        return;
+      }
+
       toast.success("Đăng nhập thành công!");
       const rawCallback =
         typeof window !== "undefined"
@@ -88,11 +97,7 @@ export default function LoginForm() {
           ? rawCallback
           : null;
 
-      if (data?.user?.role === "NHATUYENDUNG") {
-        router.push("/employer-dashboard");
-      } else {
-        router.push(safeCallback || "/dashboard");
-      }
+      router.push(safeCallback || "/dashboard");
     } catch (err) {
       const { message } = parseApiError(err, "Đăng nhập thất bại!");
 

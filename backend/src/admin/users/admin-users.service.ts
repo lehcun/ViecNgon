@@ -39,6 +39,7 @@ const USER_LIST_SELECT = {
   },
   nhaTuyenDung: {
     select: {
+      vaiTroTrongCongTy: true,
       congTy: {
         select: {
           tenCongTy: true,
@@ -64,6 +65,7 @@ interface UserListRow {
     avatarUrl: string | null;
   } | null;
   nhaTuyenDung: {
+    vaiTroTrongCongTy: string;
     congTy: {
       tenCongTy: string;
       slug: string;
@@ -72,10 +74,9 @@ interface UserListRow {
   } | null;
 }
 
-const ROLE_LABELS: Record<AdminUserRole, string> = {
-  ADMIN: 'Quản trị viên',
-  NHATUYENDUNG: 'Nhà tuyển dụng',
-  UNGVIEN: 'Ứng viên',
+const COMPANY_ROLE_LABELS: Record<'OWNER' | 'RECRUITER', string> = {
+  OWNER: 'Quản trị viên công ty (Owner)',
+  RECRUITER: 'Chuyên viên tuyển dụng (HR)',
 };
 
 @Injectable()
@@ -129,6 +130,12 @@ export class AdminUsersService {
         row.ungVien?.avatarUrl ?? row.nhaTuyenDung?.congTy?.logoUrl ?? null,
       companyName: row.nhaTuyenDung?.congTy?.tenCongTy ?? null,
       companySlug: row.nhaTuyenDung?.congTy?.slug ?? null,
+      companyRole:
+        row.nhaTuyenDung?.vaiTroTrongCongTy === 'OWNER'
+          ? 'OWNER'
+          : row.nhaTuyenDung
+            ? 'RECRUITER'
+            : null,
     };
   }
 
@@ -461,9 +468,9 @@ export class AdminUsersService {
     dto: UpdateUserRoleDto,
     currentAdminId: string,
   ): Promise<AdminUserActionResponse> {
-    if (targetId === currentAdminId && dto.vaiTro !== 'ADMIN') {
+    if (targetId === currentAdminId) {
       throw new BadRequestException(
-        'Không thể tự hạ quyền quản trị của chính bạn.',
+        'Không thể thay đổi chức vụ của tài khoản quản trị đang đăng nhập.',
       );
     }
 
@@ -475,6 +482,17 @@ export class AdminUsersService {
           email: true,
           vaiTro: true,
           trangThai: true,
+          nhaTuyenDung: {
+            select: {
+              maNTD: true,
+              vaiTroTrongCongTy: true,
+              congTy: {
+                select: {
+                  tenCongTy: true,
+                },
+              },
+            },
+          },
         },
       });
 
@@ -482,42 +500,37 @@ export class AdminUsersService {
         throw new NotFoundException('Không tìm thấy tài khoản người dùng.');
       }
 
-      if (target.vaiTro === dto.vaiTro) {
+      if (target.vaiTro !== 'NHATUYENDUNG' || !target.nhaTuyenDung) {
         throw new BadRequestException(
-          `Tài khoản này đã có vai trò ${ROLE_LABELS[dto.vaiTro]}.`,
+          'Chỉ được phép đổi chức vụ trong công ty (Owner / HR) cho tài khoản Nhà tuyển dụng. Không thể thay đổi vai trò hệ thống của Ứng viên hoặc Quản trị viên.',
         );
       }
 
-      // Bảo vệ tài khoản ADMIN hoạt động cuối cùng
-      if (target.vaiTro === 'ADMIN' && dto.vaiTro !== 'ADMIN') {
-        const activeAdmins = await tx.taiKhoan.count({
-          where: {
-            vaiTro: 'ADMIN',
-            trangThai: 'HOATDONG',
-            deletedAt: null,
-          },
-        });
-        if (activeAdmins <= 1 && target.trangThai === 'HOATDONG') {
-          throw new BadRequestException(
-            'Không thể hạ quyền quản trị viên hoạt động cuối cùng của hệ thống.',
-          );
-        }
+      if (target.nhaTuyenDung.vaiTroTrongCongTy === dto.vaiTroTrongCongTy) {
+        throw new BadRequestException(
+          `Nhà tuyển dụng này hiện đã giữ chức vụ ${COMPANY_ROLE_LABELS[dto.vaiTroTrongCongTy]}.`,
+        );
       }
 
-      const updated = await tx.taiKhoan.update({
+      await tx.nhaTuyenDung.update({
+        where: { maNTD: target.nhaTuyenDung.maNTD },
+        data: { vaiTroTrongCongTy: dto.vaiTroTrongCongTy },
+      });
+
+      const updated = await tx.taiKhoan.findUniqueOrThrow({
         where: { maTaiKhoan: targetId },
-        data: { vaiTro: dto.vaiTro },
         select: USER_LIST_SELECT,
       });
 
+      const companyLabel = target.nhaTuyenDung.congTy?.tenCongTy || 'doanh nghiệp';
       await tx.thongBao.create({
         data: {
           maTaiKhoan: targetId,
           tieuDe: this.truncateText(
-            `Vai trò tài khoản đã được cập nhật thành ${ROLE_LABELS[dto.vaiTro]}`,
+            `Chức vụ tại ${companyLabel} đã được cập nhật thành ${COMPANY_ROLE_LABELS[dto.vaiTroTrongCongTy]}`,
             255,
           ),
-          noiDung: `Quản trị viên đã thay đổi quyền truy cập tài khoản của bạn sang vai trò ${ROLE_LABELS[dto.vaiTro]}. Vui lòng đăng nhập lại để áp dụng quyền mới.`,
+          noiDung: `Quản trị viên hệ thống đã cập nhật chức vụ của bạn tại ${companyLabel} thành ${COMPANY_ROLE_LABELS[dto.vaiTroTrongCongTy]}.`,
           trangThai: 'CHUA_DOC',
         },
       });
@@ -526,7 +539,7 @@ export class AdminUsersService {
     });
 
     return {
-      message: `Đã cập nhật vai trò của ${updatedUser.email} thành ${ROLE_LABELS[dto.vaiTro]}.`,
+      message: `Đã cập nhật chức vụ của ${updatedUser.email} thành ${COMPANY_ROLE_LABELS[dto.vaiTroTrongCongTy]}.`,
       user: this.mapListItem(updatedUser),
     };
   }

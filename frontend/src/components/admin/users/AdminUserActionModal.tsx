@@ -2,7 +2,10 @@
 
 import React, { useState } from "react";
 import { Loader2, Lock, Shield, Trash2, Unlock, X } from "lucide-react";
-import type { AdminUserListItem, AdminUserRole } from "@viecngon/types";
+import type {
+  AdminUserListItem,
+  EmployerCompanyRole,
+} from "@viecngon/types";
 import { ROLE_META } from "./AdminUsersTable";
 
 export type AdminUserModalMode = "lock" | "activate" | "role" | "delete";
@@ -14,7 +17,7 @@ interface AdminUserActionModalProps {
   onClose: () => void;
   onConfirmLock: (reason: string) => void;
   onConfirmActivate: () => void;
-  onConfirmRole: (nextRole: AdminUserRole) => void;
+  onConfirmRole: (nextCompanyRole: EmployerCompanyRole) => void;
   onConfirmDelete: (reason: string) => void;
 }
 
@@ -29,7 +32,10 @@ export default function AdminUserActionModal({
   onConfirmDelete,
 }: AdminUserActionModalProps) {
   const [reason, setReason] = useState("");
-  const [selectedRole, setSelectedRole] = useState<AdminUserRole>(user.vaiTro);
+  const currentCompanyRole: EmployerCompanyRole =
+    user.companyRole === "OWNER" ? "OWNER" : "RECRUITER";
+  const [selectedCompanyRole, setSelectedCompanyRole] =
+    useState<EmployerCompanyRole>(currentCompanyRole);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,7 +46,7 @@ export default function AdminUserActionModal({
     } else if (mode === "delete") {
       onConfirmDelete(reason.trim());
     } else {
-      onConfirmRole(selectedRole);
+      onConfirmRole(selectedCompanyRole);
     }
   };
 
@@ -51,9 +57,10 @@ export default function AdminUserActionModal({
         ? "Kích hoạt tài khoản"
         : mode === "delete"
           ? "Xóa tài khoản người dùng"
-          : "Phân quyền quản trị tài khoản";
+          : "Đổi chức vụ Nhà tuyển dụng";
 
-  const roleUnchanged = mode === "role" && selectedRole === user.vaiTro;
+  const roleUnchanged =
+    mode === "role" && selectedCompanyRole === currentCompanyRole;
 
   return (
     <div
@@ -160,32 +167,40 @@ export default function AdminUserActionModal({
 
           {mode === "role" && (
             <div className="space-y-2">
+              <p className="text-xs text-text-secondary">
+                Chức vụ hiện tại tại{" "}
+                <strong className="text-text-primary">
+                  {user.companyName || "doanh nghiệp"}
+                </strong>
+                :{" "}
+                <strong className="text-primary">
+                  {currentCompanyRole === "OWNER"
+                    ? "Quản trị viên công ty (Owner)"
+                    : "Chuyên viên tuyển dụng (HR)"}
+                </strong>
+              </p>
               <label
                 htmlFor="user-role-select"
-                className="block text-xs font-semibold text-text-primary"
+                className="block text-xs font-semibold text-text-primary pt-1"
               >
-                Chọn vai trò mới
+                Chọn chức vụ trong công ty
               </label>
               <select
                 id="user-role-select"
-                value={selectedRole}
+                value={selectedCompanyRole}
                 onChange={(e) =>
-                  setSelectedRole(e.target.value as AdminUserRole)
+                  setSelectedCompanyRole(e.target.value as EmployerCompanyRole)
                 }
                 className="w-full h-10 px-3 rounded-lg border border-border-default bg-surface-card text-sm text-text-primary focus:outline-none focus:border-primary"
               >
-                <option value="UNGVIEN">Ứng viên (UNGVIEN)</option>
-                <option value="NHATUYENDUNG">
-                  Nhà tuyển dụng (NHATUYENDUNG)
-                </option>
-                <option value="ADMIN">Quản trị viên (ADMIN)</option>
+                <option value="OWNER">Quản trị viên công ty (Owner)</option>
+                <option value="RECRUITER">Chuyên viên tuyển dụng (HR)</option>
               </select>
-              {selectedRole === "ADMIN" && user.vaiTro !== "ADMIN" && (
-                <p className="text-xs text-warning-text bg-warning-soft border border-warning-border rounded-lg p-3">
-                  Lưu ý: Tài khoản được cấp quyền Quản trị viên sẽ có toàn quyền
-                  truy cập cổng quản trị ViecNgon.
-                </p>
-              )}
+              <p className="text-xs text-text-muted bg-surface-page border border-border-default rounded-lg p-3">
+                Chỉ hỗ trợ chuyển đổi chức vụ nội bộ công ty giữa{" "}
+                <strong>Owner</strong> và <strong>HR</strong> cho tài khoản Nhà
+                tuyển dụng.
+              </p>
             </div>
           )}
         </div>

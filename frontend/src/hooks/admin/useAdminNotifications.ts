@@ -18,33 +18,57 @@ import { adminNotificationKeys } from "@/queries/queryKeys";
 
 export type AdminNotificationFilter = "ALL" | "UNREAD" | "READ";
 
-export type AdminNotificationCategory = "employer" | "job" | "package" | "system";
+export type AdminNotificationCategory =
+  | "employer"
+  | "job"
+  | "review"
+  | "package"
+  | "system";
 
 export function classifyAdminNotification(
   notif: Pick<NotificationItemResponse, "title" | "content">,
 ): { category: AdminNotificationCategory; href: string } {
   const text = `${notif.title} ${notif.content}`.toLowerCase();
 
+  // 1. Đánh giá công ty (chờ duyệt / bị báo cáo vi phạm)
   if (
-    text.includes("nhà tuyển dụng mới") ||
-    text.includes("chờ kích hoạt") ||
-    text.includes("tài khoản")
+    text.includes("đánh giá") ||
+    text.includes("review") ||
+    text.includes("báo cáo vi phạm")
   ) {
-    return { category: "employer", href: "/admin/users?status=CHUAKICHHOAT" };
+    const tab = text.includes("báo cáo") ? "REPORTED" : "CHO_DUYET";
+    return { category: "review", href: `/admin/reviews?tab=${tab}` };
   }
 
+  // 2. Nhà tuyển dụng / Doanh nghiệp mới chờ duyệt kích hoạt
+  if (
+    text.includes("nhà tuyển dụng") ||
+    text.includes("chờ kích hoạt") ||
+    text.includes("doanh nghiệp mới") ||
+    text.includes("tài khoản")
+  ) {
+    return {
+      category: "employer",
+      href: "/admin/users?role=NHATUYENDUNG&status=CHUAKICHHOAT",
+    };
+  }
+
+  // 3. Tin tuyển dụng chờ kiểm duyệt
   if (
     text.includes("tin tuyển dụng") ||
-    text.includes("chờ duyệt") ||
-    text.includes("kiểm duyệt tin")
+    text.includes("kiểm duyệt tin") ||
+    text.includes("việc làm") ||
+    text.includes("chờ duyệt")
   ) {
     return { category: "job", href: "/admin/jobs?status=CHO_DUYET" };
   }
 
+  // 4. Gói dịch vụ & giao dịch thanh toán
   if (
     text.includes("gói dịch vụ") ||
     text.includes("thanh toán") ||
-    text.includes("giao dịch")
+    text.includes("giao dịch") ||
+    text.includes("quảng cáo")
   ) {
     return { category: "package", href: "/admin/packages" };
   }

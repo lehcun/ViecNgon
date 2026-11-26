@@ -1,8 +1,8 @@
 import { IsIn } from 'class-validator';
 
 export class UpdateUserRoleDto {
-  @IsIn(['UNGVIEN', 'NHATUYENDUNG', 'ADMIN'], {
-    message: 'Vai trò phải là UNGVIEN, NHATUYENDUNG hoặc ADMIN',
+  @IsIn(['OWNER', 'RECRUITER'], {
+    message: 'Chức vụ trong công ty chỉ có thể là OWNER hoặc RECRUITER (HR).',
   })
-  vaiTro: 'UNGVIEN' | 'NHATUYENDUNG' | 'ADMIN';
+  vaiTroTrongCongTy: 'OWNER' | 'RECRUITER';
 }

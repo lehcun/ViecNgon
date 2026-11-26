@@ -78,6 +78,7 @@ export default function AdminLoginForm() {
       const data = await login({
         email: values.email.trim(),
         password: values.password,
+        expectedRole: "ADMIN",
       });
 
       if (data?.user?.role !== "ADMIN") {
