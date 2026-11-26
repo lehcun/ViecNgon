@@ -80,12 +80,17 @@ export interface AdminUserDetailResponse extends AdminUserListItem {
     maNTD: string;
     hoTen: string | null;
     chucVu: string | null;
+    soDienThoai?: string | null;
     vaiTroTrongCongTy: string;
     maCongTy: string;
     tenCongTy: string;
     slug: string;
     logoUrl: string | null;
     thanhPho: string | null;
+    diaChi?: string | null;
+    website?: string | null;
+    moHinhCongTy?: string | null;
+    quyMo?: string | null;
     jobsCount: number;
   } | null;
   recentNotifications: Array<{

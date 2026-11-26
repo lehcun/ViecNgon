@@ -300,16 +300,53 @@ export default function AdminUserDetailDrawer({
                         <span>{detail.recruiterProfile.tenCongTy}</span>
                         <ExternalLink size={13} className="shrink-0 text-primary" />
                       </Link>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-primary-light text-primary border border-primary-subtle">
+                        {detail.recruiterProfile.vaiTroTrongCongTy}
+                      </span>
                     </div>
                     <p>
                       <span className="text-text-muted">Chức vụ:</span>{" "}
                       {detail.recruiterProfile.chucVu ||
                         detail.recruiterProfile.vaiTroTrongCongTy}
                     </p>
+                    {detail.recruiterProfile.soDienThoai && (
+                      <p>
+                        <span className="text-text-muted">SĐT liên hệ HR:</span>{" "}
+                        {detail.recruiterProfile.soDienThoai}
+                      </p>
+                    )}
                     <p>
                       <span className="text-text-muted">Khu vực:</span>{" "}
                       {detail.recruiterProfile.thanhPho || "Chưa cập nhật"}
+                      {detail.recruiterProfile.diaChi
+                        ? ` · ${detail.recruiterProfile.diaChi}`
+                        : ""}
                     </p>
+                    {detail.recruiterProfile.website && (
+                      <p className="truncate">
+                        <span className="text-text-muted">Website:</span>{" "}
+                        <a
+                          href={detail.recruiterProfile.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline"
+                        >
+                          {detail.recruiterProfile.website}
+                        </a>
+                      </p>
+                    )}
+                    {(detail.recruiterProfile.moHinhCongTy ||
+                      detail.recruiterProfile.quyMo) && (
+                      <p>
+                        <span className="text-text-muted">Mô hình / Quy mô:</span>{" "}
+                        {[
+                          detail.recruiterProfile.moHinhCongTy,
+                          detail.recruiterProfile.quyMo,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                    )}
                     <p className="flex items-center gap-1.5">
                       <FileText size={14} className="text-text-muted" />
                       <span>

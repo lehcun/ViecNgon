@@ -79,6 +79,39 @@ export interface RegisterResponse {
   };
 }
 
+export interface RegisterEmployerPayload {
+  // Bước 1: Thông tin tài khoản & Người đại diện
+  employerName: string;
+  email: string;
+  phone: string;
+  title: string;
+  password: string;
+
+  // Bước 2: Thông tin doanh nghiệp
+  companyName: string;
+  location: string;
+  address?: string;
+  website?: string;
+  companyModel?: string;
+  companySize?: string;
+  maCongTy?: string;
+}
+
+export interface RegisterEmployerResponse {
+  message: string;
+  pendingApproval: boolean;
+  user: {
+    id: string;
+    sub?: string;
+    email: string;
+    name: string;
+    role: UserRole;
+    status: AccountStatus;
+    companyName?: string;
+    companySlug?: string;
+  };
+}
+
 export interface ChangePasswordPayload {
   matKhauCu: string;
   matKhauMoi: string;

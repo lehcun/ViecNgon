@@ -344,15 +344,77 @@ export class AuthService {
     };
   }
 
-  // 2. Đăng ký Nhà tuyển dụng (HR)
+  private normalizeWebsiteUrl(raw?: string): string | null {
+    const trimmed = raw?.trim();
+    if (!trimmed) return null;
+    const withProtocol = /^https?:\/\//i.test(trimmed)
+      ? trimmed
+      : `https://${trimmed}`;
+    return withProtocol.slice(0, 100);
+  }
+
+  private buildCompanySlug(companyName: string): string {
+    const base = companyName
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
+    const suffix = `${Date.now().toString().slice(-4)}${Math.floor(10 + Math.random() * 89)}`;
+    return `${(base || 'cong-ty').slice(0, 185)}-${suffix}`;
+  }
+
+  private async sendEmployerPendingEmail(
+    email: string,
+    employerName: string,
+    companyName: string,
+  ): Promise<void> {
+    const frontendUrl =
+      process.env.FRONTEND_URL?.trim() || 'http://localhost:3000';
+    try {
+      await this.mailerService.sendMail({
+        to: email,
+        subject: `[ViecNgon] Đã tiếp nhận hồ sơ doanh nghiệp ${companyName}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1e293b;">
+            <h2 style="color: #0f172a;">Xin chào ${employerName},</h2>
+            <p>Cảm ơn bạn đã đăng ký tài khoản Nhà tuyển dụng cho doanh nghiệp <strong>${companyName}</strong> trên <strong>ViecNgon</strong>.</p>
+            <p>Hồ sơ doanh nghiệp của bạn đã được chuyển tới Quản trị viên để xác thực thông tin (dự kiến trong vòng 24 giờ làm việc).</p>
+            <p>Ngay khi tài khoản được kích hoạt, chúng tôi sẽ gửi email thông báo để bạn có thể đăng nhập tại <a href="${frontendUrl}/employer/login" style="color: #2563eb; font-weight: 600;">Cổng Nhà tuyển dụng ViecNgon</a>.</p>
+            <p style="margin-top: 24px; font-size: 13px; color: #64748b;">Cần hỗ trợ nhanh? Liên hệ love@viecngon.vn hoặc hotline 1900 6868.</p>
+          </div>
+        `,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown SMTP error';
+      this.logger.warn(
+        `Không thể gửi email xác nhận đăng ký NTD tới ${email}: ${msg}`,
+      );
+    }
+  }
+
+  // 2. Đăng ký Nhà tuyển dụng (HR - Admin-Managed Onboarding)
   async registerEmployer(signupDto: RegisterEmployerDto) {
-    const email = signupDto.email.trim().slice(0, 100);
+    const email = signupDto.email.trim().toLowerCase().slice(0, 100);
     const password = signupDto.password;
     const name = signupDto.employerName.trim().slice(0, 100);
-    const companyName = signupDto.companyName.trim().slice(0, 150);
-    const maCongTyInput = signupDto.maCongTy;
+    const phone = signupDto.phone?.trim().slice(0, 20) || null;
+    const title = signupDto.title?.trim().slice(0, 100) || null;
+    const companyName = signupDto.companyName
+      .trim()
+      .replace(/\s+/g, ' ')
+      .slice(0, 150);
+    const location = signupDto.location?.trim().slice(0, 100) || null;
+    const address = signupDto.address?.trim().slice(0, 255) || null;
+    const website = this.normalizeWebsiteUrl(signupDto.website);
+    const companyModel = signupDto.companyModel?.trim().slice(0, 100) || null;
+    const companySize = signupDto.companySize?.trim().slice(0, 100) || null;
+    const maCongTyInput = signupDto.maCongTy?.trim();
 
-    // Kiểm tra email đã tồn tại chưa
+    // 1. Kiểm tra email đã tồn tại chưa
     const existingUser = await this.prisma.taiKhoan.findUnique({
       where: { email },
     });
@@ -362,17 +424,42 @@ export class AuthService {
       });
     }
 
-    // Hash password
+    // 2. Nếu đăng ký doanh nghiệp mới: kiểm tra chống trùng tên công ty (mô hình ITviec / Admin-Managed)
+    if (!maCongTyInput) {
+      if (!companyName) {
+        throw fieldBadRequest({
+          companyName: 'Vui lòng nhập tên công ty của bạn!',
+        });
+      }
+
+      const existingCompany = await this.prisma.congTy.findFirst({
+        where: {
+          tenCongTy: companyName,
+          deletedAt: null,
+        },
+        select: { maCongTy: true },
+      });
+
+      if (existingCompany) {
+        throw fieldBadRequest({
+          companyName:
+            'Doanh nghiệp này đã có tài khoản trên ViecNgon. Để cấp thêm tài khoản HR cho công ty, vui lòng liên hệ quản trị viên ViecNgon (love@viecngon.vn).',
+        });
+      }
+    }
+
+    // 3. Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Tạo tài khoản, Công ty (nếu mới) VÀ Profile NTD bằng \$transaction
-    const newUser = await this.prisma.$transaction(async (tx) => {
+    // 4. Tạo tài khoản, Công ty, Chi nhánh chính, Profile NTD & Thông báo Admin trong $transaction
+    const created = await this.prisma.$transaction(async (tx) => {
       // B1: Tạo bản ghi trong bảng TaiKhoan (mặc định CHUAKICHHOAT để chờ Admin duyệt)
       const account = await tx.taiKhoan.create({
         data: {
           email,
           matKhau: hashedPassword,
           tenNguoiDung: name,
+          sdt: phone,
           vaiTro: 'NHATUYENDUNG',
           trangThai: 'CHUAKICHHOAT',
         },
@@ -380,33 +467,55 @@ export class AuthService {
 
       // B2: Xử lý Công ty
       let targetCompanyId = maCongTyInput;
+      let resolvedCompanyName = companyName;
+      let resolvedCompanySlug = '';
 
-      // Nếu HR không chọn công ty có sẵn -> Tự động tạo Công ty mới từ tên công ty nhập vào
       if (!targetCompanyId) {
-        if (!companyName) {
-          throw fieldBadRequest({
-            companyName: 'Vui lòng chọn công ty hoặc nhập tên công ty của bạn!',
-          });
+        let slug = this.buildCompanySlug(companyName);
+        const slugCollision = await tx.congTy.findUnique({
+          where: { slug },
+          select: { maCongTy: true },
+        });
+        if (slugCollision) {
+          slug = `${slug.slice(0, 188)}-${randomBytes(3).toString('hex')}`;
         }
-
-        // Tạo slug chuẩn SEO cho công ty mới
-        const slug =
-          companyName
-            .toLowerCase()
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .replace(/đ/g, 'd')
-            .replace(/[^a-z0-9\s-]/g, '')
-            .trim()
-            .replace(/\s+/g, '-') + `-${Date.now().toString().slice(-4)}`;
 
         const newCompany = await tx.congTy.create({
           data: {
             tenCongTy: companyName,
             slug,
+            thanhPho: location,
+            diaChi: address,
+            website,
+            moHinhCongTy: companyModel,
+            quyMo: companySize,
           },
         });
         targetCompanyId = newCompany.maCongTy;
+        resolvedCompanyName = newCompany.tenCongTy;
+        resolvedCompanySlug = newCompany.slug;
+
+        if (location) {
+          await tx.chiNhanh.create({
+            data: {
+              maCongTy: targetCompanyId,
+              thanhPho: location,
+              diaChi: address || location,
+            },
+          });
+        }
+      } else {
+        const existingComp = await tx.congTy.findUnique({
+          where: { maCongTy: targetCompanyId },
+          select: { tenCongTy: true, slug: true },
+        });
+        if (!existingComp) {
+          throw fieldBadRequest({
+            companyName: 'Không tìm thấy doanh nghiệp đã chọn.',
+          });
+        }
+        resolvedCompanyName = existingComp.tenCongTy;
+        resolvedCompanySlug = existingComp.slug;
       }
 
       // B3: Tạo hồ sơ Nhà Tuyển Dụng liên kết với TaiKhoan và CongTy
@@ -414,6 +523,10 @@ export class AuthService {
         data: {
           maTaiKhoan: account.maTaiKhoan,
           maCongTy: targetCompanyId,
+          hoTen: name,
+          chucVu: title,
+          soDienThoai: phone,
+          vaiTroTrongCongTy: maCongTyInput ? 'RECRUITER' : 'OWNER',
         },
       });
 
@@ -428,12 +541,21 @@ export class AuthService {
       });
 
       if (activeAdmins.length > 0) {
-        const companyLabel = companyName || 'Doanh nghiệp mới';
+        const companyLabel = resolvedCompanyName || 'Doanh nghiệp mới';
         const tieuDe = this.truncateText(
-          `Nhà tuyển dụng mới chờ kích hoạt: ${companyLabel}`,
+          `Nhà tuyển dụng mới chờ duyệt: ${companyLabel}`,
           255,
         );
-        const noiDung = `Tài khoản Nhà tuyển dụng ${name} (${email}) - ${companyLabel} vừa đăng ký và đang chờ Quản trị viên duyệt kích hoạt tại trang Quản lý người dùng.`;
+        const detailParts = [
+          `Người đại diện: ${name}${title ? ` (${title})` : ''}`,
+          `Email: ${email}`,
+          phone ? `SĐT: ${phone}` : null,
+          location ? `Địa điểm: ${location}` : null,
+        ]
+          .filter(Boolean)
+          .join(' • ');
+
+        const noiDung = `Doanh nghiệp ${companyLabel} vừa đăng ký tài khoản Nhà tuyển dụng (${detailParts}) và đang chờ Quản trị viên xét duyệt tại trang Quản lý người dùng.`;
 
         await tx.thongBao.createMany({
           data: activeAdmins.map((admin) => ({
@@ -445,26 +567,44 @@ export class AuthService {
         });
       }
 
-      return account;
+      return {
+        account,
+        companyName: resolvedCompanyName,
+        companySlug: resolvedCompanySlug,
+      };
     });
 
+    // 5. Gửi email xác nhận tiếp nhận hồ sơ (không block transaction nếu SMTP lỗi)
+    await this.sendEmployerPendingEmail(
+      created.account.email,
+      created.account.tenNguoiDung,
+      created.companyName,
+    );
+
+    const normalizedStatus = this.normalizeAccountStatus(
+      created.account.trangThai,
+    );
+
     const payload = {
-      sub: newUser.maTaiKhoan,
-      role: newUser.vaiTro,
-      status: this.normalizeAccountStatus(newUser.trangThai),
-      name: newUser.tenNguoiDung,
-      email: newUser.email,
+      sub: created.account.maTaiKhoan,
+      role: created.account.vaiTro,
+      status: normalizedStatus,
+      name: created.account.tenNguoiDung,
+      email: created.account.email,
     };
 
     return {
       access_token: await this.jwtService.signAsync(payload),
+      pendingApproval: normalizedStatus === 'CHUAKICHHOAT',
       user: {
-        id: newUser.maTaiKhoan,
-        sub: newUser.maTaiKhoan,
-        email: newUser.email,
-        name: newUser.tenNguoiDung,
-        role: newUser.vaiTro,
-        status: newUser.trangThai,
+        id: created.account.maTaiKhoan,
+        sub: created.account.maTaiKhoan,
+        email: created.account.email,
+        name: created.account.tenNguoiDung,
+        role: created.account.vaiTro,
+        status: normalizedStatus,
+        companyName: created.companyName,
+        companySlug: created.companySlug,
       },
     };
   }

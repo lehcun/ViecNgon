@@ -265,6 +265,7 @@ export class AdminUsersService {
             maNTD: true,
             hoTen: true,
             chucVu: true,
+            soDienThoai: true,
             vaiTroTrongCongTy: true,
             congTy: {
               select: {
@@ -273,6 +274,10 @@ export class AdminUsersService {
                 slug: true,
                 logoUrl: true,
                 thanhPho: true,
+                diaChi: true,
+                website: true,
+                moHinhCongTy: true,
+                quyMo: true,
               },
             },
             _count: {
@@ -321,12 +326,17 @@ export class AdminUsersService {
             maNTD: account.nhaTuyenDung.maNTD,
             hoTen: account.nhaTuyenDung.hoTen,
             chucVu: account.nhaTuyenDung.chucVu,
+            soDienThoai: account.nhaTuyenDung.soDienThoai,
             vaiTroTrongCongTy: account.nhaTuyenDung.vaiTroTrongCongTy,
             maCongTy: account.nhaTuyenDung.congTy.maCongTy,
             tenCongTy: account.nhaTuyenDung.congTy.tenCongTy,
             slug: account.nhaTuyenDung.congTy.slug,
             logoUrl: account.nhaTuyenDung.congTy.logoUrl,
             thanhPho: account.nhaTuyenDung.congTy.thanhPho,
+            diaChi: account.nhaTuyenDung.congTy.diaChi,
+            website: account.nhaTuyenDung.congTy.website,
+            moHinhCongTy: account.nhaTuyenDung.congTy.moHinhCongTy,
+            quyMo: account.nhaTuyenDung.congTy.quyMo,
             jobsCount: account.nhaTuyenDung._count.congViecs,
           }
         : null,

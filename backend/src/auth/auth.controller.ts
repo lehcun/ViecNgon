@@ -154,18 +154,28 @@ export class AuthController {
     return { message: 'Đăng ký tài khoản thành công', user };
   }
 
-  // Đăng ký cho HR (Public)
+  // Đăng ký cho HR (Public - Admin-Managed Onboarding)
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('register/employer')
   async registerEmployer(
     @Body() dto: RegisterEmployerDto,
     @Res({ passthrough: true }) res: express.Response,
   ) {
-    const { access_token, user } = await this.authService.registerEmployer(dto);
+    const { access_token, pendingApproval, user } =
+      await this.authService.registerEmployer(dto);
 
-    res.cookie('access_token', access_token, getAuthCookieOptions());
+    // Chỉ cấp cookie đăng nhập nếu tài khoản đã ở trạng thái hoạt động
+    if (!pendingApproval) {
+      res.cookie('access_token', access_token, getAuthCookieOptions());
+    }
 
-    return { message: 'Đăng ký nhà tuyển dụng thành công', user };
+    return {
+      message: pendingApproval
+        ? 'Đăng ký doanh nghiệp thành công! Hồ sơ của bạn đang chờ Quản trị viên xét duyệt.'
+        : 'Đăng ký nhà tuyển dụng thành công',
+      pendingApproval,
+      user,
+    };
   }
 
   // ==========================================

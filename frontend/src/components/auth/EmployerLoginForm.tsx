@@ -188,6 +188,16 @@ export default function EmployerLoginForm() {
         >
           Đăng nhập hệ thống
         </Button>
+
+        <p className="text-center text-sm text-text-secondary pt-2">
+          Doanh nghiệp chưa có tài khoản?{" "}
+          <Link
+            href="/employer"
+            className="font-semibold text-primary hover:underline"
+          >
+            Đăng ký Nhà tuyển dụng
+          </Link>
+        </p>
       </form>
 
       <div className="mt-10 pt-6 border-t border-border-default text-xs text-text-muted space-y-1.5">
