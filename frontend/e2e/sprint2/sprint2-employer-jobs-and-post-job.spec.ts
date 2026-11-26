@@ -53,12 +53,12 @@ test.describe("Sprint 2 - Module Quản lí bài đăng tuyển dụng (TTD)", (
     await expect(submitBtn).toBeVisible();
     await expect(page.getByText("Next.js", { exact: true })).toBeVisible();
 
-    // FUNC-TTD01: Để trống các trường bắt buộc -> bị chặn bởi required và không gọi API
+    // FUNC-TTD01: Để trống các trường bắt buộc -> hiển thị lỗi inline validation và không gọi API
     await submitBtn.click();
-    const isTitleMissing = await titleInput.evaluate(
-      (el: HTMLInputElement) => el.validity.valueMissing,
-    );
-    expect(isTitleMissing).toBe(true);
+    await expect(
+      page.getByText("Vui lòng nhập tiêu đề công việc."),
+    ).toBeVisible();
+    await expect(titleInput).toHaveAttribute("aria-invalid", "true");
     expect(createdJobPayload).toBeNull();
 
     // FUNC-TTD02..07: Điền đầy đủ dropdown, thành phố, kinh nghiệm, hạn nộp
@@ -73,16 +73,30 @@ test.describe("Sprint 2 - Module Quản lí bài đăng tuyển dụng (TTD)", (
     await page.locator('input[name="mucLuongToiThieu"]').fill("30000000");
     await page.locator('input[name="mucLuongToiDa"]').fill("45000000");
 
-    // Chưa chọn kỹ năng chuyên môn -> báo toast lỗi
+    // Chưa chọn kỹ năng chuyên môn & chưa nhập mô tả -> báo lỗi validation
     await submitBtn.click();
     await expect(
-      page.getByText("Vui lòng chọn ít nhất 1 kỹ năng chuyên môn cho công việc!"),
+      page
+        .getByText(
+          "Vui lòng kiểm tra lại các trường thông tin bị thiếu hoặc chưa hợp lệ.",
+        )
+        .first(),
     ).toBeVisible();
     expect(createdJobPayload).toBeNull();
 
-    // Chọn nhiều kỹ năng chuyên môn -> submit thành công & chuyển về /employer-dashboard
+    // Chọn nhiều kỹ năng chuyên môn & điền Mô tả / Yêu cầu / Quyền lợi
     await page.getByText("Next.js", { exact: true }).click();
     await page.getByText("TypeScript", { exact: true }).click();
+    const editors = page.locator('[contenteditable="true"]');
+    await editors
+      .nth(0)
+      .fill("Xây dựng và tối ưu hệ thống Frontend Next.js & TypeScript.");
+    await editors
+      .nth(1)
+      .fill("Tối thiểu 3 năm kinh nghiệm React, Next.js và TypeScript.");
+    await editors
+      .nth(2)
+      .fill("Lương tháng 13, bảo hiểm sức khỏe cao cấp, MacBook Pro.");
     await submitBtn.click();
 
     await expect

@@ -175,21 +175,22 @@ test.describe("Sprint 2 - Module Lên lịch phỏng vấn (LLPV)", () => {
     await expect(timeInput).toBeVisible();
     await expect(meetToggle).toBeChecked();
 
-    // FUNC-SLUV01/04/05: Bỏ trống Ngày & Thời gian bị chặn bởi HTML5 required
+    // FUNC-SLUV01/04/05: Bỏ trống Ngày & Thời gian -> hiển thị lỗi inline validation và không gọi API
     await submitBtn.click();
-    const isDateMissing = await dateInput.evaluate(
-      (el: HTMLInputElement) => el.validity.valueMissing,
-    );
-    expect(isDateMissing).toBe(true);
+    await expect(
+      page.getByText("Vui lòng chọn ngày phỏng vấn."),
+    ).toBeVisible();
+    await expect(
+      page.getByText("Vui lòng chọn giờ phỏng vấn."),
+    ).toBeVisible();
     expect(schedulePayload).toBeNull();
 
-    // Chỉ nhập ngày, bỏ trống giờ -> vẫn bị chặn
-    await dateInput.fill("2026-11-25");
+    // Chỉ nhập ngày tương lai, bỏ trống giờ -> vẫn bị chặn
+    await dateInput.fill("2027-01-15");
     await submitBtn.click();
-    const isTimeMissing = await timeInput.evaluate(
-      (el: HTMLInputElement) => el.validity.valueMissing,
-    );
-    expect(isTimeMissing).toBe(true);
+    await expect(
+      page.getByText("Vui lòng chọn giờ phỏng vấn."),
+    ).toBeVisible();
     expect(schedulePayload).toBeNull();
 
     // FUNC-SLUV02 & FUNC-SLUV03: Điền ngày giờ và tạo lịch phỏng vấn kèm Google Meet

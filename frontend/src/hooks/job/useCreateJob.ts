@@ -159,9 +159,8 @@ export function useCreateJob(initialCredits: number = 0) {
     field: K,
     value: JobFormState[K],
   ) => {
-    const nextForm = { ...formData, [field]: value };
-    setFormData(nextForm);
-    handleFieldChange(field, value, nextForm);
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    handleFieldChange(field, value, { ...formData, [field]: value });
   };
 
   const handleRichTextChange = (
