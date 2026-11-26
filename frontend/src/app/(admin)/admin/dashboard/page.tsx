@@ -1,62 +1,30 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
-import { CheckCircle, Building2, Download } from "lucide-react";
-import { toast } from "react-hot-toast";
+import { CheckCircle, Building2, FileSpreadsheet } from "lucide-react";
+import type { AdminExportReportParams } from "@viecngon/types";
 import MetricCardGrid from "@/components/admin/dashboard/MetricCardGrid";
 import UserGrowthChartCard from "@/components/admin/dashboard/UserGrowthChartCard";
 import ApplicationStatsCard from "@/components/admin/dashboard/ApplicationStatsCard";
 import RecentTransactionsTable from "@/components/admin/dashboard/RecentTransactionsTable";
 import RevenueBreakdownCard from "@/components/admin/dashboard/RevenueBreakdownCard";
-import { useAdminMetrics } from "@/hooks/admin/useAdminDashboard";
+import ExportReportModal from "@/components/admin/dashboard/ExportReportModal";
+import {
+  useAdminMetrics,
+  useExportAdminReport,
+} from "@/hooks/admin/useAdminDashboard";
 import { Button } from "@/components/ui/Button";
 
 export default function AdminDashboardPage() {
   const { data: metrics } = useAdminMetrics();
+  const [exportModalOpen, setExportModalOpen] = useState(false);
+  const exportReportMutation = useExportAdminReport();
 
-  const handleExportReport = () => {
-    if (!metrics) {
-      toast.error("Chưa có dữ liệu báo cáo để xuất.");
-      return;
-    }
-
-    const rows = [
-      ["Chỉ số", "Giá trị", "Ghi chú"],
-      [
-        "Tổng người dùng",
-        String(metrics.totalUsers.count),
-        `Tăng trưởng ${metrics.totalUsers.growthPercent}%`,
-      ],
-      [
-        "Tin chờ kiểm duyệt",
-        String(metrics.pendingJobs.count),
-        metrics.pendingJobs.requiresImmediateReview
-          ? "Cần duyệt ngay"
-          : "Ổn định",
-      ],
-      [
-        "Tổng hồ sơ ứng tuyển",
-        String(metrics.totalApplications.count),
-        `Tăng trưởng ${metrics.totalApplications.growthPercent}%`,
-      ],
-      [
-        "Doanh thu nền tảng",
-        metrics.platformRevenue.formattedAmount,
-        `Tăng trưởng ${metrics.platformRevenue.growthPercent}%`,
-      ],
-    ];
-
-    const csvContent =
-      "\uFEFF" + rows.map((row) => row.map((v) => `"${v}"`).join(",")).join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `viecngon-bao-cao-${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-    toast.success("Đã xuất báo cáo tổng quan (CSV)!");
+  const handleExportReport = (params: AdminExportReportParams) => {
+    exportReportMutation.mutate(params, {
+      onSuccess: () => setExportModalOpen(false),
+    });
   };
 
   return (
@@ -98,12 +66,23 @@ export default function AdminDashboardPage() {
             <span>Quản lý doanh nghiệp</span>
           </Link>
 
-          <Button variant="secondary" size="md" onClick={handleExportReport}>
-            <Download size={16} />
-            Xuất báo cáo tháng
+          <Button
+            variant="secondary"
+            size="md"
+            onClick={() => setExportModalOpen(true)}
+          >
+            <FileSpreadsheet size={16} />
+            Xuất báo cáo
           </Button>
         </div>
       </div>
+
+      <ExportReportModal
+        open={exportModalOpen}
+        isExporting={exportReportMutation.isPending}
+        onClose={() => setExportModalOpen(false)}
+        onExport={handleExportReport}
+      />
 
       {/* Hàng 1: 4 Thẻ chỉ số tổng quan */}
       <MetricCardGrid />

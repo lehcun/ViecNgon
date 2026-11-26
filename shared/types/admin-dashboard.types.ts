@@ -13,6 +13,15 @@
 
 export type AdminChartPeriod = "monthly" | "quarterly" | "yearly";
 
+export type AdminReportType = "summary" | "revenue" | "recruitment";
+
+export interface AdminExportReportParams {
+  reportType: AdminReportType;
+  period: AdminChartPeriod;
+  fromDate?: string;
+  toDate?: string;
+}
+
 // ---------------------------------------------------------------------
 // 1. OVERVIEW METRICS (4 THẺ CHỈ SỐ HÀNG 1)
 // ---------------------------------------------------------------------

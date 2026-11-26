@@ -1,6 +1,11 @@
 "use client";
 
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  keepPreviousData,
+} from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
 import {
   AdminDashboardMetricsResponse,
   UserGrowthChartResponse,
@@ -8,6 +13,7 @@ import {
   AdminRecentTransactionItem,
   AdminRevenueBreakdownResponse,
   AdminChartPeriod,
+  AdminExportReportParams,
 } from "@viecngon/types";
 import { adminDashboardKeys } from "@/queries/queryKeys";
 import { API_BASE_URL } from "@/lib/env";
@@ -112,6 +118,76 @@ export function useAdminRevenueBreakdown() {
         "Không thể tải cơ cấu doanh thu theo gói.",
       ),
     staleTime: 60 * 1000,
+  });
+}
+
+function extractFilenameFromDisposition(
+  header: string | null,
+  fallback: string,
+): string {
+  if (!header) return fallback;
+  const match = header.match(/filename="?([^"]+)"?/i);
+  return match?.[1] || fallback;
+}
+
+/**
+ * 6. Mutation xuất báo cáo Excel (.xlsx) đa sheet
+ * GET /admin/dashboard/export-report
+ */
+export function useExportAdminReport() {
+  return useMutation<string, Error, AdminExportReportParams>({
+    mutationFn: async (params) => {
+      const search = new URLSearchParams({
+        reportType: params.reportType,
+        period: params.period,
+      });
+      if (params.fromDate) search.set("fromDate", params.fromDate);
+      if (params.toDate) search.set("toDate", params.toDate);
+
+      const response = await fetch(
+        `${API_BASE_URL}/admin/dashboard/export-report?${search.toString()}`,
+        {
+          method: "GET",
+          credentials: "include",
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const rawMsg = errorData?.message;
+        const message = Array.isArray(rawMsg)
+          ? rawMsg[0]
+          : typeof rawMsg === "string"
+            ? rawMsg
+            : "Không thể xuất báo cáo Excel.";
+        throw new Error(message);
+      }
+
+      const blob = await response.blob();
+      const dateStamp = new Date().toISOString().slice(0, 10);
+      const fallbackName = `viecngon-bao-cao-${params.reportType}-${dateStamp}.xlsx`;
+      const filename = extractFilenameFromDisposition(
+        response.headers.get("Content-Disposition"),
+        fallbackName,
+      );
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+
+      return filename;
+    },
+    onSuccess: (filename) => {
+      toast.success(`Đã xuất báo cáo thành công (${filename})!`);
+    },
+    onError: (err) => {
+      toast.error(err.message || "Không thể xuất báo cáo Excel.");
+    },
   });
 }
 
