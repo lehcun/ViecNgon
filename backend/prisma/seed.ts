@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { seedRealisticExpansion } from './seed-realistic-expansion';
 
 const prisma = new PrismaClient();
 
@@ -31,11 +32,11 @@ async function main(): Promise<void> {
   await prisma.congViecKyNang.deleteMany();
   await prisma.ungVienKyNang.deleteMany();
   await prisma.lichPhongVan.deleteMany();
+  await prisma.danhGia.deleteMany();
   await prisma.donXinViec.deleteMany();
   await prisma.portfolio.deleteMany();
   await prisma.thanhToan.deleteMany();
   await prisma.muaQuangCao.deleteMany();
-  await prisma.danhGia.deleteMany();
   await prisma.thongBao.deleteMany();
   await prisma.baiViet.deleteMany();
   await prisma.congViec.deleteMany();
@@ -2543,6 +2544,8 @@ async function main(): Promise<void> {
       },
     ],
   });
+
+  await seedRealisticExpansion(prisma, hashedPassword, tkAdmin.maTaiKhoan);
 
   console.log('🎉 SEED THÀNH CÔNG RỰC RỠ!');
 }

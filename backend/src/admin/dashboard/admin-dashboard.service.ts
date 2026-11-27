@@ -13,7 +13,7 @@ import {
 
 @Injectable()
 export class AdminDashboardService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   /**
    * 1. GET /admin/dashboard/metrics
@@ -27,15 +27,37 @@ export class AdminDashboardService {
     const [
       candidatesCount,
       employersCount,
+      usersThisMonth,
+      usersLastMonth,
       pendingJobsCount,
       totalApplicationsCount,
       appsThisMonth,
       appsLastMonth,
       paymentSum,
+      paymentThisMonthSum,
+      paymentLastMonthSum,
       campaignSum,
     ] = await Promise.all([
-      this.prisma.taiKhoan.count({ where: { vaiTro: 'UNGVIEN' } }),
-      this.prisma.taiKhoan.count({ where: { vaiTro: 'NHATUYENDUNG' } }),
+      this.prisma.taiKhoan.count({
+        where: { vaiTro: 'UNGVIEN', deletedAt: null },
+      }),
+      this.prisma.taiKhoan.count({
+        where: { vaiTro: 'NHATUYENDUNG', deletedAt: null },
+      }),
+      this.prisma.taiKhoan.count({
+        where: {
+          vaiTro: { in: ['UNGVIEN', 'NHATUYENDUNG'] },
+          deletedAt: null,
+          ngayTao: { gte: startOfThisMonth },
+        },
+      }),
+      this.prisma.taiKhoan.count({
+        where: {
+          vaiTro: { in: ['UNGVIEN', 'NHATUYENDUNG'] },
+          deletedAt: null,
+          ngayTao: { gte: startOfLastMonth, lt: startOfThisMonth },
+        },
+      }),
       this.prisma.congViec.count({
         where: {
           deletedAt: null,
@@ -54,6 +76,16 @@ export class AdminDashboardService {
       this.prisma.thanhToan.aggregate({
         _sum: { soTienThanhToan: true },
       }),
+      this.prisma.thanhToan.aggregate({
+        where: { ngayThanhToan: { gte: startOfThisMonth } },
+        _sum: { soTienThanhToan: true },
+      }),
+      this.prisma.thanhToan.aggregate({
+        where: {
+          ngayThanhToan: { gte: startOfLastMonth, lt: startOfThisMonth },
+        },
+        _sum: { soTienThanhToan: true },
+      }),
       this.prisma.muaQuangCao.aggregate({
         _sum: { giaTaiThoiDiemMua: true },
       }),
@@ -61,21 +93,27 @@ export class AdminDashboardService {
 
     const totalUsersCount = candidatesCount + employersCount;
 
-    // Tính % tăng trưởng đơn ứng tuyển
-    let appGrowthPercent = 18;
-    if (appsLastMonth > 0) {
-      appGrowthPercent = Math.round(
-        ((appsThisMonth - appsLastMonth) / appsLastMonth) * 100,
-      );
-    } else if (appsThisMonth > 0) {
-      appGrowthPercent = 100;
-    }
+    const calcGrowth = (curr: number, prev: number): number => {
+      if (prev > 0) return Math.round(((curr - prev) / prev) * 100);
+      return curr > 0 ? 100 : 0;
+    };
+
+    const userGrowthPercent = calcGrowth(usersThisMonth, usersLastMonth);
+    const appGrowthPercent = calcGrowth(appsThisMonth, appsLastMonth);
 
     // Tổng doanh thu từ bảng ThanhToan (fallback sang MuaQuangCao nếu chưa có record ThanhToan)
     const rawPaymentTotal = Number(paymentSum._sum.soTienThanhToan || 0);
     const rawCampaignTotal = Number(campaignSum._sum.giaTaiThoiDiemMua || 0);
     const totalRevenue =
       rawPaymentTotal > 0 ? rawPaymentTotal : rawCampaignTotal;
+
+    const revenueThisMonth = Number(
+      paymentThisMonthSum._sum.soTienThanhToan || 0,
+    );
+    const revenueLastMonth = Number(
+      paymentLastMonthSum._sum.soTienThanhToan || 0,
+    );
+    const revenueGrowthPercent = calcGrowth(revenueThisMonth, revenueLastMonth);
 
     const formattedAmount = `${totalRevenue.toLocaleString('en-US')} VNĐ`;
 
@@ -84,7 +122,7 @@ export class AdminDashboardService {
         count: totalUsersCount,
         candidatesCount,
         employersCount,
-        growthPercent: 12,
+        growthPercent: userGrowthPercent,
       },
       pendingJobs: {
         count: pendingJobsCount,
@@ -97,60 +135,74 @@ export class AdminDashboardService {
       platformRevenue: {
         totalAmount: totalRevenue,
         formattedAmount,
-        growthPercent: 24,
+        growthPercent: revenueGrowthPercent,
       },
     };
   }
 
   /**
    * 2. GET /admin/dashboard/charts?period=monthly|quarterly|yearly
-   * Trả về dữ liệu biểu đồ tăng trưởng người dùng (Ứng viên & Nhà tuyển dụng)
+   * Thống kê 100% dữ liệu thực từ cột TaiKhoan.ngayTao (Ứng viên & Nhà tuyển dụng)
    */
   async getUserGrowthChart(
     period: AdminChartPeriod = 'monthly',
   ): Promise<UserGrowthChartResponse> {
-    const [candidatesCount, employersCount, jobs, applications] =
-      await Promise.all([
-        this.prisma.taiKhoan.count({ where: { vaiTro: 'UNGVIEN' } }),
-        this.prisma.taiKhoan.count({ where: { vaiTro: 'NHATUYENDUNG' } }),
-        this.prisma.congViec.findMany({
-          select: { ngayDang: true },
-        }),
-        this.prisma.donXinViec.findMany({
-          select: { ngayNop: true },
-        }),
-      ]);
+    const accounts = await this.prisma.taiKhoan.findMany({
+      where: {
+        deletedAt: null,
+        vaiTro: { in: ['UNGVIEN', 'NHATUYENDUNG'] },
+      },
+      select: {
+        vaiTro: true,
+        ngayTao: true,
+      },
+    });
 
-    const currentYear = new Date().getFullYear();
+    const candidatesCount = accounts.filter(
+      (a) => a.vaiTro === 'UNGVIEN',
+    ).length;
+    const employersCount = accounts.filter(
+      (a) => a.vaiTro === 'NHATUYENDUNG',
+    ).length;
+
+    const now = new Date();
+    const currentYear = now.getFullYear();
+
+    const calcGrowth = (curr: number, prev: number): number => {
+      if (prev > 0) return Math.round(((curr - prev) / prev) * 100);
+      return curr > 0 ? 100 : 0;
+    };
 
     if (period === 'quarterly') {
       const quarterLabels = ['Q1', 'Q2', 'Q3', 'Q4'];
-      const quarterWeights = [0.18, 0.24, 0.27, 0.31];
+      const candQ = [0, 0, 0, 0];
+      const empQ = [0, 0, 0, 0];
 
-      const data: UserGrowthDataPoint[] = quarterLabels.map((label, idx) => {
-        const cCount = Math.max(
-          1,
-          Math.round(candidatesCount * quarterWeights[idx]),
-        );
-        const eCount = Math.max(
-          1,
-          Math.round(employersCount * quarterWeights[idx]),
-        );
-        return {
-          label,
-          candidates: cCount,
-          employers: eCount,
-          total: cCount + eCount,
-        };
-      });
+      for (const acc of accounts) {
+        const d = new Date(acc.ngayTao);
+        if (d.getFullYear() !== currentYear) continue;
+        const qIdx = Math.floor(d.getMonth() / 3);
+        if (acc.vaiTro === 'UNGVIEN') candQ[qIdx]++;
+        else empQ[qIdx]++;
+      }
 
-      const latestPoint = data[data.length - 1];
+      const data: UserGrowthDataPoint[] = quarterLabels.map((label, idx) => ({
+        label,
+        candidates: candQ[idx],
+        employers: empQ[idx],
+        total: candQ[idx] + empQ[idx],
+      }));
+
+      const currQ = Math.floor(now.getMonth() / 3);
+      const currPoint = data[currQ];
+      const prevPoint = data[currQ > 0 ? currQ - 1 : 0];
+
       return {
         period: 'quarterly',
-        subtitle: `Candidate and employer registrations · Q1 – Q4 ${currentYear}`,
-        currentPeriodTotal: latestPoint.total,
-        growthPercent: 15,
-        comparisonLabel: 'vs last quarter',
+        subtitle: `Đăng ký Ứng viên & Nhà tuyển dụng · Q1 – Q4 ${currentYear}`,
+        currentPeriodTotal: currPoint.total,
+        growthPercent: calcGrowth(currPoint.total, prevPoint.total),
+        comparisonLabel: currQ > 0 ? `so với ${prevPoint.label}` : 'cùng kỳ',
         summary: {
           candidates: candidatesCount,
           employers: employersCount,
@@ -166,32 +218,39 @@ export class AdminDashboardService {
         currentYear - 1,
         currentYear,
       ];
-      const yearWeights = [0.12, 0.2, 0.3, 0.38];
+      const candY = new Map<number, number>(years.map((y) => [y, 0]));
+      const empY = new Map<number, number>(years.map((y) => [y, 0]));
 
-      const data: UserGrowthDataPoint[] = years.map((yr, idx) => {
-        const cCount = Math.max(
-          1,
-          Math.round(candidatesCount * yearWeights[idx]),
-        );
-        const eCount = Math.max(
-          1,
-          Math.round(employersCount * yearWeights[idx]),
-        );
+      for (const acc of accounts) {
+        const yr = new Date(acc.ngayTao).getFullYear();
+        if (!candY.has(yr)) continue;
+        if (acc.vaiTro === 'UNGVIEN') {
+          candY.set(yr, (candY.get(yr) ?? 0) + 1);
+        } else {
+          empY.set(yr, (empY.get(yr) ?? 0) + 1);
+        }
+      }
+
+      const data: UserGrowthDataPoint[] = years.map((yr) => {
+        const candidates = candY.get(yr) ?? 0;
+        const employers = empY.get(yr) ?? 0;
         return {
           label: String(yr),
-          candidates: cCount,
-          employers: eCount,
-          total: cCount + eCount,
+          candidates,
+          employers,
+          total: candidates + employers,
         };
       });
 
-      const latestPoint = data[data.length - 1];
+      const currPoint = data[data.length - 1];
+      const prevPoint = data[data.length - 2] ?? currPoint;
+
       return {
         period: 'yearly',
-        subtitle: `Candidate and employer registrations · ${years[0]} – ${currentYear}`,
-        currentPeriodTotal: latestPoint.total,
-        growthPercent: 28,
-        comparisonLabel: 'vs last year',
+        subtitle: `Đăng ký Ứng viên & Nhà tuyển dụng · ${years[0]} – ${currentYear}`,
+        currentPeriodTotal: currPoint.total,
+        growthPercent: calcGrowth(currPoint.total, prevPoint.total),
+        comparisonLabel: `so với năm ${prevPoint.label}`,
         summary: {
           candidates: candidatesCount,
           employers: employersCount,
@@ -200,7 +259,7 @@ export class AdminDashboardService {
       };
     }
 
-    // Default: 'monthly' (Jan -> Nov/Dec)
+    // Default: 'monthly' (T1 -> T12 của năm hiện tại)
     const monthNames = [
       'Jan',
       'Feb',
@@ -215,66 +274,35 @@ export class AdminDashboardService {
       'Nov',
       'Dec',
     ];
-    const monthlyTrendWeights = [
-      0.05, 0.06, 0.065, 0.062, 0.075, 0.082, 0.088, 0.095, 0.1, 0.105, 0.112,
-      0.106,
-    ];
+    const candM = new Array<number>(12).fill(0);
+    const empM = new Array<number>(12).fill(0);
 
-    // Đếm hoạt động thực tế theo tháng nếu có
-    const appByMonth = new Array<number>(12).fill(0);
-    const jobByMonth = new Array<number>(12).fill(0);
-
-    for (const app of applications) {
-      const d = new Date(app.ngayNop);
-      if (d.getFullYear() === currentYear) {
-        appByMonth[d.getMonth()]++;
-      }
+    for (const acc of accounts) {
+      const d = new Date(acc.ngayTao);
+      if (d.getFullYear() !== currentYear) continue;
+      const mIdx = d.getMonth();
+      if (acc.vaiTro === 'UNGVIEN') candM[mIdx]++;
+      else empM[mIdx]++;
     }
 
-    for (const job of jobs) {
-      const d = new Date(job.ngayDang);
-      if (d.getFullYear() === currentYear) {
-        jobByMonth[d.getMonth()]++;
-      }
-    }
+    const data: UserGrowthDataPoint[] = monthNames.map((label, idx) => ({
+      label,
+      candidates: candM[idx],
+      employers: empM[idx],
+      total: candM[idx] + empM[idx],
+    }));
 
-    const data: UserGrowthDataPoint[] = monthNames.map((label, idx) => {
-      const baseCandidate = Math.round(
-        candidatesCount * monthlyTrendWeights[idx],
-      );
-      const baseEmployer = Math.round(
-        employersCount * monthlyTrendWeights[idx],
-      );
-
-      const candidates = Math.max(1, baseCandidate + appByMonth[idx]);
-      const employers = Math.max(1, baseEmployer + jobByMonth[idx]);
-
-      return {
-        label,
-        candidates,
-        employers,
-        total: candidates + employers,
-      };
-    });
-
-    const currentMonthIdx = new Date().getMonth();
-    const currentPoint = data[currentMonthIdx] || data[data.length - 1];
+    const currentMonthIdx = now.getMonth();
+    const currentPoint = data[currentMonthIdx] ?? data[data.length - 1];
     const prevPoint =
-      data[currentMonthIdx > 0 ? currentMonthIdx - 1 : 0] || currentPoint;
-
-    const growthPercent =
-      prevPoint.total > 0
-        ? Math.round(
-          ((currentPoint.total - prevPoint.total) / prevPoint.total) * 100,
-        )
-        : 12;
+      data[currentMonthIdx > 0 ? currentMonthIdx - 1 : 0] ?? currentPoint;
 
     return {
       period: 'monthly',
-      subtitle: `Candidate and employer registrations · January – December ${currentYear}`,
-      currentPeriodTotal: candidatesCount + employersCount,
-      growthPercent: growthPercent >= 0 ? growthPercent || 12 : growthPercent,
-      comparisonLabel: `vs ${prevPoint.label}`,
+      subtitle: `Đăng ký Ứng viên & Nhà tuyển dụng · Tháng 1 – Tháng 12/${currentYear}`,
+      currentPeriodTotal: currentPoint.total,
+      growthPercent: calcGrowth(currentPoint.total, prevPoint.total),
+      comparisonLabel: `so với ${prevPoint.label}`,
       summary: {
         candidates: candidatesCount,
         employers: employersCount,
@@ -315,11 +343,7 @@ export class AdminDashboardService {
       const st = (app.trangThai || '').toUpperCase().trim();
       if (st === 'DA_XEM' || st === 'VIEWED') {
         statusBuckets.DA_XEM++;
-      } else if (
-        st === 'PHONG_VAN' ||
-        st === 'PHU_HOP' ||
-        st === 'INTERVIEW'
-      ) {
+      } else if (st === 'PHONG_VAN' || st === 'PHU_HOP' || st === 'INTERVIEW') {
         statusBuckets.PHONG_VAN++;
       } else if (
         st === 'TRUNG_TUYEN' ||
@@ -392,14 +416,16 @@ export class AdminDashboardService {
       statusBuckets.PHONG_VAN + statusBuckets.TRUNG_TUYEN;
     const interviewRate =
       totalApplications > 0
-        ? Number(((interviewOrHigherCount / totalApplications) * 100).toFixed(1))
+        ? Number(
+            ((interviewOrHigherCount / totalApplications) * 100).toFixed(1),
+          )
         : 0;
 
     const hiredRate =
       totalApplications > 0
         ? Number(
-          ((statusBuckets.TRUNG_TUYEN / totalApplications) * 100).toFixed(1),
-        )
+            ((statusBuckets.TRUNG_TUYEN / totalApplications) * 100).toFixed(1),
+          )
         : 0;
 
     return {
@@ -452,12 +478,10 @@ export class AdminDashboardService {
 
         return {
           id: p.maThanhToan,
-          transactionCode:
-            p.maGiaoDichDoiTac || `#VN-${10284 - idx}`,
+          transactionCode: p.maGiaoDichDoiTac || `#VN-${10284 - idx}`,
           companyName:
             p.muaQuangCao?.nhaTuyenDung?.congTy?.tenCongTy || 'Doanh nghiệp IT',
-          companyLogo:
-            p.muaQuangCao?.nhaTuyenDung?.congTy?.logoUrl || null,
+          companyLogo: p.muaQuangCao?.nhaTuyenDung?.congTy?.logoUrl || null,
           packageName:
             p.muaQuangCao?.goiQuangCao?.tieuDe ||
             p.muaQuangCao?.tieuDe ||
@@ -494,8 +518,7 @@ export class AdminDashboardService {
       return {
         id: c.maMua,
         transactionCode: `#VN-${10284 - idx}`,
-        companyName:
-          c.nhaTuyenDung?.congTy?.tenCongTy || 'Doanh nghiệp IT',
+        companyName: c.nhaTuyenDung?.congTy?.tenCongTy || 'Doanh nghiệp IT',
         companyLogo: c.nhaTuyenDung?.congTy?.logoUrl || null,
         packageName: c.goiQuangCao?.tieuDe || c.tieuDe || 'Gói Tuyển Dụng',
         amount,
@@ -565,4 +588,3 @@ export class AdminDashboardService {
     };
   }
 }
-
