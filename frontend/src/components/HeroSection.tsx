@@ -45,17 +45,30 @@ export default function HeroSection() {
   };
 
   return (
-    <section className="bg-linear-to-br from-primary-dark from-60% via-primary-active via-85% to-primary pt-28 pb-16 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-blue-100 text-xs font-medium mb-4">
+    <section className="relative overflow-hidden bg-linear-to-br from-primary-dark from-60% via-primary-active via-88% to-primary pt-28 pb-16 px-4 sm:px-6 lg:px-8">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_50%_0%,rgba(59,130,246,0.22),transparent_70%)]"
+      />
+      <div className="relative z-10 max-w-5xl mx-auto">
+        <div
+          className="emp-hero-stagger inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-blue-100 text-xs font-medium mb-4"
+          style={{ "--l": 0 } as React.CSSProperties}
+        >
           <Sparkles size={14} className="text-primary-disabled" />
           <span>Kết nối kỹ sư IT với doanh nghiệp công nghệ hàng đầu</span>
         </div>
 
-        <h1 className="text-white text-3xl sm:text-4xl font-bold tracking-tight mb-3">
+        <h1
+          className="emp-hero-stagger text-white text-3xl sm:text-4xl font-extrabold tracking-tight mb-3"
+          style={{ "--l": 1 } as React.CSSProperties}
+        >
           Tìm kiếm việc làm IT chất lượng tại Việt Nam
         </h1>
-        <p className="text-slate-300 text-sm sm:text-base mb-8 max-w-2xl leading-relaxed">
+        <p
+          className="emp-hero-stagger text-slate-300 text-sm sm:text-base mb-8 max-w-2xl leading-relaxed"
+          style={{ "--l": 1 } as React.CSSProperties}
+        >
           Khám phá cơ hội nghề nghiệp minh bạch về mức lương, công nghệ sử dụng
           và đánh giá độ phù hợp bằng AI ngay trước khi ứng tuyển.
         </p>
@@ -63,7 +76,8 @@ export default function HeroSection() {
         {/* Thanh tìm kiếm hợp nhất */}
         <form
           onSubmit={handleSearch}
-          className="flex flex-col md:flex-row bg-surface-card rounded-xl p-1.5 gap-2 shadow-lg mb-6 items-stretch md:items-center"
+          className="emp-hero-stagger flex flex-col md:flex-row bg-surface-card rounded-xl p-1.5 gap-2 shadow-xl shadow-black/25 ring-1 ring-white/10 focus-within:ring-2 focus-within:ring-primary/50 transition-shadow mb-6 items-stretch md:items-center"
+          style={{ "--l": 2 } as React.CSSProperties}
         >
           <div className="relative flex items-center px-3 w-full md:w-52 border-b md:border-b-0 md:border-r border-border-default">
             <MapPin size={18} className="mr-2 text-primary shrink-0" />
@@ -97,7 +111,7 @@ export default function HeroSection() {
 
           <button
             type="submit"
-            className="w-full md:w-auto h-11 px-7 bg-primary hover:bg-primary-hover active:bg-primary-active text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors shrink-0 text-sm"
+            className="w-full md:w-auto h-11 px-7 bg-primary hover:bg-primary-hover active:bg-primary-active active:scale-[0.98] text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-all shrink-0 text-sm cursor-pointer"
           >
             <Search size={17} />
             <span>Tìm kiếm</span>
@@ -105,7 +119,10 @@ export default function HeroSection() {
         </form>
 
         {/* Gợi ý từ khóa kỹ năng */}
-        <div className="flex flex-wrap items-center gap-2 text-sm">
+        <div
+          className="emp-hero-stagger flex flex-wrap items-center gap-2 text-sm"
+          style={{ "--l": 3 } as React.CSSProperties}
+        >
           <span className="text-slate-300 text-xs font-medium mr-1">
             Kỹ năng phổ biến:
           </span>
@@ -114,7 +131,7 @@ export default function HeroSection() {
               key={tag}
               type="button"
               onClick={() => handleTagClick(tag)}
-              className="border border-white/15 bg-white/5 text-slate-200 px-3 py-1 rounded-full hover:bg-primary hover:text-white hover:border-primary transition-colors text-xs font-medium"
+              className="border border-white/15 bg-white/5 text-slate-200 px-3 py-1 rounded-full hover:bg-primary hover:text-white hover:border-primary active:scale-[0.97] transition-all text-xs font-medium cursor-pointer"
             >
               {tag}
             </button>

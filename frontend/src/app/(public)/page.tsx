@@ -2,6 +2,7 @@ import HeroSection from "@/components/HeroSection";
 import QuickLinks from "@/components/QuickLinks";
 import RecommendedJobsSection from "@/components/home/RecommendedJobsSection";
 import TopEmployers from "@/components/TopCompany";
+import "@/components/auth/employer-landing/employer-motion.css";
 
 export default function Home() {
   return (

@@ -35,35 +35,56 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+      setIsScrolled(window.scrollY > 28);
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const isLightHeader = variant === "app" || (variant === "public" && isScrolled);
-  const navBackground =
-    variant === "dark"
-      ? "bg-primary-dark border-b border-white/10 shadow-xs"
-      : isLightHeader
-        ? "bg-surface-card/95 backdrop-blur-md shadow-xs border-b border-border-default"
-        : "bg-transparent border-b border-transparent";
-
   const textColor = isLightHeader ? "text-text-secondary" : "text-slate-200";
   const hoverColor = isLightHeader ? "hover:text-primary" : "hover:text-white";
   const logoTextColor = isLightHeader ? "text-text-primary" : "text-white";
   const isEmployer = user?.role === "NHATUYENDUNG";
   const isPendingEmployer = isEmployer && user?.status === "CHUAKICHHOAT";
   const isAdmin = user?.role === "ADMIN";
+  const isFloatingPill =
+    variant === "public" &&
+    pathname === "/" &&
+    isScrolled &&
+    !isPendingEmployer;
+
+  const navBackground =
+    variant === "dark"
+      ? "bg-primary-dark border-b border-white/10 shadow-xs"
+      : isFloatingPill
+        ? "bg-transparent border-b border-transparent"
+        : isLightHeader
+          ? "bg-surface-card/95 backdrop-blur-md shadow-xs border-b border-border-default"
+          : "bg-transparent border-b border-transparent";
+
+  // Trang /portfolio sử dụng PortfolioFloatingHeader riêng đồng bộ tông tối
+  if (variant === "public" && pathname === "/portfolio") {
+    return null;
+  }
 
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 w-full z-50 transition-all duration-200",
+        "fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300",
+        isFloatingPill ? "py-2.5 px-3 sm:px-6" : "py-0 px-0",
         navBackground,
       )}
     >
-      <div className="max-w-7xl mx-auto h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+      <div
+        className={cn(
+          "mx-auto h-16 flex items-center justify-between gap-4 border transition-all duration-300",
+          isFloatingPill
+            ? "max-w-6xl px-4 sm:px-6 rounded-2xl bg-surface-card/92 backdrop-blur-md border-border-default shadow-md"
+            : "max-w-7xl px-4 sm:px-6 lg:px-8 rounded-none bg-transparent border-transparent shadow-none",
+        )}
+      >
         {/* Trái: Logo + Menu điều hướng */}
         <div className="flex items-center gap-8 min-w-0">
           <LogoViecNgon logoTextColor={logoTextColor} />
@@ -98,7 +119,7 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
         <div className="flex items-center gap-3 sm:gap-4">
           {!isCheckingAuth && !isAuthenticated && (
             <Link
-              href="/employer/login"
+              href="/employer"
               target="_blank"
               rel="noopener noreferrer"
               className={cn(

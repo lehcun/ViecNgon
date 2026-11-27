@@ -14,6 +14,7 @@ import {
 import type { JobPromotionBadge, RecommendedJobItem } from "@viecngon/types";
 import { useAuthStore } from "@/store/authStore";
 import { useRecommendedJobs } from "@/hooks/job/useRecommendedJobs";
+import { Reveal } from "@/components/auth/employer-landing/EmployerMotionPrimitives";
 
 const INITIAL_VISIBLE_COUNT = 8;
 
@@ -239,7 +240,7 @@ export default function RecommendedJobsSection() {
       className="w-full py-12 bg-surface-card border-b border-border-default"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-8">
+        <Reveal className="text-center mb-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-text-primary tracking-tight">
             {items.length} Việc làm IT &ldquo;Ngon&rdquo; dành cho{" "}
             <span className="bg-linear-to-r from-primary to-ai bg-clip-text text-transparent font-extrabold">
@@ -262,7 +263,7 @@ export default function RecommendedJobsSection() {
               </span>
             </p>
           )}
-        </div>
+        </Reveal>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {visibleItems.map((job) => (

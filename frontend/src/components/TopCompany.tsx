@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import Marquee from "react-fast-marquee";
 import EmployerCard from "./EmployerCard";
 import { useTopCompanies } from "@/hooks/company/useTopCompanies";
 import { FormattedTopCompany } from "@viecngon/types";
+import { Reveal } from "@/components/auth/employer-landing/EmployerMotionPrimitives";
 import {
   CompanyCardSkeleton,
   EmptyState,
@@ -21,10 +23,12 @@ function MarqueeLogo({ name, logo }: { name: string; logo?: string | null }) {
     );
   }
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
+    <Image
       src={logo}
       alt={`Logo ${name}`}
+      width={120}
+      height={40}
+      unoptimized
       className="object-contain h-10 w-auto max-w-30"
       onError={() => setImgErr(true)}
     />
@@ -41,7 +45,7 @@ export default function TopEmployers() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Tiêu đề khu vực căn giữa */}
-        <div className="text-center mb-10">
+        <Reveal className="text-center mb-10">
           <h2 className="text-2xl sm:text-3xl font-bold text-text-primary tracking-tight">
             Nhà tuyển dụng hàng đầu
           </h2>
@@ -49,7 +53,7 @@ export default function TopEmployers() {
             Các doanh nghiệp công nghệ uy tín đang mở tuyển kỹ sư IT trên
             ViecNgon
           </p>
-        </div>
+        </Reveal>
 
         {/* Trạng thái Loading Skeleton (bố cục 3 + 2 cân đều) */}
         {isLoading ? (

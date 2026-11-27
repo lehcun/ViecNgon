@@ -4,8 +4,12 @@ import LogoViecNgon from "@/components/LogoViecNgon";
 
 export default function Footer() {
   return (
-    <footer className="bg-primary-dark text-slate-300 border-t border-slate-800 mt-auto">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+    <footer className="relative overflow-hidden bg-primary-dark text-slate-300 border-t border-slate-800 mt-auto">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_75%_at_50%_110%,rgba(37,99,235,0.22),transparent_70%)]"
+      />
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
           {/* Cột 1: Thương hiệu */}
           <div className="space-y-4">
@@ -118,11 +122,21 @@ export default function Footer() {
       </div>
 
       {/* Dòng bản quyền */}
-      <div className="border-t border-slate-800">
+      <div className="relative z-10 border-t border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-slate-500">
           <p>© 2026 ViecNgon. Bảo lưu mọi quyền.</p>
           <p>Nền tảng Tuyển dụng IT thông minh tại Việt Nam</p>
         </div>
+      </div>
+
+      {/* Giant Architectural Footer Wordmark */}
+      <div
+        aria-hidden="true"
+        className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 overflow-hidden select-none pointer-events-none"
+      >
+        <p className="text-center font-extrabold tracking-tighter leading-[0.82] text-[clamp(4.5rem,16vw,12rem)] bg-linear-to-b from-white/25 via-primary-disabled/20 to-transparent bg-clip-text text-transparent translate-y-3 sm:translate-y-5">
+          ViecNgon
+        </p>
       </div>
     </footer>
   );

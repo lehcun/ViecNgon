@@ -78,7 +78,7 @@ export default function EmployerLandingHeader() {
               <LogoViecNgon
                 logoTextColor={isScrolled ? "text-text-primary" : "text-white"}
                 role="employer"
-                href="/"
+                href="/employer/login"
               />
               <span
                 className={cn(

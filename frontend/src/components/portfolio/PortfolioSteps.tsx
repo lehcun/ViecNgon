@@ -1,64 +1,85 @@
+"use client";
+
+import React from "react";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import { useAuthStore } from "@/store/authStore";
+import { Reveal } from "@/components/auth/employer-landing/EmployerMotionPrimitives";
+
 const STEPS = [
   {
     num: "01",
-    title: "Tạo tài khoản",
-    desc: "Đăng nhập vào hệ thống ViecNgon bằng Email, Google hoặc GitHub.",
+    title: "Tạo tài khoản miễn phí",
+    desc: "Đăng nhập nhanh bằng Email hoặc Google để mở không gian quản lý hồ sơ ứng viên IT.",
   },
   {
     num: "02",
-    title: "Hoàn thành 70% hồ sơ",
-    desc: "Điền thông tin cá nhân, kỹ năng, kinh nghiệm. Hệ thống tự động tạo khung CV.",
+    title: "Điền hồ sơ hoặc Nhập bằng AI",
+    desc: "Tải CV PDF sẵn có để AI tự bóc tách trong vài giây, hoặc tự cập nhật kỹ năng, kinh nghiệm và dự án.",
   },
   {
     num: "03",
-    title: "Tùy chỉnh giao diện",
-    desc: "Chọn mẫu phù hợp với phong cách của bạn (Minimalist, Tech-focused...).",
+    title: "Chọn 1 trong 3 mẫu CV chuẩn",
+    desc: "Chuyển đổi tức thì giữa Truyền thống, Hiện đại và Tối giản để xem trước bản PDF hoàn chỉnh.",
   },
   {
     num: "04",
-    title: "Tải & Ứng tuyển",
-    desc: "Xuất file PDF chất lượng cao hoặc dùng trực tiếp link Portfolio để gửi nhà tuyển dụng.",
+    title: "Tải PDF & Ứng tuyển 1 chạm",
+    desc: "Xuất file PDF chất lượng cao hoặc lưu làm CV mặc định để ứng tuyển ngay các việc làm IT phù hợp.",
   },
 ];
 
 export default function PortfolioSteps() {
+  const { isAuthenticated } = useAuthStore();
+  const actionHref = isAuthenticated ? "/cv-profile" : "/register";
+
   return (
-    <section className="py-20 bg-primary-dark border-t border-slate-800">
-      <div className="max-w-6xl mx-auto px-6">
-        <h2 className="text-3xl md:text-4xl font-bold text-center text-white mb-16">
-          Tạo Portfolio hoàn chỉnh với 4 bước
-        </h2>
+    <section
+      id="steps"
+      className="py-20 sm:py-24 bg-slate-950 border-b border-white/8 scroll-mt-20"
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+        <Reveal className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+          <div className="space-y-2 max-w-2xl">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-400">
+              Quy trình tinh gọn
+            </p>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+              Hoàn thiện CV & Portfolio IT chỉ với 4 bước
+            </h2>
+          </div>
+          <Link
+            href={actionHref}
+            className="inline-flex items-center gap-2 h-10 px-5 rounded-xl bg-primary hover:bg-primary-hover text-white text-sm font-bold self-start lg:self-auto shadow-md shadow-primary/25 transition-all active:scale-[0.98]"
+          >
+            <span>Bắt đầu tạo hồ sơ</span>
+            <ArrowRight size={15} />
+          </Link>
+        </Reveal>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {STEPS.map((step, index) => (
-            <div
-              key={index}
-              className="bg-slate-900/50 border border-slate-800 rounded-xl p-8 hover:border-primary/50 transition-colors relative overflow-hidden group"
-            >
-              {/* Số mờ ở background */}
-              <div className="absolute -top-6 -right-4 text-8xl font-black text-slate-800/50 group-hover:text-primary/10 transition-colors pointer-events-none">
-                {step.num}
-              </div>
-
-              <div className="relative z-10">
-                <div className="text-primary font-bold text-xl mb-4">
-                  {step.num}
+        <div className="rounded-2xl border border-white/10 bg-slate-900/70 overflow-hidden">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-white/10">
+            {STEPS.map((step, idx) => (
+              <Reveal key={step.num} index={idx} className="h-full">
+                <div className="group h-full p-6 sm:p-7 space-y-4 hover:bg-white/4 transition-colors relative">
+                  <div className="flex items-center justify-between">
+                    <span className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-primary/15 border border-primary/30 text-blue-300 font-extrabold text-sm tabular-nums group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-colors">
+                      {step.num}
+                    </span>
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                      Bước {idx + 1}
+                    </span>
+                  </div>
+                  <h3 className="text-base font-bold text-white">
+                    {step.title}
+                  </h3>
+                  <p className="text-sm text-slate-400 leading-relaxed">
+                    {step.desc}
+                  </p>
                 </div>
-                <h3 className="text-lg font-bold text-white mb-3">
-                  {step.title}
-                </h3>
-                <p className="text-sm text-slate-400 leading-relaxed">
-                  {step.desc}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-16 text-center">
-          <button className="px-8 py-3.5 bg-primary text-white font-bold rounded-md hover:bg-primary-hover shadow-lg shadow-primary/30 transition-all">
-            Bắt đầu tạo Portfolio
-          </button>
+              </Reveal>
+            ))}
+          </div>
         </div>
       </div>
     </section>
