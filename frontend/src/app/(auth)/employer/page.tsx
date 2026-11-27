@@ -16,6 +16,8 @@ import EmployerPackagesSection from "@/components/auth/employer-landing/Employer
 import EmployerFeaturesSection from "@/components/auth/employer-landing/EmployerFeaturesSection";
 import EmployerPartnersSection from "@/components/auth/employer-landing/EmployerPartnersSection";
 import EmployerContactFooter from "@/components/auth/employer-landing/EmployerContactFooter";
+import { EmployerSmoothScroll } from "@/components/auth/employer-landing/EmployerMotionPrimitives";
+import "@/components/auth/employer-landing/employer-motion.css";
 import { useEmployerLandingData } from "@/hooks/company/useEmployerLandingData";
 import { useRegisterEmployer } from "@/hooks/auth/useRegisterEmployer";
 import { useFormValidation } from "@/hooks/useFormValidation";
@@ -197,17 +199,21 @@ export default function EmployerRegistrationPage() {
 
   return (
     <div className="min-h-screen bg-surface-page flex flex-col">
+      <EmployerSmoothScroll />
       <EmployerLandingHeader />
 
       {/* Section 1: Hero + Form Đăng ký Doanh nghiệp 2 bước */}
       <section
         id="register-form"
-        className="py-14 sm:py-20 px-4 sm:px-6 lg:px-8 scroll-mt-16 bg-surface-page"
+        className="relative py-14 sm:py-20 px-4 sm:px-6 lg:px-8 scroll-mt-16 bg-surface-page emp-hero-backdrop overflow-hidden"
       >
-        <main className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row items-center lg:items-start justify-between gap-10 lg:gap-12">
+        <main className="relative z-10 w-full max-w-7xl mx-auto flex flex-col lg:flex-row items-center lg:items-start justify-between gap-10 lg:gap-12">
           <EmployerRegisterHero />
 
-          <div className="w-full lg:w-6/12 max-w-xl bg-surface-card rounded-2xl border border-border-default shadow-sm p-6 sm:p-8">
+          <div
+            className="emp-hero-stagger w-full lg:w-6/12 max-w-xl bg-surface-card/95 backdrop-blur-xs rounded-2xl border border-border-default shadow-sm p-6 sm:p-8"
+            style={{ "--l": 2 } as React.CSSProperties}
+          >
             {step !== 3 && (
               <div className="flex items-start justify-between gap-4 pb-5 mb-6 border-b border-border-default">
                 <div>
@@ -226,40 +232,42 @@ export default function EmployerRegistrationPage() {
               </div>
             )}
 
-            {step === 1 && (
-              <EmployerRegisterStep1
-                values={step1}
-                errors={step1Validation.errors}
-                formError={step1Validation.formError}
-                onChange={handleStep1Change}
-                onBlur={(field) =>
-                  step1Validation.handleFieldBlur(field, step1[field], step1)
-                }
-                onNext={handleNextStep}
-              />
-            )}
+            <div key={step} className="emp-step-enter">
+              {step === 1 && (
+                <EmployerRegisterStep1
+                  values={step1}
+                  errors={step1Validation.errors}
+                  formError={step1Validation.formError}
+                  onChange={handleStep1Change}
+                  onBlur={(field) =>
+                    step1Validation.handleFieldBlur(field, step1[field], step1)
+                  }
+                  onNext={handleNextStep}
+                />
+              )}
 
-            {step === 2 && (
-              <EmployerRegisterStep2
-                values={step2}
-                errors={step2Validation.errors}
-                formError={step2Validation.formError}
-                isSubmitting={isPending}
-                onChange={handleStep2Change}
-                onBlur={(field) =>
-                  step2Validation.handleFieldBlur(field, step2[field], step2)
-                }
-                onBack={() => setStep(1)}
-                onSubmit={handleFinalSubmit}
-              />
-            )}
+              {step === 2 && (
+                <EmployerRegisterStep2
+                  values={step2}
+                  errors={step2Validation.errors}
+                  formError={step2Validation.formError}
+                  isSubmitting={isPending}
+                  onChange={handleStep2Change}
+                  onBlur={(field) =>
+                    step2Validation.handleFieldBlur(field, step2[field], step2)
+                  }
+                  onBack={() => setStep(1)}
+                  onSubmit={handleFinalSubmit}
+                />
+              )}
 
-            {step === 3 && submittedInfo && (
-              <EmployerRegisterSuccess
-                companyName={submittedInfo.companyName}
-                email={submittedInfo.email}
-              />
-            )}
+              {step === 3 && submittedInfo && (
+                <EmployerRegisterSuccess
+                  companyName={submittedInfo.companyName}
+                  email={submittedInfo.email}
+                />
+              )}
+            </div>
           </div>
         </main>
       </section>

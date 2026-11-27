@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Cpu, Sparkles, ShieldCheck } from "lucide-react";
+import { CountUpNumber, Reveal } from "./EmployerMotionPrimitives";
 
 interface EmployerWhyChooseSectionProps {
   stats?: {
@@ -42,17 +43,17 @@ export default function EmployerWhyChooseSection({
 }: EmployerWhyChooseSectionProps) {
   const statItems = [
     {
-      value: stats ? `${stats.candidatesCount.toLocaleString("vi-VN")}+` : "—",
+      rawValue: stats?.candidatesCount,
       label: "Hồ sơ Ứng viên IT",
       detail: "Cập nhật liên tục theo kỹ năng thực tế",
     },
     {
-      value: stats ? `${stats.companiesCount.toLocaleString("vi-VN")}+` : "—",
+      rawValue: stats?.companiesCount,
       label: "Doanh nghiệp Công nghệ",
       detail: "Đã xác thực và đang vận hành tuyển dụng",
     },
     {
-      value: stats ? `${stats.activeJobsCount.toLocaleString("vi-VN")}+` : "—",
+      rawValue: stats?.activeJobsCount,
       label: "Vị trí IT Đang mở",
       detail: "Trải rộng Hà Nội, TP. Hồ Chí Minh & Đà Nẵng",
     },
@@ -64,7 +65,7 @@ export default function EmployerWhyChooseSection({
       className="py-20 sm:py-24 bg-surface-card border-y border-border-default scroll-mt-16"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-14">
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+        <Reveal className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
           <div className="space-y-2 max-w-2xl">
             <p className="text-xs font-bold uppercase tracking-widest text-primary">
               Vì sao chọn ViecNgon
@@ -77,51 +78,53 @@ export default function EmployerWhyChooseSection({
             Toàn bộ chỉ số dưới đây được đồng bộ trực tiếp từ hệ thống ViecNgon
             theo thời gian thực.
           </p>
-        </div>
+        </Reveal>
 
         {/* Hairline Editorial Stat Strip */}
-        <div className="rounded-2xl border border-border-default bg-surface-page overflow-hidden">
-          <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border-default">
-            {isLoading
-              ? Array.from({ length: 3 }).map((_, idx) => (
-                  <div key={idx} className="p-7 animate-pulse space-y-3">
-                    <div className="h-10 w-28 rounded bg-surface-subtle" />
-                    <div className="h-4 w-40 rounded bg-surface-muted" />
-                    <div className="h-3 w-52 rounded bg-surface-muted" />
-                  </div>
-                ))
-              : statItems.map((item) => (
-                  <div key={item.label} className="p-7 space-y-1.5">
-                    <p className="text-4xl sm:text-5xl font-extrabold text-text-primary tracking-tight tabular-nums">
-                      {item.value}
-                    </p>
-                    <p className="text-sm font-bold text-primary pt-1">
-                      {item.label}
-                    </p>
-                    <p className="text-xs text-text-muted">{item.detail}</p>
-                  </div>
-                ))}
+        <Reveal index={1}>
+          <div className="rounded-2xl border border-border-default bg-surface-page overflow-hidden">
+            <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border-default">
+              {isLoading
+                ? Array.from({ length: 3 }).map((_, idx) => (
+                    <div key={idx} className="p-7 animate-pulse space-y-3">
+                      <div className="h-10 w-28 rounded bg-surface-subtle" />
+                      <div className="h-4 w-40 rounded bg-surface-muted" />
+                      <div className="h-3 w-52 rounded bg-surface-muted" />
+                    </div>
+                  ))
+                : statItems.map((item) => (
+                    <div
+                      key={item.label}
+                      className="p-7 space-y-1.5 transition-colors hover:bg-surface-card/70"
+                    >
+                      <p className="text-4xl sm:text-5xl font-extrabold text-text-primary tracking-tight tabular-nums">
+                        <CountUpNumber value={item.rawValue} suffix="+" />
+                      </p>
+                      <p className="text-sm font-bold text-primary pt-1">
+                        {item.label}
+                      </p>
+                      <p className="text-xs text-text-muted">{item.detail}</p>
+                    </div>
+                  ))}
+            </div>
           </div>
-        </div>
+        </Reveal>
 
         {/* 3 Trụ cột kiến trúc có đánh số */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {VALUE_PILLARS.map((pillar) => {
+          {VALUE_PILLARS.map((pillar, idx) => {
             const Icon = pillar.icon;
             return (
-              <div
-                key={pillar.title}
-                className="group p-6 rounded-2xl bg-surface-card border border-border-default hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200 space-y-4"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 rounded-xl bg-primary-light text-primary group-hover:bg-primary group-hover:text-white transition-colors flex items-center justify-center">
-                    <Icon size={20} />
+              <Reveal key={pillar.title} index={idx} className="h-full">
+                <div className="group h-full p-6 rounded-2xl bg-surface-card border border-border-default hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="w-10 h-10 rounded-xl bg-primary-light text-primary group-hover:bg-primary group-hover:text-white transition-colors flex items-center justify-center">
+                      <Icon size={20} />
+                    </div>
+                    <span className="text-xs font-extrabold tracking-widest text-text-placeholder tabular-nums">
+                      {pillar.index}
+                    </span>
                   </div>
-                  <span className="text-xs font-extrabold tracking-widest text-text-placeholder tabular-nums">
-                    {pillar.index}
-                  </span>
-                </div>
-                <div className="space-y-1.5">
                   <h3 className="text-base font-bold text-text-primary">
                     {pillar.title}
                   </h3>
@@ -129,7 +132,7 @@ export default function EmployerWhyChooseSection({
                     {pillar.description}
                   </p>
                 </div>
-              </div>
+              </Reveal>
             );
           })}
         </div>

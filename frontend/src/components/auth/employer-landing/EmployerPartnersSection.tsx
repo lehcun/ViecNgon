@@ -5,6 +5,7 @@ import Link from "next/link";
 import { MapPin, Briefcase, Quote } from "lucide-react";
 import type { EmployerLandingPartnerItem } from "@viecngon/types";
 import { CompanyLogo } from "@/components/ui/CompanyLogo";
+import { Reveal } from "./EmployerMotionPrimitives";
 
 interface EmployerPartnersSectionProps {
   partners: EmployerLandingPartnerItem[];
@@ -42,7 +43,7 @@ export default function EmployerPartnersSection({
   return (
     <section id="partners" className="py-20 sm:py-24 bg-surface-page scroll-mt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+        <Reveal className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
           <div className="space-y-2 max-w-2xl">
             <p className="text-xs font-bold uppercase tracking-widest text-primary">
               Doanh nghiệp đồng hành
@@ -55,7 +56,7 @@ export default function EmployerPartnersSection({
             Nhấn vào từng doanh nghiệp để xem trang thương hiệu tuyển dụng thực
             tế.
           </p>
-        </div>
+        </Reveal>
 
         {/* Tường Logo doanh nghiệp thật từ DB */}
         {isLoading ? (
@@ -72,46 +73,45 @@ export default function EmployerPartnersSection({
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {partners.slice(0, 6).map((partner) => (
-              <Link
-                key={partner.maCongTy}
-                href={`/company/${partner.slug}`}
-                className="group p-4 rounded-2xl bg-surface-card border border-border-default hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200 flex flex-col items-center text-center gap-3"
-              >
-                <CompanyLogo
-                  src={partner.logoUrl}
-                  name={partner.tenCongTy}
-                  size="lg"
-                />
-                <div className="space-y-1 min-w-0 w-full">
-                  <p className="text-xs font-bold text-text-primary group-hover:text-primary transition-colors truncate">
-                    {partner.tenCongTy}
-                  </p>
-                  <div className="flex items-center justify-center gap-2 text-[11px] text-text-muted">
-                    {partner.thanhPho && (
-                      <span className="inline-flex items-center gap-0.5 truncate">
-                        <MapPin size={10} />
-                        {partner.thanhPho}
+            {partners.slice(0, 6).map((partner, idx) => (
+              <Reveal key={partner.maCongTy} index={idx} className="h-full">
+                <Link
+                  href={`/company/${partner.slug}`}
+                  className="group h-full p-4 rounded-2xl bg-surface-card border border-border-default hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 flex flex-col items-center text-center gap-3"
+                >
+                  <CompanyLogo
+                    src={partner.logoUrl}
+                    name={partner.tenCongTy}
+                    size="lg"
+                  />
+                  <div className="space-y-1 min-w-0 w-full">
+                    <p className="text-xs font-bold text-text-primary group-hover:text-primary transition-colors truncate">
+                      {partner.tenCongTy}
+                    </p>
+                    <div className="flex items-center justify-center gap-2 text-[11px] text-text-muted">
+                      {partner.thanhPho && (
+                        <span className="inline-flex items-center gap-0.5 truncate">
+                          <MapPin size={10} />
+                          {partner.thanhPho}
+                        </span>
+                      )}
+                      <span className="inline-flex items-center gap-0.5 shrink-0 text-primary font-semibold tabular-nums">
+                        <Briefcase size={10} />
+                        {partner.jobsCount}
                       </span>
-                    )}
-                    <span className="inline-flex items-center gap-0.5 shrink-0 text-primary font-semibold tabular-nums">
-                      <Briefcase size={10} />
-                      {partner.jobsCount}
-                    </span>
+                    </div>
                   </div>
-                </div>
-              </Link>
+                </Link>
+              </Reveal>
             ))}
           </div>
         )}
 
         {/* Trích dẫn HR đối tác */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {TESTIMONIALS.map((item) => (
-            <div
-              key={item.author}
-              className="p-6 rounded-2xl bg-surface-card border border-border-default shadow-2xs hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200 flex flex-col justify-between gap-5"
-            >
+          {TESTIMONIALS.map((item, idx) => (
+            <Reveal key={item.author} index={idx} className="h-full">
+              <div className="h-full p-6 rounded-2xl bg-surface-card border border-border-default shadow-2xs hover:-translate-y-0.5 hover:shadow-md hover:border-primary/30 transition-all duration-200 flex flex-col justify-between gap-5">
               <div className="space-y-3">
                 <Quote size={20} className="text-primary/40" />
                 <p className="text-sm text-text-secondary leading-relaxed">
@@ -129,7 +129,8 @@ export default function EmployerPartnersSection({
                   <p className="text-xs text-text-muted truncate">{item.role}</p>
                 </div>
               </div>
-            </div>
+              </div>
+            </Reveal>
           ))}
         </div>
       </div>

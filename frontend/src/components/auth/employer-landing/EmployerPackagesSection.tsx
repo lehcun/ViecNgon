@@ -3,6 +3,7 @@
 import React from "react";
 import { Check, Minus, RefreshCw, ArrowRight } from "lucide-react";
 import type { EmployerLandingPackageItem } from "@viecngon/types";
+import { Reveal } from "./EmployerMotionPrimitives";
 
 interface EmployerPackagesSectionProps {
   packages: EmployerLandingPackageItem[];
@@ -103,7 +104,7 @@ export default function EmployerPackagesSection({
   return (
     <section id="packages" className="py-20 sm:py-24 bg-surface-page scroll-mt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+        <Reveal className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
           <div className="space-y-2 max-w-2xl">
             <p className="text-xs font-bold uppercase tracking-widest text-primary">
               Bảng giá gói đăng tin
@@ -116,7 +117,7 @@ export default function EmployerPackagesSection({
             Kích hoạt linh hoạt ngay trong Cổng Nhà tuyển dụng sau khi tài khoản
             được duyệt.
           </p>
-        </div>
+        </Reveal>
 
         {isError ? (
           <div className="p-10 rounded-2xl bg-surface-card border border-border-default text-center space-y-3">
@@ -154,20 +155,20 @@ export default function EmployerPackagesSection({
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-stretch">
-              {packages.map((pkg) => {
+              {packages.map((pkg, idx) => {
                 const isPopular = pkg.capDoUuTien === 3;
                 const isDiamond = pkg.capDoUuTien >= 4;
                 return (
-                  <div
-                    key={pkg.maGoi}
-                    className={`relative flex flex-col justify-between p-6 rounded-2xl border transition-all duration-200 hover:-translate-y-0.5 ${
-                      isDiamond
-                        ? "bg-primary-dark text-white border-primary-dark shadow-md"
-                        : isPopular
-                          ? "bg-surface-card border-primary shadow-sm ring-1 ring-primary/20"
-                          : "bg-surface-card border-border-default shadow-2xs hover:shadow-sm"
-                    }`}
-                  >
+                  <Reveal key={pkg.maGoi} index={idx} className="h-full">
+                    <div
+                      className={`relative h-full flex flex-col justify-between p-6 rounded-2xl border transition-all duration-200 hover:-translate-y-0.5 ${
+                        isDiamond
+                          ? "bg-primary-dark text-white border-primary-dark shadow-md hover:shadow-lg"
+                          : isPopular
+                            ? "bg-surface-card border-primary shadow-sm ring-1 ring-primary/20 hover:shadow-md"
+                            : "bg-surface-card border-border-default shadow-2xs hover:shadow-md hover:border-primary/35"
+                      }`}
+                    >
                     {(isPopular || isDiamond) && (
                       <span
                         className={`self-start mb-3 inline-flex px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${
@@ -264,13 +265,15 @@ export default function EmployerPackagesSection({
                       <span>Đăng ký sử dụng gói</span>
                       <ArrowRight size={13} />
                     </a>
-                  </div>
+                    </div>
+                  </Reveal>
                 );
               })}
             </div>
 
             {packages.length > 0 && (
-              <div className="bg-surface-card rounded-2xl border border-border-default overflow-hidden shadow-2xs">
+              <Reveal index={1}>
+                <div className="bg-surface-card rounded-2xl border border-border-default overflow-hidden shadow-2xs">
                 <div className="px-6 py-4 border-b border-border-default flex items-center justify-between gap-2">
                   <h3 className="text-sm sm:text-base font-bold text-text-primary">
                     Ma trận so sánh chi tiết quyền lợi
@@ -319,6 +322,7 @@ export default function EmployerPackagesSection({
                   </table>
                 </div>
               </div>
+              </Reveal>
             )}
           </>
         )}
