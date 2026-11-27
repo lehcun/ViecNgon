@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Quote, MapPin, Briefcase } from "lucide-react";
+import { MapPin, Briefcase, Quote } from "lucide-react";
 import type { EmployerLandingPartnerItem } from "@viecngon/types";
 import { CompanyLogo } from "@/components/ui/CompanyLogo";
 
@@ -13,18 +13,21 @@ interface EmployerPartnersSectionProps {
 
 const TESTIMONIALS = [
   {
+    initials: "TN",
     quote:
       "AI Match Score giúp đội ngũ tuyển dụng kỹ thuật của chúng tôi rút ngắn đáng kể thời gian sàng lọc hồ sơ Senior Java và Cloud.",
     author: "Nguyễn Thảo Nhi",
     role: "Senior IT Recruiter · FPT Software",
   },
   {
+    initials: "NA",
     quote:
       "Tính năng đặt lịch Google Meet trực tiếp trên hồ sơ và đánh giá đa vòng giúp Tech Lead và HR phối hợp mượt mà hơn hẳn.",
     author: "Lê Ngọc Anh",
     role: "Technical Recruiter · VNG Corporation",
   },
   {
+    initials: "KV",
     quote:
       "Trang hồ sơ công ty kết hợp đánh giá ẩn danh minh bạch giúp chúng tôi thu hút được đúng những ứng viên phù hợp văn hóa.",
     author: "Phạm Khánh Vy",
@@ -37,15 +40,21 @@ export default function EmployerPartnersSection({
   isLoading,
 }: EmployerPartnersSectionProps) {
   return (
-    <section id="partners" className="py-16 sm:py-20 bg-surface-page scroll-mt-16">
+    <section id="partners" className="py-20 sm:py-24 bg-surface-page scroll-mt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-        <div className="text-center max-w-2xl mx-auto space-y-2">
-          <p className="text-xs font-bold uppercase tracking-wider text-primary">
-            Doanh nghiệp đồng hành
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+          <div className="space-y-2 max-w-2xl">
+            <p className="text-xs font-bold uppercase tracking-widest text-primary">
+              Doanh nghiệp đồng hành
+            </p>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight">
+              Các đội ngũ kỹ thuật hàng đầu đang tuyển dụng trên ViecNgon
+            </h2>
+          </div>
+          <p className="text-sm text-text-muted max-w-sm">
+            Nhấn vào từng doanh nghiệp để xem trang thương hiệu tuyển dụng thực
+            tế.
           </p>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight">
-            Các công ty công nghệ hàng đầu tin dùng ViecNgon
-          </h2>
         </div>
 
         {/* Tường Logo doanh nghiệp thật từ DB */}
@@ -54,9 +63,9 @@ export default function EmployerPartnersSection({
             {Array.from({ length: 6 }).map((_, idx) => (
               <div
                 key={idx}
-                className="p-4 rounded-xl bg-surface-card border border-border-default animate-pulse flex flex-col items-center gap-3"
+                className="p-4 rounded-2xl bg-surface-card border border-border-default animate-pulse flex flex-col items-center gap-3"
               >
-                <div className="w-14 h-14 rounded-xl bg-surface-subtle" />
+                <div className="w-16 h-16 rounded-xl bg-surface-subtle" />
                 <div className="h-3.5 w-24 rounded bg-surface-muted" />
               </div>
             ))}
@@ -67,7 +76,7 @@ export default function EmployerPartnersSection({
               <Link
                 key={partner.maCongTy}
                 href={`/company/${partner.slug}`}
-                className="group p-4 rounded-xl bg-surface-card border border-border-default hover:border-primary/40 hover:shadow-xs transition-all flex flex-col items-center text-center gap-2.5"
+                className="group p-4 rounded-2xl bg-surface-card border border-border-default hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200 flex flex-col items-center text-center gap-3"
               >
                 <CompanyLogo
                   src={partner.logoUrl}
@@ -85,7 +94,7 @@ export default function EmployerPartnersSection({
                         {partner.thanhPho}
                       </span>
                     )}
-                    <span className="inline-flex items-center gap-0.5 shrink-0 text-primary font-semibold">
+                    <span className="inline-flex items-center gap-0.5 shrink-0 text-primary font-semibold tabular-nums">
                       <Briefcase size={10} />
                       {partner.jobsCount}
                     </span>
@@ -101,19 +110,24 @@ export default function EmployerPartnersSection({
           {TESTIMONIALS.map((item) => (
             <div
               key={item.author}
-              className="p-6 rounded-2xl bg-surface-card border border-border-default shadow-2xs flex flex-col justify-between gap-4"
+              className="p-6 rounded-2xl bg-surface-card border border-border-default shadow-2xs hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200 flex flex-col justify-between gap-5"
             >
               <div className="space-y-3">
-                <Quote size={22} className="text-primary/40" />
+                <Quote size={20} className="text-primary/40" />
                 <p className="text-sm text-text-secondary leading-relaxed">
                   &ldquo;{item.quote}&rdquo;
                 </p>
               </div>
-              <div className="pt-3 border-t border-border-default">
-                <p className="text-sm font-bold text-text-primary">
-                  {item.author}
-                </p>
-                <p className="text-xs text-text-muted mt-0.5">{item.role}</p>
+              <div className="pt-4 border-t border-border-default flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-primary-light border border-primary-subtle text-primary text-xs font-bold flex items-center justify-center shrink-0">
+                  {item.initials}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-text-primary truncate">
+                    {item.author}
+                  </p>
+                  <p className="text-xs text-text-muted truncate">{item.role}</p>
+                </div>
               </div>
             </div>
           ))}

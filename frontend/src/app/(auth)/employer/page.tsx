@@ -202,12 +202,12 @@ export default function EmployerRegistrationPage() {
       {/* Section 1: Hero + Form Đăng ký Doanh nghiệp 2 bước */}
       <section
         id="register-form"
-        className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 scroll-mt-16"
+        className="py-14 sm:py-20 px-4 sm:px-6 lg:px-8 scroll-mt-16 bg-surface-page"
       >
         <main className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row items-center lg:items-start justify-between gap-10 lg:gap-12">
           <EmployerRegisterHero />
 
-          <div className="w-full lg:w-7/12 max-w-xl bg-surface-card rounded-2xl border border-border-default shadow-sm p-6 sm:p-8">
+          <div className="w-full lg:w-6/12 max-w-xl bg-surface-card rounded-2xl border border-border-default shadow-sm p-6 sm:p-8">
             {step !== 3 && (
               <div className="flex items-start justify-between gap-4 pb-5 mb-6 border-b border-border-default">
                 <div>

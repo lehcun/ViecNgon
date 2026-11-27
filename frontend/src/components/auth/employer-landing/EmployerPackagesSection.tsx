@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Check, Minus, Sparkles, RefreshCw } from "lucide-react";
+import { Check, Minus, RefreshCw, ArrowRight } from "lucide-react";
 import type { EmployerLandingPackageItem } from "@viecngon/types";
 
 interface EmployerPackagesSectionProps {
@@ -52,7 +52,15 @@ export default function EmployerPackagesSection({
       label: "Huy hiệu nổi bật trên tin đăng",
       render: (pkg) =>
         pkg.loaiHuyHieu ? (
-          <span className="inline-flex px-2 py-0.5 rounded-full text-[11px] font-bold bg-primary-light text-primary">
+          <span
+            className={`inline-flex px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+              pkg.capDoUuTien >= 4
+                ? "bg-primary-dark text-white"
+                : pkg.capDoUuTien === 3
+                  ? "bg-vip-light text-vip border border-vip-border"
+                  : "bg-primary-light text-primary"
+            }`}
+          >
             {BADGE_LABEL[pkg.loaiHuyHieu] || pkg.loaiHuyHieu}
           </span>
         ) : (
@@ -93,19 +101,20 @@ export default function EmployerPackagesSection({
   ];
 
   return (
-    <section id="packages" className="py-16 sm:py-20 bg-surface-page scroll-mt-16">
+    <section id="packages" className="py-20 sm:py-24 bg-surface-page scroll-mt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-        <div className="text-center max-w-2xl mx-auto space-y-2.5">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-light border border-primary-subtle text-primary text-xs font-bold uppercase tracking-wider">
-            <Sparkles size={14} />
-            <span>Giải pháp Đăng tin tuyển dụng IT</span>
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+          <div className="space-y-2 max-w-2xl">
+            <p className="text-xs font-bold uppercase tracking-widest text-primary">
+              Bảng giá gói đăng tin
+            </p>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight">
+              Minh bạch quyền lợi cho từng quy mô tuyển dụng IT
+            </h2>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight">
-            Linh hoạt theo quy mô & tốc độ tuyển dụng
-          </h2>
-          <p className="text-sm sm:text-base text-text-secondary">
-            Chọn gói phù hợp ngay sau khi tài khoản doanh nghiệp của bạn được
-            kích hoạt.
+          <p className="text-sm text-text-muted max-w-sm">
+            Kích hoạt linh hoạt ngay trong Cổng Nhà tuyển dụng sau khi tài khoản
+            được duyệt.
           </p>
         </div>
 
@@ -144,56 +153,81 @@ export default function EmployerPackagesSection({
           </div>
         ) : (
           <>
-            {/* 4 Thẻ gói dịch vụ thật từ DB */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-stretch">
               {packages.map((pkg) => {
-                const isHighlight = pkg.capDoUuTien === 3;
+                const isPopular = pkg.capDoUuTien === 3;
                 const isDiamond = pkg.capDoUuTien >= 4;
                 return (
                   <div
                     key={pkg.maGoi}
-                    className={`relative flex flex-col justify-between p-6 rounded-2xl border bg-surface-card transition-shadow ${
-                      isHighlight
-                        ? "border-primary shadow-md ring-1 ring-primary/20"
-                        : isDiamond
-                          ? "border-primary-dark/40 shadow-sm"
-                          : "border-border-default shadow-2xs"
+                    className={`relative flex flex-col justify-between p-6 rounded-2xl border transition-all duration-200 hover:-translate-y-0.5 ${
+                      isDiamond
+                        ? "bg-primary-dark text-white border-primary-dark shadow-md"
+                        : isPopular
+                          ? "bg-surface-card border-primary shadow-sm ring-1 ring-primary/20"
+                          : "bg-surface-card border-border-default shadow-2xs hover:shadow-sm"
                     }`}
                   >
-                    {(isHighlight || isDiamond) && (
+                    {(isPopular || isDiamond) && (
                       <span
-                        className={`absolute -top-3 right-4 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide ${
+                        className={`self-start mb-3 inline-flex px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${
                           isDiamond
-                            ? "bg-primary-dark text-white"
-                            : "bg-primary text-white"
+                            ? "bg-white/15 text-white border border-white/20"
+                            : "bg-vip-light text-vip border border-vip-border"
                         }`}
                       >
                         {isDiamond ? "Cao cấp nhất" : "Phổ biến nhất"}
                       </span>
                     )}
 
-                    <div className="space-y-4">
+                    <div className="space-y-4 flex-1">
                       <div>
-                        <h3 className="text-base font-bold text-text-primary">
+                        <h3
+                          className={`text-base font-bold ${
+                            isDiamond ? "text-white" : "text-text-primary"
+                          }`}
+                        >
                           {pkg.tieuDe}
                         </h3>
-                        <p className="text-xs text-text-muted mt-1 min-h-8">
+                        <p
+                          className={`text-xs mt-1 min-h-8 leading-relaxed ${
+                            isDiamond ? "text-white/75" : "text-text-muted"
+                          }`}
+                        >
                           {pkg.moTaNgan ||
                             `Hiệu lực ${pkg.thoiGianHieuLuc} ngày · ${pkg.soLuotDangTin} lượt đăng tin`}
                         </p>
                       </div>
 
-                      <div className="pb-4 border-b border-border-default">
-                        <p className="text-2xl font-extrabold text-primary tabular-nums">
+                      <div
+                        className={`pb-4 border-b ${
+                          isDiamond
+                            ? "border-white/15"
+                            : "border-border-default"
+                        }`}
+                      >
+                        <p
+                          className={`text-2xl font-extrabold tabular-nums ${
+                            isDiamond ? "text-white" : "text-primary"
+                          }`}
+                        >
                           {formatVnd(pkg.gia)}
                         </p>
-                        <p className="text-xs text-text-muted mt-0.5">
+                        <p
+                          className={`text-xs mt-0.5 ${
+                            isDiamond ? "text-white/70" : "text-text-muted"
+                          }`}
+                        >
                           {pkg.soLuotDangTin} lượt đăng · {pkg.thoiGianHieuLuc}{" "}
                           ngày
                         </p>
                       </div>
 
-                      <ul className="space-y-2 text-xs text-text-secondary">
+                      <ul
+                        className={`space-y-2.5 text-xs ${
+                          isDiamond ? "text-white/85" : "text-text-secondary"
+                        }`}
+                      >
                         {(pkg.quyenLois.length > 0
                           ? pkg.quyenLois.slice(0, 5)
                           : [
@@ -205,7 +239,11 @@ export default function EmployerPackagesSection({
                           <li key={benefit} className="flex items-start gap-2">
                             <Check
                               size={14}
-                              className="text-success-text shrink-0 mt-0.5"
+                              className={`shrink-0 mt-0.5 ${
+                                isDiamond
+                                  ? "text-primary-disabled"
+                                  : "text-success-text"
+                              }`}
                             />
                             <span>{benefit}</span>
                           </li>
@@ -215,26 +253,31 @@ export default function EmployerPackagesSection({
 
                     <a
                       href="#register-form"
-                      className={`mt-6 w-full h-10 rounded-xl text-xs font-bold inline-flex items-center justify-center transition-colors ${
-                        isHighlight
-                          ? "bg-primary hover:bg-primary-hover text-white"
-                          : "bg-surface-page hover:bg-surface-muted border border-border-default text-text-primary"
+                      className={`mt-6 w-full h-10 rounded-xl text-xs font-bold inline-flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] ${
+                        isDiamond
+                          ? "bg-surface-card hover:bg-surface-muted text-primary-dark"
+                          : isPopular
+                            ? "bg-primary hover:bg-primary-hover text-white"
+                            : "bg-surface-page hover:bg-surface-muted border border-border-default text-text-primary"
                       }`}
                     >
-                      Đăng ký sử dụng gói
+                      <span>Đăng ký sử dụng gói</span>
+                      <ArrowRight size={13} />
                     </a>
                   </div>
                 );
               })}
             </div>
 
-            {/* Bảng ma trận so sánh chi tiết quyền lợi */}
             {packages.length > 0 && (
               <div className="bg-surface-card rounded-2xl border border-border-default overflow-hidden shadow-2xs">
-                <div className="px-6 py-4 border-b border-border-default">
-                  <h3 className="text-base font-bold text-text-primary">
-                    So sánh chi tiết quyền lợi các gói
+                <div className="px-6 py-4 border-b border-border-default flex items-center justify-between gap-2">
+                  <h3 className="text-sm sm:text-base font-bold text-text-primary">
+                    Ma trận so sánh chi tiết quyền lợi
                   </h3>
+                  <span className="text-xs text-text-muted hidden sm:inline">
+                    Đồng bộ trực tiếp từ danh mục gói hiện hành
+                  </span>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-160 text-sm">
@@ -255,7 +298,10 @@ export default function EmployerPackagesSection({
                     </thead>
                     <tbody className="divide-y divide-border-default">
                       {comparisonRows.map((row) => (
-                        <tr key={row.label} className="hover:bg-surface-page/60">
+                        <tr
+                          key={row.label}
+                          className="odd:bg-surface-card even:bg-surface-page/40 hover:bg-primary-light/30 transition-colors"
+                        >
                           <td className="px-6 py-3.5 text-xs sm:text-sm font-medium text-text-secondary">
                             {row.label}
                           </td>
