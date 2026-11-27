@@ -10,6 +10,13 @@ import EmployerRegisterStep2, {
   type EmployerStep2Values,
 } from "@/components/auth/EmployerRegisterStep2";
 import EmployerRegisterSuccess from "@/components/auth/EmployerRegisterSuccess";
+import EmployerLandingHeader from "@/components/auth/employer-landing/EmployerLandingHeader";
+import EmployerWhyChooseSection from "@/components/auth/employer-landing/EmployerWhyChooseSection";
+import EmployerPackagesSection from "@/components/auth/employer-landing/EmployerPackagesSection";
+import EmployerFeaturesSection from "@/components/auth/employer-landing/EmployerFeaturesSection";
+import EmployerPartnersSection from "@/components/auth/employer-landing/EmployerPartnersSection";
+import EmployerContactFooter from "@/components/auth/employer-landing/EmployerContactFooter";
+import { useEmployerLandingData } from "@/hooks/company/useEmployerLandingData";
 import { useRegisterEmployer } from "@/hooks/auth/useRegisterEmployer";
 import { useFormValidation } from "@/hooks/useFormValidation";
 import {
@@ -65,6 +72,12 @@ export default function EmployerRegistrationPage() {
   } | null>(null);
 
   const { mutateAsync: registerEmployer, isPending } = useRegisterEmployer();
+  const {
+    data: landingData,
+    isLoading: isLoadingLanding,
+    isError: isLandingError,
+    refetch: refetchLanding,
+  } = useEmployerLandingData();
 
   const step1Validation = useFormValidation<EmployerStep1Values>({
     fieldOrder: STEP1_FIELDS,
@@ -183,65 +196,99 @@ export default function EmployerRegistrationPage() {
   };
 
   return (
-    <div className="min-h-screen bg-surface-page flex items-center py-10 px-4 sm:px-6 lg:px-8">
-      <main className="w-full max-w-6xl mx-auto flex flex-col lg:flex-row items-center lg:items-start justify-between gap-10 lg:gap-12">
-        <EmployerRegisterHero />
+    <div className="min-h-screen bg-surface-page flex flex-col">
+      <EmployerLandingHeader />
 
-        <section className="w-full lg:w-7/12 max-w-xl bg-surface-card rounded-2xl border border-border-default shadow-sm p-6 sm:p-8">
-          {step !== 3 && (
-            <div className="flex items-start justify-between gap-4 pb-5 mb-6 border-b border-border-default">
-              <div>
-                <h2 className="text-lg sm:text-xl font-bold text-text-primary">
-                  Đăng ký tài khoản Nhà tuyển dụng
-                </h2>
-                <p className="text-xs sm:text-sm text-text-muted mt-0.5">
-                  {step === 1
-                    ? "Bước 1: Thông tin tài khoản & người đại diện doanh nghiệp"
-                    : "Bước 2: Thông tin doanh nghiệp để Quản trị viên xác thực"}
-                </p>
+      {/* Section 1: Hero + Form Đăng ký Doanh nghiệp 2 bước */}
+      <section
+        id="register-form"
+        className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 scroll-mt-16"
+      >
+        <main className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row items-center lg:items-start justify-between gap-10 lg:gap-12">
+          <EmployerRegisterHero />
+
+          <div className="w-full lg:w-7/12 max-w-xl bg-surface-card rounded-2xl border border-border-default shadow-sm p-6 sm:p-8">
+            {step !== 3 && (
+              <div className="flex items-start justify-between gap-4 pb-5 mb-6 border-b border-border-default">
+                <div>
+                  <h2 className="text-lg sm:text-xl font-bold text-text-primary">
+                    Đăng ký tài khoản Nhà tuyển dụng
+                  </h2>
+                  <p className="text-xs sm:text-sm text-text-muted mt-0.5">
+                    {step === 1
+                      ? "Bước 1: Thông tin tài khoản & người đại diện doanh nghiệp"
+                      : "Bước 2: Thông tin doanh nghiệp để Quản trị viên xác thực"}
+                  </p>
+                </div>
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-primary-light text-primary text-xs font-bold tabular-nums shrink-0">
+                  {step}/2
+                </span>
               </div>
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-primary-light text-primary text-xs font-bold tabular-nums shrink-0">
-                {step}/2
-              </span>
-            </div>
-          )}
+            )}
 
-          {step === 1 && (
-            <EmployerRegisterStep1
-              values={step1}
-              errors={step1Validation.errors}
-              formError={step1Validation.formError}
-              onChange={handleStep1Change}
-              onBlur={(field) =>
-                step1Validation.handleFieldBlur(field, step1[field], step1)
-              }
-              onNext={handleNextStep}
-            />
-          )}
+            {step === 1 && (
+              <EmployerRegisterStep1
+                values={step1}
+                errors={step1Validation.errors}
+                formError={step1Validation.formError}
+                onChange={handleStep1Change}
+                onBlur={(field) =>
+                  step1Validation.handleFieldBlur(field, step1[field], step1)
+                }
+                onNext={handleNextStep}
+              />
+            )}
 
-          {step === 2 && (
-            <EmployerRegisterStep2
-              values={step2}
-              errors={step2Validation.errors}
-              formError={step2Validation.formError}
-              isSubmitting={isPending}
-              onChange={handleStep2Change}
-              onBlur={(field) =>
-                step2Validation.handleFieldBlur(field, step2[field], step2)
-              }
-              onBack={() => setStep(1)}
-              onSubmit={handleFinalSubmit}
-            />
-          )}
+            {step === 2 && (
+              <EmployerRegisterStep2
+                values={step2}
+                errors={step2Validation.errors}
+                formError={step2Validation.formError}
+                isSubmitting={isPending}
+                onChange={handleStep2Change}
+                onBlur={(field) =>
+                  step2Validation.handleFieldBlur(field, step2[field], step2)
+                }
+                onBack={() => setStep(1)}
+                onSubmit={handleFinalSubmit}
+              />
+            )}
 
-          {step === 3 && submittedInfo && (
-            <EmployerRegisterSuccess
-              companyName={submittedInfo.companyName}
-              email={submittedInfo.email}
-            />
-          )}
-        </section>
-      </main>
+            {step === 3 && submittedInfo && (
+              <EmployerRegisterSuccess
+                companyName={submittedInfo.companyName}
+                email={submittedInfo.email}
+              />
+            )}
+          </div>
+        </main>
+      </section>
+
+      {/* Section 2: Vì sao chọn ViecNgon? */}
+      <EmployerWhyChooseSection
+        stats={landingData?.stats}
+        isLoading={isLoadingLanding}
+      />
+
+      {/* Section 3: Giải pháp Đăng tin & Bảng so sánh 4 gói */}
+      <EmployerPackagesSection
+        packages={landingData?.packages ?? []}
+        isLoading={isLoadingLanding}
+        isError={isLandingError}
+        onRetry={() => refetchLanding()}
+      />
+
+      {/* Section 4: Hệ sinh thái tiện ích AI & Tuyển dụng */}
+      <EmployerFeaturesSection />
+
+      {/* Section 5: Doanh nghiệp tin dùng & Trích dẫn HR */}
+      <EmployerPartnersSection
+        partners={landingData?.partners ?? []}
+        isLoading={isLoadingLanding}
+      />
+
+      {/* Section 6: Liên hệ B2B & Footer */}
+      <EmployerContactFooter />
     </div>
   );
 }

@@ -204,4 +204,67 @@ describe('CompanyService', () => {
     expect(unfollowed.followerCount).toBe(4);
     expect(prisma.theoDoiCongTy.delete).toHaveBeenCalled();
   });
+
+  it('getEmployerLandingData trả về stats, packages (parse JSON an toàn) và partners', async () => {
+    prisma.taiKhoan.count.mockResolvedValue(48);
+    prisma.congTy.count.mockResolvedValue(9);
+    prisma.congViec.count.mockResolvedValue(16);
+    prisma.goiQuangCao.findMany.mockResolvedValue([
+      {
+        maGoi: 'pkg-1',
+        tieuDe: 'Gói Cơ Bản',
+        gia: 1_500_000,
+        thoiGianHieuLuc: 30,
+        soLuotDangTin: 3,
+        capDoUuTien: 1,
+        loaiHuyHieu: 'BASIC',
+        moTaNgan: 'Phù hợp startup',
+        quyenLoiJson: JSON.stringify(['Hiển thị 30 ngày', 'AI Match Score']),
+      },
+      {
+        maGoi: 'pkg-2',
+        tieuDe: 'Gói Diamond',
+        gia: 15_000_000,
+        thoiGianHieuLuc: 60,
+        soLuotDangTin: 20,
+        capDoUuTien: 4,
+        loaiHuyHieu: 'DIAMOND',
+        moTaNgan: 'Gói cao cấp',
+        quyenLoiJson: '{broken-json',
+      },
+    ]);
+    prisma.congTy.findMany.mockResolvedValue([
+      {
+        maCongTy: 'ct-fpt',
+        tenCongTy: 'FPT Software',
+        slug: 'fpt-software',
+        logoUrl: 'https://img.example/fpt.png',
+        thanhPho: 'Hà Nội',
+        nhaTuyenDungs: [{ _count: { congViecs: 4 } }],
+      },
+    ]);
+
+    const res = await service.getEmployerLandingData();
+    expect(res.stats).toEqual({
+      candidatesCount: 48,
+      companiesCount: 9,
+      activeJobsCount: 16,
+    });
+    expect(res.packages).toHaveLength(2);
+    expect(res.packages[0].quyenLois).toEqual([
+      'Hiển thị 30 ngày',
+      'AI Match Score',
+    ]);
+    expect(res.packages[1].quyenLois).toEqual([]);
+    expect(res.partners).toEqual([
+      {
+        maCongTy: 'ct-fpt',
+        tenCongTy: 'FPT Software',
+        slug: 'fpt-software',
+        logoUrl: 'https://img.example/fpt.png',
+        thanhPho: 'Hà Nội',
+        jobsCount: 4,
+      },
+    ]);
+  });
 });

@@ -30,6 +30,11 @@ export class CompanyController {
     return await this.companyService.getFeaturedBannerEmployers();
   }
 
+  @Get('employer-landing')
+  async getEmployerLandingData() {
+    return await this.companyService.getEmployerLandingData();
+  }
+
   @Get(':id/follow-status')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('UNGVIEN')

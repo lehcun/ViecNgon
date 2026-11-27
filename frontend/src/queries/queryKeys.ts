@@ -44,6 +44,7 @@ export const companyKeys = {
   lists: () => [...companyKeys.all, "list"],
   list: (filters: JobFilterParams) => [...companyKeys.lists(), { filters }],
   featuredBanners: () => [...companyKeys.all, "featured-banners"] as const,
+  employerLanding: () => [...companyKeys.all, "employer-landing"] as const,
 
   // Chi tiết hồ sơ công ty
   details: () => [...companyKeys.all, "detail"],

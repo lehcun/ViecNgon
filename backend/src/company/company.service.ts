@@ -9,6 +9,7 @@ import type {
   CompanyPostItem,
   CompanyReviewItem,
   CompanySectionImages,
+  EmployerLandingDataResponse,
   FeaturedEmployerBannerItem,
   FormattedTopCompany,
   JobPromotionBadge,
@@ -876,6 +877,108 @@ export class CompanyService {
       message: isFollowing
         ? 'Đã theo dõi công ty. Bạn sẽ nhận được thông báo khi có việc làm mới!'
         : 'Đã bỏ theo dõi công ty.',
+    };
+  }
+
+  private parsePackageBenefits(raw?: string | null): string[] {
+    if (!raw) return [];
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed
+        .filter((item): item is string => typeof item === 'string')
+        .map((item) => item.trim())
+        .filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  async getEmployerLandingData(): Promise<EmployerLandingDataResponse> {
+    const [
+      candidatesCount,
+      companiesCount,
+      activeJobsCount,
+      packages,
+      partnerCompanies,
+    ] = await Promise.all([
+      this.prisma.taiKhoan.count({
+        where: { vaiTro: 'UNGVIEN', deletedAt: null },
+      }),
+      this.prisma.congTy.count({
+        where: { deletedAt: null },
+      }),
+      this.prisma.congViec.count({
+        where: { trangThai: 'DANG_TUYEN', deletedAt: null },
+      }),
+      this.prisma.goiQuangCao.findMany({
+        where: { trangThai: 'HOATDONG' },
+        orderBy: { capDoUuTien: 'asc' },
+        select: {
+          maGoi: true,
+          tieuDe: true,
+          gia: true,
+          thoiGianHieuLuc: true,
+          soLuotDangTin: true,
+          capDoUuTien: true,
+          loaiHuyHieu: true,
+          moTaNgan: true,
+          quyenLoiJson: true,
+        },
+      }),
+      this.prisma.congTy.findMany({
+        where: { deletedAt: null, logoUrl: { not: null } },
+        take: 12,
+        orderBy: { ngayTao: 'asc' },
+        select: {
+          maCongTy: true,
+          tenCongTy: true,
+          slug: true,
+          logoUrl: true,
+          thanhPho: true,
+          nhaTuyenDungs: {
+            select: {
+              _count: {
+                select: {
+                  congViecs: {
+                    where: { trangThai: 'DANG_TUYEN', deletedAt: null },
+                  },
+                },
+              },
+            },
+          },
+        },
+      }),
+    ]);
+
+    return {
+      stats: {
+        candidatesCount,
+        companiesCount,
+        activeJobsCount,
+      },
+      packages: packages.map((pkg) => ({
+        maGoi: pkg.maGoi,
+        tieuDe: pkg.tieuDe,
+        gia: Number(pkg.gia ?? 0),
+        thoiGianHieuLuc: pkg.thoiGianHieuLuc ?? 30,
+        soLuotDangTin: pkg.soLuotDangTin ?? 1,
+        capDoUuTien: pkg.capDoUuTien,
+        loaiHuyHieu: pkg.loaiHuyHieu,
+        moTaNgan: pkg.moTaNgan,
+        quyenLois: this.parsePackageBenefits(pkg.quyenLoiJson),
+      })),
+      partners: partnerCompanies.map((comp) => ({
+        maCongTy: comp.maCongTy,
+        tenCongTy: comp.tenCongTy,
+        slug: comp.slug,
+        logoUrl: comp.logoUrl,
+        thanhPho: comp.thanhPho,
+        jobsCount: comp.nhaTuyenDungs.reduce(
+          (sum, hr) => sum + hr._count.congViecs,
+          0,
+        ),
+      })),
     };
   }
 }

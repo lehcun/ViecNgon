@@ -112,6 +112,37 @@ export interface RegisterEmployerResponse {
   };
 }
 
+export interface EmployerLandingPackageItem {
+  maGoi: string;
+  tieuDe: string;
+  gia: number;
+  thoiGianHieuLuc: number;
+  soLuotDangTin: number;
+  capDoUuTien: number;
+  loaiHuyHieu: string | null;
+  moTaNgan: string | null;
+  quyenLois: string[];
+}
+
+export interface EmployerLandingPartnerItem {
+  maCongTy: string;
+  tenCongTy: string;
+  slug: string;
+  logoUrl: string | null;
+  thanhPho: string | null;
+  jobsCount: number;
+}
+
+export interface EmployerLandingDataResponse {
+  stats: {
+    candidatesCount: number;
+    companiesCount: number;
+    activeJobsCount: number;
+  };
+  packages: EmployerLandingPackageItem[];
+  partners: EmployerLandingPartnerItem[];
+}
+
 export interface ChangePasswordPayload {
   matKhauCu: string;
   matKhauMoi: string;
